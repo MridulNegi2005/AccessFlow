@@ -229,3 +229,5 @@ Codex parent installed Qwen2.5:3b as an explicitly selected local reasoning comp
 
 
 - 2026-09-13 18:40, Codex with Luna high planner worker and read-only review: generated dependency/nonce regressions and controller checks; reviewed and incorporated exact manifest model schema changes. Two A race fixtures now declare their existing dummy argument as a manifest constant. Full224 tests/Ruff pass; seven pre-fix failures observed. Human review pending; no B/CI changes.
+
+- 2026-09-13 18:47, Codex: user requested stop; preserved terminal2/4 actual model results and shut down verified local runtime. No further implementation, test runs, model calls or CI dispatch. Source3e24c06 already pushed; final stop evidence saved locally.
