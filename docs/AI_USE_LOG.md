@@ -268,3 +268,14 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - **Notes:** WAV reaches the mock controller final. PNG transport is validated and preserved,
   but the current v0.1 agent requires a paired transcript for a controller final. No shared
   contract, dependency or lockfile change.
+
+## 2026-09-13 - Codex Atishay functional Chrome browser smoke
+
+- **Task:** Verify the local demo using Chrome and its actual text, WAV and PNG controls.
+- **Result:** Connected WebSocket, text acknowledgment/final, WAV media status/final and PNG
+  media status plus paired transcript final were observed. No horizontal overflow was observed.
+- **Status:** Functional browser matrix passed; physical microphone/device capture, pixel
+  inspection and separate console capture remain unverified.
+- **Dependency note:** Local-only websockets 17.1 was installed because committed Uvicorn
+  dependencies did not provide WebSocket support. No pyproject or lockfile change was made;
+  propose this dependency to the shared owner.

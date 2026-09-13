@@ -272,11 +272,21 @@ async def websocket(websocket: WebSocket) -> None:
 
         async def receive_inputs():
             while True:
-                event = event_from_message(
-                    session_id,
-                    await websocket.receive_json(),
-                    media_root=media_root,
-                )
+                message = await websocket.receive_json()
+                try:
+                    event = event_from_message(
+                        session_id,
+                        message,
+                        media_root=media_root,
+                    )
+                except (TypeError, ValueError) as error:
+                    await websocket.send_json(
+                        {
+                            "kind": "demo_error",
+                            "payload": {"backend": "demo/input", "message": str(error)},
+                        }
+                    )
+                    continue
                 if isinstance(event, AudioEvent):
                     source_id = event.payload.utterance_id
                 elif isinstance(event, FrameEvent):
