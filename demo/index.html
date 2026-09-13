@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AccessFlow mock demo</title>
+  <style>
+    :root { color-scheme: dark; font: 16px system-ui, sans-serif; }
+    body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #10131a; color: #eef1f7; }
+    section { margin: 1rem 0; padding: 1rem; border: 1px solid #303747; border-radius: 12px; background: #171c26; }
+    button { margin: .35rem .25rem .35rem 0; padding: .55rem .8rem; border: 0; border-radius: 8px; cursor: pointer; }
+    input[type=text] { width: min(100%, 620px); padding: .6rem; border-radius: 8px; border: 1px solid #586277; background: #0c0f15; color: inherit; }
+    code { color: #9ee6b3; } small { color: #aab4c8; }
+    pre { white-space: pre-wrap; margin: 0; }
+    .event { margin-top: .75rem; padding: .75rem; border-left: 3px solid #7aa2f7; background: #0d1118; }
+  </style>
+</head>
+<body>
+  <h1>AccessFlow</h1>
+  <p>Minimal queue-driven browser demo. <strong>Backend: demo/mock</strong>. Inputs and responses are illustrative mock evidence.</p>
+
+  <section>
+    <h2>Text</h2>
+    <form id="text-form">
+      <input id="text" type="text" placeholder="Try: Book Tues... actually Wednesday" required>
+      <button>Send final transcript</button>
+      <button type="button" id="partial">Send partial</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Audio</h2>
+    <input id="audio" type="file" accept="audio/wav,.wav">
+    <button type="button" id="send-audio">Send WAV mock input</button>
+    <button type="button" id="mic">Use microphone mock input</button>
+    <small>These controls label the mock route; no audio is uploaded or transcribed by this demo.</small>
+  </section>
+
+  <section>
+    <h2>Image</h2>
+    <input id="image" type="file" accept="image/png,.png">
+    <button type="button" id="send-image">Send PNG mock input</button>
+    <small>The mock route displays provenance only. It is not a live vision evaluation.</small>
+  </section>
+
+  <section>
+    <h2>OutputEvent stream</h2>
+    <div id="events" aria-live="polite"></div>
+  </section>
+
+  <script>
+    const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+    const events = document.querySelector('#events');
+    let revision = 0;
+    let utterance = 0;
+
+    function show(event) {
+      const card = document.createElement('div');
+      card.className = 'event';
+      card.innerHTML = `<strong>${event.kind}</strong><pre>${JSON.stringify(event, null, 2)}</pre>`;
+      events.prepend(card);
+    }
+
+    function send(kind, payload) {
+      socket.send(JSON.stringify({ kind, payload }));
+    }
+
+    function transcript(final) {
+      utterance += 1;
+      revision = 0;
+      return { utterance_id: `browser-${utterance}`, revision, text: document.querySelector('#text').value, final };
+    }
+
+    socket.onmessage = (message) => show(JSON.parse(message.data));
+    socket.onopen = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: true } });
+    socket.onerror = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: false } });
+
+    document.querySelector('#text-form').onsubmit = (event) => {
+      event.preventDefault();
+      send('transcript', transcript(true));
+    };
+    document.querySelector('#partial').onclick = () => send('transcript', transcript(false));
+    document.querySelector('#send-audio').onclick = () => {
+      const file = document.querySelector('#audio').files[0];
+      send('audio', { path: file ? file.name : 'browser-mock.wav', utterance_id: `audio-${Date.now()}` });
+    };
+    document.querySelector('#mic').onclick = () => {
+      send('audio', { path: `browser-microphone-${Date.now()}.wav`, utterance_id: `mic-${Date.now()}` });
+    };
+    document.querySelector('#send-image').onclick = () => {
+      const file = document.querySelector('#image').files[0];
+      send('frame', { path: file ? file.name : 'browser-mock.png', frame_id: `frame-${Date.now()}` });
+    };
+  </script>
+</body>
+</html>

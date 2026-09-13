@@ -70,6 +70,8 @@ class Agent:
         self.active_frame = None
         self.active_speech = None
         self.speech_ready = False
+        self.speech_write_requested = False
+        self.semantic_correction_event = None
         self.last_sequence = -1
         self.invalidated = set()
         self.perception_epoch = 0
@@ -142,6 +144,8 @@ class Agent:
                     self.perception_epoch += 1
                     self.latest_complete = False
                     self.speech_ready = False
+                    self.speech_write_requested = False
+                    self.semantic_correction_event = None
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
                     if event.payload.scope == "task":
@@ -174,9 +178,12 @@ class Agent:
                     if source[0] == "speech":
                         self.active_speech = source[1]
                         self.speech_ready = False
+                        self.speech_write_requested = False
+                        self.semantic_correction_event = None
                     if self.last_request_finished:
                         self.request_id = str(uuid4())
                         self.last_request_finished = False
+                        self.speech_write_requested = False
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -258,9 +265,14 @@ class Agent:
             decision = self.turn_policy.update(obs.model_copy(deep=True), self._view())
             if obs.modality != "image" and obs.source_id == self.active_speech:
                 self.speech_ready = decision.kind == "complete" and obs.final
+                self.semantic_correction_event = obs.event_id if (
+                    obs.final and decision.kind == "possible_correction") else None
             self.latest_complete = self.speech_ready
             if obs.modality == "image":
-                self.latest_complete = self.latest_complete and obs.final and decision.kind == "complete"
+                # An image can invite an informational answer on its own. It does
+                # not finish pending speech or authorize a state-changing action.
+                self.latest_complete = (self.speech_ready or self.active_speech is None) and (
+                    obs.final and decision.kind == "complete")
             self.state.correction_pending = not self.latest_complete
             if decision.kind == "stop":
                 self.generation += 1
@@ -302,6 +314,23 @@ class Agent:
         self.planner = self._spawn(plan())
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        speech = self.observations.get(("speech", self.active_speech))
+        speech_origin = source == ("speech", self.active_speech)
+        final_correction = bool(speech_origin and speech and speech.final and
+                                speech.event_id == self.semantic_correction_event)
+        if final_correction and proposal.request_complete and not proposal.clarification:
+            # The policy flagged a completed utterance as a possible correction.
+            # A fresh semantic plan can resolve it; a partial hypothesis cannot
+            # become complete merely because the model requests a write.
+            self.speech_ready = True
+            self.latest_complete = True
+            self.state.correction_pending = False
+            self.semantic_correction_event = None
+        if speech_origin:
+            # Only the current spoken request can supply write intent. An image
+            # may fill missing details, but cannot invent or revive that intent.
+            self.speech_write_requested = bool(self.speech_ready and proposal.write_requested
+                                               and not proposal.clarification)
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
@@ -329,7 +358,7 @@ class Agent:
                 self.provisional_intent = None
             self.state.intent = proposal.intent
         await self._invalidate_dependencies(changed, "dependency_changed")
-        if proposal.clarification and self.latest_complete:
+        if proposal.clarification and (self.latest_complete or final_correction):
             self.state.status = "clarifying"
             await self._emit("clarify", text=proposal.clarification)
         for proposed in proposal.calls:
@@ -341,8 +370,9 @@ class Agent:
                 await self._emit("error", code="missing_dependency")
                 continue
             if manifest.effect == "write":
-                if not (self.latest_complete and proposal.request_complete and proposal.write_requested
-                        and not self.state.correction_pending):
+                if not (self.latest_complete and self.speech_ready and self.speech_write_requested
+                        and proposal.request_complete and proposal.write_requested
+                        and not self.state.correction_pending and not proposal.clarification):
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
                     continue
