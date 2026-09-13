@@ -103,6 +103,7 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
     terminal = asyncio.Event()
     completion_status = "completed"
     failure_type = None
+    perception_cleanup = "not_required"
     criterion = definition.terminal_output
     terminal_cause = criterion.caused_by_event_id or inputs[-1].event_id
 
@@ -167,6 +168,15 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
             failure_type = type(exc).__name__
         finally:
             await asyncio.gather(runner, return_exceptions=True)
+        close_perception = getattr(selected_perception, "aclose", None)
+        if close_perception is not None:
+            try:
+                await asyncio.wait_for(close_perception(), SHUTDOWN_TIMEOUT_S)
+                perception_cleanup = "closed"
+            except Exception as exc:
+                perception_cleanup = "failed"
+                completion_status = "perception_cleanup_error"
+                failure_type = type(exc).__name__
         try:
             # Drain output already emitted even when the runner failed before an ended event.
             await asyncio.wait_for(outgoing.join(), 1)
@@ -190,6 +200,7 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                 "runtime_s": time.perf_counter() - started, "expected_slots": scenario.get("expected_slots", {}),
                 "measurement_clock": "perf_counter", "clock_resolution_s": time.get_clock_info("perf_counter").resolution,
                 "completion_status": completion_status,
+                "perception_cleanup": perception_cleanup,
                 "failure_type": failure_type,
                 "mock_executor_effect_count": len(tools.effects),
                 "config": {"partial_debounce_s": agent.partial_debounce_s, "turn_policy": policy_profile,

@@ -78,4 +78,6 @@ NotImplementedError until the real organizer schema is supplied. A successful in
 replay is not official-kit compatibility. The controller defaults to 115 seconds, leaving
 headroom below 120, and explicit model warm-up is bounded below 300 seconds. Real machine
 timings remain to be measured. Cancellation of a Python task cannot forcibly terminate a
-misbehaving native model; perception implementations must bound their worker lifetime.
+misbehaving native model; the CLI local profile therefore uses a bounded subprocess.
+See [PROCESS_WORKER.md](PROCESS_WORKER.md). Actual model warm-up and end-to-end runtime
+still require measurement on the declared environment.

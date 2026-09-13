@@ -51,7 +51,7 @@ mock external effects. It proves no ASR/vision capability. Explicit `--backend o
 or `--backend gemini` exercises actual reasoning while external tools remain fake.
 See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits.
 
-Use `--components local` with replay or suite to connect `LocalPerception` and
+Use `--components local` with replay or suite to connect the process-isolated local adapter and
 `HeuristicTurnPolicy` to the engine. Reasoning stays scripted unless `--backend` is changed:
 
 ```powershell
@@ -62,3 +62,5 @@ The suite checks confirmed slots and actual mock effects; see
 [docs/EVALUATION.md](docs/EVALUATION.md). Raw audio requires a preinstalled ASR model;
 real vision, adaptive timing and model evaluation remain incomplete. GitHub Actions
 remains disabled; run the development checks locally.
+
+Native media lifecycle and test limitations: [docs/PROCESS_WORKER.md](docs/PROCESS_WORKER.md).

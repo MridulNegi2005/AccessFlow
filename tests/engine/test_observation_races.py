@@ -12,12 +12,18 @@ from test_safety import end, manifest, proposal, start, transcript, wait_for
 
 @pytest.mark.parametrize("scope", ["speech", "task"])
 async def test_delayed_perception_cannot_restart_after_interrupt(scope):
-    entered, release, returned = asyncio.Event(), asyncio.Event(), asyncio.Event()
+    entered, release, returned, cancelled = (asyncio.Event() for _ in range(4))
 
     class Delayed:
         async def observe(self, event):
             entered.set()
-            await release.wait()
+            try:
+                await release.wait()
+            except asyncio.CancelledError:
+                # Simulate a native callback that still returns after cancellation;
+                # requesting cancellation does not replace the stale-result gate.
+                cancelled.set()
+                await release.wait()
             async for obs in FakePerception().observe(event):
                 yield obs
             returned.set()
@@ -33,6 +39,7 @@ async def test_delayed_perception_cannot_restart_after_interrupt(scope):
         await asyncio.wait_for(entered.wait(), 1)
         await iq.put(InterruptEvent(session_id="s", payload=Interrupt(scope=scope)))
         await wait_for(oq, lambda e: e.payload.get("stop_output"))
+        await asyncio.wait_for(cancelled.wait(), 1)
         release.set()
         await asyncio.wait_for(returned.wait(), 1)
         # Drain the controller through a subsequent output barrier.
