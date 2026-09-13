@@ -109,3 +109,11 @@ comparative measurements against the energy baseline.
 **Status:** checkpoint validated; held-out VAD quality, acoustic pause evaluation and live vision evidence remain.
 **Notes:** webrtcvad-wheels 2.0.14, aggressiveness 2, 20 ms frames. Tone 25/25 active; generated
 speech 189/265 active with 0.640 s trailing silence. No tracked dependency or contract change.
+
+## [2026-09-13 21:00] - Codex
+**Task:** Add and measure a generated pause-and-correction speech fixture.
+**Changes:** Added provenance-tracked audio with a 1.5 second break, then measured WebRTC VAD
+and Faster Whisper through LocalPerception.
+**Status:** checkpoint validated; held-out endpoint quality, acoustic VAD evaluation and live vision evidence remain.
+**Notes:** 6.024 s fixture, WebRTC 139/301 active frames in three windows with 0.640 s trailing
+silence; ASR elapsed 1.334 s, realtime factor 0.221. No participant audio used.
