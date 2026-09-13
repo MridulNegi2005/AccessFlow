@@ -78,3 +78,15 @@ Workflow check (2026-09-13 18:32), last updated by Codex: explanation completed;
 **Notes:** Engine commit3e24c06 pushed to mridul/engine;224 tests/Ruff passed. Actual guarded Qwen suite2/4: corrected-device and lost-response recovery pass; support omits slots, text correction leaves completion/write flags false. Independent planner probes remain unrun/unread. Review wrote only sync notes during live run; source code stayed at3e24c06, so dirty-worktree flags in raw evidence reflect docs only. CI remains disabled. Next on explicit resume: address incomplete model plans, then unseen probes and remaining Workstream A gates.
 
 ---
+
+## [2026-09-13 20:45] — Claude Code
+**Task:** Add a Groq hosted reasoning backend for planner accuracy testing.
+**Changes:** `JsonBackend` gains a `groq` branch beside `ollama` and `gemini`; CLI accepts
+`--backend groq`; `.env.example` documents the new variables. Usage metrics are recorded per request.
+**Status:** adapter complete and tested; live comparison blocked on an API key.
+**Notes:** 231 tests and Ruff pass. End-to-end CLI warmup verified against a Groq-shaped local stub.
+No key exists on this machine, so no accuracy result is claimed. Next: set `ACCESSFLOW_GROQ_API_KEY`
+and run the live_dev suite against the preserved gemma3 0/4 and Qwen 2/4 traces. No B-owned files
+changed. CI remains disabled. Nothing pushed.
+
+---

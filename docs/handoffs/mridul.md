@@ -118,3 +118,30 @@ Explicit Qwen2.5:3b comparison on clean82a9d0c:1/4 task criteria passed with ori
 **Notes:** Engine commit3e24c06 pushed to mridul/engine;224 tests/Ruff passed. Actual guarded Qwen suite2/4: corrected-device and lost-response recovery pass; support omits slots, text correction leaves completion/write flags false. Independent planner probes remain unrun/unread. Review wrote only sync notes during live run; source code stayed at3e24c06, so dirty-worktree flags in raw evidence reflect docs only. CI remains disabled. Next on explicit resume: address incomplete model plans, then unseen probes and remaining Workstream A gates.
 
 ---
+
+## [2026-09-13 20:45] — Claude Code
+**Task:** Add a Groq hosted reasoning backend to test planner accuracy against larger open models.
+**Changes:** `JsonBackend` accepts `groq` beside `ollama` and `gemini`. Backend model defaults move to a
+`DEFAULT_MODELS` table. The Groq branch uses the OpenAI-compatible chat completions endpoint, bearer
+authentication, temperature 0 and `response_format` `json_object`. Strict `json_schema` output is
+opt-in through `ACCESSFLOW_GROQ_STRUCTURED=1`, because strict mode rejects some schemas this project
+generates. Request evidence records the Groq `usage` block: queue time, prompt time, completion time,
+token counts and total time. The CLI accepts `--backend groq` for `replay`, `warmup` and `suite`.
+**Status:** in-progress. Adapter is complete and tested. The live comparison is not run.
+**Tests run and results:** `uv run pytest -q` — 231 passed, two existing TestClient warnings.
+`uv run ruff check .` passed. Seven new Groq tests cover request shape, opt-in structured output,
+missing key, rate-limit non-retry, usage metric filtering, GPU rejection and unknown backend rejection.
+End-to-end check: `accessflow warmup --backend groq` against a local stub that speaks the Groq wire
+format returned `ready: true` and exit code 0. The stub confirmed path, bearer header, model,
+temperature, response format and message roles.
+**Live-model results:** None. No Groq API key exists on this machine.
+**Known failures/limits:** No hosted key is configured, so no accuracy comparison against the saved
+gemma3:4b 0/4 and guarded Qwen2.5:3b 2/4 results. The default model id `llama-3.3-70b-versatile`
+must be checked against Groq's current model list before a scored run. Free-tier rate limits are
+unmeasured and matter across a 60-scenario suite.
+**Dependency or contract proposals:** None. No new dependency. No public schema change.
+**Next independent task:** Set `ACCESSFLOW_GROQ_API_KEY` in `.env`, then run
+`accessflow suite scenarios/live_dev --backend groq` and compare against the preserved local traces.
+**AI tools and human modifications:** Claude Code (Opus 5) wrote the adapter, tests and this entry.
+No human review recorded.
+**Atishay:** No B-owned files changed. CI remains disabled. No push performed.

@@ -336,3 +336,90 @@ async def test_warmup_timeout_is_per_request_override():
         await backend.warmup()
     assert backend.timeout == 20
     assert observed == [(20, 0.2, 0.2)]
+
+
+async def test_groq_request_shape_and_default_json_object(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
+    monkeypatch.delenv("ACCESSFLOW_GROQ_STRUCTURED", raising=False)
+    seen = {}
+    def handler(request):
+        seen["path"] = request.url.path
+        seen["host"] = request.url.host
+        seen["auth"] = request.headers.get("Authorization")
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"choices": [{"message": {
+            "content": '{"response":"Here is general information"}'}}]})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        reasoner = ModelReasoner(JsonBackend("groq", client))
+        result = await reasoner.plan(
+            SessionView(session_id="s", state=Snapshot(), observations=[], results=[]), [])
+    assert result.response == "Here is general information"
+    assert seen["host"] == "api.groq.com"
+    assert seen["path"] == "/openai/v1/chat/completions"
+    assert seen["auth"] == "Bearer unit-test-placeholder-not-a-real-key"
+    assert seen["body"]["model"] == "llama-3.3-70b-versatile"
+    assert seen["body"]["temperature"] == 0
+    assert seen["body"]["response_format"] == {"type": "json_object"}
+    assert [message["role"] for message in seen["body"]["messages"]] == ["system", "user"]
+
+
+async def test_groq_structured_output_is_opt_in(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
+    monkeypatch.setenv("ACCESSFLOW_GROQ_STRUCTURED", "1")
+    seen = {}
+    def handler(request):
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"choices": [{"message": {"content": '{"ready":true}'}}]})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        await JsonBackend("groq", client).generate("system", {}, {"type": "object"})
+    assert seen["body"]["response_format"]["type"] == "json_schema"
+    assert seen["body"]["response_format"]["json_schema"]["schema"] == {"type": "object"}
+
+
+async def test_groq_missing_key_fails_before_network(monkeypatch):
+    monkeypatch.delenv("ACCESSFLOW_GROQ_API_KEY", raising=False)
+    backend = JsonBackend("groq")
+    with pytest.raises(ValueError, match="KEY"):
+        await backend.generate("system", {}, {})
+    evidence = backend.evidence()
+    assert evidence["request_count"] == 1
+    assert evidence["requests"][0]["exception_type"] == "ValueError"
+
+
+async def test_groq_quota_failure_not_retried_or_switched(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(429, json={"error": "rate_limit_exceeded"})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        with pytest.raises(httpx.HTTPStatusError):
+            await JsonBackend("groq", client).generate("system", {}, {})
+    assert len(calls) == 1
+
+
+async def test_groq_evidence_keeps_safe_usage_metrics(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
+    def handler(request):
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": '{"ready":true}'}}],
+            "usage": {"queue_time": 0.01, "prompt_tokens": 120, "prompt_time": 0.02,
+                      "completion_tokens": 40, "completion_time": 0.08, "total_tokens": 160,
+                      "total_time": 0.11, "unexpected": "ignored", "prompt_cost": -1}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        backend = JsonBackend("groq", client)
+        await backend.generate("system", {}, {})
+    record = backend.evidence()["requests"][0]
+    assert record["outcome"] == "success"
+    assert record["total_tokens"] == 160 and record["total_time"] == 0.11
+    assert "unexpected" not in record and "prompt_cost" not in record
+
+
+def test_groq_rejects_gpu_placement():
+    with pytest.raises(ValueError, match="num_gpu"):
+        JsonBackend("groq", num_gpu=35)
+
+
+def test_unknown_backend_rejected():
+    with pytest.raises(ValueError, match="Explicit backend"):
+        JsonBackend("openai")
