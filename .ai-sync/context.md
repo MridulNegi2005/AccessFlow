@@ -124,3 +124,11 @@ silence; ASR elapsed 1.334 s, realtime factor 0.221. No participant audio used.
 browser encoding; kept the demo perception backend explicitly mock.
 **Status:** checkpoint validated; microphone capture, held-out endpoint quality, live vision and feedback remain.
 **Notes:** Demo suite 9 passed; no shared contract or dependency change.
+
+## [2026-09-13 22:00] - Codex
+**Task:** Replace the mock microphone control with browser-side WAV capture.
+**Changes:** Added getUserMedia capture, 16-bit PCM WAV encoding, upload through the existing
+session route and static UI checks; kept downstream perception demo/mock.
+**Status:** checkpoint validated at code level; manual browser device smoke, held-out endpoint quality,
+feedback and live vision remain.
+**Notes:** Demo suite 9 passed; no shared contract or dependency change.

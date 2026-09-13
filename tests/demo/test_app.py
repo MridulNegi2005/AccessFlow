@@ -54,6 +54,9 @@ def test_demo_page_exposes_all_mock_input_controls():
     assert 'accept="audio/wav,.wav"' in html
     assert 'accept="image/png,.png"' in html
     assert 'id="mic"' in html
+    assert 'id="stop-mic"' in html
+    assert 'getUserMedia' in html
+    assert 'encodeWav' in html
 
 
 def test_websocket_returns_controller_output_event():

@@ -284,6 +284,28 @@ uv run --python 3.12 --extra dev ruff check demo tests/demo
                                                        -> All checks passed
 ~~~
 
+## Checkpoint 15 - 13 September 2026: browser microphone capture
+
+Replaced the mock microphone button with browser capture that encodes mono PCM into a
+16-bit WAV and sends it through the existing validated session upload route.
+
+- Uses getUserMedia and a short-lived browser audio processor; the stream stops when the user uploads.
+- Encodes the captured samples as a RIFF/WAV payload before WebSocket transport.
+- Reuses the server-side 8 MiB limit, WAV validation and per-session temporary storage.
+- Keeps the downstream agent on demo/mock perception, so microphone transport is not live ASR evidence.
+- Adds static checks for the microphone controls, getUserMedia path and WAV encoder.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/demo -q  -> 9 passed
+uv run --python 3.12 --extra dev ruff check demo tests/demo
+                                                       -> All checks passed
+~~~
+
+A real browser permission/device smoke run is still required before claiming microphone
+capture works on evaluator hardware.
+
 Python 3.11 and `uv` are required:
 
 ```powershell

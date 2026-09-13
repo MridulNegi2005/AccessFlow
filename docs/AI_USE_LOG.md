@@ -156,3 +156,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: Demo suite 9 passed; full suite verification follows; Ruff passed for owned paths.
 - Backend/dependencies: Existing FastAPI WebSocket stack; no dependency or contract change. Microphone remains mock.
+
+## 2026-09-13 - Codex Atishay browser microphone capture
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Replace the mock microphone button with browser-side PCM-to-WAV capture through the existing validated session upload route.
+- Output: Added getUserMedia capture, 16-bit WAV encoding, stream shutdown and static UI checks.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Demo suite 9 passed; Ruff passed for owned paths. Browser permission and device capture were not available for this run.
+- Backend/dependencies: Existing browser APIs and FastAPI WebSocket route; no dependency or contract change.
