@@ -64,6 +64,7 @@ class Agent:
         self.planner = None
         self.active_frame = None
         self.last_sequence = -1
+        self.invalidated = set()
 
         async def pump():
             while True:
@@ -151,9 +152,10 @@ class Agent:
                     await self._cancel_writes("new_evidence")
                     self._spawn(self._perceive(event, self.generation))
         finally:
-            for task in self.workers:
+            pending = list(self.workers)
+            for task in pending:
                 task.cancel()
-            await asyncio.gather(*self.workers, return_exceptions=True)
+            await asyncio.gather(*pending, return_exceptions=True)
             self.running = False
 
     def _spawn(self, coroutine):
@@ -200,7 +202,7 @@ class Agent:
         if message.kind == "tool":
             await self._result(message.value)
             return
-        if message.generation != self.generation:
+        if message.kind != "observation" and message.generation != self.generation:
             return
         if message.kind == "failure":
             await self._emit("error", code="backend_failure", detail=message.value)
@@ -213,7 +215,11 @@ class Agent:
                 return
             self.observations[key] = obs
             decision = self.turn_policy.update(obs, self._view())
-            self.latest_complete = decision.kind == "complete" and obs.final
+            if obs.modality != "image":
+                self.latest_complete = decision.kind == "complete" and obs.final
+            else:
+                speech = [o for o in self.observations.values() if o.modality != "image"]
+                self.latest_complete = bool(speech and speech[-1].final)
             self.state.correction_pending = not self.latest_complete
             if decision.kind == "stop":
                 await self._cancel_writes("explicit_stop")
@@ -307,7 +313,7 @@ class Agent:
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
         if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
-            if not any(c.effect == "write" and c.status in {"unknown", "cancelled"} for c in self.ledger.values()):
+            if not any(c.effect == "write" for c in self.ledger.values()):
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
 
     async def _execute(self, call, timeout):
@@ -325,6 +331,7 @@ class Agent:
 
     async def _cancel(self, call, reason):
         call.status = "cancelled"
+        self.invalidated.add(call.call_id)
         await self._emit("cancel_call", call_id=call.call_id, operation_id=call.operation_id, reason=reason)
         if self.executor:
             async def cancel():
@@ -386,9 +393,42 @@ class Agent:
                 await self._emit("final", result=result.result, call_id=call.call_id, basis="confirmed_tool_effect")
             else:
                 await self._emit("acknowledge", result=result.result, call_id=call.call_id, basis="tool_evidence")
+                await self._reconcile(call, result)
                 self._start_plan()
         elif result.status == "failed":
             await self._emit("error", code="tool_failed", call_id=call.call_id, detail=result.error)
+
+    async def _reconcile(self, status_call, result):
+        """Executor-normalized status evidence, restricted to the manifest's status tool.
+
+        Wire adapters must normalize real status schemas to operation_id/outcome. Never
+        infer confirmation from arbitrary prose or let a model declare a write committed.
+        """
+        for original in self.ledger.values():
+            if original.effect != "write" or original.status not in {"unknown", "cancelled"}:
+                continue
+            manifest = self.manifests[original.tool]
+            if manifest.status_tool != status_call.tool:
+                continue
+            if result.result.get("operation_id") != original.operation_id:
+                continue
+            outcome = result.result.get("outcome")
+            if outcome == "no_effect":
+                original.status = "failed"
+                self.state.status = "listening"
+            elif outcome == "committed":
+                original.status = "success"
+                confirmed = ToolResult(call_id=original.call_id, status="success", committed=True,
+                                       result=result.result)
+                self.results.append(confirmed)
+                if original.call_id in self.invalidated:
+                    await self._emit("error", code="effect_committed_after_invalidation",
+                                     call_id=original.call_id, result=result.result)
+                else:
+                    self.state.status = "completed"
+                    self.last_request_finished = True
+                    await self._emit("final", basis="reconciled_tool_effect", call_id=original.call_id,
+                                     result=result.result)
 
     async def _shutdown(self, reason):
         for call in list(self.ledger.values()):
