@@ -13,6 +13,15 @@
 
 Append each future milestone with prompts, outputs, edits, tests and reviewer. This log
 supports the mandatory organizer form; it is not a completed or signed disclosure form.
+## 2026-09-13 - Codex Atishay turn-policy checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Implement a compact synchronous turn policy against the existing v0.1 observation contract.
+- Output: Added correction, backchannel, partial-speech and stale-revision decisions with focused tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Full suite 29 passed; Ruff passed for owned paths.
+- Backend/dependencies: Model-free heuristic; no dependency or contract changes.
 
 ## 2026-09-13 — Codex Atishay handoff
 

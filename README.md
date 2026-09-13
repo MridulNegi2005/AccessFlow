@@ -37,6 +37,28 @@ The tests prove contract and adapter behavior only. No live ASR, vision quality,
 backend result or hardware latency is claimed yet. Next: turn timing policies, partial
 transcript cases, a replaceable vision adapter and the minimal fake-agent demo.
 
+## Checkpoint 2 - 13 September 2026: turn policy baseline
+
+Added the first synchronous `HeuristicTurnPolicy` under Atishay's owned workstream.
+
+- Final speech completes only when the observation is marked final; partial speech always continues.
+- Explicit markers such as "actually" and "I mean" become `possible_correction` decisions.
+- Repeated words remain ordinary speech unless a correction marker is present.
+- Short acknowledgments such as "mm-hmm" become `backchannel` decisions.
+- Older revisions cannot complete a turn when a newer observation is already present.
+- The policy is deterministic, synchronous and model-free, so it does not block the dispatcher.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest tests/perception -q  -> 13 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/turn_policy tests/perception
+                                                               -> All checks passed
+```
+
+The current contract has no timer or silence event, so this baseline does not claim acoustic
+pause detection. Next: a replaceable PNG vision adapter with frame identity and evidence
+metadata, followed by the minimal fake-agent demo.
 Python 3.11 and `uv` are required:
 
 ```powershell
