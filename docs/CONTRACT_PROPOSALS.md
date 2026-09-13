@@ -31,3 +31,10 @@ controller flag records write intent only from accepted complete-turn speech pla
 image evidence may fill details but cannot invent intent or revive a completed request.
 Four regression/positive cases verify image-source isolation and valid multimodal completion.
 No new public authorization field; the independent authorization provider still governs effects.
+## 2026-09-13 - Speech activity timing signal
+
+- Author: Atishay Workstream B
+- Failing example: A partial transcript with a long acoustic gap currently carries only the transcript final flag, so the engine cannot distinguish “user is pausing” from “utterance ended” without overloading turn completion.
+- Proposed addition: Add an additive timing event or optional observation metadata carrying activity windows, source utterance ID, source revision, frame start/end timestamps and a pause threshold result. The signal must remain separate from TurnDecision.complete.
+- Compatibility plan: Keep v0.1 transcript/audio events and TurnPolicy unchanged. A translating adapter can drop timing metadata for older consumers; the current owned timing summary remains offline until the proposal is accepted.
+- Decision: Pending review by Mridul; no shared contract files changed.

@@ -51,3 +51,9 @@ CI remains disabled. Human review has not been recorded.
 
 Before publication, Atishay advanced to 2a4372a. Review its PCM/timing changes and
 reported illustrative-speech ASR evidence next; this merge tests d61d4dc only.
+
+## Follow-up integration: 2a4372a
+159 tests and Ruff pass after merging B's PCM/timing/demo updates. B-owned bytes unchanged;
+both WAV hashes/durations match provenance. ASR measurements are B-reported, not rerun here.
+Next: A subprocess perception adapter and replay ownership/cleanup; worker development is
+in progress on the canonical checkout. No CI trigger, dependency or public schema change.

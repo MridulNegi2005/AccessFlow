@@ -83,3 +83,14 @@ illustrative speech fixture; his handoff reports Faster Whisper CPU INT8 measure
 Those newer code changes and measurements are not part of this tested checkpoint and
 must be reviewed next; do not treat this report's older B limitations as a fresh audit
 of 2a4372a. The demo revision issue was reported against d61d4dc.
+
+## Follow-up: checkpoint 2a4372a integrated
+
+Merged the newer checkpoint without changing B-owned implementation. Combined tests:
+159 passed; Ruff passed. The former audioop warning is gone; two test-client dependency
+warnings remain. Both checked-in WAV hashes and durations match B's provenance report.
+The generated speech ASR timing remains a teammate-reported measurement, not independently
+reproduced here. The demo now waits up to one second for graceful agent shutdown; browser
+utterance revision handling and real browser media input remain B work. Timing summaries
+remain an offline helper; B's additive timing-contract proposal is preserved for review.
+Next A work: the bounded subprocess perception adapter and runner lifecycle integration.

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import AudioBuffer, WavFormat, energy_activity, load_pcm
+from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, summarize_activity, validate_wav
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -56,3 +56,74 @@ def test_energy_activity_rejects_invalid_configuration():
 
 def test_audio_buffer_metadata_is_explicit():
     assert WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=8_000)
+
+@pytest.mark.parametrize(
+    ("sample_width", "frames"),
+    [
+        (1, bytes([128, 255, 0])),
+        (2, b"\x00\x00\xff\x7f\x00\x80"),
+        (3, b"\x00\x00\x00\xff\xff\x7f\x00\x00\x80"),
+        (4, b"\x00\x00\x00\x00\xff\xff\xff\x7f\x00\x00\x00\x80"),
+    ],
+)
+def test_loader_preserves_common_pcm_widths(tmp_path: Path, sample_width: int, frames: bytes):
+    wav_path = tmp_path / f"width-{sample_width}.wav"
+    with wave.open(str(wav_path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(sample_width)
+        handle.setframerate(16_000)
+        handle.writeframes(frames)
+
+    buffer = load_pcm(wav_path)
+
+    assert buffer.sample_width == sample_width
+    assert buffer.pcm == frames
+
+
+def test_checked_in_speech_fixture_has_declared_format():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_speech.wav"
+
+    assert validate_wav(fixture) == WavFormat(
+        channels=1,
+        sample_width=2,
+        sample_rate=22_050,
+        frames=116_949,
+    )
+
+
+def test_activity_summary_reports_windows_and_trailing_pause_without_completion():
+    frames = (
+        ActivityFrame(0.0, 0.02, 0, False),
+        ActivityFrame(0.02, 0.04, 1_000, True),
+        ActivityFrame(0.04, 0.06, 1_000, True),
+        ActivityFrame(0.06, 0.46, 0, False),
+    )
+
+    summary = summarize_activity(frames, pause_after_s=0.2)
+
+    assert summary.windows[0].start_s == 0.02
+    assert summary.windows[0].end_s == 0.06
+    assert summary.active_duration_s == pytest.approx(0.04)
+    assert summary.leading_silence_s == 0.02
+    assert summary.trailing_silence_s == 0.4
+    assert summary.pause_detected is True
+
+
+def test_all_silence_does_not_look_like_a_pause_after_speech():
+    frames = (
+        ActivityFrame(0.0, 0.02, 0, False),
+        ActivityFrame(0.02, 0.04, 0, False),
+    )
+
+    summary = summarize_activity(frames)
+
+    assert summary.windows == ()
+    assert summary.pause_detected is False
+
+
+def test_activity_summary_rejects_empty_frames_and_invalid_threshold():
+    with pytest.raises(ValueError, match="at least one"):
+        summarize_activity(())
+
+    with pytest.raises(ValueError, match="pause_after_s"):
+        summarize_activity((ActivityFrame(0.0, 0.02, 0, False),), pause_after_s=-1)

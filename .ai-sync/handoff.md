@@ -1,20 +1,20 @@
 # Active handoff
 
-Last updated by: Codex (2026-09-13 16:56)
+Last updated by: Codex (2026-09-13 17:07)
 
 ## Current Task
 Persistent Workstream A goal remains active. Integration of engine c92a7da and Atishay
-d61d4dc is tested; A-only correction/image/proposal fixes accompany the merge.
+2a4372a is tested; A-only correction/image/proposal fixes accompany the merge.
 
 ## In Progress
-151 tests and Ruff pass; fake and local component suites 4/4, including installed wheel.
+159 tests and Ruff pass; fake and local component suites 4/4, including installed wheel.
 Raw WAV/PNG callback tests are injected doubles. No live model quality claim. B-owned
 implementation is unchanged. README checkpoint history moved to WORKSTREAM_B_CHECKPOINTS.md.
 See docs/INTEGRATION_2026-09-13.md for reproductions, commands and remaining B review items.
 
 ## Next Steps
-Atishay advanced to 2a4372a during this slice (PCM/timing/speech ASR evidence); review
-that new checkpoint next. This tested merge includes d61d4dc only.
+Atishay 2a4372a is now integrated and tested; see the follow-up section in the integration
+report. His ASR timings are teammate-reported; fixture bytes/durations verified here.
 Bound native inference lifetime/concurrency; configure and measure actual reasoning/vision;
 expand scenarios, baseline/ablation and independently authored held-out checks. Official kit
 and corrected Docker execution remain outstanding. Preserve B ownership.
@@ -44,8 +44,7 @@ This is not a finished hackathon submission.
 ## Next Steps
 Atishay: read ATISHAY_START_HERE.md, branch atishay/perception, build only owned components
 against fakes. The public clone path is verified; direct pushes require collaborator access,
-otherwise use a fork and pull request. Atishay has completed perception, turn-policy, vision, demo and audio baselines; next is local ASR
-measurement and a maintained replacement for deprecated `audioop`.
+otherwise use a fork and pull request. Atishay has completed perception, turn-policy, vision, demo, audio baselines and the dependency-free PCM maintenance checkpoint; next is speech-quality ASR measurement and timing refinement.
 Mridul: continue engine tests/fixes on mridul/engine. Integrate small slices.
 
 ## Key Files Modified

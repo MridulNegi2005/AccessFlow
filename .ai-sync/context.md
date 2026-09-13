@@ -152,3 +152,41 @@ CPU/int8 segment aggregation tests without downloading weights.
 **Notes:** Initial merged code 137 tests; four integration failures and two clarification/write regressions reproduced then fixed. Final 151 tests and Ruff pass; four development cases pass with fake and local components, including installed wheel. No live models or B-owned implementation edits. CI stays disabled. Next: native worker lifecycle, actual model validation and broader baseline/held-out evaluation.
 
 ---
+## [2026-09-13 18:30] - Codex
+**Task:** Replace deprecated audioop calls in Atishay's owned PCM path.
+**Changes:** Added standard-library PCM decoding, stereo downmixing, linear resampling and RMS
+helpers with coverage for 1-, 2-, 3- and 4-byte samples.
+**Status:** checkpoint validated; live ASR measurement and acoustic VAD remain.
+**Notes:** uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q passed 9
+tests. Ruff passed for owned paths. No dependency or contract changes; no live backend claim.
+
+## [2026-09-13 19:00] - Codex
+**Task:** Measure the installed local Faster Whisper backend on declared hardware.
+**Changes:** Installed the optional runtime in the ignored environment, downloaded the base.en
+model into ignored models storage and recorded a real CPU INT8 fixture run.
+**Status:** checkpoint validated; speech-quality, acoustic VAD and live vision evidence remain.
+**Notes:** Intel Core Ultra 5 125H, Python 3.12.10, faster-whisper 1.2.1. Model load 0.464 s;
+0.500 s tone inference 0.677 s; realtime factor 1.354; transcript empty as expected. No tracked
+dependency or contract changes.
+
+## [2026-09-13 19:30] - Codex
+**Task:** Add a non-participant speech fixture and measure local ASR through LocalPerception.
+**Changes:** Added a Windows speech-synthesized WAV with provenance and recorded an adapter-level
+Faster Whisper base.en CPU INT8 run.
+**Status:** checkpoint validated; held-out speech accuracy, acoustic VAD and live vision evidence remain.
+**Notes:** 5.304 s fixture, 5.874 s adapter elapsed, realtime factor 1.108. Transcript matched the
+known script apart from the final number wording. No tracked dependency or contract changes.
+## [2026-09-13 20:00] - Codex
+**Task:** Add a timing-only activity summary and an additive proposal for future timing metadata.
+**Changes:** Added activity windows, silence durations and pause signals over existing energy frames;
+kept the v0.1 engine contract unchanged and recorded the proposal for review.
+**Status:** checkpoint validated; held-out speech cases, acoustic VAD and live vision evidence remain.
+**Notes:** Focused audio/timing suite expected 12 tests; no pause is treated as semantic completion.
+
+## [2026-09-13 17:07] — Codex
+**Task:** Review and integrate newer Atishay checkpoint 2a4372a.
+**Changes:** Preserved B implementation, merged shared docs/history, checked fixture provenance.
+**Status:** in-progress
+**Notes:** 159 tests and Ruff pass. WAV hashes/durations verified; ASR results remain teammate-reported. Native process worker under development in A-owned adapter files. CI remains disabled.
+
+---

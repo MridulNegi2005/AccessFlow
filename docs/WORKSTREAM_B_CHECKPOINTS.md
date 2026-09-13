@@ -159,3 +159,76 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perc
 No Faster Whisper weights are installed or evaluated in this environment yet. Next: measure
 an explicitly installed model on declared hardware, then connect timing decisions to the
 available event contract without making every pause a completion.
+
+
+## Checkpoint 8 - 13 September 2026: dependency-free PCM backend
+
+Replaced the deprecated Python 3.12 audioop calls in the owned PCM path with small
+standard-library decoder, stereo downmixer, linear resampler and RMS helpers.
+
+- Supports 1-, 2-, 3- and 4-byte PCM sample widths.
+- Keeps the existing mono/stereo loading and target-rate behavior without adding a dependency
+  or changing the shared contract.
+- Adds focused coverage for all supported sample widths.
+- Keeps the activity output explicitly labeled as an energy baseline, not a speech classifier.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q  -> 9 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                                         -> All checks passed
+~~~
+
+This removes the current audioop deprecation warning from the PCM path. It does not establish
+production resampling quality or acoustic VAD quality. Next: measure an explicitly installed
+local ASR model on declared hardware.
+
+## Checkpoint 9 - 13 September 2026: local ASR timing measurement
+
+Ran the installed Faster Whisper base.en model through the local CPU INT8 path on the
+checked-in WAV fixture.
+
+- Hardware: Intel Core Ultra 5 125H, 16 GB installed RAM, Python 3.12.10.
+- Model/runtime: Systran/faster-whisper-base.en, snapshot 3d3d5dee26484f91867d81cb899cfcf72b96be6c, faster-whisper 1.2.1.
+- Audio duration: 0.500 s; model load: 0.464 s; inference: 0.677 s; backend realtime factor: 1.354. LocalPerception.observe elapsed 1.233 s, realtime factor 2.466.
+- The model returned an empty transcript and detected English, which is expected for the
+  synthetic 440 Hz tone. This is timing/backend evidence, not speech recognition quality.
+
+The full measurement record is in docs/feedback/ASR_MEASUREMENTS.md. The model remains in the
+ignored models directory and is not committed.
+
+## Checkpoint 10 - 13 September 2026: illustrative speech ASR run
+
+Added a locally synthesized, non-participant speech fixture and ran it through
+LocalPerception with the installed Faster Whisper base.en CPU INT8 backend.
+
+- Fixture: 5.304 s mono PCM, 16-bit, 22.05 kHz; generated with the installed Windows speech synthesizer.
+- SHA-256: B42354F90462A08AD23DF835256289116DEFDE4287AB2AC3D9D3CF2E87BCD5E6.
+- Transcript: “My screen keeps flickering after the update. Book Wednesday at 5.”
+- Adapter elapsed time: 5.874 s; realtime factor: 1.108.
+- This is one illustrative generated-voice case, not a held-out accuracy benchmark or a claim
+  about participant speech.
+
+The fixture and ASR details are recorded in docs/feedback/PROVENANCE.md and
+docs/feedback/ASR_MEASUREMENTS.md.
+
+## Checkpoint 11 - 13 September 2026: timing-only activity summary
+
+Added an offline timing summary over the energy frames without changing the shared v0.1
+contract or treating a pause as turn completion.
+
+- Reports contiguous active windows, active duration and leading/trailing silence.
+- Exposes pause_detected only as an acoustic timing signal; all-silence input is not a pause after speech.
+- Adds an additive contract proposal for carrying timing metadata into a future adapter.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q  -> 13 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                                         -> All checks passed
+~~~
+
+The current engine still consumes the v0.1 observation contract and has no timer event.
+This is an offline timing baseline, not acoustic VAD quality or a semantic completion claim.
