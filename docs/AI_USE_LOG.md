@@ -146,3 +146,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: 6.024 s fixture; WebRTC 139/301 active frames across three windows with 0.640 s trailing silence; ASR elapsed 1.334 s and realtime factor 0.221; transcript preserved the correction wording.
 - Backend/dependencies: Faster Whisper 1.2.1 and webrtcvad-wheels 2.0.14 in the ignored environment; no tracked dependency, lockfile or contract change.
+
+## 2026-09-13 - Codex Atishay browser media upload boundary
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Make selected WAV and PNG files travel through the minimal browser demo as validated session-scoped media while retaining the explicit mock perception boundary.
+- Output: Added base64 upload decoding, size/type validation, temporary session storage, browser file encoding and focused tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Demo suite 9 passed; full suite verification follows; Ruff passed for owned paths.
+- Backend/dependencies: Existing FastAPI WebSocket stack; no dependency or contract change. Microphone remains mock.

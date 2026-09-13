@@ -20,7 +20,7 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 - Live reasoning adapters, official-kit adapter after the kit is supplied, replay and metrics.
 - Held-out speech-quality ASR measurement, validated acoustic VAD integration, live vision backend and real multimodal
   benchmark on declared hardware.
-- Real browser audio capture/upload, voluntary feedback notes, demo video and presentation draft.
+- Microphone capture, voluntary feedback notes, demo video and presentation draft.
 - Docker/CI verification, the 60-scenario authored/provenance-tracked set, reviewed disclosure
   and final release assembly.
 

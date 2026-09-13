@@ -117,3 +117,10 @@ and Faster Whisper through LocalPerception.
 **Status:** checkpoint validated; held-out endpoint quality, acoustic VAD evaluation and live vision evidence remain.
 **Notes:** 6.024 s fixture, WebRTC 139/301 active frames in three windows with 0.640 s trailing
 silence; ASR elapsed 1.334 s, realtime factor 0.221. No participant audio used.
+
+## [2026-09-13 21:30] - Codex
+**Task:** Add session-scoped WAV/PNG upload to the browser demo.
+**Changes:** Added base64 transport, 8 MiB limit, WAV/PNG validation, temporary file cleanup and
+browser encoding; kept the demo perception backend explicitly mock.
+**Status:** checkpoint validated; microphone capture, held-out endpoint quality, live vision and feedback remain.
+**Notes:** Demo suite 9 passed; no shared contract or dependency change.

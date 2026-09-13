@@ -266,6 +266,24 @@ break, and “Actually, Wednesday at five.”
 - WebRTC VAD produced three windows around the spoken portions and 0.640 s trailing silence.
 - The timing and transcript are illustrative development evidence; this fixture is not held out.
 
+## Checkpoint 14 - 13 September 2026: browser media upload boundary
+
+Extended the minimal demo to upload selected WAV and PNG bytes through the WebSocket route.
+
+- The server decodes base64 payloads, enforces an 8 MiB limit and validates RIFF/WAV or PNG headers.
+- Uploaded files are materialized in a per-session temporary directory and removed with the session.
+- The existing typed AudioEvent and FrameEvent routes receive the materialized paths.
+- The browser microphone button remains explicitly mock; selected-file upload is real transport only.
+- The demo still uses demo/mock perception and makes no live ASR or vision claim.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/demo -q  -> 9 passed
+uv run --python 3.12 --extra dev ruff check demo tests/demo
+                                                       -> All checks passed
+~~~
+
 Python 3.11 and `uv` are required:
 
 ```powershell
