@@ -238,3 +238,11 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
   added a regression test against a client-supplied private path.
 - **Status:** Demo suite 12 passed; full suite 65 passed; Ruff clean.
 - **Notes:** No shared contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay local model configuration guard
+
+- **Task:** Fail clearly when the optional local Faster Whisper model path is invalid.
+- **Changes:** Added directory validation, a labeled demo/config WebSocket error and
+  regression coverage.
+- **Status:** Demo suite 14 passed; full suite 67 passed; Ruff clean.
+- **Notes:** Default mock mode and valid local mode remain unchanged. No shared contract or
+  dependency change.
