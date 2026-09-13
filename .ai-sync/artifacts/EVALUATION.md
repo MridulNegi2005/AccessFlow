@@ -90,3 +90,5 @@ commit/configuration under `docs/results/` for submission later.
 
 Still outstanding: the 60-case multimodal set, teammate-authored held-out labels, real
 model runs, timing baselines/ablation, memory measurements and official-kit adaptation.
+
+For a separate gated-worker controller timing benchmark, see [RESPONSIVENESS.md](RESPONSIVENESS.md).

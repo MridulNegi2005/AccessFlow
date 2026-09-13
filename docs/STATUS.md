@@ -12,7 +12,10 @@ evidence, not an evaluated submission.
 - Gemini/Ollama reasoning adapters tested with HTTP doubles; no real model results yet.
 - Manifest-bound in-memory lookup/write/status environment with independent committed effects.
 - Four developer-authored text workflows, task criteria, isolated suite runs and causal traces.
-- Replay crash/timeout evidence and nonzero CLI exits for failed runs or task criteria.
+- Replay crash/timeout/cancellation evidence and nonzero CLI exits for failed runs or task criteria.
+- Late committed writes retained after earlier no-effect claims; contradictory transport status reported.
+- Four-condition synthetic controller responsiveness command with auditable raw timestamps.
+- 108 local tests and Ruff pass; four development workflows pass. Timing smoke run: 8/8 probes.
 - Public repository and teammate bootstrap. Atishay9828 was invited with write permission;
   invitation acceptance has not been checked in this slice.
 

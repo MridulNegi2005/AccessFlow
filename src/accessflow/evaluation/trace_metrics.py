@@ -320,8 +320,20 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
 
     operation_calls: defaultdict[tuple[str | None, str], list[tuple[str, str]]] = defaultdict(list)
     call_to_operation: dict[tuple[str | None, str], tuple[str | None, str]] = {}
+    call_to_effect: dict[tuple[str | None, str], str] = {}
     operation_display: dict[tuple[str | None, str], str] = {}
     operation_sessions: defaultdict[str, set[str | None]] = defaultdict(set)
+    manifest_effects: defaultdict[str | None, dict[str, str]] = defaultdict(dict)
+    for typ, event, _, _ in records:
+        if typ != "input" or _event_kind(event) != "session_start":
+            continue
+        for tool in _payload(event).get("tools", []):
+            if not isinstance(tool, Mapping):
+                continue
+            name = tool.get("name")
+            effect = tool.get("effect")
+            if isinstance(name, str) and effect in {"read", "write"}:
+                manifest_effects[event.get("session_id")][name] = effect
     for typ, event, _, _ in records:
         if typ != "output" or _event_kind(event) != "tool_call":
             continue
@@ -335,6 +347,12 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
         operation_key = (event.get("session_id"), operation_id)
         operation_calls[operation_key].append((call_id, event_id))
         call_to_operation[(event.get("session_id"), call_id)] = operation_key
+        effect = _event_value(event, "effect")
+        if effect not in {"read", "write"}:
+            tool = _event_value(event, "tool")
+            effect = manifest_effects[event.get("session_id")].get(tool) if isinstance(tool, str) else None
+        if effect in {"read", "write"}:
+            call_to_effect[(event.get("session_id"), call_id)] = effect
         operation_display[operation_key] = operation_id
         operation_sessions[operation_id].add(event.get("session_id"))
 
@@ -350,13 +368,18 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
         if len({call_id for call_id, _ in attempts}) > 1
     }
     operation_id_observations = sum(len(attempts) for attempts in operation_calls.values())
-    distinct_call_count = len({call_id for attempts in operation_calls.values() for call_id, _ in attempts})
+    distinct_call_count = len({
+        (operation_key[0], call_id)
+        for operation_key, attempts in operation_calls.items()
+        for call_id, _ in attempts
+    })
     repeated_operation_attempts = sum(count - 1 for count in repeated_operations.values())
     duplicate_delivery_events = sum(
         len(attempts) - len({call_id for call_id, _ in attempts}) for attempts in operation_calls.values()
     )
 
     outcome_history: defaultdict[tuple[str | None, str], list[tuple[str, str, str]]] = defaultdict(list)
+    unknown_effect_outcomes = 0
     for typ, event, _, _ in records:
         kind = _event_kind(event)
         payload = _payload(event)
@@ -378,13 +401,32 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
         call_id = _event_value(event, "call_id")
         operation_id = _event_value(event, "operation_id")
         result = _as_mapping(payload.get("result")) or {}
+        normalized_outcome = result.get("outcome")
+        normalized_operation_id = result.get("operation_id")
+        normalized_status_shape = (
+            isinstance(normalized_operation_id, str)
+            and bool(normalized_operation_id)
+            and normalized_outcome in {"committed", "no_effect", "unknown"}
+        )
         if not isinstance(operation_id, str) or not operation_id:
-            explicit_operation = result.get("operation_id")
-            operation_id = explicit_operation if isinstance(explicit_operation, str) else ""
+            operation_id = normalized_operation_id if isinstance(normalized_operation_id, str) else ""
         if not isinstance(call_id, str) or not call_id:
             call_id = ""
         session_id = event.get("session_id")
-        operation_key = (session_id, operation_id) if operation_id else call_to_operation.get((session_id, call_id))
+        call_key = (session_id, call_id)
+        call_effect = call_to_effect.get(call_key)
+        is_normalized_status = normalized_status_shape and (
+            call_effect != "read" or payload.get("status") == "success"
+        )
+        if typ == "input" and kind == "tool_result" and call_effect is None:
+            unknown_effect_outcomes += 1
+        # Read calls are informational unless the executor returned the
+        # normalized operation status used to reconcile a write.  For legacy
+        # traces without an effect-bearing tool_call, preserve the old status
+        # interpretation and record the evidence limitation below.
+        if call_effect == "read" and not is_normalized_status:
+            continue
+        operation_key = (session_id, operation_id) if operation_id else call_to_operation.get(call_key)
         if operation_key is None:
             operation_key = (session_id, f"call:{call_id}" if call_id else f"event:{_event_id(event) or len(outcome_history)}")
         attempt_key = call_id or _event_id(event) or f"event:{len(outcome_history[operation_key])}"
@@ -408,10 +450,10 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
             attempt_resolved[(operation_key, attempt_key)] = resolve(statuses)
         statuses = set(attempt_resolved[(operation_key, attempt_key)] for attempt_key in by_attempt)
         logical_resolved[operation_key] = resolve(statuses)
-        raw_statuses = {outcome for _, outcome, _ in history}
-        if {"committed", "not_committed"}.issubset(raw_statuses):
-            display = display_operation(operation_key) if operation_key in operation_display else operation_key[1]
-            conflicts[display] = sorted(raw_statuses)
+        for attempt_key, attempt_statuses in by_attempt.items():
+            if {"committed", "not_committed"}.issubset(attempt_statuses):
+                display = display_operation(operation_key) if operation_key in operation_display else operation_key[1]
+                conflicts[display] = sorted(attempt_statuses)
 
     outcome_counts = Counter(logical_resolved.values())
     outcomes = None
@@ -481,6 +523,7 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
         "trace_quality": {
             "typed_rows": len(records),
             "ignored_rows": ignored_rows,
+            "outcomes_with_unknown_effect": unknown_effect_outcomes,
             "rows_with_observed_at": sum(observed_at is not None for _, _, observed_at, _ in records),
             "rows_with_speech_ended_at": sum(_speech_ended_at(row) is not None for _, _, _, row in records),
         },

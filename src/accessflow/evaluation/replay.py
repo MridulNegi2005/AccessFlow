@@ -7,7 +7,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from accessflow.contracts import EndEvent, ResultEvent
+from accessflow.contracts import EndEvent, ResultEvent, ToolResult
 from accessflow.engine import Agent
 from accessflow.fakes import EventReasoner, FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization
 from accessflow.evaluation.trace_metrics import evaluate_trace
@@ -58,7 +58,14 @@ async def replay(path, output, reasoner=None, backend="offline-fake"):
             return result
 
         async def cancel(self, call_id):
-            return await executor.cancel(call_id)
+            status = await executor.cancel(call_id)
+            if status == "cancelled_before_commit":
+                # Record the same normalized evidence that Agent receives through
+                # its worker inbox; this is observation, not a second delivery.
+                record("input", ResultEvent(session_id=inputs[0].session_id,
+                       payload=ToolResult(call_id=call_id, status="cancelled")),
+                       transport="executor_cancel")
+            return status
 
         @property
         def effects(self):

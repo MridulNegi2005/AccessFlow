@@ -10,6 +10,7 @@ uv run ruff check .
 uv run accessflow replay scenarios/dev/text_correction.json
 uv run accessflow metrics artifacts/replay.jsonl
 uv run accessflow suite scenarios/dev --output-dir artifacts/development-suite
+uv run accessflow responsiveness --samples 100 --output-dir artifacts/responsiveness
 ```
 
 `uv.lock` pins the dependency resolution. `artifacts/` is local output and ignored by Git.

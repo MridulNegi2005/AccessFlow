@@ -68,3 +68,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 92 local tests, Ruff, four development workflows and isolated installed-wheel four-case run pass. No B paths or shared contract changed. No live inference, official scores or held-out claims. CI stays disabled; no workflow triggered. Next: measured controller responsiveness, baseline/ablation and broader cases.
 
 ---
+
+## [2026-09-13 16:35] — Codex
+**Task:** Continue Workstream A: controller responsiveness and conflicting write outcomes.
+**Changes:** Added four-condition gated-worker timing command with raw timestamps and failure-aware p95 targets. Fixed ignored late commit evidence after failed/canceled outcomes and inconsistent status fields. Metrics now separate legitimate retries from within-attempt contradictions and exclude failed reads; confirmed cancellation results are traced. Luna high workers provided bounded harness/metrics implementations, reviewed and corrected by Codex.
+**Status:** in-progress
+**Notes:** 108 local tests and Ruff pass, four development cases pass; CLI smoke: 8/8. Commit code before preserving measured 100-sample-per-condition results. No B-owned code or shared wire-contract changes. CI disabled/manual-only; no model/media/official score claims.
+
+---

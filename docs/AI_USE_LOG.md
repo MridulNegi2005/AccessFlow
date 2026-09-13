@@ -37,3 +37,16 @@ User authorized persistent Workstream A development and Luna high workers. Codex
 - Validation: 92 local tests and Ruff pass; four scripted development cases pass. Built wheel
   installed in isolated environment; same four cases pass. No real provider/media run performed.
 - Human modifications/review: Not recorded. These cases are developer-authored, not held out.
+
+## 2026-09-13 — Controller responsiveness and outcome conflicts
+- Prompt: Continue Workstream A with bounded Luna high workers; keep GitHub Actions disabled.
+- Codex outputs: Reproducing conflicting-write tests, controller fixes, confirmed cancellation
+  trace evidence, CLI integration, documentation and review of worker implementations.
+- gpt-5.6-luna high outputs: Responsiveness harness/tests and separate trace-outcome corrections.
+- Review changes: Required actual pending-gate snapshots at output, raw causal timestamps,
+  cleanup failure accounting, failed-sample exclusion, per-condition quantiles, strict p95
+  targets and truthful synthetic-load labels. Required successful status-read evidence and
+  within-attempt conflict detection; normal retries must not be mislabeled contradictory.
+- Validation: 108 local tests and Ruff pass, four development workflows pass; CLI smoke: 8/8.
+  Main measured results will identify the tested code commit. No real model/media benchmark.
+- Human modifications/review: Not recorded.

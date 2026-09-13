@@ -158,3 +158,107 @@ def test_response_latency_uses_first_response_per_source_and_keeps_sessions_sepa
     assert result["latency"]["acknowledgment_from_input_receipt_s"]["p50_s"] == 0.3
     assert result["latency"]["substantive_response_from_input_receipt_s"]["sample_count"] == 1
     assert result["latency"]["substantive_response_from_input_receipt_s"]["p50_s"] == 0.8
+
+
+def test_retry_no_effect_then_commit_is_logical_commit_without_conflict():
+    trace = [
+        row("output", "tool_call", 1.0, call_id="attempt-1", operation_id="op-retry", effect="write"),
+        row("input", "tool_result", 1.1, call_id="attempt-1", payload={
+            "status": "success", "committed": False,
+            "result": {"operation_id": "op-retry", "outcome": "no_effect"},
+        }),
+        row("output", "tool_call", 2.0, call_id="attempt-2", operation_id="op-retry", effect="write"),
+        row("input", "tool_result", 2.1, call_id="attempt-2", payload={
+            "status": "success", "committed": True,
+        }),
+    ]
+
+    result = evaluate_trace(trace)
+
+    assert result["committed_effect_outcomes"]["counts"] == {
+        "committed": 1, "not_committed": 0, "unknown": 0,
+    }
+    assert result["attempt_outcomes"]["counts"] == {
+        "committed": 1, "not_committed": 1, "unknown": 0,
+    }
+    assert result["conflicting_terminal_evidence"] is None
+
+
+def test_same_call_no_effect_and_commit_is_conflicting_terminal_evidence():
+    trace = [
+        row("output", "tool_call", 1.0, call_id="attempt-1", operation_id="op-same", effect="write"),
+        row("input", "tool_result", 1.1, call_id="attempt-1", payload={
+            "status": "success", "committed": False,
+            "result": {"operation_id": "op-same", "outcome": "no_effect"},
+        }),
+        row("output", "final", 1.2, call_id="attempt-1", operation_id="op-same", payload={
+            "basis": "confirmed_tool_effect",
+        }),
+    ]
+
+    result = evaluate_trace(trace)
+
+    assert result["committed_effect_outcomes"]["counts"] == {
+        "committed": 1, "not_committed": 0, "unknown": 0,
+    }
+    assert result["conflicting_terminal_evidence"] == {
+        "op-same": ["committed", "not_committed"],
+    }
+
+
+def test_failed_read_result_is_not_a_write_outcome():
+    trace = [
+        row("output", "tool_call", 1.0, call_id="read-1", operation_id="lookup-1", effect="read"),
+        row("input", "tool_result", 1.1, call_id="read-1", payload={
+            "status": "failed", "committed": False, "result": {},
+        }),
+    ]
+
+    result = evaluate_trace(trace)
+
+    assert result["committed_effect_outcomes"] is None
+
+
+def test_normalized_status_read_is_evidence_for_queried_write():
+    trace = [
+        row("output", "tool_call", 1.0, call_id="write-1", operation_id="op-status", effect="write"),
+        row("input", "tool_result", 1.1, call_id="write-1", payload={
+            "status": "unknown", "committed": False, "result": {},
+        }),
+        row("output", "tool_call", 2.0, call_id="status-1", operation_id="status-call", effect="read"),
+        row("input", "tool_result", 2.1, call_id="status-1", payload={
+            "status": "success", "committed": False,
+            "result": {"operation_id": "op-status", "outcome": "committed"},
+        }),
+    ]
+
+    result = evaluate_trace(trace)
+
+    assert result["committed_effect_outcomes"]["counts"] == {
+        "committed": 1, "not_committed": 0, "unknown": 0,
+    }
+
+
+def test_failed_status_read_does_not_turn_incidental_normalized_fields_into_evidence():
+    trace = [
+        row("output", "tool_call", 1.0, call_id="status-1", operation_id="status-call", effect="read"),
+        row("input", "tool_result", 1.1, call_id="status-1", payload={
+            "status": "failed", "committed": False,
+            "result": {"operation_id": "op-status", "outcome": "committed"},
+        }),
+    ]
+
+    result = evaluate_trace(trace)
+
+    assert result["committed_effect_outcomes"] is None
+
+
+def test_distinct_call_ids_are_scoped_to_the_session():
+    trace = [
+        row("output", "tool_call", 1.0, call_id="same-call", operation_id="op-1", effect="write", session_id="s1"),
+        row("output", "tool_call", 1.0, call_id="same-call", operation_id="op-1", effect="write", session_id="s2"),
+    ]
+
+    result = evaluate_trace(trace)
+
+    assert result["operation_ids"]["distinct_call_ids"] == 2

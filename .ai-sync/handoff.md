@@ -1,15 +1,20 @@
 # Active handoff
 
-Last updated by: Codex (2026-09-13 16:20)
+Last updated by: Codex (2026-09-13 16:35)
 
 ## Current Task
 Continue the user's persistent Workstream A goal until manually stopped. Goal remains active.
 
 ## In Progress
-Engine and evaluation implementation. 92 local tests and Ruff pass. Four developer-authored
+Engine and evaluation implementation. 108 local tests and Ruff pass. Four developer-authored
 scripted workflows pass their slot/effect criteria, including cancellation and lost-response
 reconciliation. Built wheel runs all four cases in an isolated environment. No real inference,
 official-kit, multimodal or accessibility benefit results are claimed.
+
+## Latest Slice
+Gated-worker responsiveness CLI and tests added (smoke: 8/8). Conflicting late write effects
+are preserved and reported; metrics and cancellation trace evidence corrected. Next action:
+commit source and preserve a 100-sample-per-condition measurement from that clean commit.
 
 ## Next Steps
 Read docs/ENGINE_PROGRESS.md and docs/EVALUATION.md. Next A work: causal cancellation/ack

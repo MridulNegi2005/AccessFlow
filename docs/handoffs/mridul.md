@@ -21,3 +21,12 @@ AI tools/prompts/outputs and human modifications: Codex implementation and revie
 workers drafted/revised the mock environment and retry races. No human review recorded yet.
 GitHub Actions: Disabled remotely and manual-only in source. Do not enable or dispatch.
 Atishay: No B-owned components edited. Read EVALUATION.md to run or author cases independently.
+
+## Responsiveness and conflicting-outcome slice
+108 local tests and Ruff pass; four-case development suite passes. Added gated-worker timing
+CLI with four conditions (smoke: 8/8 probes), raw queue/method timestamps and p95 target checks.
+Added five regression cases for late/inconsistent committed write results; the initial four
+failed before the fix. The fifth guards duplicate/conflicting delivery after a late commit. Metrics distinguish normal retries from within-attempt contradictions and
+exclude ordinary failed reads from write outcomes. Confirmed cancellation evidence is traced.
+Next: commit source, measure 100 samples per condition against that clean commit, save reviewed
+raw samples/report, then real reasoning access and baseline/ablation. CI remains disabled.

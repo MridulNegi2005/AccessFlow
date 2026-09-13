@@ -14,7 +14,9 @@ The offline safety suite and Ruff pass; exact current counts are in handoffs/mri
 - operation IDs available through the public view, reconciliation and bounded safe retry;
 - intentional new requests following failure receiving new operation IDs;
 - session reset, deadline before start and partial-request coalescing;
-- recorded input/output/executor events, timeout traces and honest causal metrics.
+- recorded input/output/executor/cancellation events, timeout traces and honest causal metrics;
+- late committed effects after failure/cancellation and inconsistent response-status reporting;
+- gated-worker responsiveness probes, raw timestamps and failure-aware p95 targets.
 
 Tests are synthetic software evidence, not the 60 independently authored scenarios or a
 claim about actual speech recognition. Four development workflows use mock tools and
@@ -29,7 +31,7 @@ and executor-effect criteria. They are development fixtures, not held-out cases.
 | Dynamic planning | Manifest validation, generic dispatch, provider HTTP tests | Real reasoning on unfamiliar schemas and held-out wording |
 | Correct local corrections | Provisional rollback and source/race tests | More multi-slot/in-flight permutations and end-to-end model behavior |
 | Action ledger | Duplicate handling, unknown-write block, reconciliation, safe retry tests and generic mock workflows | Broader conflicting-result/cancellation measurements |
-| Responsiveness | Async workers, 80 ms partial debounce, final bypass, causal traces | Sampled cancellation/ack p95 measurements under realistic load |
+| Responsiveness | Async workers, final bypass, causal traces and four-condition gated-worker benchmark | Reviewed measured run; real-model/resource-load, playback and speech latency |
 | Evaluation | Typed traces, failure evidence, explicit missing values, task criteria against actual mock effects, four-case suite, source/scenario hashes | Full corpus, baselines/ablation, modality reports and held-out/live runs |
 | Session isolation | Reused-agent reset and detached view tests | Provider/cache lifecycle tests under concurrent independent sessions |
 | Local/hosted reasoning | Adapter code and mocked HTTP tests | No local Ollama service or configured Gemini key found; actual model runs pending |
@@ -44,7 +46,7 @@ fully grounded per-field attribution. No accessibility benefit or live-model sco
 
 ## Next independent A tasks
 
-1. Expand the fault suite and complete reliable causal cancellation measurements.
+1. Preserve measured controller results, then evaluate real reasoning and resource-load behavior.
 2. Expand independently authored cases using the mock environment and outcome checks.
 3. Implement baseline/ablation comparisons without changing the shared inference/tools across variants.
 4. Configure and measure a real reasoning backend; integrate B only after its components arrive.
