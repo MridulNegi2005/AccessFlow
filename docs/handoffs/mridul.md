@@ -11,3 +11,6 @@ Known limitations: Initial safety suite passes; broader races and reconciliation
 Dependency or contract proposals: See CONTRACT_PROPOSALS.md.
 Next independent task: Broader races, real reasoning access, held-out scenarios, official kit adapter.
 AI tools/prompts/outputs and human modifications: Codex implementation; no human validation yet.
+
+## Latest milestone
+47 local tests and Ruff pass. Source/race fixes, safe retry/reconciliation, public ledger and typed replay/metrics integrated. Next tasks and limitations: ENGINE_PROGRESS.md. Goal remains active; only A-owned code changed.

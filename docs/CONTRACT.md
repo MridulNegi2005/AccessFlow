@@ -37,3 +37,25 @@ does not undo committed effects. Unknown outcomes must not trigger automatic wri
 
 Golden examples and `tests/test_contract.py` are the shared compatibility gate. The fake
 perception accepts text or explicitly scripted observations; fake audio is never live ASR.
+
+## Additive engine updates, 13 September
+
+- `SessionView.calls` defaults to an empty list for existing constructors. It exposes
+  detached ToolCall snapshots, including operation_id/status, so a reasoner can request
+  status reconciliation without reaching into the executor. Observe-only clients need no changes.
+- Output payloads may include `caused_by_event_id`; confirmed write finals include
+  operation_id. These are additive fields inside the existing extensible payload.
+- Perception must echo the original input event_id as already required. Results from an
+  interrupted or superseded utterance/frame are rejected. Previously accepted completed
+  utterances remain session context; a late result from an older utterance cannot start a plan.
+- Session views, perception input and policy arguments are detached copies; component
+  mutation never constitutes an authoritative state update.
+- Provisional slot/intent changes are associated with the input source that triggered the
+  plan. Replacing that hypothesis restores earlier confirmed values or removes new tentative
+  ones, and invalidates dependent reads. Fine-grained model-provided field evidence remains
+  future work; this is trigger-source provenance, not a claim of perfect semantic attribution.
+- Partial planning is debounced by 80 ms by default; final observations bypass that delay.
+  EventReasoner binds fake proposals to event IDs so coalescing doesn't shift script answers.
+- A model-proposed retry after a definitively failed/no-effect attempt is bounded to one
+  retry and keeps operation_id with a fresh call_id. Unknown/cancelled outcomes block writes.
+  A new user request after a terminal write failure/success starts a new operation identity.

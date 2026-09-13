@@ -189,6 +189,7 @@ class SessionView(Model):
     state: Snapshot
     observations: list[Observation]
     results: list[ToolResult]
+    calls: list["ToolCall"] = Field(default_factory=list)
 
 
 class ToolCall(Model):
@@ -204,3 +205,6 @@ class ToolCall(Model):
 class Clock(Protocol):
     def now(self) -> float: ...
     async def sleep(self, seconds: float) -> None: ...
+
+
+SessionView.model_rebuild()

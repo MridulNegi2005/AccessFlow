@@ -40,6 +40,6 @@ mock external effects. It proves no ASR/vision capability. Explicit `--backend o
 or `--backend gemini` exercises actual reasoning while external tools remain fake.
 See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits.
 
-The repository currently contains 22 offline unit/contract/safety tests, a synthetic text
+The engine branch currently contains 47 offline unit/contract/safety/metrics tests, a synthetic text
 correction replay and model HTTP adapters tested with mocked HTTP responses. Atishay's
 actual audio, image, turn-timing and demo implementation is intentionally still open.

@@ -1,0 +1,48 @@
+# Workstream A evidence and remaining work
+
+13 September 2026. The ongoing goal covers Mridul's workstream only. Atishay's perception,
+turn policy, UI, feedback and presentation ownership remains intact. Automatic CI is disabled.
+
+## This slice
+
+47 offline tests pass and Ruff passes. Coverage added for:
+
+- delayed perception after interruption and from superseded utterances;
+- input origin IDs, detached policy/reasoner state and manifest copies;
+- removal of superseded provisional slots and restoration of earlier confirmed values;
+- frame-specific tentative state, cancellation recovery without repeating user instructions;
+- operation IDs available through the public view, reconciliation and bounded safe retry;
+- intentional new requests following failure receiving new operation IDs;
+- session reset, deadline before start and partial-request coalescing;
+- recorded input/output/executor events, timeout traces and honest causal metrics.
+
+Tests are synthetic software evidence, not the 60 independently authored scenarios or a
+claim about actual speech recognition. One development text replay still uses mock tools
+and scripted reasoning; recorded effect evidence and final output resolve to one operation.
+
+## Requirements still needing work/evidence
+
+| Requirement | Evidence now | Still required |
+|---|---|---|
+| Dynamic planning | Manifest validation, generic dispatch, provider HTTP tests | Real reasoning on unfamiliar schemas and held-out wording |
+| Correct local corrections | Provisional rollback and source/race tests | More multi-slot/in-flight permutations and end-to-end model behavior |
+| Action ledger | Duplicate result handling, unknown-write block, status reconciliation, safe retry tests | Broader conflicting-result/cancellation cases and generic mock workflow |
+| Responsiveness | Async workers, 80 ms partial debounce, final bypass, causal traces | Sampled cancellation/ack p95 measurements under realistic load |
+| Evaluation | Typed traces, receipt versus speech-end metrics, explicit missing values | Scenario corpus, task completion oracle, baselines/ablation, modality reports |
+| Session isolation | Reused-agent reset and detached view tests | Provider/cache lifecycle tests under concurrent independent sessions |
+| Local/hosted reasoning | Adapter code and mocked HTTP tests | No local Ollama service or configured Gemini key found; actual model runs pending |
+| Packaging | Prior remote Docker build passed; missing-git runtime fix locally regression-tested | Corrected image execution on Docker-capable environment; no automatic CI restart |
+| Official adapter | Explicit unimplemented marker, internal adapter | Organizer kit and public scenarios; don't invent wire compatibility |
+| Submission | Repo, plan, setup docs, AI-use log | Human registration/template checks, artifacts, disclosure review and final tag/submission |
+
+Known limits: the controller conservatively cancels pending writes on new input until
+intent resolves. This can over-cancel for backchannels; Atishay's policy integration and
+evaluation must quantify/refine it. Source provenance is tied to the plan trigger, not
+fully grounded per-field attribution. No accessibility benefit or live-model score is claimed.
+
+## Next independent A tasks
+
+1. Expand the fault suite and complete reliable causal cancellation measurements.
+2. Add a general manifest-driven mock support/status environment and development cases.
+3. Extend evaluation to per-scenario completion, baseline comparison and reproducibility metadata.
+4. Configure and measure a real reasoning backend; integrate B only after its components arrive.

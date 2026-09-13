@@ -32,3 +32,6 @@ No live model, official compatibility, latency or completion target is currently
 
 ## CI follow-up
 GitHub logs confirmed lint/tests/text replay and Docker build passed; container execution failed because replay assumed git was installed. Fixed metadata lookup to tolerate missing git (commit is null unless supplied through ACCESSFLOW_COMMIT). 24 local tests and lint pass. Workflow is disabled on GitHub and manual-only in source; do not re-enable automatic runs without user request. Full fixed container execution remains unverified.
+
+## Current engine slice
+47 local tests and Ruff pass. Added interruption/source isolation, provisional rollback, public call ledger, safe retries and typed causal metrics. Scripted replay has one confirmed mock operation and correct expected slots. See ENGINE_PROGRESS.md for requirement-level evidence and remaining work. CI remains disabled; live backend not configured.

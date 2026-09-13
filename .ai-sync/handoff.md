@@ -3,26 +3,23 @@
 Last updated by: Codex
 
 ## Current Task
-Implement AccessFlow Workstream A and prepare independent Workstream B checkout.
+Persistent user goal: continue Workstream A until manually stopped. Only Mridul-owned code.
 
 ## In Progress
-Initial engine and 22 offline contract/safety/provider tests pass. Replay works with fake
-reasoning/tools. Model adapters, Docker and CI config exist; live inference remains untested.
-Public GitHub setup completed; Atishay9828 invited with write access, acceptance pending.
-Broader race tests, complete metrics and official adapter remain incomplete.
-Main and mridul/engine contain the tested starter. Atishay's published branch stays at
-the common earlier bootstrap; merge origin/main locally before starting. No remote
-Atishay work was overwritten. CI workflow is committed, but no run was returned by the
-GitHub Actions API during verification; Docker/hosted CI is not claimed as passing.
-This is not a finished hackathon submission.
+Engine source/race safety and evaluation implementation. 47 offline tests, Ruff and
+scripted replay pass. No live inference, official-kit or clinical claims. Luna high workers
+reviewed controller behavior and authored trace metrics; parent reviewed and integrated.
 
 ## Next Steps
-Atishay: read ATISHAY_START_HERE.md, branch atishay/perception, build only owned components
-against fakes. Mridul: continue engine tests/fixes on mridul/engine. Integrate small slices.
+Read docs/ENGINE_PROGRESS.md for evidence and remaining work. Next independent slice:
+more fault/cancellation measurements, manifest-driven mock workflow and scenario evaluation.
+Atishay continues perception/timing/UI against shared contracts. SessionView.calls is an
+additive defaulted field; no B-owned paths changed. Actual model validation still pending.
 
 ## Key Files Modified
-contracts.py, interfaces.py, fakes.py, clock.py, engine.py; pyproject.toml/uv.lock;
-AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and start guide.
+engine.py, contracts.py, fakes.py, clock.py, evaluation/replay.py, evaluation/trace_metrics.py,
+model prompt, regression tests, docs/CONTRACT.md and docs/ENGINE_PROGRESS.md.
 
-## CI correction
-Workflow disabled remotely and manual-only in YAML after user reported failure emails. Do not re-enable automatic runs without user request. Missing-git replay regression fixed; 24 local tests pass. Docker build previously passed remotely; corrected Docker execution remains unverified.
+## CI constraint
+GitHub workflow disabled remotely; YAML manual-only. Do not re-enable or dispatch CI
+without user request. Corrected Docker execution still unverified on a Docker host.

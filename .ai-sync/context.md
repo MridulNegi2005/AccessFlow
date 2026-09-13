@@ -44,3 +44,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** GitHub test/lint/replay/Docker build passed; container run failed at git metadata lookup. 24 local tests and lint now pass. Full fixed Docker run is unverified locally. Do not re-enable automatic CI without user request. Two older queued runs rejected cancellation with HTTP 409; no new workflow runs were dispatched.
 
 ---
+
+## [2026-09-13 15:51] — Codex
+**Task:** Continue user goal, Workstream A only.
+**Changes:** Source/interrupt isolation, provisional rollback, detached component views, bounded retries with stable operation IDs, public ledger view, debounced partial reasoning, event-bound fakes, typed replay traces and evidence-aware metrics. Luna high workers supplied focused review and metrics code; Codex reviewed and integrated with follow-up fixes.
+**Status:** in-progress
+**Notes:** 47 tests and Ruff passed; offline replay yielded one confirmed mock operation and correct labeled slots. No live model access configured. CI remains disabled/manual-only. Next: broader fault/cancellation metrics, dynamic mock workflow and scenario evaluation. See docs/ENGINE_PROGRESS.md.
+
+---

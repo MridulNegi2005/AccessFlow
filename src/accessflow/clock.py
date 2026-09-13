@@ -4,7 +4,7 @@ import time
 
 class RealClock:
     def now(self) -> float:
-        return time.monotonic()
+        return time.perf_counter()
 
     async def sleep(self, seconds: float) -> None:
         await asyncio.sleep(seconds)
