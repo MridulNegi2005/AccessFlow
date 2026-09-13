@@ -92,3 +92,13 @@ Added an optional Ollama PNG provider and environment-gated demo routing.
 - Mocked provider and demo tests cover successful responses and configuration/service errors.
 - No Ollama executable or loopback service was available on this machine; live model
   availability and vision quality remain unverified.
+## Checkpoint 24 - 13 September 2026: WebSocket media protocol smoke
+
+Verified the browser demo's validated media path end to end for base64 WAV and PNG payloads.
+
+- The WebSocket reports the received media kind and preserved source ID after materialization.
+- WAV transport reaches the mock controller and emits its expected informational final.
+- PNG transport is validated and session-scoped; the current v0.1 agent requires a paired
+  transcript before producing a controller final, so image-only planning remains an engine
+  integration item.
+- Demo tests: 18 passed; full suite: 77 passed; Ruff and git diff --check are clean.

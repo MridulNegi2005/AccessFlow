@@ -14,7 +14,9 @@ This is not a finished hackathon submission.
 Atishay: read ATISHAY_START_HERE.md, branch atishay/perception, build only owned components
 against fakes. The public clone path is verified; direct pushes require collaborator access,
 otherwise use a fork and pull request. Atishay has completed perception, turn-policy, vision, demo, opt-in local audio routing, audio baselines, timing/VAD candidates, browser media transport, held-out generated-case measurements and the feedback/recording safeguards and presentation outline; next is manual browser/device smoke, voluntary feedback and engine integration.
-Mridul: continue engine tests/fixes on mridul/engine. Integrate small slices.
+Mridul: continue engine tests/fixes on mridul/engine. Integrate small slices. The current
+demo media smoke confirms PNG transport and preserves its frame ID, but image-only planning
+still needs an engine integration slice; the smoke pairs the image with a transcript.
 
 ## Key Files Modified
 contracts.py, interfaces.py, fakes.py, clock.py, engine.py; pyproject.toml/uv.lock;

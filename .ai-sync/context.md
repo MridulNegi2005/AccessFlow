@@ -272,3 +272,17 @@ open. No service was installed or downloaded.
 **Status:** The provider remains mocked and the live vision-quality checkpoint remains open.
 
 **Notes:** No source, contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay WebSocket media protocol smoke
+
+**Task:** Verify that browser WAV and PNG payloads survive the session-scoped media boundary
+and reach the demo controller path.
+
+**Changes:** Added transport-only demo_status events containing the received media kind and
+source ID. Added WebSocket tests for base64 WAV and PNG uploads. WAV reaches the mock
+controller final; PNG is validated and retained for the session, while the current v0.1 agent
+requires a paired transcript before emitting a controller final.
+
+**Status:** Demo suite 18 passed; full suite 77 passed; Ruff and git diff --check clean.
+
+**Notes:** No shared contract, dependency or lockfile change. Image-only controller planning
+remains an engine integration item; no live ASR or vision-quality claim is made.
