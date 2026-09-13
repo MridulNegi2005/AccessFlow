@@ -66,3 +66,9 @@ against the checked-in fixture; documented the `audioop` deprecation limitation.
 **Status:** checkpoint validated; local ASR and maintained VAD backend remain.
 **Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 43 tests. No live ASR or VAD
 quality evidence is claimed.
+## [2026-09-13 18:00] - Codex
+**Task:** Harden the local Faster Whisper ASR seam for Atishay's Workstream B.
+**Changes:** Added local model-path validation, injectable factory configuration and focused
+CPU/int8 segment aggregation tests without downloading weights.
+**Status:** checkpoint validated; live model measurement remains.
+**Notes:** Perception tests passed 23; no live ASR quality or latency evidence is claimed.

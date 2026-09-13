@@ -82,12 +82,14 @@ class LocalPerception:
         *,
         model_path: str | Path | None = None,
         vision_provider: Callable[[Path], str] | None = None,
+        whisper_factory: Callable[..., Any] | None = None,
     ) -> None:
         if transcriber is not None and model_path is not None:
             raise ValueError("Pass transcriber or model_path, not both")
         self._transcriber = transcriber
         self._model_path = Path(model_path) if model_path is not None else None
         self._vision_provider = vision_provider
+        self._whisper_factory = whisper_factory
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
 
@@ -153,18 +155,27 @@ class LocalPerception:
         return await asyncio.to_thread(self._transcribe_installed_whisper, path), "faster-whisper/cpu-int8"
 
     def _transcribe_installed_whisper(self, path: Path) -> str:
+        if self._model_path is None or not self._model_path.exists():
+            raise FileNotFoundError(f"Installed Faster Whisper model not found: {self._model_path}")
         if self._whisper_model is None:
             with self._model_lock:
                 if self._whisper_model is None:
-                    try:
-                        from faster_whisper import WhisperModel
-                    except ImportError as error:
-                        raise RuntimeError(
-                            "Faster Whisper is optional; install the audio extra to use model_path"
-                        ) from error
-                    self._whisper_model = WhisperModel(
-                        str(self._model_path),
-                        device="cpu",
-                        compute_type="int8",
-                    )
+                    if self._whisper_factory is not None:
+                        self._whisper_model = self._whisper_factory(
+                            str(self._model_path),
+                            device="cpu",
+                            compute_type="int8",
+                        )
+                    else:
+                        try:
+                            from faster_whisper import WhisperModel
+                        except ImportError as error:
+                            raise RuntimeError(
+                                "Faster Whisper is optional; install the audio extra to use model_path"
+                            ) from error
+                        self._whisper_model = WhisperModel(
+                            str(self._model_path),
+                            device="cpu",
+                            compute_type="int8",
+                        )
         return _transcribe_with_whisper(self._whisper_model, path)

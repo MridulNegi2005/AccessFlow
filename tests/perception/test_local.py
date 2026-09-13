@@ -172,3 +172,48 @@ async def test_checked_in_audio_fixture_uses_the_raw_wav_route():
     metadata = validate_wav(fixture)
 
     assert metadata == WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=8_000)
+@pytest.mark.asyncio
+async def test_installed_whisper_uses_local_model_factory_and_cpu_int8(tmp_path: Path):
+    from types import SimpleNamespace
+
+    model_dir = tmp_path / "whisper-model"
+    model_dir.mkdir()
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    factory_calls = []
+
+    class FakeModel:
+        def transcribe(self, path: str, beam_size: int):
+            assert Path(path) == wav_path
+            assert beam_size == 5
+            return [SimpleNamespace(text=" Book "), SimpleNamespace(text="Wednesday")], None
+
+    def factory(path: str, **kwargs):
+        factory_calls.append((path, kwargs))
+        return FakeModel()
+
+    event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="u4"),
+    )
+    observation = await _one(
+        LocalPerception(model_path=model_dir, whisper_factory=factory),
+        event,
+    )
+
+    assert factory_calls == [(str(model_dir), {"device": "cpu", "compute_type": "int8"})]
+    assert observation.text == "Book Wednesday"
+    assert observation.backend == "faster-whisper/cpu-int8"
+
+
+@pytest.mark.asyncio
+async def test_installed_whisper_rejects_missing_local_model(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="u5"),
+    )
+
+    with pytest.raises(FileNotFoundError, match="model not found"):
+        await _one(LocalPerception(model_path=tmp_path / "missing"), event)

@@ -146,6 +146,27 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perc
 Python 3.12 reports the expected `audioop` deprecation warning. No live ASR, speech VAD,
 vision quality, hosted backend or hardware latency is claimed. Next: connect an explicitly
 installed local ASR model and measure backend timing on declared hardware.
+## Checkpoint 7 - 13 September 2026: local ASR seam
+
+Hardened the optional Faster Whisper path in `LocalPerception` without downloading models during a scenario.
+
+- Requires an existing local model directory before starting inference.
+- Adds a factory seam for deterministic tests and future backend substitution.
+- Requests `device="cpu"` and `compute_type="int8"`, then aggregates returned segment text.
+- Keeps the model import, load and transcription work off the event loop.
+- Labels the output `faster-whisper/cpu-int8`; the factory tests are not a live model benchmark.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest tests/perception -q  -> 23 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                               -> All checks passed
+```
+
+No Faster Whisper weights are installed or evaluated in this environment yet. Next: measure
+an explicitly installed model on declared hardware, then connect timing decisions to the
+available event contract without making every pause a completion.
 Python 3.11 and `uv` are required:
 
 ```powershell
