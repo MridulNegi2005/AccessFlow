@@ -218,6 +218,25 @@ LocalPerception with the installed Faster Whisper base.en CPU INT8 backend.
 The fixture and ASR details are recorded in docs/feedback/PROVENANCE.md and
 docs/feedback/ASR_MEASUREMENTS.md.
 
+## Checkpoint 11 - 13 September 2026: timing-only activity summary
+
+Added an offline timing summary over the energy frames without changing the shared v0.1
+contract or treating a pause as turn completion.
+
+- Reports contiguous active windows, active duration and leading/trailing silence.
+- Exposes pause_detected only as an acoustic timing signal; all-silence input is not a pause after speech.
+- Adds an additive contract proposal for carrying timing metadata into a future adapter.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q  -> 13 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                                         -> All checks passed
+~~~
+
+The current engine still consumes the v0.1 observation contract and has no timer event.
+This is an offline timing baseline, not acoustic VAD quality or a semantic completion claim.
 Python 3.11 and `uv` are required:
 
 ```powershell

@@ -96,3 +96,9 @@ Faster Whisper base.en CPU INT8 run.
 **Status:** checkpoint validated; held-out speech accuracy, acoustic VAD and live vision evidence remain.
 **Notes:** 5.304 s fixture, 5.874 s adapter elapsed, realtime factor 1.108. Transcript matched the
 known script apart from the final number wording. No tracked dependency or contract changes.
+## [2026-09-13 20:00] - Codex
+**Task:** Add a timing-only activity summary and an additive proposal for future timing metadata.
+**Changes:** Added activity windows, silence durations and pause signals over existing energy frames;
+kept the v0.1 engine contract unchanged and recorded the proposal for review.
+**Status:** checkpoint validated; held-out speech cases, acoustic VAD and live vision evidence remain.
+**Notes:** Focused audio/timing suite expected 12 tests; no pause is treated as semantic completion.
