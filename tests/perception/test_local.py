@@ -1,3 +1,4 @@
+import struct
 import wave
 from pathlib import Path
 
@@ -5,6 +6,10 @@ import pytest
 
 from accessflow.contracts import Audio, AudioEvent, Transcript, TranscriptEvent
 from accessflow.perception import LocalPerception, WavFormat, validate_wav
+
+def _write_png(path: Path, *, width: int = 1, height: int = 1) -> None:
+    header = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR"
+    path.write_bytes(header + struct.pack(">II", width, height))
 
 
 def _write_wav(path: Path, *, frames: int = 160) -> None:
@@ -115,5 +120,48 @@ async def test_image_input_requires_real_provider():
 
     event = FrameEvent(session_id="s1", payload=Frame(path="device.png", frame_id="f1"))
 
-    with pytest.raises(NotImplementedError, match="explicit vision provider"):
+    with pytest.raises(RuntimeError, match="explicit vision provider"):
         await _one(LocalPerception(), event)
+
+
+@pytest.mark.asyncio
+async def test_image_input_preserves_frame_identity_with_injected_provider(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "device.png"
+    _write_png(image_path, width=320, height=240)
+    seen_paths = []
+
+    def provider(path: Path) -> str:
+        seen_paths.append(path)
+        return "screen has a horizontal flicker"
+
+    event = FrameEvent(
+        session_id="s1",
+        event_id="e4",
+        timestamp=2.5,
+        payload=Frame(path=str(image_path), frame_id="frame-7"),
+    )
+
+    observation = await _one(LocalPerception(vision_provider=provider), event)
+
+    assert seen_paths == [image_path]
+    assert observation.event_id == "e4"
+    assert observation.source_id == "frame-7"
+    assert observation.revision == 0
+    assert observation.modality == "image"
+    assert observation.text == "screen has a horizontal flicker"
+    assert observation.speech_start == observation.speech_end == 2.5
+    assert observation.backend == "local/injected-vision"
+
+
+@pytest.mark.asyncio
+async def test_image_input_rejects_malformed_png(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "broken.png"
+    image_path.write_bytes(b"not a png")
+    event = FrameEvent(session_id="s1", payload=Frame(path=str(image_path), frame_id="frame-8"))
+
+    with pytest.raises(ValueError, match="Invalid PNG"):
+        await _one(LocalPerception(vision_provider=lambda _: "never"), event)

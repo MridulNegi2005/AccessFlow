@@ -59,6 +59,29 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/turn_policy tests/per
 The current contract has no timer or silence event, so this baseline does not claim acoustic
 pause detection. Next: a replaceable PNG vision adapter with frame identity and evidence
 metadata, followed by the minimal fake-agent demo.
+
+## Checkpoint 3 - 13 September 2026: replaceable vision seam
+
+Added the first image path to `LocalPerception` without changing the shared v0.1 contract.
+
+- Validates the PNG signature, IHDR chunk and non-zero dimensions before provider work.
+- Uses an injected vision provider so tests remain deterministic and future backends stay replaceable.
+- Emits `Observation(modality="image")` with `frame_id`, source event ID, revision 0 and frame timestamp.
+- Refuses missing providers and malformed images instead of generating a canned caption.
+- Keeps validation and provider execution off the event loop.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest tests/perception -q  -> 15 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                               -> All checks passed
+```
+
+This proves the adapter seam and provenance behavior only. No live vision model quality or
+hardware latency is claimed. Next: add a minimal fake-agent demo that renders output events
+without duplicating authoritative engine state.
+
 Python 3.11 and `uv` are required:
 
 ```powershell

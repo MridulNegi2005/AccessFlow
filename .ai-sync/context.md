@@ -37,3 +37,11 @@ corrections, repetitions, backchannels and stale revisions; updated the README a
 **Status:** checkpoint validated; no vision or UI implementation yet.
 **Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 29 tests and Ruff passed for owned
 paths. The current contract still lacks timer/silence events, so no acoustic pause claim is made.
+
+## [2026-09-13 16:00] - Codex
+**Task:** Implement the replaceable PNG vision checkpoint for Atishay's Workstream B.
+**Changes:** Added PNG validation and injected vision-provider support to `LocalPerception`,
+with frame identity/timestamp tests and updated checkpoint documentation.
+**Status:** checkpoint validated; minimal demo remains.
+**Notes:** Focused perception tests passed 15; full suite verification follows. No live vision
+backend or quality evidence is claimed.

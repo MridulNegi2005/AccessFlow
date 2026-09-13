@@ -7,6 +7,7 @@ passing it to an optional local transcriber. Model work runs off the event loop.
 from __future__ import annotations
 
 import asyncio
+import struct
 import threading
 import wave
 from collections.abc import AsyncIterator, Callable
@@ -48,6 +49,20 @@ def validate_wav(path: Path) -> WavFormat:
     return metadata
 
 
+def _validate_png(path: Path) -> None:
+    signature = b"\x89PNG\r\n\x1a\n"
+    try:
+        with path.open("rb") as handle:
+            header = handle.read(24)
+    except OSError as error:
+        raise ValueError(f"Invalid PNG file: {path}") from error
+    if len(header) != 24 or header[:8] != signature or header[12:16] != b"IHDR":
+        raise ValueError(f"Invalid PNG file: {path}")
+    width, height = struct.unpack(">II", header[16:24])
+    if width < 1 or height < 1:
+        raise ValueError(f"PNG has invalid dimensions: {path}")
+
+
 def _transcribe_with_whisper(model: Any, path: Path) -> str:
     segments, _ = model.transcribe(str(path), beam_size=5)
     return " ".join(segment.text.strip() for segment in segments).strip()
@@ -66,11 +81,13 @@ class LocalPerception:
         transcriber: Callable[[Path], str] | None = None,
         *,
         model_path: str | Path | None = None,
+        vision_provider: Callable[[Path], str] | None = None,
     ) -> None:
         if transcriber is not None and model_path is not None:
             raise ValueError("Pass transcriber or model_path, not both")
         self._transcriber = transcriber
         self._model_path = Path(model_path) if model_path is not None else None
+        self._vision_provider = vision_provider
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
 
@@ -107,7 +124,23 @@ class LocalPerception:
             return
 
         if isinstance(event, FrameEvent):
-            raise NotImplementedError("Image perception requires an explicit vision provider")
+            if self._vision_provider is None:
+                raise RuntimeError("Image perception requires an explicit vision provider")
+            path = Path(event.payload.path)
+            await asyncio.to_thread(_validate_png, path)
+            text = await asyncio.to_thread(self._vision_provider, path)
+            yield Observation(
+                event_id=event.event_id,
+                source_id=event.payload.frame_id,
+                revision=0,
+                modality="image",
+                text=text,
+                final=True,
+                speech_start=event.timestamp,
+                speech_end=event.timestamp,
+                backend="local/injected-vision",
+            )
+            return
         raise ValueError(f"Unsupported perception event: {event.kind}")
 
     async def _transcribe(self, path: Path) -> tuple[str, str]:

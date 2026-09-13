@@ -13,9 +13,8 @@ This is not a finished hackathon submission.
 ## Next Steps
 Atishay: read ATISHAY_START_HERE.md, branch atishay/perception, build only owned components
 against fakes. The public clone path is verified; direct pushes require collaborator access,
-otherwise use a fork and pull request. Atishay has completed the perception and turn-policy
-baselines; next is vision and the minimal demo. Mridul: continue engine tests/fixes on
-mridul/engine. Integrate small slices.
+otherwise use a fork and pull request. Atishay has completed perception, turn-policy and vision baselines; next is the minimal demo.
+Mridul: continue engine tests/fixes on mridul/engine. Integrate small slices.
 
 ## Key Files Modified
 contracts.py, interfaces.py, fakes.py, clock.py, engine.py; pyproject.toml/uv.lock;
