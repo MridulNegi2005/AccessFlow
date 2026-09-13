@@ -13,3 +13,14 @@
 
 Append each future milestone with prompts, outputs, edits, tests and reviewer. This log
 supports the mandatory organizer form; it is not a completed or signed disclosure form.
+
+## 2026-09-13 — Codex Atishay handoff
+
+- Feature origin: User request to prepare Atishay’s independent repository start point.
+- Tool: Codex (current coding session).
+- Prompt: Verify the public clone/branch path and provide accurate `ATISHAY_START_HERE.md` guidance.
+- Output: Confirmed the clone and branch checkout; clarified that direct pushes need collaborator
+  access and that fork-based pull requests are the fallback.
+- Human modifications/review: Awaiting Atishay’s review.
+- Validation: `uv run --python 3.12 --extra dev pytest tests/test_contract.py` — 4 passed.
+- Backend/dependencies: No live backend and no committed dependency changes.

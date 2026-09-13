@@ -1,0 +1,137 @@
+"""Local, independently testable perception adapters.
+
+The adapter keeps transcript handling deterministic and validates audio before
+passing it to an optional local transcriber. Model work runs off the event loop.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import threading
+import wave
+from collections.abc import AsyncIterator, Callable
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from ..contracts import AudioEvent, FrameEvent, InputEvent, Observation, TranscriptEvent
+
+
+@dataclass(frozen=True)
+class WavFormat:
+    """Validated PCM WAV metadata used by a local audio backend."""
+
+    channels: int
+    sample_width: int
+    sample_rate: int
+    frames: int
+
+
+def validate_wav(path: Path) -> WavFormat:
+    try:
+        with wave.open(str(path), "rb") as handle:
+            if handle.getcomptype() != "NONE":
+                raise ValueError("WAV must contain uncompressed PCM audio")
+            metadata = WavFormat(
+                channels=handle.getnchannels(),
+                sample_width=handle.getsampwidth(),
+                sample_rate=handle.getframerate(),
+                frames=handle.getnframes(),
+            )
+    except (OSError, EOFError, wave.Error) as error:
+        raise ValueError(f"Invalid WAV file: {path}") from error
+
+    if metadata.channels < 1 or metadata.sample_width < 1 or metadata.sample_rate < 1:
+        raise ValueError(f"WAV has invalid format metadata: {path}")
+    if metadata.frames < 1:
+        raise ValueError(f"WAV contains no audio frames: {path}")
+    return metadata
+
+
+def _transcribe_with_whisper(model: Any, path: Path) -> str:
+    segments, _ = model.transcribe(str(path), beam_size=5)
+    return " ".join(segment.text.strip() for segment in segments).strip()
+
+
+class LocalPerception:
+    """Convert input events into observations without mutating session state.
+
+    ``transcriber`` is a small injection point for tests or another local ASR
+    backend. When omitted, ``model_path`` must point to an already-installed
+    Faster Whisper model; no model is downloaded during ``observe``.
+    """
+
+    def __init__(
+        self,
+        transcriber: Callable[[Path], str] | None = None,
+        *,
+        model_path: str | Path | None = None,
+    ) -> None:
+        if transcriber is not None and model_path is not None:
+            raise ValueError("Pass transcriber or model_path, not both")
+        self._transcriber = transcriber
+        self._model_path = Path(model_path) if model_path is not None else None
+        self._whisper_model: Any | None = None
+        self._model_lock = threading.Lock()
+
+    async def observe(self, event: InputEvent) -> AsyncIterator[Observation]:
+        if isinstance(event, TranscriptEvent):
+            yield Observation(
+                event_id=event.event_id,
+                source_id=event.payload.utterance_id,
+                revision=event.payload.revision,
+                modality="text",
+                text=event.payload.text,
+                final=event.payload.final,
+                speech_start=event.payload.speech_start,
+                speech_end=event.payload.speech_end,
+                backend="local/text-pass-through",
+            )
+            return
+
+        if isinstance(event, AudioEvent):
+            path = Path(event.payload.path)
+            await asyncio.to_thread(validate_wav, path)
+            text, backend = await self._transcribe(path)
+            yield Observation(
+                event_id=event.event_id,
+                source_id=event.payload.utterance_id,
+                revision=event.payload.revision,
+                modality="audio",
+                text=text,
+                final=True,
+                speech_start=event.payload.speech_start,
+                speech_end=event.payload.speech_end,
+                backend=backend,
+            )
+            return
+
+        if isinstance(event, FrameEvent):
+            raise NotImplementedError("Image perception requires an explicit vision provider")
+        raise ValueError(f"Unsupported perception event: {event.kind}")
+
+    async def _transcribe(self, path: Path) -> tuple[str, str]:
+        if self._transcriber is not None:
+            return await asyncio.to_thread(self._transcriber, path), "local/injected-asr"
+        if self._model_path is None:
+            raise RuntimeError(
+                "No local transcriber configured; install Faster Whisper and provide model_path"
+            )
+        return await asyncio.to_thread(self._transcribe_installed_whisper, path), "faster-whisper/cpu-int8"
+
+    def _transcribe_installed_whisper(self, path: Path) -> str:
+        if self._whisper_model is None:
+            with self._model_lock:
+                if self._whisper_model is None:
+                    try:
+                        from faster_whisper import WhisperModel
+                    except ImportError as error:
+                        raise RuntimeError(
+                            "Faster Whisper is optional; install the audio extra to use model_path"
+                        ) from error
+                    self._whisper_model = WhisperModel(
+                        str(self._model_path),
+                        device="cpu",
+                        compute_type="int8",
+                    )
+        return _transcribe_with_whisper(self._whisper_model, path)
