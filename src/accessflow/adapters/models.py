@@ -282,6 +282,15 @@ class ModelReasoner:
         request = {"session": view.model_dump(mode="json"),
                    "manifests": [m.model_dump(mode="json") for m in manifests]}
         unresolved = self.reconciliation_context(view, manifests)
+        outstanding = (getattr(view, "write_pending", False) and not unresolved
+                       and self.write_outstanding(view))
+        if outstanding:
+            request["required_next_step"] = {
+                "kind": "complete_requested_write",
+                "instruction": "The user's request asks for a state-changing effect that has not been "
+                               "performed. A completed read is evidence for that effect, never a "
+                               "substitute for it. Continue the plan: either call the write tool or ask "
+                               "a specific clarification. Do not answer with the read result alone."}
         if unresolved:
             request["required_next_step"] = {
                 "kind": "reconcile_unknown_effects",
@@ -296,9 +305,16 @@ class ModelReasoner:
         result = await self.backend.generate(
             SYSTEM,
             request,
-            self.output_schema(manifests, allow_write_calls=not bool(unresolved)),
+            self.output_schema(manifests, allow_write_calls=not bool(unresolved),
+                               allow_final_response=not outstanding),
             **kwargs)
         return PlanProposal.model_validate(result)
+
+    @staticmethod
+    def write_outstanding(view):
+        """True when no write call has been dispatched or confirmed for this request."""
+        return not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
+                       for call in view.calls)
 
     @staticmethod
     def reconciliation_context(view, manifests):
@@ -308,7 +324,7 @@ class ModelReasoner:
                 for call in view.calls if call.effect == "write" and call.status in {"unknown", "cancelled"}]
 
     @staticmethod
-    def output_schema(manifests=None, *, allow_write_calls=True):
+    def output_schema(manifests=None, *, allow_write_calls=True, allow_final_response=True):
         # Internal proposals retain defaults for fixtures and backwards compatibility.
         # Model generation must make each safety/action decision explicitly rather than
         # satisfying an all-optional schema with only extracted slots (or an empty object).
@@ -338,6 +354,12 @@ class ModelReasoner:
         schema["properties"]["write_requested"]["description"] = (
             "True only when the user's current request asks for the state-changing effect. "
             "The controller separately checks authorization before dispatch.")
+        if not allow_final_response:
+            # A requested write is not satisfied by prose. Forcing response to null leaves
+            # the model a tool call or an explicit clarification, which the controller can act on.
+            schema["properties"]["response"] = {
+                "type": "null",
+                "description": "Must be null while a requested state-changing effect is outstanding."}
         if manifests is not None:
             calls = schema["properties"]["calls"]
             available = [manifest for manifest in manifests

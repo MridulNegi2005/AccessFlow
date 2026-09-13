@@ -501,3 +501,72 @@ async def test_ollama_think_absent_by_default(monkeypatch):
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         await JsonBackend("ollama", client).generate("system", {}, {})
     assert "think" not in seen["body"]
+
+
+def test_outstanding_write_forbids_a_final_response():
+    schema = ModelReasoner.output_schema([], allow_final_response=False)
+    assert schema["properties"]["response"]["type"] == "null"
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate({"intent": "service", "slot_updates": {}, "calls": [],
+                             "clarification": None, "response": "Support notes say book a visit.",
+                             "request_complete": True, "write_requested": True}, schema)
+    jsonschema.validate({"intent": "service", "slot_updates": {}, "calls": [],
+                         "clarification": "Which day suits you?", "response": None,
+                         "request_complete": True, "write_requested": True}, schema)
+
+
+def test_write_outstanding_tracks_dispatched_calls():
+    view = SessionView(session_id="s", state=Snapshot(), observations=[], results=[])
+    assert ModelReasoner.write_outstanding(view) is True
+    for status in ("pending", "success", "unknown"):
+        dispatched = view.model_copy(update={"calls": [ToolCall(
+            call_id="c", operation_id="op", tool="reserve", arguments={}, dependencies={},
+            effect="write", status=status)]})
+        assert ModelReasoner.write_outstanding(dispatched) is False
+    read_only = view.model_copy(update={"calls": [ToolCall(
+        call_id="r", operation_id="op", tool="inspect", arguments={}, dependencies={},
+        effect="read", status="success")]})
+    assert ModelReasoner.write_outstanding(read_only) is True
+
+
+async def test_pending_write_sends_continuation_step_and_null_response_schema():
+    seen = {}
+
+    class Backend:
+        async def generate(self, system, data, schema):
+            seen["data"], seen["schema"] = data, schema
+            return PlanProposal(clarification="Which day?").model_dump()
+
+    read = ToolManifest(name="inspect_support_notes", description="Read notes", effect="read",
+                        parameters={"type": "object"})
+    write = ToolManifest(name="file_visit_request", description="Book visit", effect="write",
+                         parameters={"type": "object"})
+    view = SessionView(session_id="s", state=Snapshot(), observations=[], results=[],
+                       calls=[ToolCall(call_id="r", operation_id="op", tool=read.name,
+                                       arguments={}, dependencies={}, effect="read",
+                                       status="success")],
+                       write_pending=True)
+    await ModelReasoner(Backend()).plan(view, [read, write])
+    assert seen["data"]["required_next_step"]["kind"] == "complete_requested_write"
+    assert seen["schema"]["properties"]["response"]["type"] == "null"
+    # The write tool stays available: this is a continuation, not a read-only turn.
+    assert write.name in seen["schema"]["$defs"]["ProposedCall"]["properties"]["tool"]["enum"]
+
+
+async def test_no_continuation_step_without_a_pending_write():
+    seen = {}
+
+    class Backend:
+        async def generate(self, system, data, schema):
+            seen["data"], seen["schema"] = data, schema
+            return PlanProposal(response="Here is general information").model_dump()
+
+    view = SessionView(session_id="s", state=Snapshot(), observations=[], results=[])
+    assert view.write_pending is False
+    await ModelReasoner(Backend()).plan(view, [])
+    assert "required_next_step" not in seen["data"]
+    # The unconstrained field is str | None, so it is an anyOf rather than a null-only stub.
+    assert seen["schema"]["properties"]["response"].get("type") != "null"
+    jsonschema.validate({"intent": None, "slot_updates": {}, "calls": [], "clarification": None,
+                         "response": "Here is general information", "request_complete": True,
+                         "write_requested": False}, seen["schema"])
