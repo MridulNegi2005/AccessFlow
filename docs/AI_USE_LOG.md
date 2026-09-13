@@ -13,3 +13,12 @@
 
 Append each future milestone with prompts, outputs, edits, tests and reviewer. This log
 supports the mandatory organizer form; it is not a completed or signed disclosure form.
+
+## 2026-09-13 — Codex engine continuation
+
+- User steering: Publish to GitHub for normal collaboration; public approved; invite Atishay9828.
+- Outputs: Engine safety fixes/tests, reconciliation normalization, bounded HTTP reasoning
+  adapters, replay CLI, trace summary, Docker/CI and run instructions.
+- Validation: 22 offline tests and Ruff passed; synthetic text replay ran with corrected
+  slots and one mock action. No live provider or raw-media evaluation performed.
+- Human changes/review: Not recorded yet. Originality and accessibility benefit not validated.

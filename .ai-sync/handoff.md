@@ -6,8 +6,10 @@ Last updated by: Codex
 Implement AccessFlow Workstream A and prepare independent Workstream B checkout.
 
 ## In Progress
-Initial engine and 16 offline contract/safety tests pass. Broader race and reconciliation
-tests, replay and packaging remain incomplete. GitHub setup was explicitly requested.
+Initial engine and 22 offline contract/safety/provider tests pass. Replay works with fake
+reasoning/tools. Model adapters, Docker and CI config exist; live inference remains untested.
+Public GitHub setup completed; Atishay9828 invited with write access, acceptance pending.
+Broader race tests, complete metrics and official adapter remain incomplete.
 This is not a finished hackathon submission.
 
 ## Next Steps

@@ -20,3 +20,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 16 offline tests passed; Ruff passed. Authenticated GitHub account verified; repository visibility selection pending. No live inference claim.
 
 ---
+
+## [2026-09-13 14:39] — Codex
+**Task:** Publish collaboration repository and continue engine implementation.
+**Changes:** Public GitHub repo verified; Atishay9828 write invitation created. Added HTTP reasoning adapters, replay, trace summary, 22 passing offline tests, Docker and CI configuration.
+**Status:** in-progress
+**Notes:** No live-model or official-kit claims. Atishay-owned directories remain open. Main starts from the tested bootstrap; current work is on mridul/engine. Invitation acceptance remains Atishay's step.
+
+---
