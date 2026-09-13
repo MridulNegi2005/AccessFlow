@@ -18,9 +18,11 @@ tool execution and packaging. You do not need his engine, his API key or his mac
    uv run pytest tests/test_contract.py
    ```
 
-   `origin` is the shared GitHub repository. Commit to your branch and use
-   `git push -u origin atishay/perception` to share your work. A private repository
-   requires accepting the collaborator invitation before cloning.
+   The repository is public, so cloning and reading the code do not require an
+   invitation. `origin` points to the shared GitHub repository. Push directly with
+   `git push -u origin atishay/perception` only if Mridul has granted you collaborator
+   access; otherwise create your own fork, push `atishay/perception` there, and open a
+   pull request back to the shared repository.
 
 4. Read `docs/CONTRACT.md`, `src/accessflow/interfaces.py`, `src/accessflow/fakes.py`
    and the golden event in `tests/fixtures/transcript.json`.

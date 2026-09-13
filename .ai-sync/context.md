@@ -20,3 +20,12 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 16 offline tests passed; Ruff passed. Authenticated GitHub account verified; repository visibility selection pending. No live inference claim.
 
 ---
+
+## [2026-09-13 15:00] — Codex
+**Task:** Prepare the public-repository handoff for Atishay.
+**Changes:** Verified the public clone and `atishay/perception` checkout; corrected
+`ATISHAY_START_HERE.md` to explain direct collaborator pushes versus fork-based work.
+**Status:** handoff-ready; no Workstream B implementation started.
+**Notes:** `uv run --python 3.12 --extra dev pytest tests/test_contract.py` passed 4 tests.
+The default 3.11 `uv` target is locally broken; no live ASR, vision or hosted-backend
+evidence exists.
