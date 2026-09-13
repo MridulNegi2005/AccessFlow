@@ -223,3 +223,16 @@ speaker-note requirements and explicit remaining gates.
 evidence remain.
 
 **Notes:** No source, contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay session path isolation
+
+**Task:** Prevent browser clients from supplying arbitrary filesystem paths to the demo
+perception boundary.
+
+**Changes:** No-byte fallbacks are rooted in the per-session temporary directory whenever
+the WebSocket route supplies a media root. Added a regression test for a private path
+payload.
+
+**Status:** Demo suite 12 passed; full suite 65 passed; Ruff clean.
+
+**Notes:** Base64 media validation remains unchanged. No shared contract, dependency or
+lockfile change.

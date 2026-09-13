@@ -114,6 +114,18 @@ def test_websocket_returns_controller_output_event():
     assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
 
+def test_browser_path_is_not_used_when_session_upload_root_exists(tmp_path: Path):
+    event = event_from_message(
+        "session-1",
+        {"kind": "audio", "payload": {"path": r"C:\private\recording.wav"}},
+        media_root=tmp_path,
+    )
+
+    materialized = Path(event.payload.path)
+    assert materialized == tmp_path / "browser-mock.wav"
+    assert "private" not in str(materialized)
+
+
 def test_browser_audio_upload_is_materialized_and_validated(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")

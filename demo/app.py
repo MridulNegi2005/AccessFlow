@@ -125,7 +125,10 @@ async def index() -> FileResponse:
 def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | None) -> str:
     data = payload.get("data_base64")
     if data is None:
-        return payload.get("path", "browser-mock.wav" if kind == "audio" else "browser-mock.png")
+        fallback = "browser-mock.wav" if kind == "audio" else "browser-mock.png"
+        if media_root is None:
+            return payload.get("path", fallback)
+        return str(media_root / fallback)
     if media_root is None:
         raise ValueError("media upload requires a session directory")
     try:

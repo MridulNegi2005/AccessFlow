@@ -67,3 +67,10 @@ Added docs/presentation/SLIDE_OUTLINE.md as a template-neutral content draft.
 - Ties numbers to the current generated fixtures, local model configuration and test suite.
 - Marks the official template, recording, feedback, integration and release work as
   outstanding.
+## Checkpoint 21 - 13 September 2026: session path isolation
+
+Hardened the browser media boundary against client-supplied filesystem paths.
+
+- Session WebSocket traffic now roots no-byte fallbacks in the session temporary directory.
+- Existing base64 WAV/PNG validation and cleanup remain unchanged.
+- The boundary has a focused regression test; no shared contract or dependency changed.
