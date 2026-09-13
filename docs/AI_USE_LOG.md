@@ -204,3 +204,12 @@ Ruff pass. No independent live-model run or human review recorded. No dependency
 
 ## 2026-09-13 — Local model setup and telemetry (Workstream A)
 Feature origin: approved real-inference validation requirement. Codex parent installed verified official portable Ollama and gemma3:4b locally, wrote runtime/experiment scripts and integrated replay evidence. GPT-5.6-Luna high drafted bounded request telemetry and warm-up validation/tests; parent reviewed. 185 tests and Ruff pass. Cold real readiness returned valid JSON in 144.93 s; no completed real task reported yet. Human review pending. No hosted calls or new dependencies. Runtime/model assets are outside Git.
+
+## 2026-09-13 — Explicit live planner decisions
+Real local pilot on clean 6099497: readiness 18.32 s, valid model plan in 8.23 s,
+no calls and unresolved completion; task timed out at 30 s with zero mock effects.
+Generation schema previously allowed every top-level field to be omitted. A-side fix
+requires explicit output fields and dependencies in the model schema, explains resolved
+corrections and action planning in the system prompt; internal v0.1 defaults unchanged.
+Focused model tests 13 pass and Ruff passes. Same-fixture live retry follows; this is
+development tuning, not a held-out comparison. CI remains disabled.

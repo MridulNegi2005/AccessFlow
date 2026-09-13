@@ -2,11 +2,42 @@ import asyncio
 import json
 
 import httpx
+import jsonschema
 import pytest
 from pydantic import ValidationError
 
 from accessflow.adapters.models import JsonBackend, ModelReasoner
 from accessflow.contracts import SessionView, Snapshot
+
+
+def test_model_generation_requires_explicit_completion_and_action_decisions():
+    schema = ModelReasoner.output_schema()
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate({"slot_updates": {"day": "Wednesday"}}, schema)
+    complete = {"intent": "appointment", "slot_updates": {"day": "Wednesday"},
+                "calls": [{"tool": "unfamiliar_reserve", "arguments": {"day": "Wednesday"},
+                           "dependencies": ["day"]}], "clarification": None, "response": None,
+                "request_complete": True, "write_requested": True}
+    jsonschema.validate(complete, schema)
+    del complete["calls"][0]["dependencies"]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(complete, schema)
+
+
+async def test_reasoner_sends_required_decision_schema_without_changing_internal_defaults():
+    from accessflow.contracts import PlanProposal
+
+    def handler(request):
+        schema = json.loads(request.content)["format"]
+        assert set(schema["required"]) == set(PlanProposal.model_fields)
+        return httpx.Response(200, json={"message": {"content": json.dumps(
+            PlanProposal(clarification="Which day?").model_dump())}})
+
+    assert PlanProposal().request_complete is False
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        result = await ModelReasoner(JsonBackend(client=client)).plan(
+            SessionView(session_id="s", state=Snapshot(), observations=[], results=[]), [])
+        assert result.clarification == "Which day?"
 
 
 async def test_ollama_request_uses_explicit_model_and_schema():
