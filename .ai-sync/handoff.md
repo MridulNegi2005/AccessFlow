@@ -102,3 +102,15 @@ outbound network access. Next: backend policy decision, then multimodal end to e
 235 tests and Ruff pass. No B-owned files changed. CI disabled. Nothing pushed.
 
 ---
+
+## [2026-09-14 01:30] — Claude Code
+**Task:** Lightweight local model repeat trials.
+**Status:** qwen3:4b scored 3/4, 2/4, 2/4 across three trials; best local model tested.
+**Notes:** Found two config defects that faked model failures: a leftover num_gpu override made
+qwen2.5:7b spill to shared memory, and qwen3's think block caused 0/4 with zero successful
+requests. ACCESSFLOW_OLLAMA_THINK now controls the latter. Local models are non-deterministic
+against the 120-second cap on this hardware. Gemma 4 has no small variant (12b/7.6 GB minimum),
+so it must be tested hosted; NVIDIA NIM backend added and awaiting a key. 240 tests and Ruff
+pass. No B-owned files changed. CI disabled. Nothing pushed.
+
+---

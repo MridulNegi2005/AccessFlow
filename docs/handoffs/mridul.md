@@ -196,3 +196,27 @@ Then multimodal end-to-end, which is 50 percent of the hidden set at a 1.5 multi
 **AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
 **Atishay:** No B-owned files changed. CI remains disabled. Nothing pushed. Groq also hosts
 `whisper-large-v3` and `whisper-large-v3-turbo`, subject to the same network caveat.
+
+## [2026-09-14 01:30] — Claude Code
+**Task:** Repeat trials on lightweight local models; check whether Gemma 4 is usable locally.
+**Changes:** `ACCESSFLOW_OLLAMA_THINK` controls the Ollama think field. Groq request path
+generalised into a shared OpenAI-compatible branch; NVIDIA NIM registered against it.
+Added results/LOCAL_REPEAT_2026-09-14.md.
+**Status:** in-progress.
+**Tests run and results:** 240 passed, Ruff passed. qwen3:4b on live_dev across three valid
+trials: **3/4, 2/4, 2/4**.
+**Live-model results:** qwen3:4b (2.5 GB) is the best local model tested and matches or beats
+qwen2.5:7b. text-correction and device-correction pass in all three trials.
+lost-response-reconciliation is timing-marginal. support-read-then-service never passes.
+**Known failures/limits:** Two configuration defects produced false model results. A leftover
+`num_gpu` override forced qwen2.5:7b to request a 4168 MiB buffer on a 4096 MiB card, so the
+13 September 2/4 at 26.54 s was measured while spilling to shared memory. qwen3 emits a think
+block; with it enabled the model scored 0/4 with zero successful requests, all ReadTimeout.
+Record the offload line and think setting beside every local score. Local small models are
+non-deterministic against the 120-second cap on this hardware. Gemma 4 has no small variant;
+the smallest tag is 12b at 7.6 GB against 4 GB of VRAM.
+**Dependency or contract proposals:** None. No public schema change. No new dependency.
+**Next independent task:** Run `google/gemma-4-31b-it` through the NVIDIA backend; needs
+`ACCESSFLOW_NVIDIA_API_KEY`. Then baselines and ablation, then multimodal.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI disabled. Nothing pushed.
