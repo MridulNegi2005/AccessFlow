@@ -431,3 +431,16 @@ It includes the scenario, failure mode, architecture, correction and pause evide
 action-safety states, browser/backend boundaries, current measurements and remaining
 gates. It explicitly labels generated fixtures, mock reasoning and missing live evidence.
 The official organizer template is still required before final assembly.
+## Checkpoint 21 - 13 September 2026: session path isolation
+
+Hardened the browser upload boundary so a WebSocket payload cannot make the demo read an
+arbitrary client-supplied filesystem path.
+
+- Byte uploads are decoded, validated and written inside the session temporary directory.
+- When no bytes are supplied, the mock fallback path is also rooted in that session.
+- Unit coverage confirms a path such as C:\private\recording.wav is never used when a
+  session upload root exists.
+- The no-root helper behavior remains available for isolated typed-event tests.
+
+This is a demo boundary hardening change; it does not alter shared contracts or authorize
+real actions.

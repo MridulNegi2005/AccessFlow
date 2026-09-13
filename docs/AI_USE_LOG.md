@@ -231,3 +231,10 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
   remain.
 - **Notes:** All current claims are tied to generated fixtures or offline tests. No
   participant data, source, contract or dependency change.
+## 2026-09-13 - Codex Atishay session path isolation
+
+- **Task:** Harden the browser demo media boundary.
+- **Changes:** Rooted no-byte fallback paths in the per-session temporary directory and
+  added a regression test against a client-supplied private path.
+- **Status:** Demo suite 12 passed; full suite 65 passed; Ruff clean.
+- **Notes:** No shared contract, dependency or lockfile change.
