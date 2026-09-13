@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, summarize_activity, validate_wav, webrtc_activity
+from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -166,3 +166,35 @@ def test_checked_in_pause_fixture_has_declared_format():
         sample_rate=22_050,
         frames=132_830,
     )
+
+
+def test_pause_candidates_keep_internal_and_trailing_gaps_separate():
+    frames = (
+        ActivityFrame(0.00, 0.02, 1_000, True),
+        ActivityFrame(0.02, 0.62, 0, False),
+        ActivityFrame(0.62, 0.64, 1_000, True),
+        ActivityFrame(0.64, 1.14, 0, False),
+    )
+
+    candidates = pause_candidates(frames, min_pause_s=0.4)
+
+    assert len(candidates) == 2
+    assert candidates[0] == PauseCandidate(0.02, 0.62, pytest.approx(0.6), trailing=False)
+    assert candidates[1].start_s == 0.64
+    assert candidates[1].end_s == pytest.approx(1.14)
+    assert candidates[1].duration_s == pytest.approx(0.5)
+    assert candidates[1].trailing is True
+
+
+def test_pause_candidates_ignore_short_gaps_and_all_silence():
+    frames = (
+        ActivityFrame(0.00, 0.02, 1_000, True),
+        ActivityFrame(0.02, 0.12, 0, False),
+        ActivityFrame(0.12, 0.14, 1_000, True),
+    )
+
+    assert pause_candidates(frames, min_pause_s=0.4) == ()
+    assert pause_candidates(
+        (ActivityFrame(0.0, 0.5, 0, False),),
+        min_pause_s=0.1,
+    ) == ()
