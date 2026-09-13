@@ -18,7 +18,7 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 
 - Broader engine race tests and validation of the normalized status reconciliation route.
 - Live reasoning adapters, official-kit adapter after the kit is supplied, replay and metrics.
-- Held-out generated-case ASR and endpoint measurements, validated acoustic VAD endpoint quality on human speech, live vision backend and real multimodal
+- Held-out generated-case ASR and endpoint measurements are recorded; human speech and endpoint quality, live vision backend and real multimodal
   benchmark on declared hardware.
 - Manual browser/device smoke proof, a completed voluntary feedback session, demo video and final presentation assembly.
 - Docker/CI verification, the 60-scenario authored/provenance-tracked set, reviewed disclosure
@@ -58,3 +58,12 @@ Added an environment-gated local audio mode to the owned browser demo.
 - A real checked-in WAV completed the WebSocket route with the cached Faster Whisper model;
   the controller emitted its informational final output.
 - Browser permission/device capture and live vision remain unverified.
+## Checkpoint 20 - 13 September 2026: presentation content outline
+
+Added docs/presentation/SLIDE_OUTLINE.md as a template-neutral content draft.
+
+- Covers the problem, failure mode, architecture, correction/timing, action safety,
+  multimodal boundary, evidence and limitations.
+- Ties numbers to the current generated fixtures, local model configuration and test suite.
+- Marks the official template, recording, feedback, integration and release work as
+  outstanding.

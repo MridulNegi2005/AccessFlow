@@ -211,3 +211,15 @@ transcript for local audio review.
 lockfile change.
 
 **Notes:** The output remains informational and cannot authorize a real action.
+## 2026-09-13 - Codex Atishay presentation content outline
+
+**Task:** Prepare a template-neutral presentation draft while the official template remains
+unavailable.
+
+**Changes:** Added docs/presentation/SLIDE_OUTLINE.md with eight evidence-labeled slides,
+speaker-note requirements and explicit remaining gates.
+
+**Status:** Content draft prepared; official template, final deck, video and integration
+evidence remain.
+
+**Notes:** No source, contract, dependency or lockfile change.

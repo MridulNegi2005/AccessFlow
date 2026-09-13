@@ -1,7 +1,7 @@
 # Atishay workstream handoff
 
 Date and branch: 2026-09-13 / atishay/perception
-Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, opt-in local audio demo path, synthetic audio provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, feedback-session template and demo recording script implemented in owned paths; shared fakes/interfaces remain unchanged.
+Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, opt-in local audio demo path, synthetic audio provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, feedback-session template, demo recording script and template-neutral presentation outline implemented in owned paths; shared fakes/interfaces remain unchanged.
 Contract version used: 0.1
 Tests run and results: `uv run --python 3.12 --extra dev pytest -q` — 64 passed; perception run — 37
 passed; demo run — 9 passed; Ruff clean for owned paths.
