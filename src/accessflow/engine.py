@@ -25,11 +25,15 @@ class WorkerMessage:
     kind: str
     generation: int
     value: object
+    perception_epoch: int = 0
+    source: tuple | None = None
 
 
 class Agent:
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
-                 scenario_timeout=115, inference_timeout=25):
+                 scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08):
+        if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
+            raise ValueError("Timeouts must be positive and debounce nonnegative")
         self.perception = perception
         self.turn_policy = turn_policy
         self.reasoner = reasoner
@@ -37,6 +41,7 @@ class Agent:
         self.authorization = authorization or DenyWrites()
         self.scenario_timeout = min(scenario_timeout, 119)
         self.inference_timeout = inference_timeout
+        self.partial_debounce_s = partial_debounce_s
         self.running = False
 
     async def run(self, input_queue, output_queue, clock=None):
@@ -67,6 +72,15 @@ class Agent:
         self.speech_ready = False
         self.last_sequence = -1
         self.invalidated = set()
+        self.perception_epoch = 0
+        self.source_events = {}
+        self.provisional_slots = {}
+        self.slot_revisions = {}
+        self.provisional_intent = None
+        self.attempt_counts = {}
+        self.planning_source = None
+        self.current_event_id = None
+        self.call_causes = {}
 
         async def pump():
             while True:
@@ -97,7 +111,11 @@ class Agent:
                         await self._emit("error", code="duplicate_manifest_names")
                         break
                     self.session_id = event.session_id
-                    self.manifests = {tool.name: tool for tool in event.payload.tools}
+                    self.manifests = {tool.name: tool.model_copy(deep=True) for tool in event.payload.tools}
+                    if any(tool.status_tool and (tool.status_tool not in self.manifests or
+                           self.manifests[tool.status_tool].effect != "read") for tool in self.manifests.values()):
+                        await self._emit("error", code="invalid_status_tool_manifest")
+                        break
                     self.seen.add(event.event_id)
                     self.last_sequence = event.sequence
                     continue
@@ -110,6 +128,7 @@ class Agent:
                 if event.event_id in self.seen:
                     continue
                 self.seen.add(event.event_id)
+                self.current_event_id = event.event_id
                 if isinstance(event, EndEvent):
                     await self._shutdown(event.payload.reason)
                     break
@@ -120,6 +139,7 @@ class Agent:
                 self.last_sequence = max(self.last_sequence, event.sequence)
                 if isinstance(event, InterruptEvent):
                     self.generation += 1
+                    self.perception_epoch += 1
                     self.latest_complete = False
                     self.speech_ready = False
                     self.state.correction_pending = True
@@ -142,7 +162,13 @@ class Agent:
                         revision = payload.revision
                     if revision <= self.sources.get(source, -1):
                         continue
+                    if source[0] == "image" and self.active_frame is not None:
+                        previous_source = ("image", self.active_frame)
+                        await self._rollback_hypothesis(previous_source)
+                        self.observations.pop(previous_source, None)
+                    await self._rollback_hypothesis(source)
                     self.sources[source] = revision
+                    self.source_events[source] = event.event_id
                     if source[0] == "image":
                         self.active_frame = source[1]
                     if source[0] == "speech":
@@ -157,7 +183,7 @@ class Agent:
                     self.state.status = "listening"
                     # Conservative write guard until semantic/dependency resolution.
                     await self._cancel_writes("new_evidence")
-                    self._spawn(self._perceive(event, self.generation))
+                    self._spawn(self._perceive(event.model_copy(deep=True), self.generation, self.perception_epoch))
         finally:
             pending = list(self.workers)
             for task in pending:
@@ -184,10 +210,10 @@ class Agent:
             timer.cancel()
             await asyncio.gather(work, timer, return_exceptions=True)
 
-    async def _perceive(self, event, generation):
+    async def _perceive(self, event, generation, epoch):
         async def collect():
             async for observation in self.perception.observe(event):
-                await self.inbox.put(WorkerMessage("observation", generation, observation))
+                await self.inbox.put(WorkerMessage("observation", generation, observation.model_copy(deep=True), epoch))
         try:
             await self._bounded(collect(), self.inference_timeout)
         except Exception as exc:
@@ -196,10 +222,13 @@ class Agent:
     def _view(self):
         self.state.pending_call_ids = [c.call_id for c in self.ledger.values() if c.status == "pending"]
         return SessionView(session_id=self.session_id, state=self.state.model_copy(deep=True),
-                           observations=list(self.observations.values())[-24:],
-                           results=[r.model_copy(deep=True) for r in self.results[-12:]])
+                           observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
+                           results=[r.model_copy(deep=True) for r in self.results[-12:]],
+                           calls=[c.model_copy(deep=True) for c in self.ledger.values()])
 
     async def _emit(self, kind, **payload):
+        if self.current_event_id is not None:
+            payload.setdefault("caused_by_event_id", self.current_event_id)
         self.output_sequence += 1
         view = self._view()
         await self.out.put(OutputEvent(session_id=self.session_id, sequence=self.output_sequence,
@@ -214,19 +243,28 @@ class Agent:
         if message.kind == "failure":
             await self._emit("error", code="backend_failure", detail=message.value)
         elif message.kind == "observation":
+            if message.perception_epoch != self.perception_epoch:
+                return
             obs: Observation = message.value
             key = ("image" if obs.modality == "image" else "speech", obs.source_id)
-            if self.sources.get(key) != obs.revision:
+            if self.sources.get(key) != obs.revision or self.source_events.get(key) != obs.event_id:
                 return
             if obs.modality == "image" and obs.source_id != self.active_frame:
                 return
+            if obs.modality != "image" and obs.source_id != self.active_speech:
+                return
+            self.current_event_id = obs.event_id
             self.observations[key] = obs
-            decision = self.turn_policy.update(obs, self._view())
+            decision = self.turn_policy.update(obs.model_copy(deep=True), self._view())
             if obs.modality != "image" and obs.source_id == self.active_speech:
                 self.speech_ready = decision.kind == "complete" and obs.final
             self.latest_complete = self.speech_ready
+            if obs.modality == "image":
+                self.latest_complete = self.latest_complete and obs.final and decision.kind == "complete"
             self.state.correction_pending = not self.latest_complete
             if decision.kind == "stop":
+                self.generation += 1
+                self.perception_epoch += 1
                 await self._cancel_writes("explicit_stop")
                 self.state.status = "stopped"
                 await self._emit("acknowledge", text="Stopped.", stop_output=True)
@@ -236,12 +274,16 @@ class Agent:
             if self.latest_complete:
                 await self._emit("acknowledge", text="I'll check that.", backend=obs.backend)
             # Partial plans may prepare reads but may never authorize writes.
-            self._start_plan()
+            self._start_plan(source=key)
         elif message.kind == "plan":
-            await self._apply(message.value)
+            self.current_event_id = self.source_events.get(message.source)
+            await self._apply(message.value, message.source)
 
-    def _start_plan(self):
+    def _start_plan(self, source=None):
         self.generation += 1
+        if source is not None:
+            self.planning_source = source
+        source = self.planning_source
         if self.planner and not self.planner.done():
             self.planner.cancel()
         view = self._view()
@@ -249,27 +291,42 @@ class Agent:
 
         async def plan():
             try:
-                proposal = await self._bounded(self.reasoner.plan(view, list(self.manifests.values())),
+                if view.state.correction_pending and self.partial_debounce_s:
+                    await self.clock.sleep(self.partial_debounce_s)
+                proposal = await self._bounded(self.reasoner.plan(view, [m.model_copy(deep=True)
+                                                                        for m in self.manifests.values()]),
                                                self.inference_timeout)
-                await self.inbox.put(WorkerMessage("plan", generation, proposal))
+                await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True), source=source))
             except Exception as exc:
                 await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
         self.planner = self._spawn(plan())
 
-    async def _apply(self, proposal: PlanProposal):
+    async def _apply(self, proposal: PlanProposal, source=None):
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
+            if not self.latest_complete and name not in self.provisional_slots:
+                self.provisional_slots[name] = (source,
+                                                old.model_copy(deep=True) if old else None)
+            elif not self.latest_complete and self.provisional_slots[name][0] != source:
+                self.provisional_slots[name] = (source, self.provisional_slots[name][1])
+            elif self.latest_complete:
+                self.provisional_slots.pop(name, None)
             if old is None or old.value != value:
                 changed.add(name)
+                self.slot_revisions[name] = self.slot_revisions.get(name, 0) + 1
                 self.state.slots[name] = Slot(value=value, confirmed=self.latest_complete,
-                                              revision=(old.revision + 1 if old else 1),
+                                              revision=self.slot_revisions[name],
                                               evidence=[o.event_id for o in self.observations.values()])
             elif self.latest_complete:
                 old.confirmed = True
-        if changed or proposal.intent != self.state.intent:
+        if changed or (proposal.intent is not None and proposal.intent != self.state.intent):
             self.state.revision += 1
         if proposal.intent is not None:
+            if not self.latest_complete and self.provisional_intent is None:
+                self.provisional_intent = (source, self.state.intent)
+            elif self.latest_complete:
+                self.provisional_intent = None
             self.state.intent = proposal.intent
         for call in list(self.ledger.values()):
             if call.status == "pending" and changed.intersection(call.dependencies):
@@ -297,9 +354,10 @@ class Agent:
                     continue
             dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies}
             signature = json.dumps([self.request_id, proposed.tool, proposed.arguments, dependencies], sort_keys=True)
-            if signature in self.dispatched:
+            previous = self.ledger.get(self.dispatched.get(signature))
+            if previous and (previous.status != "failed" or self.attempt_counts[signature] >= 2):
                 continue
-            operation_id = str(uuid4())
+            operation_id = previous.operation_id if previous else str(uuid4())
             args = dict(proposed.arguments)
             if manifest.idempotency_parameter:
                 args[manifest.idempotency_parameter] = operation_id
@@ -314,13 +372,37 @@ class Agent:
                 await self._emit("clarify", text="This environment has not authorized that state-changing tool.")
                 continue
             self.dispatched[signature] = call.call_id
+            self.attempt_counts[signature] = self.attempt_counts.get(signature, 0) + 1
             self.ledger[call.call_id] = call
+            self.call_causes[call.call_id] = self.current_event_id
             self.state.status = "working"
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
         if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
             if not any(c.effect == "write" for c in self.ledger.values()):
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
+
+    async def _rollback_hypothesis(self, source):
+        changed = set()
+        if self.provisional_intent and self.provisional_intent[0] == source:
+            self.state.intent = self.provisional_intent[1]
+            self.provisional_intent = None
+            self.state.revision += 1
+        for name, (owner, prior) in list(self.provisional_slots.items()):
+            if owner != source:
+                continue
+            del self.provisional_slots[name]
+            changed.add(name)
+            self.slot_revisions[name] = self.slot_revisions.get(name, 0) + 1
+            if prior is None:
+                self.state.slots.pop(name, None)
+            else:
+                self.state.slots[name] = prior.model_copy(update={"revision": self.slot_revisions[name]}, deep=True)
+        if changed:
+            self.state.revision += 1
+            for call in list(self.ledger.values()):
+                if call.status == "pending" and changed.intersection(call.dependencies):
+                    await self._cancel(call, "hypothesis_replaced")
 
     async def _execute(self, call, timeout):
         try:
@@ -356,6 +438,7 @@ class Agent:
                 await self._cancel(call, reason)
 
     async def _result(self, result):
+        result = result.model_copy(deep=True)
         call = self.ledger.get(result.call_id)
         if call is None:
             await self._emit("error", code="unknown_call_result", call_id=result.call_id)
@@ -369,9 +452,12 @@ class Agent:
                 call.status = "success"
                 self.results.append(result)
                 await self._emit("error", code="effect_committed_after_invalidation", call_id=call.call_id,
-                                 result=result.result, message="Cancellation did not roll back this effect.")
+                                 operation_id=call.operation_id, result=result.result,
+                                 message="Cancellation did not roll back this effect.")
             elif result.status == "cancelled" or result.status == "failed":
                 call.status = "failed"
+                if call.effect == "write" and self.latest_complete and self.state.status != "stopped":
+                    self._start_plan()
             elif call.effect == "read":
                 call.status = "stale"
             else:
@@ -380,6 +466,8 @@ class Agent:
             return
         if call.status == "unknown" and result.status == "unknown":
             return
+        if call.effect == "read" and result.status == "unknown":
+            result = result.model_copy(update={"status": "failed"})
         if call.effect == "write" and result.status == "success" and not result.committed:
             result = result.model_copy(update={"status": "unknown"})
         call.status = result.status if result.status != "cancelled" else "failed"
@@ -396,12 +484,16 @@ class Agent:
             if call.effect == "write":
                 self.state.status = "completed"
                 self.last_request_finished = True
-                await self._emit("final", result=result.result, call_id=call.call_id, basis="confirmed_tool_effect")
+                await self._emit("final", result=result.result, call_id=call.call_id, operation_id=call.operation_id,
+                                 basis="confirmed_tool_effect", caused_by_event_id=self.call_causes[call.call_id])
             else:
-                await self._emit("acknowledge", result=result.result, call_id=call.call_id, basis="tool_evidence")
+                await self._emit("acknowledge", result=result.result, call_id=call.call_id, basis="tool_evidence",
+                                 caused_by_event_id=self.call_causes[call.call_id])
                 await self._reconcile(call, result)
                 self._start_plan()
         elif result.status == "failed":
+            if call.effect == "write":
+                self.last_request_finished = True
             await self._emit("error", code="tool_failed", call_id=call.call_id, detail=result.error)
 
     async def _reconcile(self, status_call, result):
@@ -434,9 +526,12 @@ class Agent:
                     self.state.status = "completed"
                     self.last_request_finished = True
                     await self._emit("final", basis="reconciled_tool_effect", call_id=original.call_id,
-                                     result=result.result)
+                                     operation_id=original.operation_id, result=result.result,
+                                     caused_by_event_id=self.call_causes[original.call_id])
 
     async def _shutdown(self, reason):
+        if self.session_id is None:
+            return
         for call in list(self.ledger.values()):
             if call.status == "pending":
                 await self._cancel(call, reason)

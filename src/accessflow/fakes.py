@@ -38,6 +38,20 @@ class ScriptedReasoner:
         return self.proposals.popleft() if self.proposals else PlanProposal()
 
 
+class EventReasoner:
+    """Fixture proposals bound to originating events, unaffected by debounced calls."""
+    def __init__(self, proposals):
+        self.proposals = proposals
+        self.order = {event_id: index for index, event_id in enumerate(proposals)}
+
+    async def plan(self, view, manifests):
+        known = [obs.event_id for obs in view.observations if obs.event_id in self.proposals]
+        if not known:
+            return PlanProposal()
+        event_id = max(known, key=self.order.__getitem__)
+        return self.proposals[event_id].model_copy(deep=True)
+
+
 class FakeTools:
     """Manifest-name independent mock. Gate gives tests exact control of completion."""
     def __init__(self, gate=None, outcome="success", ignore_cancel=False):

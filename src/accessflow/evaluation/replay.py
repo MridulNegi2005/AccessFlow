@@ -6,10 +6,11 @@ import subprocess
 import time
 from pathlib import Path
 
-from accessflow.contracts import EndEvent, PlanProposal
+from accessflow.contracts import EndEvent, PlanProposal, ResultEvent
 from accessflow.adapters.internal import parse_event
 from accessflow.engine import Agent
-from accessflow.fakes import FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization, ScriptedReasoner
+from accessflow.fakes import EventReasoner, FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization
+from accessflow.evaluation.trace_metrics import evaluate_trace
 
 
 def commit_revision():
@@ -26,53 +27,81 @@ def commit_revision():
 async def replay(path, output, reasoner=None, backend="offline-fake"):
     scenario = json.loads(Path(path).read_text(encoding="utf-8"))
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
-    tools = FakeTools()
-    agent = Agent(FakePerception(), FinalFlagPolicy(), reasoner or ScriptedReasoner(
-                  [PlanProposal.model_validate(p) for p in scenario["proposals"]]), tools, MockOnlyAuthorization())
+    class RecordedTools(FakeTools):
+        async def execute(self, call):
+            result = await super().execute(call)
+            record("input", ResultEvent(session_id=scenario["events"][0]["session_id"], payload=result),
+                   transport="executor_return")
+            return result
+
+    tools = RecordedTools()
+    inputs = [parse_event(entry) for entry in scenario["events"]]
+    perception_inputs = [entry for entry in inputs if entry.kind in {"transcript", "audio", "frame"}]
+    fixture_plans = {} if reasoner is not None else {
+        event.event_id: PlanProposal.model_validate(plan)
+        for event, plan in zip(perception_inputs, scenario["proposals"], strict=True)}
+    agent = Agent(FakePerception(), FinalFlagPolicy(), reasoner or EventReasoner(fixture_plans),
+                  tools, MockOnlyAuthorization())
     runner = asyncio.create_task(agent.run(incoming, outgoing))
     events = []
-    started = time.monotonic()
+    started = time.perf_counter()
+    terminal = asyncio.Event()
+    completion_status = "completed"
+
+    def record(kind, event, transport="queue"):
+        events.append({"type": kind, "event": event.model_dump(mode="json"),
+                       "observed_at": time.perf_counter() - started, "transport": transport})
 
     async def collect():
         while True:
             event = await outgoing.get()
-            events.append(event.model_dump(mode="json"))
+            record("output", event)
             if event.kind == "final" or event.payload.get("code") == "backend_failure":
+                terminal.set()
+            if event.state.status == "ended":
                 return
 
     collector = asyncio.create_task(collect())
     try:
-        for entry in scenario["events"]:
-            await incoming.put(parse_event(entry))
+        for entry in inputs:
+            record("input", entry)
+            await incoming.put(entry)
             # Explicit test pacing, not an inferred speech/end-of-turn measurement.
             await asyncio.sleep(scenario.get("event_spacing_s", 0.01))
-        await asyncio.wait_for(collector, 30)
+        await asyncio.wait_for(terminal.wait(), min(scenario.get("completion_timeout_s", 30), 110))
+    except TimeoutError:
+        completion_status = "timeout"
     finally:
-        await incoming.put(EndEvent(session_id=scenario["events"][0]["session_id"]))
-        await runner
-        collector.cancel()
-        await asyncio.gather(collector, return_exceptions=True)
+        ending = EndEvent(session_id=scenario["events"][0]["session_id"])
+        record("input", ending)
+        await incoming.put(ending)
+        try:
+            await runner
+            await asyncio.wait_for(collector, 1)
+        finally:
+            collector.cancel()
+            await asyncio.gather(collector, return_exceptions=True)
+    if any(row["type"] == "output" and row["event"]["payload"].get("code") == "backend_failure" for row in events):
+        completion_status = "backend_failure"
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
                 "tools": "fake", "perception": "text-pass-through", "commit": commit_revision(),
                 "python": platform.python_version(), "platform": platform.platform(),
-                "runtime_s": time.monotonic() - started, "expected_slots": scenario.get("expected_slots", {})}
+                "runtime_s": time.perf_counter() - started, "expected_slots": scenario.get("expected_slots", {}),
+                "measurement_clock": "perf_counter", "clock_resolution_s": time.get_clock_info("perf_counter").resolution,
+                "completion_status": completion_status,
+                "mock_executor_effect_count": len(tools.effects),
+                "config": {"partial_debounce_s": agent.partial_debounce_s, "turn_policy": "final-flag-baseline",
+                           "tools": "fake", "perception": "text-pass-through"}}
     destination = Path(output)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text("\n".join(json.dumps(e) for e in [metadata, *events]) + "\n", encoding="utf-8")
-    return {"trace": str(destination), "backend": backend, "events": len(events), "mock_effects": len(tools.effects)}
+    return {"trace": str(destination), "backend": backend, "events": len(events), "mock_effects": len(tools.effects),
+            "completion_status": completion_status}
 
 
 def metrics(path):
     rows = [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line]
-    meta, events = rows[0], rows[1:]
-    finals = [e for e in events if e["kind"] == "final"]
-    final_slots = finals[-1]["state"]["slots"] if finals else {}
-    expected = meta.get("expected_slots", {})
-    slot_accuracy = (sum(final_slots.get(k, {}).get("value") == v for k, v in expected.items()) / len(expected)
-                     if expected else None)
-    return {"scenario": meta["scenario"], "backend": meta["backend"], "tools": meta["tools"],
-            "final_count": len(finals), "slot_accuracy": slot_accuracy,
-            "tool_calls": sum(e["kind"] == "tool_call" for e in events),
-            "cancellations": sum(e["kind"] == "cancel_call" for e in events),
-            "errors": sum(e["kind"] == "error" for e in events), "runtime_s": meta["runtime_s"],
-            "limitation": "Single internal replay; no speech latency, clinical benefit or official score measured."}
+    # Old flat output traces retain count/slot evidence but have no receipt timestamps.
+    normalized = [({"type": "output", "event": row} if "kind" in row and "type" not in row else row)
+                  for row in rows]
+    return evaluate_trace(normalized)

@@ -22,3 +22,6 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Validation: 22 offline tests and Ruff passed; synthetic text replay ran with corrected
   slots and one mock action. No live provider or raw-media evaluation performed.
 - Human changes/review: Not recorded yet. Originality and accessibility benefit not validated.
+
+## 2026-09-13 — Continued engine goal
+User authorized persistent Workstream A development and Luna high workers. Codex implemented controller/replay changes; gpt-5.6-luna high performed a bounded read-only controller audit and authored trace_metrics.py plus tests. Codex reviewed the metrics, requested fixes for outcome identity, causality, timing semantics and duplicate-count naming, integrated and tested. 47 tests and Ruff passed; no human validation or live-model results claimed.

@@ -15,6 +15,17 @@ uv run accessflow metrics artifacts/replay.jsonl
 Commit selected reviewed final metrics under docs/results/ later, with commit/configuration
 and provenance. The synthetic example is development-only, not one of the teammate-held-out cases.
 
+Replay traces now contain `run_metadata` and input/output rows with `observed_at` measured
+using perf_counter. Executor returns are recorded as input evidence with an explicit
+transport label; they are not delivered a second time to the engine. Timeout/backend-failure
+runs retain trace evidence and `completion_status`. The metrics command accepts both new
+traces and older flat output traces (which have no causal timing evidence).
+
+Latency from input receipt is distinct from speech-end latency. Actual speech-end metrics
+require a calibrated row-level `speech_ended_at` in the same clock domain. Acknowledgment
+and substantive response are separate first-response measurements per causal input. Missing
+labels or timing evidence remain null. Repeated attempts are not called duplicate effects.
+
 ## Optional live reasoning
 
 No provider switch is automatic. There are zero automatic retries on quota/network failure.
