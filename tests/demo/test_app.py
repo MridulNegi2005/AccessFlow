@@ -30,6 +30,33 @@ def test_browser_message_becomes_typed_event(kind, expected):
 
 
 @pytest.mark.asyncio
+async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
+    class LocalAudio:
+        async def observe(self, event):
+            yield Observation(
+                event_id=event.event_id,
+                source_id=event.payload.utterance_id,
+                revision=event.payload.revision,
+                modality="audio",
+                text="local transcript",
+                final=True,
+                backend="faster-whisper/cpu-int8",
+            )
+
+    event = event_from_message(
+        "session-1",
+        {"kind": "audio", "payload": {"path": "speech.wav", "utterance_id": "audio-1"}},
+    )
+
+    perception = DemoPerception(audio_backend=LocalAudio())
+    observations = [item async for item in perception.observe(event)]
+
+    assert observations[0].text == "local transcript"
+    assert observations[0].backend == "faster-whisper/cpu-int8"
+    assert "local/Faster Whisper CPU INT8" in perception.backend_label
+
+
+@pytest.mark.asyncio
 async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path: Path):
     event = event_from_message(
         "session-1",
@@ -47,7 +74,18 @@ async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path
     assert "device.png" in observation.text
 
 
-def test_demo_page_exposes_all_mock_input_controls():
+def test_demo_perception_environment_can_enable_local_audio(monkeypatch):
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_WHISPER_MODEL",
+        "models/models--Systran--faster-whisper-base.en/snapshots/local",
+    )
+
+    perception = DemoPerception.from_environment()
+
+    assert "local/Faster Whisper CPU INT8" in perception.backend_label
+
+
+def test_demo_page_exposes_input_controls_and_backend_label():
     html = Path("demo/index.html").read_text(encoding="utf-8")
 
     assert 'id="text-form"' in html
@@ -55,6 +93,7 @@ def test_demo_page_exposes_all_mock_input_controls():
     assert 'accept="image/png,.png"' in html
     assert 'id="mic"' in html
     assert 'id="stop-mic"' in html
+    assert 'id="backend-label"' in html
     assert 'getUserMedia' in html
     assert 'encodeWav' in html
 
@@ -63,10 +102,14 @@ def test_websocket_returns_controller_output_event():
     with TestClient(demo_app.app) as client:
         with client.websocket_connect("/ws") as socket:
             socket.send_json({"kind": "transcript", "payload": {"text": "Book Wednesday"}})
-            received = [socket.receive_json(), socket.receive_json()]
+            received = []
+            output_kinds = {"acknowledge", "final"}
+            while len([item for item in received if item["kind"] in output_kinds]) < 2:
+                received.append(socket.receive_json())
 
-    assert {item["kind"] for item in received} == {"acknowledge", "final"}
-    final = next(item for item in received if item["kind"] == "final")
+    outputs = [item for item in received if item["kind"] in {"acknowledge", "final"}]
+    assert {item["kind"] for item in outputs} == {"acknowledge", "final"}
+    final = next(item for item in outputs if item["kind"] == "final")
     assert final["payload"]["basis"] == "informational"
     assert final["state"]["status"] == "listening"
 

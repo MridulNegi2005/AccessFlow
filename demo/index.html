@@ -18,7 +18,7 @@
 </head>
 <body>
   <h1>AccessFlow</h1>
-  <p>Minimal queue-driven browser demo. <strong>Perception backend: demo/mock</strong>. Inputs and responses are illustrative mock evidence.</p>
+  <p>Minimal queue-driven browser demo. <strong>Perception backend: <span id="backend-label">connecting</span></strong>. Inputs and responses are labeled evidence.</p>
 
   <section>
     <h2>Text</h2>
@@ -32,10 +32,10 @@
   <section>
     <h2>Audio</h2>
     <input id="audio" type="file" accept="audio/wav,.wav">
-    <button type="button" id="send-audio">Upload WAV to mock route</button>
+    <button type="button" id="send-audio">Upload WAV to selected backend</button>
     <button type="button" id="mic">Start microphone capture</button>
     <button type="button" id="stop-mic" disabled>Stop and upload microphone</button>
-    <small>Selected WAV bytes and microphone PCM are uploaded for this session and validated. The perception response remains demo/mock.</small>
+    <small>Selected WAV bytes and microphone PCM are uploaded for this session and validated. Audio uses demo/mock by default; an existing local Faster Whisper model can be enabled by configuration.</small>
   </section>
 
   <section>
@@ -53,6 +53,7 @@
   <script>
     const socket = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws');
     const events = document.querySelector('#events');
+    const backendLabel = document.querySelector('#backend-label');
     const micButton = document.querySelector('#mic');
     const stopMicButton = document.querySelector('#stop-mic');
     let revision = 0;
@@ -60,6 +61,9 @@
     let microphone = null;
 
     function show(event) {
+      if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
+        backendLabel.textContent = event.payload.perception_backend;
+      }
       const card = document.createElement('div');
       card.className = 'event';
       card.innerHTML = '<strong>' + event.kind + '</strong><pre>' +
@@ -198,7 +202,7 @@
     }
 
     socket.onmessage = (message) => show(JSON.parse(message.data));
-    socket.onopen = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: true } });
+    socket.onopen = () => show({ kind: 'demo_status', payload: { connected: true } });
     socket.onerror = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: false } });
 
     document.querySelector('#text-form').onsubmit = (event) => {

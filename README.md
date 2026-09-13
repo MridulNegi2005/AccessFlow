@@ -398,3 +398,27 @@ Evidence and provenance:
 These are generated development cases held out from the earlier local examples. They do
 not establish human speech accuracy, representative generalization, endpoint quality or
 clinical benefit. The fixture metadata check passed; full-suite verification follows.
+## Checkpoint 19 - 13 September 2026: opt-in local audio demo path
+
+The browser demo now supports an explicit local audio mode without changing its safe
+default:
+
+~~~powershell
+$env:ACCESSFLOW_DEMO_WHISPER_MODEL = 'E:\path\to\existing\faster-whisper-model'
+uv run --python 3.12 uvicorn demo.app:app
+~~~
+
+When configured, uploaded or microphone WAV input uses LocalPerception and the page shows
+“local/Faster Whisper CPU INT8 audio + demo/mock text/image”. Text and image inputs remain
+demo/mock. The model must already exist locally; the demo does not download weights.
+
+Integration smoke evidence with the cached base.en model:
+
+~~~text
+WebSocket status: local/Faster Whisper CPU INT8 audio + demo/mock text/image
+Audio acknowledgment: faster-whisper/cpu-int8
+Controller final: Mock agent received audio input. (informational)
+~~~
+
+The backend route and controller output are verified through TestClient. Browser permission,
+physical microphone capture, live vision and a non-mock reasoner remain unverified.

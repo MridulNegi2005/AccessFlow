@@ -47,3 +47,14 @@ Measured three newly generated voice cases after fixing the local evaluation con
   0.669 seconds of early acoustic margin.
 - The results are held-out generated-fixture evidence only; human speech accuracy and
   endpoint quality remain unverified.
+## Checkpoint 19 - 13 September 2026: opt-in local audio demo path
+
+Added an environment-gated local audio mode to the owned browser demo.
+
+- The default remains demo/mock.
+- Setting ACCESSFLOW_DEMO_WHISPER_MODEL to an existing model path routes WAV input through
+  LocalPerception and displays the local backend label.
+- Text and image inputs remain demo/mock.
+- A real checked-in WAV completed the WebSocket route with the cached Faster Whisper model;
+  the controller emitted its informational final output.
+- Browser permission/device capture and live vision remain unverified.

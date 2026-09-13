@@ -184,3 +184,18 @@ precise endpoint quality, browser/device smoke and integration remain unverified
 
 **Notes:** Fixture check passed 1 test; no shared contract, dependency or lockfile change.
 Generated voice was used; no participant or third-party recording.
+## 2026-09-13 - Codex Atishay opt-in local audio demo path
+
+**Task:** Route real uploaded WAV input through the cached local Faster Whisper backend when
+explicitly configured, while preserving the demo/mock default.
+
+**Changes:** Added an environment-gated LocalPerception audio delegate, a visible backend
+status label, configuration guidance and tests. A checked-in held-out WAV completed the
+actual WebSocket demo route with the cached base.en CPU INT8 model; the acknowledgment
+reported faster-whisper/cpu-int8 and the controller emitted its informational final.
+
+**Status:** Local audio route verified through TestClient. Browser permission and physical
+microphone capture, live vision and non-mock reasoning remain unverified.
+
+**Notes:** Demo suite 11 passed; full suite verification follows. No shared contract,
+dependency or lockfile change.
