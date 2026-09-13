@@ -45,3 +45,10 @@ with frame identity/timestamp tests and updated checkpoint documentation.
 **Status:** checkpoint validated; minimal demo remains.
 **Notes:** Focused perception tests passed 15; full suite verification follows. No live vision
 backend or quality evidence is claimed.
+## [2026-09-13 16:30] - Codex
+**Task:** Implement the minimal fake-agent browser demo for Atishay's Workstream B.
+**Changes:** Added FastAPI WebSocket routing, typed browser-event translation, labeled mock
+perception/reasoning, plain HTML controls and an end-to-end smoke test.
+**Status:** checkpoint validated; real WAV provenance and timing/VAD remain.
+**Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 37 tests. Ruff passed for owned
+paths. FastAPI test-client dependency deprecation warnings remain; no live multimodal evidence.

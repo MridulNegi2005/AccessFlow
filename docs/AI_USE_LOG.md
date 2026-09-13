@@ -14,6 +14,15 @@
 Append each future milestone with prompts, outputs, edits, tests and reviewer. This log
 supports the mandatory organizer form; it is not a completed or signed disclosure form.
 
+## 2026-09-13 - Codex Atishay demo checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Build a minimal fake-agent browser demo that renders controller output events.
+- Output: Added FastAPI WebSocket routing, typed event conversion, mock-labeled controls and smoke tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Demo suite 6 passed; full suite 37 passed; Ruff passed for owned paths.
+- Backend/dependencies: Existing FastAPI stack; no dependency or contract changes. Test-client deprecation warnings recorded.
 ## 2026-09-13 - Codex Atishay vision checkpoint
 
 - Feature origin: The approved AccessFlow Workstream B plan.
