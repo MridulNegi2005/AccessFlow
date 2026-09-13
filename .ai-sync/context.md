@@ -139,3 +139,19 @@ feedback and live vision remain.
 **Status:** checkpoint validated; held-out endpoint quality, manual browser smoke, feedback and live vision remain.
 **Notes:** WebRTC on pause-correction produced a 2.260 s internal and 0.640 s trailing candidate.
 No shared contract or dependency change.
+
+## 2026-09-13 - Codex Atishay feedback and recording safeguards
+
+**Task:** Prepare the voluntary feedback worksheet and the <=5-minute demo recording script.
+
+**Changes:** Added docs/feedback/SESSION_TEMPLATE.md with separate consent gates for
+recording/upload, anonymized-note defaults, task prompts and retention fields. Added
+docs/presentation/DEMO_RECORDING_SCRIPT.md with a 4m40s sequence that labels mock/local
+backend boundaries and avoids presenting placeholders as live evidence. Updated status,
+handoff and README records.
+
+**Status:** Local documentation checkpoint prepared; no participant data or demo recording
+collected.
+
+**Notes:** Manual browser/device smoke, held-out endpoint quality, engine integration and
+final presentation assembly remain. No shared contract, dependency or lockfile change.

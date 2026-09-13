@@ -176,3 +176,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay and Mridul review.
 - Validation: Perception suite 18 passed; Ruff passed for owned paths. WebRTC found a 2.260 s internal and 0.640 s trailing candidate on the pause-correction fixture.
 - Backend/dependencies: Existing optional webrtcvad-wheels 2.0.14 local environment; no tracked dependency, lockfile or contract change.
+
+## 2026-09-13 - Codex Atishay feedback and demo recording safeguards
+
+- **Task:** Prepare the owned feedback and presentation artifacts.
+- **Changes:** Added a voluntary session worksheet with explicit capture-consent gates and
+  a 4m40s demo recording script tied to verified mock/local boundaries.
+- **Status:** Documentation checkpoint validated locally; no participant capture or demo
+  recording performed.
+- **Notes:** Manual browser/device smoke, held-out endpoint quality, engine integration,
+  feedback notes and final presentation remain. No shared contract or dependency change.

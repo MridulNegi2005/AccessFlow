@@ -13,7 +13,7 @@ This is not a finished hackathon submission.
 ## Next Steps
 Atishay: read ATISHAY_START_HERE.md, branch atishay/perception, build only owned components
 against fakes. The public clone path is verified; direct pushes require collaborator access,
-otherwise use a fork and pull request. Atishay has completed perception, turn-policy, vision, demo, audio baselines and the dependency-free PCM maintenance checkpoint; next is speech-quality ASR measurement and timing refinement.
+otherwise use a fork and pull request. Atishay has completed perception, turn-policy, vision, demo, audio baselines, timing/VAD candidates, browser media transport and the feedback/recording safeguards; next is manual browser/device smoke, voluntary feedback and engine integration.
 Mridul: continue engine tests/fixes on mridul/engine. Integrate small slices.
 
 ## Key Files Modified

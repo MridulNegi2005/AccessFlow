@@ -337,3 +337,23 @@ hardware latency or accessibility benefit is claimed by passing those tests.
 The shared GitHub remote is being set up at the user's request. Registration, final
 submission tag and submission are separate human steps. No API credentials are required
 for contract tests.
+
+## Checkpoint 17 - 13 September 2026: feedback and recording safeguards
+
+Added an ethical voluntary-feedback worksheet and a timed demo recording script.
+
+- Feedback defaults to anonymized written notes.
+- Recording, upload or redistribution requires specific agreement before capture.
+- The worksheet records backend labels, prototype commit/configuration, retention and
+  deletion decisions, while excluding diagnosis, training and population claims.
+- The 4m40s recording script labels mock, local and future integration boundaries and
+  gives evidence-backed narration for corrections, stale results, image uncertainty,
+  reconciliation and current measurements.
+
+Files:
+
+- docs/feedback/SESSION_TEMPLATE.md
+- docs/presentation/DEMO_RECORDING_SCRIPT.md
+
+The session has not been run and no participant data has been collected. The recording
+has not been made; manual browser/device smoke and the Mridul engine integration remain.
