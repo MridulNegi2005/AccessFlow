@@ -288,3 +288,25 @@ No wire change and no new dependency. Atishay's components need no change.
 ablation, then multimodal.
 **AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
 **Atishay:** No B-owned files changed. CI disabled. Nothing pushed.
+
+## [2026-09-14 04:30] — Claude Code
+**Task:** Speed up local inference.
+**Changes:** `scripts/start-local-ollama.ps1` accepts `-FlashAttention`, `-KvCacheType` and
+`-ContextLength`, and records them in `ollama-server.json`. Defaults preserve previous
+behaviour. Added results/INFERENCE_TUNING_2026-09-14.md. No source or contract change.
+**Status:** in-progress.
+**Live-model results:** The bottleneck was placement, not the model. Only 26 of 37 layers were
+on the GPU while about 1560 MiB of VRAM sat idle, so generation ran at 7.9 tok/s. Flash
+attention with a q8_0 KV cache cuts the KV cache from 576 MiB to 306 MiB, which lets all 37
+layers fit. Warm generation is now **38.1 tok/s**, 4.8 times faster; mean request 25.2 s to
+**8.6 s**; scenario runtimes 16-59 s to **4-17 s**. Suite score unchanged at 3/4 and 4/4.
+**Known failures/limits:** Do not pin `ACCESSFLOW_OLLAMA_NUM_GPU`. Verified with 37 and then
+with it unset: automatic fitting selects 37/37 and reaches 37.3 tok/s, matching the pinned
+result, and adapts per model. The one failure was `lost-response-status-reconciliation`
+rejecting a reconciliation plan for `missing_dependency`: the status tool's `receipt`
+parameter carries the controller operation id, which is not a slot, so listing it as a
+dependency fails. Known contract edge, passes in most runs, worth a separate fix.
+**Dependency or contract proposals:** None.
+**Next independent task:** Baselines and ablation, then multimodal.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI disabled. Nothing pushed.

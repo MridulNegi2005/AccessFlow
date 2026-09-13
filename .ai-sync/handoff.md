@@ -138,3 +138,15 @@ so a tool call or clarification are the only valid answers. Hosted qwen3.8-27b s
 244 tests, Ruff and the offline dev suite pass. No B-owned files changed. Nothing pushed.
 
 ---
+
+## [2026-09-14 04:30] — Claude Code
+**Task:** Local inference tuning.
+**Status:** Generation 7.9 to 38.1 tok/s; mean request 25.2 s to 8.6 s.
+**Notes:** Only 26 of 37 layers were on the GPU while about 1560 MiB of VRAM sat idle. Flash
+attention plus a q8_0 KV cache frees enough room for full offload. Start the server with
+`-FlashAttention 1 -KvCacheType q8_0`. Do not pin ACCESSFLOW_OLLAMA_NUM_GPU: automatic fitting
+now selects 37/37 and adapts per model, while a stale pin once made qwen2.5:7b spill into
+shared memory. Scenario runtimes are now 4-17 s against a 120 s cap. No B-owned files changed.
+Nothing pushed.
+
+---
