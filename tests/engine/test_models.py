@@ -478,3 +478,26 @@ async def test_http_status_failures_record_code_and_bounded_detail(monkeypatch):
     throttled = bounded.evidence()["requests"][0]
     assert throttled["status_code"] == 429
     assert len(throttled["error_detail"]) == 400
+
+
+@pytest.mark.parametrize("value,expected", [("0", False), ("false", False), ("1", True), ("true", True)])
+async def test_ollama_think_flag_sent_only_when_configured(monkeypatch, value, expected):
+    monkeypatch.setenv("ACCESSFLOW_OLLAMA_THINK", value)
+    seen = {}
+    def handler(request):
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"message": {"content": '{"ready":true}'}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        await JsonBackend("ollama", client).generate("system", {}, {})
+    assert seen["body"]["think"] is expected
+
+
+async def test_ollama_think_absent_by_default(monkeypatch):
+    monkeypatch.delenv("ACCESSFLOW_OLLAMA_THINK", raising=False)
+    seen = {}
+    def handler(request):
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"message": {"content": '{"ready":true}'}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        await JsonBackend("ollama", client).generate("system", {}, {})
+    assert "think" not in seen["body"]

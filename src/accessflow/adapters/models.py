@@ -51,6 +51,12 @@ DEFAULT_MODELS = {
     "ollama": ("ACCESSFLOW_OLLAMA_MODEL", "gemma3:4b"),
     "gemini": ("ACCESSFLOW_GEMINI_MODEL", "gemini-2.5-flash-lite"),
     "groq": ("ACCESSFLOW_GROQ_MODEL", "llama-3.3-70b-versatile"),
+    "nvidia": ("ACCESSFLOW_NVIDIA_MODEL", "google/gemma-4-31b-it"),
+}
+# Providers speaking the OpenAI chat completions dialect, keyed by env prefix and default host.
+OPENAI_COMPATIBLE = {
+    "groq": ("ACCESSFLOW_GROQ", "https://api.groq.com/openai/v1"),
+    "nvidia": ("ACCESSFLOW_NVIDIA", "https://integrate.api.nvidia.com/v1"),
 }
 BACKENDS = frozenset(DEFAULT_MODELS)
 
@@ -99,8 +105,8 @@ class JsonBackend:
                 "history_limit": self.history_limit,
                 "num_ctx": 4096 if self.backend == "ollama" else None,
                 "num_gpu": self.num_gpu,
-                "response_format": (self._groq_response_format({"stub": True})["type"]
-                                    if self.backend == "groq" else None),
+                "response_format": (self._openai_response_format({"stub": True}, OPENAI_COMPATIBLE[self.backend][0])["type"]
+                                    if self.backend in OPENAI_COMPATIBLE else None),
                 "temperature": 0,
                 "ollama_duration_unit": "nanoseconds",
             },
@@ -162,10 +168,15 @@ class JsonBackend:
             options = {"num_ctx": 4096, "temperature": 0}
             if self.num_gpu is not None:
                 options["num_gpu"] = self.num_gpu
-            request_kwargs = {"json": {"model": self.model, "stream": False, "format": schema,
-                                        "messages": [{"role": "system", "content": system},
-                                                      {"role": "user", "content": prompt}],
-                                        "options": options}}
+            body = {"model": self.model, "stream": False, "format": schema,
+                    "messages": [{"role": "system", "content": system},
+                                 {"role": "user", "content": prompt}],
+                    "options": options}
+            # Reasoning models emit a think block before the JSON, which exceeds planning deadlines.
+            think = os.getenv("ACCESSFLOW_OLLAMA_THINK")
+            if think is not None:
+                body["think"] = think not in {"0", "false", "False"}
+            request_kwargs = {"json": body}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
             response = await client.post(os.getenv("ACCESSFLOW_OLLAMA_URL", "http://localhost:11434") + "/api/chat",
@@ -174,24 +185,24 @@ class JsonBackend:
             payload = response.json()
             text = payload["message"]["content"]
             metrics = self._ollama_metrics(payload)
-        elif self.backend == "groq":
-            key = os.getenv("ACCESSFLOW_GROQ_API_KEY")
+        elif self.backend in OPENAI_COMPATIBLE:
+            prefix, default_url = OPENAI_COMPATIBLE[self.backend]
+            key = os.getenv(f"{prefix}_API_KEY")
             if not key:
-                raise ValueError("ACCESSFLOW_GROQ_API_KEY is required for explicit hosted mode")
+                raise ValueError(f"{prefix}_API_KEY is required for explicit hosted mode")
             request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": {
                     "model": self.model, "stream": False, "temperature": 0,
-                    "response_format": self._groq_response_format(schema),
+                    "response_format": self._openai_response_format(schema, prefix),
                     "messages": [{"role": "system", "content": system},
                                  {"role": "user", "content": prompt}]}}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
             response = await client.post(
-                os.getenv("ACCESSFLOW_GROQ_URL", "https://api.groq.com/openai/v1") + "/chat/completions",
-                **request_kwargs)
+                os.getenv(f"{prefix}_URL", default_url) + "/chat/completions", **request_kwargs)
             response.raise_for_status()
             payload = response.json()
             text = payload["choices"][0]["message"]["content"]
-            metrics = self._groq_metrics(payload)
+            metrics = self._openai_metrics(payload)
         else:
             key = os.getenv("ACCESSFLOW_GEMINI_API_KEY")
             if not key:
@@ -212,15 +223,15 @@ class JsonBackend:
         return text, metrics
 
     @staticmethod
-    def _groq_response_format(schema):
+    def _openai_response_format(schema, prefix="ACCESSFLOW_GROQ"):
         # Schema is already appended to the prompt for every backend. Strict structured output
         # is opt-in because it rejects schemas this project generates from Pydantic.
-        if schema and os.getenv("ACCESSFLOW_GROQ_STRUCTURED") == "1":
+        if schema and os.getenv(f"{prefix}_STRUCTURED") == "1":
             return {"type": "json_schema", "json_schema": {"name": "plan", "schema": schema}}
         return {"type": "json_object"}
 
     @staticmethod
-    def _groq_metrics(payload):
+    def _openai_metrics(payload):
         if not isinstance(payload, Mapping):
             return None
         usage = payload.get("usage")
