@@ -104,6 +104,26 @@ uv run --python 3.12 --extra dev ruff check demo tests/demo
 FastAPI's test client currently emits dependency deprecation warnings; they do not fail the
 suite. Next: add real WAV fixture provenance and timing/VAD integration while retaining the
 mock demo as an explicit development mode.
+## Checkpoint 5 - 13 September 2026: audio fixture provenance
+
+Added a deterministic synthetic WAV fixture at `tests/fixtures/audio/synthetic_tone.wav`.
+
+- The fixture is generated locally with Python's standard `wave`, `struct` and `math` libraries.
+- It is mono PCM, 16-bit, 16 kHz and 0.5 seconds long; it contains a 440 Hz tone, not speech.
+- Its provenance, intended development-only use and SHA-256 are recorded in `docs/feedback/PROVENANCE.md`.
+- A perception test validates the checked-in file through the same raw WAV route used by `LocalPerception`.
+- No participant voice, third-party recording or ASR quality claim is attached to this asset.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest tests/perception -q  -> 16 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                               -> All checks passed
+```
+
+Next: connect a real local transcription backend to an explicitly installed model and add
+speech-activity timing behind a replaceable adapter, with backend and hardware measurements.
 Python 3.11 and `uv` are required:
 
 ```powershell

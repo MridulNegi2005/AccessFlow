@@ -52,3 +52,10 @@ perception/reasoning, plain HTML controls and an end-to-end smoke test.
 **Status:** checkpoint validated; real WAV provenance and timing/VAD remain.
 **Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 37 tests. Ruff passed for owned
 paths. FastAPI test-client dependency deprecation warnings remain; no live multimodal evidence.
+## [2026-09-13 17:00] - Codex
+**Task:** Add deterministic audio fixture provenance for Atishay's Workstream B.
+**Changes:** Generated a synthetic 16 kHz PCM tone with standard libraries, recorded its hash and
+provenance, and added a checked-in fixture validation test.
+**Status:** checkpoint validated; local ASR model and timing/VAD remain.
+**Notes:** Focused perception tests passed 16; the fixture is not speech and supplies no ASR quality
+evidence. No participant recording was used.
