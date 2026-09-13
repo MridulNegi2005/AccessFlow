@@ -23,6 +23,15 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: Perception suite 16 passed; Ruff passed for owned paths.
 - Backend/dependencies: Python standard-library audio generation; no dependency or contract changes.
+## 2026-09-13 - Codex Atishay ASR checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Make the optional local Faster Whisper path testable without model downloads.
+- Output: Added model-path validation, CPU int8 factory configuration and segment aggregation tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Perception suite 23 passed; Ruff passed for owned paths.
+- Backend/dependencies: Faster Whisper remains optional; no dependency or contract changes; no live model run.
 ## 2026-09-13 - Codex Atishay PCM checkpoint
 
 - Feature origin: The approved AccessFlow Workstream B plan.
