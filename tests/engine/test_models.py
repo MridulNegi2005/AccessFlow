@@ -423,3 +423,35 @@ def test_groq_rejects_gpu_placement():
 def test_unknown_backend_rejected():
     with pytest.raises(ValueError, match="Explicit backend"):
         JsonBackend("openai")
+
+
+def test_cli_request_timeout_reaches_backend(monkeypatch):
+    import sys
+
+    from accessflow import cli
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
+    captured = {}
+    real = cli.JsonBackend
+    def spy(backend, *args, **kwargs):
+        captured["timeout"] = kwargs.get("timeout")
+        instance = real(backend, *args, **kwargs)
+        async def warmup():
+            return {"ready": True}
+        instance.warmup = warmup
+        return instance
+    monkeypatch.setattr(cli, "JsonBackend", spy)
+    monkeypatch.setattr(sys, "argv", ["accessflow", "warmup", "--backend", "groq",
+                                      "--request-timeout", "45"])
+    cli.main()
+    assert captured["timeout"] == 45.0
+
+
+@pytest.mark.parametrize("value", ["0", "-5"])
+def test_cli_rejects_non_positive_request_timeout(monkeypatch, value):
+    import sys
+
+    from accessflow import cli
+    monkeypatch.setattr(sys, "argv", ["accessflow", "warmup", "--backend", "ollama",
+                                      "--request-timeout", value])
+    with pytest.raises(SystemExit):
+        cli.main()
