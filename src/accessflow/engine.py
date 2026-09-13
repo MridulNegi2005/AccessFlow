@@ -454,8 +454,27 @@ class Agent:
         if call is None:
             await self._emit("error", code="unknown_call_result", call_id=result.call_id)
             return
+        if call.effect == "write" and result.committed and call.status == "failed":
+            # A failed/cancelled acknowledgment is not permission to discard later
+            # evidence of a real effect. Keep that truth without completing a newer
+            # request or undoing an explicit stop.
+            call.status = "success"
+            self.results.append(result.model_copy(update={"status": "success"}))
+            await self._emit("error", code="effect_committed_after_invalidation"
+                             if call.call_id in self.invalidated else "conflicting_write_outcome",
+                             call_id=call.call_id, operation_id=call.operation_id,
+                             previous_status="failed", result=result.result,
+                             caused_by_event_id=self.call_causes[call.call_id],
+                             message="The tool later confirmed an effect after reporting no effect.")
+            return
         if call.status in {"success", "failed", "stale"}:
             return
+        if call.effect == "write" and result.committed and result.status != "success":
+            await self._emit("error", code="inconsistent_tool_result", call_id=call.call_id,
+                             operation_id=call.operation_id, reported_status=result.status,
+                             caused_by_event_id=self.call_causes[call.call_id],
+                             message="The tool confirmed an effect despite a non-success response status.")
+            result.status = "success"
         current = all(self.state.slots.get(key) and self.state.slots[key].revision == revision
                       for key, revision in call.dependencies.items())
         if call.call_id in self.invalidated or not current:

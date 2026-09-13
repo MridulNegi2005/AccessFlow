@@ -6,6 +6,7 @@ from pathlib import Path
 from .adapters.models import JsonBackend, ModelReasoner
 from .evaluation.replay import metrics, replay
 from .evaluation.suite import run_suite
+from .evaluation.responsiveness import run_responsiveness
 
 
 def main():
@@ -23,11 +24,23 @@ def main():
     suite.add_argument("scenario_directory")
     suite.add_argument("--output-dir", default="artifacts/suite")
     suite.add_argument("--backend", choices=["offline-fake", "ollama", "gemini"], default="offline-fake")
+    responsiveness = commands.add_parser("responsiveness", help="Measure synthetic controller responsiveness")
+    responsiveness.add_argument("--samples", type=int, default=100, help="Independent samples per condition")
+    responsiveness.add_argument("--output-dir", default="artifacts/responsiveness")
     args = parser.parse_args()
     if args.command == "metrics":
         result = metrics(args.trace)
     elif args.command == "warmup":
         result = asyncio.run(JsonBackend(args.backend).warmup())
+    elif args.command == "responsiveness":
+        if args.samples < 1:
+            parser.error("--samples must be positive")
+        result = asyncio.run(run_responsiveness(args.output_dir, samples=args.samples))
+        print(json.dumps(result, indent=2))
+        if result["counts"]["failed"] or any(
+                target["target_passed"] is not True for target in result["targets"].values()):
+            raise SystemExit(1)
+        return
     elif args.command == "suite":
         backend = None if args.backend == "offline-fake" else JsonBackend(args.backend)
         report = asyncio.run(run_suite(Path(args.scenario_directory).glob("*.json"), args.output_dir,

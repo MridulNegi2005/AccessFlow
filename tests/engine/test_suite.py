@@ -17,6 +17,12 @@ async def test_development_suite_checks_effects_and_preserves_backend_identity(t
         assert case["backend"] == "offline-fake"
         assert case["metrics"]["run_metadata"]["tools"] == "manifest-mock"
         assert case["metrics"]["committed_effect_outcomes"]["counts"]["committed"] == 1
+    corrected = next(case for case in report["cases"] if case["scenario_file"] == "device_correction_during_write.json")
+    rows = [json.loads(line) for line in Path(corrected["trace"]).read_text().splitlines()]
+    cancellations = [row for row in rows if row.get("transport") == "executor_cancel"]
+    assert len(cancellations) == 1
+    assert cancellations[0]["event"]["payload"]["status"] == "cancelled"
+    assert corrected["metrics"]["committed_effect_outcomes"]["counts"]["not_committed"] == 1
 
 
 async def test_invalid_scenario_remains_in_suite_denominator(tmp_path):
