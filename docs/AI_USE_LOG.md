@@ -279,3 +279,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - **Dependency note:** Local-only websockets 17.1 was installed because committed Uvicorn
   dependencies did not provide WebSocket support. No pyproject or lockfile change was made;
   propose this dependency to the shared owner.
+## 2026-09-13 - Codex Atishay synthetic microphone browser smoke
+
+- **Task:** Exercise browser microphone start, stop, WAV encoding and upload without recording
+  a person.
+- **Result:** Chrome's synthetic device entered recording state; stop uploaded WAV and the
+  session emitted media_received=audio and the mock final.
+- **Status:** Synthetic microphone path passed. Physical device permission/capture, pixel
+  inspection and separate console capture remain unverified.
+- **Notes:** No participant or physical recording was used. No source, contract, dependency or
+  lockfile change.

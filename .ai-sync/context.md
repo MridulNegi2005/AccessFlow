@@ -301,3 +301,16 @@ microphone/device capture, pixel inspection and separate console capture remain 
 **Notes:** Uvicorn required a local-only websockets 17.1 install to serve the WebSocket route.
 The committed dependency files were not changed; shared dependency ownership should review this
 proposal before fresh-machine browser use.
+## 2026-09-13 - Codex Atishay synthetic microphone browser smoke
+
+**Task:** Exercise microphone start, stop, WAV encoding and upload in real Chrome without
+capturing a person.
+
+**Changes:** No product source change. Chrome's fake audio device entered recording state,
+stopped cleanly, uploaded a WAV and received media_received=audio plus the mock final.
+
+**Status:** Synthetic microphone browser path passed. Physical device permission and capture,
+pixel inspection and separate console capture remain unverified.
+
+**Notes:** No participant or physical recording was used. No shared contract, dependency or
+lockfile change beyond the previously documented local-only websockets runtime.

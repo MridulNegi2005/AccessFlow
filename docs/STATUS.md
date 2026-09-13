@@ -116,3 +116,13 @@ Ran the local demo through a temporary isolated Chrome session using the actual 
   does not currently include a WebSocket runtime. This is recorded as a dependency proposal.
 - Physical microphone/device capture, pixel inspection and separate console capture remain
   unverified.
+## Checkpoint 26 - 13 September 2026: synthetic microphone browser smoke
+
+Exercised the microphone controls in isolated Chrome with Chrome's synthetic audio device.
+
+- Start entered the recording state and enabled the stop control.
+- Stop closed the capture path, encoded the samples as WAV and uploaded them through the
+  session WebSocket.
+- The browser observed media_received=audio and the mock controller final.
+- No person or physical microphone was recorded. Physical device permission, pixel inspection
+  and separate console capture remain unverified.
