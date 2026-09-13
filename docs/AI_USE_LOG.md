@@ -23,6 +23,15 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: Perception suite 16 passed; Ruff passed for owned paths.
 - Backend/dependencies: Python standard-library audio generation; no dependency or contract changes.
+## 2026-09-13 - Codex Atishay PCM checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Add a small reusable PCM loader and deterministic activity baseline without changing shared contracts.
+- Output: Added mono/stereo loading, rate conversion, RMS activity frames and focused tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Perception suite 21 passed; full suite verification follows; Ruff passed for owned paths.
+- Backend/dependencies: Python standard library `audioop`; deprecation recorded, no lockfile change.
 ## 2026-09-13 - Codex Atishay demo checkpoint
 
 - Feature origin: The approved AccessFlow Workstream B plan.

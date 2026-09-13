@@ -124,6 +124,28 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perc
 
 Next: connect a real local transcription backend to an explicitly installed model and add
 speech-activity timing behind a replaceable adapter, with backend and hardware measurements.
+## Checkpoint 6 - 13 September 2026: PCM and activity baseline
+
+Added an isolated PCM loader and fixed-window energy activity helper in
+`src/accessflow/perception/audio.py`.
+
+- Downmixes mono or stereo PCM WAV input and converts it to a requested sample rate.
+- Exposes frame start/end times and RMS levels for deterministic timing experiments.
+- Keeps this as an energy baseline, not a speech classifier or clinical VAD.
+- Covers the checked-in tone fixture, stereo resampling, silence/tone boundaries and invalid configuration.
+- Adds no dependency or shared-contract change; a maintained audio library should replace `audioop` before Python 3.13 support.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest tests/perception -q  -> 21 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                               -> All checks passed
+```
+
+Python 3.12 reports the expected `audioop` deprecation warning. No live ASR, speech VAD,
+vision quality, hosted backend or hardware latency is claimed. Next: connect an explicitly
+installed local ASR model and measure backend timing on declared hardware.
 Python 3.11 and `uv` are required:
 
 ```powershell
