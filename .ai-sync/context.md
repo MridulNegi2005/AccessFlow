@@ -28,3 +28,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** No live-model or official-kit claims. Atishay-owned directories remain open. Main starts from the tested bootstrap; current work is on mridul/engine. Invitation acceptance remains Atishay's step.
 
 ---
+
+## [2026-09-13 14:41] — Codex
+**Task:** Finish normal GitHub handoff.
+**Changes:** Main and engine branch published; Atishay9828 invited with write permission. Documented merge-origin-main start step and pending hosted CI verification.
+**Status:** completed (GitHub/bootstrap handoff); implementation remains in-progress
+**Notes:** 22 local tests, Ruff and offline replay passed. No Actions runs returned by API; Docker and real models unverified. No final release tag or submission.
+
+---

@@ -10,6 +10,10 @@ Initial engine and 22 offline contract/safety/provider tests pass. Replay works 
 reasoning/tools. Model adapters, Docker and CI config exist; live inference remains untested.
 Public GitHub setup completed; Atishay9828 invited with write access, acceptance pending.
 Broader race tests, complete metrics and official adapter remain incomplete.
+Main and mridul/engine contain the tested starter. Atishay's published branch stays at
+the common earlier bootstrap; merge origin/main locally before starting. No remote
+Atishay work was overwritten. CI workflow is committed, but no run was returned by the
+GitHub Actions API during verification; Docker/hosted CI is not claimed as passing.
 This is not a finished hackathon submission.
 
 ## Next Steps

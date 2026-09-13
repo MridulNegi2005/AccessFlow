@@ -16,6 +16,8 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 - Replay CLI, trace summary and explicit Gemini/Ollama reasoning adapters added. Adapters
   tested with mocked HTTP only; the text replay ran in offline-fake mode with one effect.
 - Docker and CI configuration added; Docker unavailable locally; CI result recorded separately.
+- GitHub Actions API returned no workflow runs during final verification. CI/Docker
+  remain unverified; the 22 passing tests were run locally on Python 3.11.15.
 
 ## Still required
 

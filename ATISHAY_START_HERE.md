@@ -13,6 +13,7 @@ tool execution and packaging. You do not need his engine, his API key or his mac
    git clone https://github.com/MridulNegi2005/AccessFlow.git
    cd AccessFlow
    git switch atishay/perception
+   git merge origin/main
    uv python install 3.11
    uv sync --extra dev
    uv run pytest tests/test_contract.py
@@ -21,6 +22,11 @@ tool execution and packaging. You do not need his engine, his API key or his mac
    `origin` is the shared GitHub repository. Commit to your branch and use
    `git push -u origin atishay/perception` to share your work. A private repository
    requires accepting the collaborator invitation before cloning.
+
+   This repository is public. Atishay9828 has been invited with write permission;
+   accept https://github.com/MridulNegi2005/AccessFlow/invitations before your first push.
+   The merge command above brings the shared engine/bootstrap updates onto your local
+   work branch; it does not modify any remote branch until you push.
 
 4. Read `docs/CONTRACT.md`, `src/accessflow/interfaces.py`, `src/accessflow/fakes.py`
    and the golden event in `tests/fixtures/transcript.json`.
