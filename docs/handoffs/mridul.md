@@ -145,3 +145,26 @@ unmeasured and matter across a 60-scenario suite.
 **AI tools and human modifications:** Claude Code (Opus 5) wrote the adapter, tests and this entry.
 No human review recorded.
 **Atishay:** No B-owned files changed. CI remains disabled. No push performed.
+
+## [2026-09-13 21:20] — Claude Code
+**Task:** Test whether a larger open model fixes the planner failures.
+**Changes:** Added `--request-timeout` and `--inference-timeout` to the CLI and plumbed the
+controller deadline through `run_suite` and `replay`. Defaults are unchanged. Pulled
+`qwen2.5:7b-instruct` to the existing D: runtime.
+**Status:** in-progress. The local scaling question is answered. The hosted question is not.
+**Tests run and results:** `uv run pytest -q` — 234 passed. `uv run ruff check .` passed.
+Fair comparison on `scenarios/live_dev`, same commit, same prompt, same guards, 90-second
+requests and a 95-second controller deadline: qwen2.5:3b 2/4 and qwen2.5:7b-instruct 2/4.
+Mean successful request 10.1 s versus 26.5 s. See results/MODEL_SCALING_2026-09-13.md.
+**Live-model results:** A larger local model gave no accuracy gain at about 2.6 times the
+latency. The two models passed different subsets, so this is not a capability ordering.
+`support-read-then-service` failed on both. Each model ran once.
+**Known failures/limits:** An earlier 7B run scored 1/4 only because the fixed 25-second
+controller deadline cancelled the requests. Any earlier result reporting `backend_failure`
+is unmeasured, not a planning error. Single runs; no repeat measurement of variance.
+No hosted key, so the large-model hypothesis remains untested.
+**Dependency or contract proposals:** None. No new dependency. No public schema change.
+**Next independent task:** Run the Groq backend once a key exists, then decide between
+planner redesign and a hosted model. Repeat runs to separate variance from capability.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI remains disabled. Nothing pushed.
