@@ -1,9 +1,9 @@
 # Active handoff
 
-Last updated by: Codex (2026-09-13, argument dependency repair)
+Last updated by: Codex (2026-09-13, focused argument dependency review)
 
 ## Current Task
-Persistent Workstream A goal remains active. B checkpoint 2a4372a integrated unchanged.
+STOPPED at user request. Do not resume until explicitly requested. Workstream A remains incomplete. B checkpoint 2a4372a integrated unchanged.
 Improve actual model planning accuracy and dependency enforcement. CI must remain disabled.
 
 ## In Progress
@@ -13,8 +13,12 @@ All failures retained. Qwen's invented tool names and repeated write instead of 
 query remain task failures. New controller guards reject untracked/contradictory arguments
 and preserve retry identity across model nonce changes. Optional argument_slots maps aliases.
 Model generation now binds exact tool names and read-only choices during unresolved writes.
-Portable runtime/models are in D:\AccessFlow-LocalRuntime; server is currently running
-for the next clean-source measurement. Stop it with scripts/stop-local-ollama.ps1 after runs.
+Focused review found no bypass or crash within the documented contract; direct constants are
+top-level by design and nested/$ref forms fail closed. If read/status manifests are allowed
+to declare idempotency_parameter, that field is overwritten with the status call identity,
+so it cannot target the original operation; current contract/tests do not explicitly forbid it.
+Portable runtime/models are in D:\AccessFlow-LocalRuntime; server is now stopped
+after the terminal measurement. No background model work remains.
 Native lifecycle remains tested; B's ASR report is teammate-reported evidence only.
 
 ## Next Steps
@@ -66,3 +70,11 @@ Local-model checkpoint (2026-09-13 17:43), Codex: 185 tests and Ruff pass; porta
 Live evidence checkpoint (2026-09-13 17:57), Codex: two failed real pilots preserved in docs/results/LOCAL_MODEL_2026-09-13.md. Source fixes include grounded explicit planner schema, correction acknowledgment, fixture formats and diagnostics. Runner verifies model reset and aborts on cleanup failure; parent added cooperative cancellation reports. Next: clean-source live four-case experiment. B ownership and CI-off constraint unchanged.
 
 Workflow check (2026-09-13 18:32), last updated by Codex: explanation completed; CI remains disabled and manual-only. No new workflow runs. Existing implementation next steps preserved. Key files modified: sync notes, A handoff and AI-use log only.
+
+## [2026-09-13 18:47] — Codex
+**Task:** Safely stop at the user's explicit request.
+**Changes:** Saved final Qwen report/traces. Unloaded models and stopped verified Ollama process; no listener on11435 or live model-check process remains. All child agents completed.
+**Status:** stopped by user; project incomplete. Do not resume until user requests it.
+**Notes:** Engine commit3e24c06 pushed to mridul/engine;224 tests/Ruff passed. Actual guarded Qwen suite2/4: corrected-device and lost-response recovery pass; support omits slots, text correction leaves completion/write flags false. Independent planner probes remain unrun/unread. Review wrote only sync notes during live run; source code stayed at3e24c06, so dirty-worktree flags in raw evidence reflect docs only. CI remains disabled. Next on explicit resume: address incomplete model plans, then unseen probes and remaining Workstream A gates.
+
+---
