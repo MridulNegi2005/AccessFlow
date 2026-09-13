@@ -168,3 +168,31 @@ No hosted key, so the large-model hypothesis remains untested.
 planner redesign and a hosted model. Repeat runs to separate variance from capability.
 **AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
 **Atishay:** No B-owned files changed. CI remains disabled. Nothing pushed.
+
+## [2026-09-14 00:35] — Claude Code
+**Task:** Run the hosted Groq comparison against the preserved local baselines.
+**Changes:** Added HTTP status code and bounded provider error text to request evidence.
+Added results/HOSTED_MODEL_2026-09-14.md. No engine or contract change.
+**Status:** in-progress. The model-capacity question is answered. Multimodal and the
+official kit remain open.
+**Tests run and results:** `uv run pytest -q` — 235 passed. `uv run ruff check .` passed.
+Paced hosted run on `scenarios/live_dev`, Groq `qwen/qwen3.8-27b`, one scenario every
+75 seconds: **4/4 passed**, 6 requests, mean 0.91 s, maximum 1.03 s, slowest scenario 2.0 s.
+**Live-model results:** The hosted 27B model passed every case, including
+`support-read-then-service`, which failed on gemma3:4b, qwen2.5:3b and qwen2.5:7b. Local
+baselines were 0/4, 2/4 and 2/4. The remaining planner failures were model capacity, not
+the interface contract.
+**Known failures/limits:** Two batched suite runs scored 3/4 and 2/4. Every failure was
+HTTP 429 free-tier ITPM throttling at 7000 input tokens per minute, not a planning error.
+Requests average 1459 prompt tokens, so the ceiling is about 4.8 requests per minute. A
+60-scenario run implies about 25 minutes of rate-limited time. The system prompt is 781
+tokens, 54 percent of an average request. The configured default `llama-3.3-70b-versatile`
+is not available on this account. The official guide does not state that the evaluation
+environment has outbound network access; a hosted-only submission scores zero if the
+harness is sandboxed. Each configuration ran once.
+**Dependency or contract proposals:** None. No new dependency. No public schema change.
+**Next independent task:** Decide the backend policy for submission, keeping local working.
+Then multimodal end-to-end, which is 50 percent of the hidden set at a 1.5 multiplier.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI remains disabled. Nothing pushed. Groq also hosts
+`whisper-large-v3` and `whisper-large-v3-turbo`, subject to the same network caveat.

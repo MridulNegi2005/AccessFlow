@@ -90,3 +90,15 @@ and run the live_dev suite against the preserved gemma3 0/4 and Qwen 2/4 traces.
 changed. CI remains disabled. Nothing pushed.
 
 ---
+
+## [2026-09-14 00:35] — Claude Code
+**Task:** Hosted Groq comparison against preserved local baselines.
+**Status:** Paced hosted run scored 4/4 on live_dev with Groq `qwen/qwen3.8-27b`.
+**Notes:** Local baselines were gemma3:4b 0/4, qwen2.5:3b 2/4, qwen2.5:7b 2/4. Mean request
+0.91 s against 10.06 s and 26.54 s locally. Batched runs scored 3/4 and 2/4 purely from
+HTTP 429 free-tier throttling at 7000 input tokens per minute, not planning errors. Keep the
+local backend working: the official guide never states that the evaluation environment has
+outbound network access. Next: backend policy decision, then multimodal end to end.
+235 tests and Ruff pass. No B-owned files changed. CI disabled. Nothing pushed.
+
+---
