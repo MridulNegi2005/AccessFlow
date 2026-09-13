@@ -2,7 +2,9 @@
 
 > Last updated by: Claude Code
 > Timestamp: 2026-09-14T05:10:00+05:30
-> Branch: `mridul/engine` · 244 tests and Ruff pass · **12 commits unpushed** · CI disabled
+> Branch: `mridul/engine` · merged Atishay `871c8cf` · 250 tests and Ruff pass · **unpushed** · CI disabled
+
+> Before starting: read `docs/STATUS.md` "Still required" and update it before you finish.
 
 ## Current Task
 
@@ -30,7 +32,6 @@ The next work is evaluation evidence, not more model work.
 
 ## In Progress
 
-- **Teammate integration is stale.** Merged at `2a4372a`; his remote is at `871c8cf`, unfetched.
 - **Held-out probes unused.** Four independently authored planner probes exist, have never been
   run, and their labels have never been read. This is the only unseen data available.
 - **Scenario corpus is 8 of 60.** Plan calls for 30 text, 18 audio, 12 visual, split 40
@@ -38,17 +39,15 @@ The next work is evaluation evidence, not more model work.
 
 ## Next Steps
 
-1. `git fetch` and review Atishay's `871c8cf` before any further measurement, so results are
-   tied to the perception code actually under test.
-2. **Multimodal end to end.** Audio and visual are 50 percent of the hidden set at a 1.5
+1. **Multimodal end to end.** Audio and visual are 50 percent of the hidden set at a 1.5
    multiplier and have no evidence at all. Largest unclaimed score.
-3. **Baselines and ablation.** Disable dependency-aware stale-result rejection, rerun the same
+2. **Baselines and ablation.** Disable dependency-aware stale-result rejection, rerun the same
    scenarios, show wrong or duplicate effects appear. Same model, one component off. This is
    the only thing that demonstrates the engine earns its place.
-4. Run the four held-out probes once, after the engine stops changing.
-5. Verify Docker container execution on a Docker-capable host.
-6. Official kit adapter once the organizer publishes the schema. Do not invent wire compatibility.
-7. Submission assembly: deck, video of five minutes or less, AI disclosure, release tag
+3. Run the four held-out probes once, after the engine stops changing.
+4. Verify Docker container execution on a Docker-capable host.
+5. Official kit adapter once the organizer publishes the schema. Do not invent wire compatibility.
+6. Submission assembly: deck, video of five minutes or less, AI disclosure, release tag
    `PRISM_GENAI_HACKATHON_Y2026`. Do not create the tag during ordinary development.
 
 ## Known Defects and Cautions
@@ -72,7 +71,12 @@ The next work is evaluation evidence, not more model work.
 - **Secrets.** `.env` holds Groq and NVIDIA keys and is gitignored; no key is in any tracked
   file. The NVIDIA key was pasted into a chat transcript and should be rotated.
 - **CI stays disabled.** Do not enable or dispatch the workflow.
-- **No B-owned files were changed.** Nothing has been pushed.
+- **No B-owned files were changed.** Atishay `871c8cf` is merged unmodified; his WebRTC VAD
+  keeps `webrtcvad` as a lazy optional import, so no lockfile change was needed.
+- **Append-only logs now use a union merge driver.** `.ai-sync/context.md` and
+  `docs/AI_USE_LOG.md` concatenate both sides automatically. Never add a rewritten-in-place
+  file such as `docs/STATUS.md` to that list.
+- Nothing has been pushed.
 
 ## Key Files Modified
 

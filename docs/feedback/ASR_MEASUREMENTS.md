@@ -45,3 +45,19 @@ their provenance recorded before any quality claim.
 This is a single generated-voice development case. The transcript matches the known script
 apart from the final number wording. It is useful for checking the local seam and a timing
 observation, but it is not a held-out accuracy result or a representative speech benchmark.
+
+## 2026-09-13 - WebRTC VAD and Faster Whisper on pause-and-correction speech
+
+- Fixture: tests/fixtures/audio/synthetic_pause_correction.wav
+- Fixture duration: 6.024 seconds; source format 1 channel, 16-bit PCM, 22,050 Hz
+- SHA-256: 49B0B26FD1EBCAE0772B2559A4ABA3782444F59FAB7E7E7038122F06157C872B
+- WebRTC settings: aggressiveness 2, 20 ms frames, normalized to 16 kHz
+- Energy baseline: 93/302 active frames across eight fragmented windows
+- WebRTC VAD: 139/301 active frames across three windows; 0.640 seconds trailing silence
+- Faster Whisper base.en through LocalPerception.observe: 1.334 seconds; realtime factor 0.221
+- Transcript: Book Tuesday. Actually, Wednesday at 5.
+
+The source script includes a generated 1.5 second break between the two utterances. The
+observed VAD windows preserve the broad two-part structure, while the transcript preserves
+the correction wording. This is a development case, not a held-out accuracy or endpoint
+benchmark.

@@ -182,6 +182,29 @@ known script apart from the final number wording. No tracked dependency or contr
 kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Status:** checkpoint validated; held-out speech cases, acoustic VAD and live vision evidence remain.
 **Notes:** Focused audio/timing suite expected 12 tests; no pause is treated as semantic completion.
+## [2026-09-13 20:30] - Codex
+**Task:** Add and evaluate an optional WebRTC activity backend.
+**Changes:** Added lazy WebRTC VAD loading, format checks, deterministic injection tests and
+comparative measurements against the energy baseline.
+**Status:** checkpoint validated; held-out VAD quality, acoustic pause evaluation and live vision evidence remain.
+**Notes:** webrtcvad-wheels 2.0.14, aggressiveness 2, 20 ms frames. Tone 25/25 active; generated
+speech 189/265 active with 0.640 s trailing silence. No tracked dependency or contract change.
+
+## [2026-09-13 21:00] - Codex
+**Task:** Add and measure a generated pause-and-correction speech fixture.
+**Changes:** Added provenance-tracked audio with a 1.5 second break, then measured WebRTC VAD
+and Faster Whisper through LocalPerception.
+**Status:** checkpoint validated; held-out endpoint quality, acoustic VAD evaluation and live vision evidence remain.
+**Notes:** 6.024 s fixture, WebRTC 139/301 active frames in three windows with 0.640 s trailing
+silence; ASR elapsed 1.334 s, realtime factor 0.221. No participant audio used.
+
+## [2026-09-13 21:30] - Codex
+**Task:** Add session-scoped WAV/PNG upload to the browser demo.
+**Changes:** Added base64 transport, 8 MiB limit, WAV/PNG validation, temporary file cleanup and
+browser encoding; kept the demo perception backend explicitly mock.
+**Status:** checkpoint validated; microphone capture, held-out endpoint quality, live vision and feedback remain.
+**Notes:** Demo suite 9 passed; no shared contract or dependency change.
+
 
 ## [2026-09-13 17:07] — Codex
 **Task:** Review and integrate newer Atishay checkpoint 2a4372a.

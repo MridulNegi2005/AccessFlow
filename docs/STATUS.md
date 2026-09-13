@@ -34,15 +34,35 @@ See [ENGINE_PROGRESS.md](ENGINE_PROGRESS.md) for requirement-level evidence and
 [EVALUATION.md](EVALUATION.md) for commands and fixture authoring. Exact test results are
 recorded in [handoffs/mridul.md](handoffs/mridul.md).
 
-## Still required for Mridul's workstream
+## Still required
 
-- Real reasoning on unfamiliar manifests and held-out wording.
-- Broader timing/fault measurements, baseline comparison and dependency-rejection ablation.
-- Full scenario set, independently authored held-out cases and modality/backend reports.
-- Actual model/modality validation after integrating Atishay checkpoint 2a4372a; native worker lifecycle is tested; live model/runtime measurements remain required.
-- Corrected Docker execution on a Docker-capable host; hardware/warm-up measurements.
+Read this section before starting work and update it before finishing. That applies to every
+person and every AI agent on the project. Record evidence in your own handoff file, not here.
+
+### Workstream A — Mridul
+
+- Independently authored held-out cases, and the full 60-scenario set. Eight exist today.
+- Baseline comparison and the dependency-rejection ablation.
+- End-to-end multimodal runs through the controller, reported by modality and backend.
+- Corrected Docker execution on a Docker-capable host; hardware and warm-up measurements.
 - Official-kit translation and public-kit runs after the organizer supplies the schema.
-- Submission assembly, reviewed disclosure and human registration/template/release checks.
+- Submission assembly, reviewed disclosure, and the release tag.
+- Open defect: `lost-response-status-reconciliation` intermittently fails with
+  `missing_dependency` because the status tool's target id is not a slot.
+
+### Workstream B — Atishay
+
+- Held-out speech-quality ASR measurement and validated acoustic VAD integration.
+- Live vision backend and a real multimodal benchmark on declared hardware.
+- Microphone capture and voluntary feedback notes.
+- Demo video and presentation draft.
+
+### Completed since this list was last written
+
+- Live reasoning adapters. Four backends are measured; `qwen/qwen3.8-27b` scores 4/4 at a
+  0.91 s mean. See results/MODEL_SWEEP_2026-09-14.md.
+- Real reasoning on the development scenarios, including the two-step read-then-write chain.
+- Team registration.
 
 Atishay reports a real Faster Whisper CPU INT8 run on one generated speech fixture;
 see feedback/ASR_MEASUREMENTS.md. This is teammate-recorded adapter evidence on his machine,

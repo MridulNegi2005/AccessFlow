@@ -1,4 +1,6 @@
+import base64
 import importlib.util
+import struct
 from pathlib import Path
 
 import pytest
@@ -64,3 +66,47 @@ def test_websocket_returns_controller_output_event():
     final = next(item for item in received if item["kind"] == "final")
     assert final["payload"]["basis"] == "informational"
     assert final["state"]["status"] == "listening"
+
+def test_browser_audio_upload_is_materialized_and_validated(tmp_path: Path):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    event = event_from_message(
+        "session-1",
+        {"kind": "audio", "payload": {"data_base64": encoded, "utterance_id": "upload-1"}},
+        media_root=tmp_path,
+    )
+
+    materialized = Path(event.payload.path)
+    assert materialized.parent == tmp_path
+    assert materialized.suffix == ".wav"
+    assert materialized.read_bytes() == fixture.read_bytes()
+    assert event.payload.utterance_id == "upload-1"
+
+
+def test_browser_png_upload_is_materialized_and_validated(tmp_path: Path):
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded = base64.b64encode(png).decode("ascii")
+
+    event = event_from_message(
+        "session-1",
+        {"kind": "frame", "payload": {"data_base64": encoded, "frame_id": "upload-frame"}},
+        media_root=tmp_path,
+    )
+
+    materialized = Path(event.payload.path)
+    assert materialized.parent == tmp_path
+    assert materialized.suffix == ".png"
+    assert materialized.read_bytes() == png
+    assert event.payload.frame_id == "upload-frame"
+
+
+def test_browser_media_upload_rejects_wrong_file_type(tmp_path: Path):
+    encoded = base64.b64encode(b"not media").decode("ascii")
+
+    with pytest.raises(ValueError, match="RIFF WAV"):
+        event_from_message(
+            "session-1",
+            {"kind": "audio", "payload": {"data_base64": encoded}},
+            media_root=tmp_path,
+        )
