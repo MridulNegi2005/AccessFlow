@@ -487,3 +487,18 @@ Added end-to-end demo coverage for browser media messages after session material
 
 Verification: pytest tests/demo -q -> 18 passed; pytest -q -> 77 passed; Ruff clean;
 git diff --check clean. FastAPI/Starlette dependency deprecation warnings remain informational.
+
+## Checkpoint 25 - 13 September 2026: functional Chrome browser smoke
+
+Ran the local demo through a temporary isolated Chrome session using the actual page controls.
+
+- Chrome connected to the WebSocket route and rendered the demo/mock backend label.
+- Text produced the visible mock acknowledgment and informational final output.
+- The checked-in WAV control produced a media-received audio status and mock final.
+- The PNG control produced a media-received frame status; a paired transcript then produced
+  its informational final.
+- The captured viewport had no horizontal overflow.
+- Uvicorn required local-only websockets 17.1 because the committed dependency set does not
+  currently include a WebSocket runtime. This is recorded as a proposal for the shared owner.
+- Physical microphone/device capture, pixel inspection and separate console capture remain
+  unverified.

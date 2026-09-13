@@ -286,3 +286,18 @@ requires a paired transcript before emitting a controller final.
 
 **Notes:** No shared contract, dependency or lockfile change. Image-only controller planning
 remains an engine integration item; no live ASR or vision-quality claim is made.
+
+## 2026-09-13 - Codex Atishay functional Chrome browser smoke
+
+**Task:** Exercise the local demo in Chrome through its real text, WAV and PNG controls.
+
+**Changes:** No product source change in this checkpoint. Captured functional browser evidence for
+the connected WebSocket, text final, WAV media status/final and PNG media status plus paired
+transcript final. Added docs/feedback/BROWSER_SMOKE.md.
+
+**Status:** Functional Chrome matrix passed; rendered width had no horizontal overflow. Physical
+microphone/device capture, pixel inspection and separate console capture remain unverified.
+
+**Notes:** Uvicorn required a local-only websockets 17.1 install to serve the WebSocket route.
+The committed dependency files were not changed; shared dependency ownership should review this
+proposal before fresh-machine browser use.

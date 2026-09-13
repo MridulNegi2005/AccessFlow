@@ -102,3 +102,17 @@ Verified the browser demo's validated media path end to end for base64 WAV and P
   transcript before producing a controller final, so image-only planning remains an engine
   integration item.
 - Demo tests: 18 passed; full suite: 77 passed; Ruff and git diff --check are clean.
+
+## Checkpoint 25 - 13 September 2026: functional Chrome browser smoke
+
+Ran the local demo through a temporary isolated Chrome session using the actual page controls.
+
+- Text produced the visible mock acknowledgment and informational final output.
+- The checked-in WAV file control produced a media-received audio status and mock final.
+- The PNG file control produced a media-received frame status; the current v0.1 agent then
+  produced a final after a paired transcript.
+- The rendered document had no horizontal overflow in the captured viewport.
+- The smoke required local-only websockets 17.1 because the committed Uvicorn dependency
+  does not currently include a WebSocket runtime. This is recorded as a dependency proposal.
+- Physical microphone/device capture, pixel inspection and separate console capture remain
+  unverified.
