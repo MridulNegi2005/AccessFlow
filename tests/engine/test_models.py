@@ -455,3 +455,26 @@ def test_cli_rejects_non_positive_request_timeout(monkeypatch, value):
                                       "--request-timeout", value])
     with pytest.raises(SystemExit):
         cli.main()
+
+
+async def test_http_status_failures_record_code_and_bounded_detail(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
+    body = {"error": {"type": "invalid_request_error", "message": "context too long"}}
+    async with httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda request: httpx.Response(400, json=body))) as client:
+        backend = JsonBackend("groq", client)
+        with pytest.raises(httpx.HTTPStatusError):
+            await backend.generate("system", {}, {})
+    record = backend.evidence()["requests"][0]
+    assert record["status_code"] == 400
+    assert record["exception_type"] == "HTTPStatusError"
+    assert "invalid_request_error" in record["error_detail"]
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(
+            lambda request: httpx.Response(429, text="y" * 900))) as client:
+        bounded = JsonBackend("groq", client)
+        with pytest.raises(httpx.HTTPStatusError):
+            await bounded.generate("system", {}, {})
+    throttled = bounded.evidence()["requests"][0]
+    assert throttled["status_code"] == 429
+    assert len(throttled["error_detail"]) == 400
