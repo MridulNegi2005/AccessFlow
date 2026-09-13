@@ -73,3 +73,12 @@ CI disabled/manual-only. No new dependencies or public wire fields. Goal remains
 
 ## Local-model instrumentation checkpoint
 185 tests and Ruff pass. Luna high drafted bounded request telemetry and warm-up validation; parent reviewed, integrated replay evidence and added portable runtime/measurement scripts. Real cold readiness: 144.93 s; not a task-quality result. D: runtime/model storage avoids nearly full C:. See LOCAL_MODELS.md. Next: clean-source live task measurements. No B-owned code, dependencies, CI or release changes.
+
+## 2026-09-13 — Explicit live planner decisions
+Real local pilot on clean 6099497: readiness 18.32 s, valid model plan in 8.23 s,
+no calls and unresolved completion; task timed out at 30 s with zero mock effects.
+Generation schema previously allowed every top-level field to be omitted. A-side fix
+requires explicit output fields and dependencies in the model schema, explains resolved
+corrections and action planning in the system prompt; internal v0.1 defaults unchanged.
+Focused model tests 13 pass and Ruff passes. Same-fixture live retry follows; this is
+development tuning, not a held-out comparison. CI remains disabled.
