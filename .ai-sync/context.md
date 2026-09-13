@@ -155,3 +155,16 @@ collected.
 
 **Notes:** Manual browser/device smoke, held-out endpoint quality, engine integration and
 final presentation assembly remain. No shared contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay local demo smoke
+
+**Task:** Verify the local demo after the documentation checkpoint.
+
+**Changes:** Started the FastAPI demo temporarily and checked the served page for the
+microphone capture path, WAV encoder and explicit demo/mock label.
+
+**Status:** HTTP smoke returned 200 and the full suite passed 61 tests with 2 known
+dependency deprecation warnings. The desktop browser-control surface failed to initialize,
+so browser permission and physical-device microphone capture remain unverified.
+
+**Notes:** Temporary server stopped after the check. No source, contract, dependency or
+lockfile change.

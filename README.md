@@ -357,3 +357,14 @@ Files:
 
 The session has not been run and no participant data has been collected. The recording
 has not been made; manual browser/device smoke and the Mridul engine integration remain.
+
+Local smoke evidence:
+
+~~~text
+GET http://127.0.0.1:8000/ -> 200
+served page contains getUserMedia, encodeWav and the demo/mock label
+uv run --python 3.12 --extra dev pytest -q -> 61 passed, 2 warnings
+~~~
+
+The browser-control surface was unavailable in this run, so microphone permission and
+physical-device capture remain unverified.

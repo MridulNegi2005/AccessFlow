@@ -186,3 +186,11 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
   recording performed.
 - **Notes:** Manual browser/device smoke, held-out endpoint quality, engine integration,
   feedback notes and final presentation remain. No shared contract or dependency change.
+## 2026-09-13 - Codex Atishay local demo smoke
+
+- **Task:** Verify the browser demo after the documentation checkpoint.
+- **Changes:** Served the demo locally and checked the HTTP response and required UI
+  markers for getUserMedia, WAV encoding and the demo/mock backend label.
+- **Status:** HTTP 200; full suite 61 passed with 2 dependency deprecation warnings.
+- **Notes:** Browser-control initialization failed, so permission and physical-device
+  microphone capture remain unverified. Temporary server was stopped.
