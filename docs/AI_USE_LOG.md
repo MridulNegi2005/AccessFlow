@@ -222,3 +222,12 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - **Status:** Demo suite 11 passed; full suite 64 passed; Ruff clean.
 - **Notes:** The reasoner remains mock and informational; no action authority or shared
   contract change.
+## 2026-09-13 - Codex Atishay presentation content outline
+
+- **Task:** Prepare the content draft for the required presentation template.
+- **Changes:** Added an eight-slide outline covering the scenario, architecture, safety,
+  measurements, backend labels and remaining gates.
+- **Status:** Template-neutral content draft complete; official template and final assembly
+  remain.
+- **Notes:** All current claims are tied to generated fixtures or offline tests. No
+  participant data, source, contract or dependency change.

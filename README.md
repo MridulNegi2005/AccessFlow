@@ -422,3 +422,12 @@ Controller final: Mock agent received audio input: Please book a screen repair f
 
 The backend route and controller output are verified through TestClient. Browser permission,
 physical microphone capture, live vision and a non-mock reasoner remain unverified.
+## Checkpoint 20 - 13 September 2026: presentation content outline
+
+Added docs/presentation/SLIDE_OUTLINE.md, a template-neutral eight-slide content draft
+for the required final presentation.
+
+It includes the scenario, failure mode, architecture, correction and pause evidence,
+action-safety states, browser/backend boundaries, current measurements and remaining
+gates. It explicitly labels generated fixtures, mock reasoning and missing live evidence.
+The official organizer template is still required before final assembly.
