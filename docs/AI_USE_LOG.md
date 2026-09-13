@@ -246,3 +246,16 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - **Status:** Demo suite 14 passed; full suite 67 passed; Ruff clean.
 - **Notes:** Default mock mode and valid local mode remain unchanged. No shared contract or
   dependency change.
+## 2026-09-13 - Codex Atishay opt-in local Ollama vision path
+
+- **Task:** Add and test an optional local PNG vision backend.
+- **Changes:** Added loopback-only Ollama generate provider, LocalPerception backend labeling,
+  environment-gated demo routing and mocked success/error tests.
+- **Status:** Provider and demo delegate pass; no live Ollama service or vision-quality claim.
+- **Notes:** No model download, shared contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay local vision availability check
+
+- **Task:** Check for a local Ollama service before any live vision run.
+- **Result:** ollama command not found and loopback port 11434 was closed.
+- **Status:** No installation or download attempted; live vision remains unverified.
+- **Notes:** No source, contract, dependency or lockfile change.

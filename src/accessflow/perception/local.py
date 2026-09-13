@@ -140,7 +140,7 @@ class LocalPerception:
                 final=True,
                 speech_start=event.timestamp,
                 speech_end=event.timestamp,
-                backend="local/injected-vision",
+                backend=getattr(self._vision_provider, "backend_name", "local/injected-vision"),
             )
             return
         raise ValueError(f"Unsupported perception event: {event.kind}")

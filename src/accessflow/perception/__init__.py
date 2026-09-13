@@ -4,6 +4,7 @@ from .timing import ActivitySummary, ActivityWindow, PauseCandidate, pause_candi
 from .audio import ActivityFrame, AudioBuffer, energy_activity, load_pcm
 from .vad import webrtc_activity
 from .local import LocalPerception, WavFormat, validate_wav
+from .vision import OllamaVisionProvider
 
 __all__ = [
     "ActivitySummary",
@@ -12,6 +13,7 @@ __all__ = [
     "ActivityFrame",
     "AudioBuffer",
     "LocalPerception",
+    "OllamaVisionProvider",
     "WavFormat",
     "energy_activity",
     "load_pcm",
