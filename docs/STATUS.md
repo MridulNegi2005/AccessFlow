@@ -19,7 +19,11 @@ evidence, not an evaluated submission.
 - Replay crash/timeout/cancellation evidence and nonzero CLI exits for failed runs or task criteria.
 - Late committed writes retained after earlier no-effect claims; contradictory transport status reported.
 - Four-condition synthetic controller responsiveness command with auditable raw timestamps.
-- 185 local tests and Ruff pass; four development workflows pass in fake reasoning mode. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
+- 204 local tests and Ruff pass; four development workflows pass in fake reasoning mode. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
+- Actual gemma3:4b live development suite: 0/4 completed. Two request timeouts and two
+  incorrect semantic plans; no effects. Explicit GPU placement improved one request's
+  speed but its task still failed. Raw proposals and traces are preserved, not replaced
+  by mock successes. See results/LOCAL_MODEL_2026-09-13.md.
 - Public repository and teammate bootstrap. Atishay9828 was invited with write permission;
   invitation acceptance has not been checked in this slice.
 
@@ -40,7 +44,8 @@ recorded in [handoffs/mridul.md](handoffs/mridul.md).
 Atishay reports a real Faster Whisper CPU INT8 run on one generated speech fixture;
 see feedback/ASR_MEASUREMENTS.md. This is teammate-recorded adapter evidence on his machine,
 not an independently reproduced end-to-end result, held-out score or accessibility benefit.
-No live reasoning/vision, official compatibility or end-to-end latency target is certified.
+No live model task-completion or vision-quality target, official compatibility or
+end-to-end latency target is certified.
 
 ## GitHub Actions
 

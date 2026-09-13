@@ -219,3 +219,5 @@ Codex parent preserved two failed live pilots, grounded planner schema per Ollam
 
 ## 2026-09-13 — First full live development run
 Actual Ollama gemma3:4b on clean79bd263: 0/4 tasks passed. Two request timeouts; two invalid semantic plans, zero effects. Typed outputs prove wrapper/format/completion errors; controller did not emit model's false success claim. All resets/cleanup succeeded. Codex added opt-in GPU-layer setting and placement/load evidence for the next isolated hardware experiment; model22 and runner6 tests pass, Ruff pass. Prompt and timeout values unchanged in this placement experiment.
+
+Final validation for local-model experiment slice:204 tests and Ruff passed. Codex preserved all failures and compared auto versus explicit35-layer placement with unchanged request/controller deadlines. Actual model outputs changed; no isolated causal/p95 claim. No real task passed, no external effects, no hosted request. Human review remains pending.

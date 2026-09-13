@@ -1,27 +1,31 @@
 # Active handoff
 
-Last updated by: Codex (2026-09-13 17:23)
+Last updated by: Codex (2026-09-13, after live model experiments)
 
 ## Current Task
 Persistent Workstream A goal remains active. B checkpoint 2a4372a integrated unchanged.
-Native process lifecycle is implemented and locally verified; CI must remain disabled.
+Improve actual model planning accuracy after preserved failed live runs. CI must remain disabled.
 
 ## In Progress
-178 tests and Ruff pass; installed-wheel local profile 4/4. ProcessPerception serializes
-native inference, handles cancellation/startup/close, and launches the actual interpreter
-on Windows instead of leaving a venv-redirector child alive. Replay closes owned providers
-and records cleanup outcome. Controller cancels superseded/interrupt workers; late-result
-checks remain. See docs/PROCESS_WORKER.md for actual PID evidence and honest limits.
-No actual model was run in this slice. B's ASR report remains teammate-reported evidence.
+204 tests and Ruff pass (two existing TestClient warnings). Actual Ollama gemma3:4b
+live development suite 0/4: two request timeouts, two invalid semantic plans. No effects
+or model-invented final successes emitted. Explicit GPU35 reduced one plan request from
+19.74 to 11.11 s but task still failed. All traces/plans retained in docs/results.
+Portable runtime/models are in D:\AccessFlow-LocalRuntime; server explicitly stopped.
+See scripts/start-local-ollama.ps1 and docs/LOCAL_MODELS.md to restart. No paid fallback.
+Native lifecycle remains tested; B's ASR report is teammate-reported evidence only.
 
 ## Next Steps
-Measure/configure actual reasoning/vision and local model warm-up/reload/runtime. Review
-B's activity timing contract proposal; add baseline/ablation and broader/held-out cases.
-Official-kit schema and corrected Docker execution remain outstanding. Preserve B ownership.
+Fix demonstrated model misunderstandings (flat slot values, actual tool arguments,
+request understanding versus completed effect, 24-hour time); test unfamiliar wording
+and explicitly compare another local model if needed. Preserve failed evidence. Then
+actual vision/ASR integration, B activity contract review, baselines/ablation and broader
+held-out cases. Official-kit schema and corrected Docker execution remain outstanding.
 
 ## Key Files Modified
-A process adapter/worker, engine worker cancellation, CLI/replay, A lifecycle tests;
-PROCESS_WORKER.md, setup/contract/status and AI/sync notes. No public wire/dependency change.
+A model/schema/telemetry adapter, final-correction acknowledgment, replay evidence,
+local runtime/experiment scripts, live_dev fixture variants, results/docs and A tests.
+No B implementation, public wire contract or dependency changes.
 
 ## CI constraint
 Workflow 357005144 disabled remotely and YAML manual-only. Do not enable or dispatch.

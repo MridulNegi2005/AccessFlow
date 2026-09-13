@@ -222,3 +222,11 @@ kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Notes:** Full suite 194 passed before two additional cancellation tests; focused runner6 and model/integration28 pass. Ruff passes. PowerShell stop/restart and occupied-port refusal verified. Four live variants pass only their scripted plumbing check. Next: clean-source actual four-case run. No B-owned implementation or CI changes.
 
 ---
+
+## [2026-09-13 18:09] — Codex
+**Task:** Complete real local-model measurements and preserve the next A-side failure to fix.
+**Changes:** Saved cold readiness, two original pilots, grounded four-case failure suite and GPU35 pilot with typed plans/config/source hashes. Added optional GPU placement evidence, strict runner failure/reset accounting, and actual server lifecycle checks.
+**Status:** in-progress (persistent goal)
+**Notes:** Final204 tests and Ruff pass. Live suite0/4; GPU placement improved one request to11.11 s but the task still failed. No wrong effects or false final success emitted. Server stopped and unloaded. Next: improve measured plan semantics or compare another explicit local model, then real modalities/baselines/full coverage. CI remains disabled; no B files or dependencies changed.
+
+---
