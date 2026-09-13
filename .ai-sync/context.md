@@ -29,3 +29,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** `uv run --python 3.12 --extra dev pytest tests/test_contract.py` passed 4 tests.
 The default 3.11 `uv` target is locally broken; no live ASR, vision or hosted-backend
 evidence exists.
+
+## [2026-09-13 15:30] - Codex
+**Task:** Implement the first turn-policy checkpoint for Atishay's Workstream B.
+**Changes:** Added the synchronous `HeuristicTurnPolicy` and focused tests for partial speech,
+corrections, repetitions, backchannels and stale revisions; updated the README and handoff.
+**Status:** checkpoint validated; no vision or UI implementation yet.
+**Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 29 tests and Ruff passed for owned
+paths. The current contract still lacks timer/silence events, so no acoustic pause claim is made.
