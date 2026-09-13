@@ -207,6 +207,8 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                            "tools": tool_profile, "perception": perception_profile,
                            "component_config": component_config or {}}}
     metadata.update(source_evidence(path))
+    reasoner_evidence = getattr(reasoner, "evidence", None)
+    metadata["reasoner_evidence"] = reasoner_evidence() if callable(reasoner_evidence) else None
     outcome = evaluate_task(definition.expectation, events, tools.effects, inputs[0].payload.tools, completion_status)
     metadata["task_oracle"] = outcome
     destination = Path(output)

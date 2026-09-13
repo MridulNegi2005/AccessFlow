@@ -201,3 +201,6 @@ Ruff pass. No independent live-model run or human review recorded. No dependency
   packaged missing-WAV failure path and no remaining worker PID verified.
 - Evidence/backend: real Python subprocesses with fake providers; no live model run. No additional
   dependency, CI trigger, human review or submission recorded.
+
+## 2026-09-13 — Local model setup and telemetry (Workstream A)
+Feature origin: approved real-inference validation requirement. Codex parent installed verified official portable Ollama and gemma3:4b locally, wrote runtime/experiment scripts and integrated replay evidence. GPT-5.6-Luna high drafted bounded request telemetry and warm-up validation/tests; parent reviewed. 185 tests and Ruff pass. Cold real readiness returned valid JSON in 144.93 s; no completed real task reported yet. Human review pending. No hosted calls or new dependencies. Runtime/model assets are outside Git.
