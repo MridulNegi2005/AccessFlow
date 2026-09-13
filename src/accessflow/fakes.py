@@ -64,7 +64,8 @@ class FakeTools:
 
     async def cancel(self, call_id):
         self.cancelled.add(call_id)
-        return "unknown" if self.ignore_cancel else "cancelled_before_commit"
+        committed = any(c.call_id == call_id and c.operation_id in self.effects for c in self.calls)
+        return "unknown" if self.ignore_cancel or committed else "cancelled_before_commit"
 
 
 class MockOnlyAuthorization:

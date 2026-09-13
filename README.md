@@ -26,5 +26,6 @@ The internal protocol is v0.1, **not Samsung's unpublished wire schema**. Offlin
 prove contracts and orchestration only. No live ASR, vision quality, official-kit score,
 hardware latency or accessibility benefit is claimed by passing those tests.
 
-Registration, hosted Git remote creation, publishing, final tag and submission are not
-performed by the bootstrap. No API credentials are required for contract tests.
+The shared GitHub remote is being set up at the user's request. Registration, final
+submission tag and submission are separate human steps. No API credentials are required
+for contract tests.

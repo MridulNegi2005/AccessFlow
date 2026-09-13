@@ -12,3 +12,11 @@ Python configuration, workstream ownership, handoff instructions and plan copy. 
 Official kit, live model benchmarks and final submission remain outstanding. No hosted remote.
 
 ---
+
+## [2026-09-13 14:32] — Codex
+**Task:** Prepare GitHub collaboration at user request.
+**Changes:** Added initial engine safety tests; normal clone/push instructions replace bundle workflow.
+**Status:** in-progress
+**Notes:** 16 offline tests passed; Ruff passed. Authenticated GitHub account verified; repository visibility selection pending. No live inference claim.
+
+---

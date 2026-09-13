@@ -6,8 +6,9 @@ Last updated by: Codex
 Implement AccessFlow Workstream A and prepare independent Workstream B checkout.
 
 ## In Progress
-Initial engine exists; race tests, replay, reconciliation and packaging are not complete.
-Contract/bootstrap verification is being run. This is not a finished hackathon submission.
+Initial engine and 16 offline contract/safety tests pass. Broader race and reconciliation
+tests, replay and packaging remain incomplete. GitHub setup was explicitly requested.
+This is not a finished hackathon submission.
 
 ## Next Steps
 Atishay: read ATISHAY_START_HERE.md, branch atishay/perception, build only owned components

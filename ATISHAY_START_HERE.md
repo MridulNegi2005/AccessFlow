@@ -5,22 +5,22 @@ tool execution and packaging. You do not need his engine, his API key or his mac
 
 ## First 30 minutes
 
-1. Receive this repository via a Git remote or the supplied `AccessFlow-bootstrap.bundle`.
+1. Clone the shared GitHub repository using the commands below.
 2. Clone it into your own directory. Do not use Mridul's working checkout.
 3. Create your branch from the common bootstrap:
 
    ```powershell
-   git clone ./AccessFlow-bootstrap.bundle AccessFlow
+   git clone https://github.com/MridulNegi2005/AccessFlow.git
    cd AccessFlow
-   git switch -c atishay/perception
+   git switch atishay/perception
    uv python install 3.11
    uv sync --extra dev
    uv run pytest tests/test_contract.py
    ```
 
-   If cloning a bundle, `origin` points at the bundle, not an online repository. Once
-   the team creates a shared remote, use `git remote set-url origin <shared-url>`.
-   Both people can work offline and exchange bundles meanwhile.
+   `origin` is the shared GitHub repository. Commit to your branch and use
+   `git push -u origin atishay/perception` to share your work. A private repository
+   requires accepting the collaborator invitation before cloning.
 
 4. Read `docs/CONTRACT.md`, `src/accessflow/interfaces.py`, `src/accessflow/fakes.py`
    and the golden event in `tests/fixtures/transcript.json`.
