@@ -111,6 +111,7 @@ def test_websocket_returns_controller_output_event():
     assert {item["kind"] for item in outputs} == {"acknowledge", "final"}
     final = next(item for item in outputs if item["kind"] == "final")
     assert final["payload"]["basis"] == "informational"
+    assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
 
 def test_browser_audio_upload_is_materialized_and_validated(tmp_path: Path):

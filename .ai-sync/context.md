@@ -199,3 +199,15 @@ microphone capture, live vision and non-mock reasoning remain unverified.
 
 **Notes:** Demo suite 11 passed; full suite verification follows. No shared contract,
 dependency or lockfile change.
+## 2026-09-13 - Codex Atishay visible local transcript output
+
+**Task:** Make the local audio result reviewable in the browser demo.
+
+**Changes:** The mock reasoner now includes the latest observation text in its informational
+final response. This keeps the reasoner explicitly mock while exposing the LocalPerception
+transcript for local audio review.
+
+**Status:** Demo and full suites pass after the change; no shared contract, dependency or
+lockfile change.
+
+**Notes:** The output remains informational and cannot authorize a real action.

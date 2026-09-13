@@ -20,7 +20,8 @@ Use the generated, provenance-tracked pause-correction fixture or a typed equiva
 
 > Book Tuesday ... actually, Wednesday at five.
 
-Show the transcript revision and the correction state. Explain that the local fixture and
+Show the transcript text in the informational controller output, then show the transcript
+revision and correction state when available. Explain that the local fixture and
 timing measurements are development evidence. If using the browser microphone, show the
 capture control and its backend label, then state that the current demo transports a WAV
 payload into the session-scoped upload route while downstream perception remains demo/mock
