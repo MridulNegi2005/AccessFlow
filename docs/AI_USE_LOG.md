@@ -216,3 +216,6 @@ development tuning, not a held-out comparison. CI remains disabled.
 
 ## 2026-09-13 — Live failure analysis and experiment review
 Codex parent preserved two failed live pilots, grounded planner schema per Ollama structured-output documentation, added completed-correction acknowledgments and fair-format/model-deadline fixture variants. Luna high reviewed scripts and implemented runner failure/reset/typed-plan diagnostics and four tests. Parent added precise phases and two cooperative cancellation tests, and hardened PowerShell listener/process lifecycle (actually stop/restart/port-refusal tested). Full suite194 passed before last2 tests; runner6 and focused model/integration28 pass, Ruff pass. No model success inferred from mocks; no B edits or dependency/CI change. Human review pending.
+
+## 2026-09-13 — First full live development run
+Actual Ollama gemma3:4b on clean79bd263: 0/4 tasks passed. Two request timeouts; two invalid semantic plans, zero effects. Typed outputs prove wrapper/format/completion errors; controller did not emit model's false success claim. All resets/cleanup succeeded. Codex added opt-in GPU-layer setting and placement/load evidence for the next isolated hardware experiment; model22 and runner6 tests pass, Ruff pass. Prompt and timeout values unchanged in this placement experiment.

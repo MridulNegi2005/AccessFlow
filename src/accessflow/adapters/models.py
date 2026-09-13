@@ -37,7 +37,7 @@ Do not place a final success claim in response for a state-changing request.
 
 class JsonBackend:
     def __init__(self, backend="ollama", client=None, timeout=20, warmup_timeout=290,
-                 history_limit=128):
+                 history_limit=128, num_gpu=None):
         if backend not in {"ollama", "gemini"}:
             raise ValueError("Explicit backend must be ollama or gemini")
         if warmup_timeout <= 0:
@@ -51,6 +51,13 @@ class JsonBackend:
         self.timeout = timeout
         self.warmup_timeout = warmup_timeout
         self.history_limit = history_limit
+        if backend == "ollama" and num_gpu is None:
+            configured_gpu = os.getenv("ACCESSFLOW_OLLAMA_NUM_GPU")
+            num_gpu = int(configured_gpu) if configured_gpu is not None else None
+        if num_gpu is not None and (backend != "ollama" or isinstance(num_gpu, bool)
+                                    or not isinstance(num_gpu, int) or num_gpu < -1):
+            raise ValueError("num_gpu requires Ollama and an integer >= -1")
+        self.num_gpu = num_gpu
         self.lock = asyncio.Lock()
         self._request_history = deque(maxlen=history_limit)
         self._request_count = 0
@@ -70,7 +77,8 @@ class JsonBackend:
                 "request_timeout_seconds": self.timeout,
                 "warmup_timeout_seconds": self.warmup_timeout,
                 "history_limit": self.history_limit,
-                "num_ctx": 4096,
+                "num_ctx": 4096 if self.backend == "ollama" else None,
+                "num_gpu": self.num_gpu,
                 "temperature": 0,
                 "ollama_duration_unit": "nanoseconds",
             },
@@ -124,10 +132,13 @@ class JsonBackend:
 
     async def _request(self, client, system, prompt, schema, *, timeout=None):
         if self.backend == "ollama":
+            options = {"num_ctx": 4096, "temperature": 0}
+            if self.num_gpu is not None:
+                options["num_gpu"] = self.num_gpu
             request_kwargs = {"json": {"model": self.model, "stream": False, "format": schema,
                                         "messages": [{"role": "system", "content": system},
                                                       {"role": "user", "content": prompt}],
-                                        "options": {"num_ctx": 4096, "temperature": 0}}}
+                                        "options": options}}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
             response = await client.post(os.getenv("ACCESSFLOW_OLLAMA_URL", "http://localhost:11434") + "/api/chat",
@@ -160,7 +171,8 @@ class JsonBackend:
         if not isinstance(payload, Mapping):
             return None
         metrics = {}
-        for key in ("prompt_eval_count", "prompt_eval_duration", "eval_count", "eval_duration"):
+        for key in ("total_duration", "load_duration", "prompt_eval_cached_count",
+                    "prompt_eval_count", "prompt_eval_duration", "eval_count", "eval_duration"):
             value = payload.get(key)
             if (isinstance(value, (int, float)) and not isinstance(value, bool)
                     and value >= 0 and (isinstance(value, int) or math.isfinite(value))):

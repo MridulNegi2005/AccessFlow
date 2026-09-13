@@ -168,6 +168,9 @@ async def run(args, *, client_factory=None, backend_factory=None, replay_fn=None
                 started = time.perf_counter()
                 await warmup.warmup()
                 record["warmup_s"] = time.perf_counter() - started
+                placement = await client.get(base_url + "/api/ps")
+                placement.raise_for_status()
+                record["model_placement_after_warmup"] = placement.json()
                 phase = "replay"
                 diagnostic_reasoner = DiagnosticReasoner(ModelReasoner(backend_factory()))
                 trace = destination / f"case-{index + 1:03d}.jsonl"
