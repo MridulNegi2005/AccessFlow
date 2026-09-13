@@ -133,3 +133,55 @@ saved reports/raw samples in docs/results. No human validation or live-model cla
 - Validation: 151 tests and Ruff pass; four-case fake/local suites and installed-wheel local suite pass.
 - Backend: Scripted reasoning and injected media callbacks; no live model evaluation.
 - Human modifications/review: Not recorded. No additional dependency, CI trigger or submission.
+## 2026-09-13 - Codex Atishay PCM maintenance checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan and the handoff requirement to replace deprecated audioop.
+- Tool: Codex (current coding session).
+- Prompt: Replace the owned audioop PCM path with a small maintained implementation without changing the shared contract.
+- Output: Added standard-library PCM decoding, stereo downmixing, linear resampling and RMS helpers; added 1/2/3/4-byte coverage.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Focused audio suite 9 passed; Ruff passed for owned paths; no audioop import remains.
+- Backend/dependencies: No dependency or lockfile change; no live ASR/VAD evidence.
+
+## 2026-09-13 - Codex Atishay local ASR measurement
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Run the explicitly installed Faster Whisper base.en CPU INT8 backend on the checked-in audio fixture and record timing honestly.
+- Output: Installed the optional runtime in the ignored virtual environment, downloaded the model into the ignored models directory and recorded the first local pass.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Model loaded in 0.464 s; inference took 0.677 s for 0.500 s of audio; realtime factor 1.354; transcript was empty as expected for a synthetic tone.
+- Backend/dependencies: Faster Whisper 1.2.1, Systran/faster-whisper-base.en, CPU int8; no tracked dependency or contract change.
+## 2026-09-13 - Codex Atishay demo teardown repair
+
+- Feature origin: Full-suite verification of the Workstream B demo.
+- Tool: Codex (current coding session).
+- Prompt: Fix the WebSocket demo cleanup so normal disconnects await the queue-driven agent shutdown cleanly.
+- Output: The demo now cancels only transport tasks, sends a typed session-end event and waits briefly for the agent before cancelling as a last resort.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Demo suite 6 passed; full suite 50 passed; Ruff passed for owned paths.
+- Backend/dependencies: No dependency or contract change.
+## 2026-09-13 - Codex Atishay illustrative speech ASR run
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Generate a clearly labeled non-participant speech fixture and run the installed Faster Whisper base.en CPU INT8 adapter.
+- Output: Added synthetic_speech.wav with provenance and recorded a LocalPerception.observe run.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: 5.304 s fixture; adapter elapsed 5.874 s; realtime factor 1.108; transcript matched the known script apart from the final number wording.
+- Backend/dependencies: Faster Whisper 1.2.1, CPU int8; no tracked dependency or contract change.
+## 2026-09-13 - Codex Atishay timing-only activity summary
+
+- Feature origin: The approved AccessFlow Workstream B plan and the v0.1 contract limitation around timer events.
+- Tool: Codex (current coding session).
+- Prompt: Add a timing-only activity summary that reports pauses without converting them into turn completion, and record an additive contract proposal.
+- Output: Added contiguous activity windows, silence durations, pause signal tests and a pending timing metadata proposal.
+- Human modifications/review: Awaiting Atishay and Mridul review.
+- Validation: Focused audio/timing suite 13 passed; Ruff passed for owned paths; no shared contract changed.
+- Backend/dependencies: Standard library energy frames; no dependency or lockfile change.
+
+## 2026-09-13 — Codex second B integration
+Feature origin: ongoing A integration ownership. Prompt: review and integrate 2a4372a
+without modifying B-owned code. Codex preserved B changes and checkpoint narrative,
+resolved shared documentation conflicts and verified WAV hashes/durations. 159 tests and
+Ruff pass. No independent live-model run or human review recorded. No dependency change.
