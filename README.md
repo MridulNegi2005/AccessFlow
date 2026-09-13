@@ -254,6 +254,18 @@ The comparison is an illustrative backend observation, not a VAD quality benchma
 in docs/feedback/VAD_MEASUREMENTS.md. The local environment uses webrtcvad-wheels 2.0.14;
 the shared lockfile remains unchanged pending review.
 
+## Checkpoint 13 - 13 September 2026: pause-and-correction fixture
+
+Added a second generated speech fixture containing “Book Tuesday.”, a deliberate 1.5 second
+break, and “Actually, Wednesday at five.”
+
+- Fixture: 6.024 s mono PCM, 16-bit, 22.05 kHz; SHA-256
+  49B0B26FD1EBCAE0772B2559A4ABA3782444F59FAB7E7E7038122F06157C872B.
+- Faster Whisper returned “Book Tuesday. Actually, Wednesday at 5.” in 1.334 s
+  (realtime factor 0.221).
+- WebRTC VAD produced three windows around the spoken portions and 0.640 s trailing silence.
+- The timing and transcript are illustrative development evidence; this fixture is not held out.
+
 Python 3.11 and `uv` are required:
 
 ```powershell

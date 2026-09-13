@@ -155,3 +155,14 @@ def test_webrtc_activity_rejects_unsupported_format():
 
     with pytest.raises(ValueError, match="frame_ms"):
         webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), frame_ms=25)
+
+
+def test_checked_in_pause_fixture_has_declared_format():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_pause_correction.wav"
+
+    assert validate_wav(fixture) == WavFormat(
+        channels=1,
+        sample_width=2,
+        sample_rate=22_050,
+        frames=132_830,
+    )

@@ -136,3 +136,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: Focused perception suite 15 passed; Ruff passed for owned paths. Tone: WebRTC 25/25 active frames. Generated speech: WebRTC 189/265 active frames and 0.640 s trailing silence.
 - Backend/dependencies: webrtcvad-wheels 2.0.14 in the ignored environment only; no tracked dependency, lockfile or contract change.
+
+## 2026-09-13 - Codex Atishay pause-and-correction fixture
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Generate a non-participant speech fixture with an explicit pause and self-correction, then measure ASR and acoustic activity.
+- Output: Added synthetic_pause_correction.wav with provenance and recorded WebRTC and Faster Whisper results.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: 6.024 s fixture; WebRTC 139/301 active frames across three windows with 0.640 s trailing silence; ASR elapsed 1.334 s and realtime factor 0.221; transcript preserved the correction wording.
+- Backend/dependencies: Faster Whisper 1.2.1 and webrtcvad-wheels 2.0.14 in the ignored environment; no tracked dependency, lockfile or contract change.
