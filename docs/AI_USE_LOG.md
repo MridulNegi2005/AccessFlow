@@ -118,3 +118,12 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: 5.304 s fixture; adapter elapsed 5.874 s; realtime factor 1.108; transcript matched the known script apart from the final number wording.
 - Backend/dependencies: Faster Whisper 1.2.1, CPU int8; no tracked dependency or contract change.
+## 2026-09-13 - Codex Atishay timing-only activity summary
+
+- Feature origin: The approved AccessFlow Workstream B plan and the v0.1 contract limitation around timer events.
+- Tool: Codex (current coding session).
+- Prompt: Add a timing-only activity summary that reports pauses without converting them into turn completion, and record an additive contract proposal.
+- Output: Added contiguous activity windows, silence durations, pause signal tests and a pending timing metadata proposal.
+- Human modifications/review: Awaiting Atishay and Mridul review.
+- Validation: Focused audio/timing suite 13 passed; Ruff passed for owned paths; no shared contract changed.
+- Backend/dependencies: Standard library energy frames; no dependency or lockfile change.
