@@ -72,3 +72,19 @@ quality evidence is claimed.
 CPU/int8 segment aggregation tests without downloading weights.
 **Status:** checkpoint validated; live model measurement remains.
 **Notes:** Perception tests passed 23; no live ASR quality or latency evidence is claimed.
+## [2026-09-13 18:30] - Codex
+**Task:** Replace deprecated audioop calls in Atishay's owned PCM path.
+**Changes:** Added standard-library PCM decoding, stereo downmixing, linear resampling and RMS
+helpers with coverage for 1-, 2-, 3- and 4-byte samples.
+**Status:** checkpoint validated; live ASR measurement and acoustic VAD remain.
+**Notes:** uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q passed 9
+tests. Ruff passed for owned paths. No dependency or contract changes; no live backend claim.
+
+## [2026-09-13 19:00] - Codex
+**Task:** Measure the installed local Faster Whisper backend on declared hardware.
+**Changes:** Installed the optional runtime in the ignored environment, downloaded the base.en
+model into ignored models storage and recorded a real CPU INT8 fixture run.
+**Status:** checkpoint validated; speech-quality, acoustic VAD and live vision evidence remain.
+**Notes:** Intel Core Ultra 5 125H, Python 3.12.10, faster-whisper 1.2.1. Model load 0.464 s;
+0.500 s tone inference 0.677 s; realtime factor 1.354; transcript empty as expected. No tracked
+dependency or contract changes.

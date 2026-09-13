@@ -133,7 +133,7 @@ Added an isolated PCM loader and fixed-window energy activity helper in
 - Exposes frame start/end times and RMS levels for deterministic timing experiments.
 - Keeps this as an energy baseline, not a speech classifier or clinical VAD.
 - Covers the checked-in tone fixture, stereo resampling, silence/tone boundaries and invalid configuration.
-- Adds no dependency or shared-contract change; a maintained audio library should replace `audioop` before Python 3.13 support.
+- Adds no dependency or shared-contract change; Checkpoint 8 later replaced the deprecated audioop path with standard-library primitives.
 
 Evidence from this checkpoint:
 
@@ -143,9 +143,7 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perc
                                                                -> All checks passed
 ```
 
-Python 3.12 reports the expected `audioop` deprecation warning. No live ASR, speech VAD,
-vision quality, hosted backend or hardware latency is claimed. Next: connect an explicitly
-installed local ASR model and measure backend timing on declared hardware.
+The CP6 baseline used audioop; Checkpoint 8 removed that deprecation from the PCM path. No live ASR, speech VAD, vision quality, hosted backend or hardware latency is claimed. Next: connect an explicitly installed local ASR model and measure backend timing on declared hardware.
 ## Checkpoint 7 - 13 September 2026: local ASR seam
 
 Hardened the optional Faster Whisper path in `LocalPerception` without downloading models during a scenario.
@@ -164,9 +162,47 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perc
                                                                -> All checks passed
 ```
 
-No Faster Whisper weights are installed or evaluated in this environment yet. Next: measure
+At the time of this checkpoint no Faster Whisper weights had been evaluated; Checkpoint 9 records the first local measurement. Next: measure
 an explicitly installed model on declared hardware, then connect timing decisions to the
 available event contract without making every pause a completion.
+
+## Checkpoint 8 - 13 September 2026: dependency-free PCM backend
+
+Replaced the deprecated Python 3.12 audioop calls in the owned PCM path with small
+standard-library decoder, stereo downmixer, linear resampler and RMS helpers.
+
+- Supports 1-, 2-, 3- and 4-byte PCM sample widths.
+- Keeps the existing mono/stereo loading and target-rate behavior without adding a dependency
+  or changing the shared contract.
+- Adds focused coverage for all supported sample widths.
+- Keeps the activity output explicitly labeled as an energy baseline, not a speech classifier.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q  -> 9 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                                                         -> All checks passed
+~~~
+
+This removes the current audioop deprecation warning from the PCM path. It does not establish
+production resampling quality or acoustic VAD quality. Next: measure an explicitly installed
+local ASR model on declared hardware.
+
+## Checkpoint 9 - 13 September 2026: local ASR timing measurement
+
+Ran the installed Faster Whisper base.en model through the local CPU INT8 path on the
+checked-in WAV fixture.
+
+- Hardware: Intel Core Ultra 5 125H, 16 GB installed RAM, Python 3.12.10.
+- Model/runtime: Systran/faster-whisper-base.en, snapshot 3d3d5dee26484f91867d81cb899cfcf72b96be6c, faster-whisper 1.2.1.
+- Audio duration: 0.500 s; model load: 0.464 s; inference: 0.677 s; backend realtime factor: 1.354. LocalPerception.observe elapsed 1.233 s, realtime factor 2.466.
+- The model returned an empty transcript and detected English, which is expected for the
+  synthetic 440 Hz tone. This is timing/backend evidence, not speech recognition quality.
+
+The full measurement record is in docs/feedback/ASR_MEASUREMENTS.md. The model remains in the
+ignored models directory and is not committed.
+
 Python 3.11 and `uv` are required:
 
 ```powershell

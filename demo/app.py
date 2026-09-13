@@ -160,23 +160,28 @@ async def websocket(websocket: WebSocket) -> None:
     sender = asyncio.create_task(send_outputs())
     receiver = asyncio.create_task(receive_inputs())
     try:
-        done, pending = await asyncio.wait(
+        done, _ = await asyncio.wait(
             {sender, receiver, agent_task},
             return_when=asyncio.FIRST_COMPLETED,
         )
         for task in done:
             if not task.cancelled() and task.exception():
                 raise task.exception()
-        for task in pending:
-            task.cancel()
-        await asyncio.gather(*pending, return_exceptions=True)
     except (WebSocketDisconnect, RuntimeError, ValueError):
         pass
     finally:
-        if agent.running:
+        for task in (sender, receiver):
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(sender, receiver, return_exceptions=True)
+
+        if agent.running and not agent_task.done():
             await incoming.put(EndEvent(session_id=session_id))
         if not agent_task.done():
-            agent_task.cancel()
+            try:
+                await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
+            except (asyncio.TimeoutError, RuntimeError):
+                agent_task.cancel()
         await asyncio.gather(agent_task, return_exceptions=True)
 
 

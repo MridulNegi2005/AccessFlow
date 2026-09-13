@@ -56,3 +56,25 @@ def test_energy_activity_rejects_invalid_configuration():
 
 def test_audio_buffer_metadata_is_explicit():
     assert WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=8_000)
+
+@pytest.mark.parametrize(
+    ("sample_width", "frames"),
+    [
+        (1, bytes([128, 255, 0])),
+        (2, b"\x00\x00\xff\x7f\x00\x80"),
+        (3, b"\x00\x00\x00\xff\xff\x7f\x00\x00\x80"),
+        (4, b"\x00\x00\x00\x00\xff\xff\xff\x7f\x00\x00\x00\x80"),
+    ],
+)
+def test_loader_preserves_common_pcm_widths(tmp_path: Path, sample_width: int, frames: bytes):
+    wav_path = tmp_path / f"width-{sample_width}.wav"
+    with wave.open(str(wav_path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(sample_width)
+        handle.setframerate(16_000)
+        handle.writeframes(frames)
+
+    buffer = load_pcm(wav_path)
+
+    assert buffer.sample_width == sample_width
+    assert buffer.pcm == frames
