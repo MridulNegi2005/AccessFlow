@@ -36,3 +36,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 22 local tests, Ruff and offline replay passed. No Actions runs returned by API; Docker and real models unverified. No final release tag or submission.
 
 ---
+
+## [2026-09-13 14:47] — Codex
+**Task:** Investigate unwanted CI failure emails.
+**Changes:** Disabled GitHub workflow 357005144; changed triggers to manual workflow_dispatch. Fixed replay crash when git executable is absent; added regression tests.
+**Status:** completed
+**Notes:** GitHub test/lint/replay/Docker build passed; container run failed at git metadata lookup. 24 local tests and lint now pass. Full fixed Docker run is unverified locally. Do not re-enable automatic CI without user request. Two older queued runs rejected cancellation with HTTP 409; no new workflow runs were dispatched.
+
+---

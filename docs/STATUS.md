@@ -29,3 +29,6 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 - Feedback, video, supplied presentation template, reviewed disclosure and final release.
 
 No live model, official compatibility, latency or completion target is currently certified.
+
+## CI follow-up
+GitHub logs confirmed lint/tests/text replay and Docker build passed; container execution failed because replay assumed git was installed. Fixed metadata lookup to tolerate missing git (commit is null unless supplied through ACCESSFLOW_COMMIT). 24 local tests and lint pass. Workflow is disabled on GitHub and manual-only in source; do not re-enable automatic runs without user request. Full fixed container execution remains unverified.

@@ -23,3 +23,6 @@ against fakes. Mridul: continue engine tests/fixes on mridul/engine. Integrate s
 ## Key Files Modified
 contracts.py, interfaces.py, fakes.py, clock.py, engine.py; pyproject.toml/uv.lock;
 AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and start guide.
+
+## CI correction
+Workflow disabled remotely and manual-only in YAML after user reported failure emails. Do not re-enable automatic runs without user request. Missing-git replay regression fixed; 24 local tests pass. Docker build previously passed remotely; corrected Docker execution remains unverified.

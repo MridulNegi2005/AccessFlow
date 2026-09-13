@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import platform
 import subprocess
 import time
@@ -9,6 +10,17 @@ from accessflow.contracts import EndEvent, PlanProposal
 from accessflow.adapters.internal import parse_event
 from accessflow.engine import Agent
 from accessflow.fakes import FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization, ScriptedReasoner
+
+
+def commit_revision():
+    supplied = os.getenv("ACCESSFLOW_COMMIT")
+    if supplied:
+        return supplied
+    try:
+        result = subprocess.run(["git", "rev-parse", "HEAD"], text=True, capture_output=True, timeout=2)
+        return result.stdout.strip() if result.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        return None
 
 
 async def replay(path, output, reasoner=None, backend="offline-fake"):
@@ -40,9 +52,8 @@ async def replay(path, output, reasoner=None, backend="offline-fake"):
         await runner
         collector.cancel()
         await asyncio.gather(collector, return_exceptions=True)
-    git = subprocess.run(["git", "rev-parse", "HEAD"], text=True, capture_output=True)
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
-                "tools": "fake", "perception": "text-pass-through", "commit": git.stdout.strip(),
+                "tools": "fake", "perception": "text-pass-through", "commit": commit_revision(),
                 "python": platform.python_version(), "platform": platform.platform(),
                 "runtime_s": time.monotonic() - started, "expected_slots": scenario.get("expected_slots", {})}
     destination = Path(output)
