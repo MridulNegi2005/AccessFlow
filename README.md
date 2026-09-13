@@ -237,6 +237,23 @@ uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perc
 
 The current engine still consumes the v0.1 observation contract and has no timer event.
 This is an offline timing baseline, not acoustic VAD quality or a semantic completion claim.
+## Checkpoint 12 - 13 September 2026: optional WebRTC activity backend
+
+Added a lazy optional WebRTC VAD adapter over normalized 16-bit PCM frames, with injected
+detector tests and no shared contract change.
+
+- Accepts 8, 16, 32 or 48 kHz audio and 10, 20 or 30 ms frames.
+- Keeps acoustic activity separate from semantic turn completion and tool safety.
+- Compared the adapter with the energy baseline on both provenance-tracked fixtures.
+- On the tone, both methods marked 25/25 frames active, showing that activity detection alone
+  is not evidence of speech.
+- On generated speech, WebRTC marked 189/265 frames active in two broad windows and left
+  0.640 s trailing silence; the energy baseline marked 138/266 frames across fragmented windows.
+
+The comparison is an illustrative backend observation, not a VAD quality benchmark. Details are
+in docs/feedback/VAD_MEASUREMENTS.md. The local environment uses webrtcvad-wheels 2.0.14;
+the shared lockfile remains unchanged pending review.
+
 Python 3.11 and `uv` are required:
 
 ```powershell

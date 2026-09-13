@@ -127,3 +127,12 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay and Mridul review.
 - Validation: Focused audio/timing suite 13 passed; Ruff passed for owned paths; no shared contract changed.
 - Backend/dependencies: Standard library energy frames; no dependency or lockfile change.
+## 2026-09-13 - Codex Atishay optional WebRTC activity backend
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Add a lazy optional WebRTC VAD adapter with deterministic injection tests, then compare it with the energy baseline on the two generated fixtures.
+- Output: Added 8/16/32/48 kHz and 10/20/30 ms format validation, optional package loading, and activity comparison evidence.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Focused perception suite 15 passed; Ruff passed for owned paths. Tone: WebRTC 25/25 active frames. Generated speech: WebRTC 189/265 active frames and 0.640 s trailing silence.
+- Backend/dependencies: webrtcvad-wheels 2.0.14 in the ignored environment only; no tracked dependency, lockfile or contract change.
