@@ -1,0 +1,24 @@
+{
+  "id": "development-text-correction-01",
+  "provenance": "Codex-authored synthetic orchestration example, 2026-09-13; not held out or clinical data",
+  "event_spacing_s": 0.05,
+  "expected_slots": {"day": "Wednesday", "hour": "17:00"},
+  "events": [
+    {"kind": "session_start", "session_id": "demo", "payload": {"tools": [{
+      "name": "reserve_service_slot", "description": "Create one mock device service appointment", "effect": "write",
+      "parameters": {"type": "object", "properties": {"day": {"type": "string"}, "hour": {"type": "string"}},
+      "required": ["day", "hour"], "additionalProperties": false}
+    }]}},
+    {"kind": "transcript", "session_id": "demo", "sequence": 1, "payload": {"utterance_id": "u1", "revision": 0,
+      "text": "Book Tues ...", "final": false}},
+    {"kind": "transcript", "session_id": "demo", "sequence": 2, "payload": {"utterance_id": "u1", "revision": 1,
+      "text": "Book Tuesday, actually Wednesday at five PM", "final": true}}
+  ],
+  "proposals": [
+    {"intent": "service_appointment", "slot_updates": {"day": "Tuesday"}},
+    {"intent": "service_appointment", "slot_updates": {"day": "Wednesday", "hour": "17:00"},
+     "request_complete": true, "write_requested": true,
+     "calls": [{"tool": "reserve_service_slot", "arguments": {"day": "Wednesday", "hour": "17:00"},
+       "dependencies": ["day", "hour"]}]}
+  ]
+}

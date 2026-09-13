@@ -63,6 +63,8 @@ class Agent:
         self.latest_complete = False
         self.planner = None
         self.active_frame = None
+        self.active_speech = None
+        self.speech_ready = False
         self.last_sequence = -1
         self.invalidated = set()
 
@@ -119,6 +121,7 @@ class Agent:
                 if isinstance(event, InterruptEvent):
                     self.generation += 1
                     self.latest_complete = False
+                    self.speech_ready = False
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
                     if event.payload.scope == "task":
@@ -134,13 +137,17 @@ class Agent:
                     if isinstance(event, FrameEvent):
                         source = ("image", payload.frame_id)
                         revision = 0
-                        self.active_frame = payload.frame_id
                     else:
                         source = ("speech", payload.utterance_id)
                         revision = payload.revision
                     if revision <= self.sources.get(source, -1):
                         continue
                     self.sources[source] = revision
+                    if source[0] == "image":
+                        self.active_frame = source[1]
+                    if source[0] == "speech":
+                        self.active_speech = source[1]
+                        self.speech_ready = False
                     if self.last_request_finished:
                         self.request_id = str(uuid4())
                         self.last_request_finished = False
@@ -215,11 +222,9 @@ class Agent:
                 return
             self.observations[key] = obs
             decision = self.turn_policy.update(obs, self._view())
-            if obs.modality != "image":
-                self.latest_complete = decision.kind == "complete" and obs.final
-            else:
-                speech = [o for o in self.observations.values() if o.modality != "image"]
-                self.latest_complete = bool(speech and speech[-1].final)
+            if obs.modality != "image" and obs.source_id == self.active_speech:
+                self.speech_ready = decision.kind == "complete" and obs.final
+            self.latest_complete = self.speech_ready
             self.state.correction_pending = not self.latest_complete
             if decision.kind == "stop":
                 await self._cancel_writes("explicit_stop")
@@ -236,6 +241,7 @@ class Agent:
             await self._apply(message.value)
 
     def _start_plan(self):
+        self.generation += 1
         if self.planner and not self.planner.done():
             self.planner.cancel()
         view = self._view()
@@ -358,7 +364,7 @@ class Agent:
             return
         current = all(self.state.slots.get(key) and self.state.slots[key].revision == revision
                       for key, revision in call.dependencies.items())
-        if call.status == "cancelled" or not current:
+        if call.call_id in self.invalidated or not current:
             if call.effect == "write" and result.committed:
                 call.status = "success"
                 self.results.append(result)
