@@ -112,7 +112,7 @@ class DemoReasoner:
     async def plan(self, view, manifests) -> PlanProposal:
         latest = view.observations[-1]
         return PlanProposal(
-            response=f"Mock agent received {latest.modality} input.",
+            response=f"Mock agent received {latest.modality} input: {latest.text}",
             request_complete=True,
         )
 

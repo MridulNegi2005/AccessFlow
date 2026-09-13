@@ -214,3 +214,11 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
   produced an informational final.
 - **Notes:** Demo default remains demo/mock for text and image. Browser device capture, live
   vision and non-mock reasoning remain unverified. No shared contract or dependency change.
+## 2026-09-13 - Codex Atishay visible local transcript output
+
+- **Task:** Make local audio evidence visible in the browser demo.
+- **Changes:** Included the latest observation text in the mock reasoner informational final
+  and added a regression assertion.
+- **Status:** Demo suite 11 passed; full suite 64 passed; Ruff clean.
+- **Notes:** The reasoner remains mock and informational; no action authority or shared
+  contract change.

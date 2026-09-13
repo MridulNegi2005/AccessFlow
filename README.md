@@ -417,7 +417,7 @@ Integration smoke evidence with the cached base.en model:
 ~~~text
 WebSocket status: local/Faster Whisper CPU INT8 audio + demo/mock text/image
 Audio acknowledgment: faster-whisper/cpu-int8
-Controller final: Mock agent received audio input. (informational)
+Controller final: Mock agent received audio input: Please book a screen repair for Friday at 10. (informational)
 ~~~
 
 The backend route and controller output are verified through TestClient. Browser permission,
