@@ -18,7 +18,7 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 
 - Broader engine race tests and validation of the normalized status reconciliation route.
 - Live reasoning adapters, official-kit adapter after the kit is supplied, replay and metrics.
-- Held-out speech-quality ASR measurement, validated acoustic VAD endpoint quality, live vision backend and real multimodal
+- Held-out generated-case ASR and endpoint measurements, validated acoustic VAD endpoint quality on human speech, live vision backend and real multimodal
   benchmark on declared hardware.
 - Manual browser/device smoke proof, a completed voluntary feedback session, demo video and final presentation assembly.
 - Docker/CI verification, the 60-scenario authored/provenance-tracked set, reviewed disclosure
@@ -36,3 +36,14 @@ Prepared the owned feedback and presentation artifacts for later human-led valid
   for the current mock/local boundaries.
 - No participant feedback or recording was collected in this checkpoint.
 - Manual browser/device smoke, engine integration and final presentation recording remain.
+## Checkpoint 18 - 13 September 2026: held-out generated speech and endpoint check
+
+Measured three newly generated voice cases after fixing the local evaluation configuration.
+
+- Faster Whisper preserved the fluent request, repeated phrase, correction and two-part
+  request through LocalPerception.observe.
+- WebRTC produced no internal candidate for the fluent or repetition case.
+- On the labeled 1.2 second break, the candidate overlapped the full break but included
+  0.669 seconds of early acoustic margin.
+- The results are held-out generated-fixture evidence only; human speech accuracy and
+  endpoint quality remain unverified.

@@ -168,3 +168,19 @@ so browser permission and physical-device microphone capture remain unverified.
 
 **Notes:** Temporary server stopped after the check. No source, contract, dependency or
 lockfile change.
+## 2026-09-13 - Codex Atishay held-out generated speech evaluation
+
+**Task:** Measure newly generated speech cases after the earlier development fixtures and
+compare fixed-window endpoint candidates with labeled boundaries.
+
+**Changes:** Added three 22.05 kHz mono PCM WAV cases under
+tests/fixtures/audio/held_out, machine-readable labels/results under docs/feedback and a
+fixture metadata test. Faster Whisper base.en CPU INT8 preserved the repeated phrase,
+correction and two-part request. WebRTC produced no internal candidate for fluent or
+repetition; the labeled 1.2 second break had a 1.880-3.860 second candidate with 0.606 IoU.
+
+**Status:** Local held-out generated-case checkpoint measured. Human speech quality,
+precise endpoint quality, browser/device smoke and integration remain unverified.
+
+**Notes:** Fixture check passed 1 test; no shared contract, dependency or lockfile change.
+Generated voice was used; no participant or third-party recording.

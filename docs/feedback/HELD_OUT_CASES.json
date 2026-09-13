@@ -1,0 +1,33 @@
+{
+  "created": "2026-09-13",
+  "author": "Codex for AccessFlow development",
+  "consent_license": "Generated locally with the installed Windows speech synthesizer; no participant or third-party recording",
+  "split": "Held-out from the earlier development fixtures and thresholds; generated voice, not representative speech",
+  "backend": "Faster Whisper base.en CPU INT8 and optional WebRTC VAD",
+  "cases": {
+    "fluent": {
+      "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
+      "script": "Please book a screen repair for Friday at ten.",
+      "duration_s": 3.449,
+      "expected_internal_pauses": []
+    },
+    "repetition": {
+      "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
+      "script": "I want Tuesday, Tuesday, actually Wednesday at five.",
+      "duration_s": 4.724,
+      "expected_internal_pauses": []
+    },
+    "pause": {
+      "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
+      "script": "I tried restarting already. [1.2 second inserted break] The screen still flickers.",
+      "duration_s": 5.958,
+      "expected_internal_pauses": [
+        {
+          "start_s": 2.549,
+          "end_s": 3.749,
+          "duration_s": 1.2
+        }
+      ]
+    }
+  }
+}

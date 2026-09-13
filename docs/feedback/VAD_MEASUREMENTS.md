@@ -35,3 +35,24 @@ docs/feedback/PROVENANCE.md. No participant audio was used.
 
 The pause-correction internal candidate spans the generated 1.5 second break plus speech
 classification margins. Candidates are timing signals only and do not complete an utterance.
+
+## 2026-09-13 - Held-out endpoint check
+
+Settings: WebRTC VAD aggressiveness 2, 20 ms frames, normalized 16 kHz 16-bit mono PCM;
+endpoint candidate threshold 0.400 seconds.
+
+| Case | Active frames | Windows | Internal candidates | Trailing candidate |
+|---|---:|---|---|---|
+| heldout_fluent.wav | 130/172 | 0.180-2.780 s | none | 2.780-3.440 s (0.660 s) |
+| heldout_repetition.wav | 173/236 | 0.100-1.180, 1.460-2.180, 2.420-4.080 s | none at threshold | 4.080-4.720 s (0.640 s) |
+| heldout_pause.wav | 162/297 | 0.100-1.880, 3.860-5.320 s | 1.880-3.860 s (1.980 s) | 5.320-5.940 s (0.620 s) |
+
+The labeled inserted break in heldout_pause.wav is 2.549-3.749 seconds. The candidate
+overlaps the full 1.200-second label, with start error -0.669 seconds, end error
++0.111 seconds and interval-over-union 0.606. The early start shows that this simple
+windowed candidate includes acoustic margins; it is a timing signal, not a precise
+speech boundary or semantic completion decision.
+
+The fluent and repetition cases produced no internal candidate at the fixed threshold.
+The repetition case still produced several acoustic activity windows, which reinforces
+that activity segmentation must not be used to delete repeated words or infer intent.

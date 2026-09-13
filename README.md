@@ -368,3 +368,33 @@ uv run --python 3.12 --extra dev pytest -q -> 61 passed, 2 warnings
 
 The browser-control surface was unavailable in this run, so microphone permission and
 physical-device capture remain unverified.
+## Checkpoint 18 - 13 September 2026: held-out generated speech and endpoint check
+
+Added three generated-voice cases after the earlier development fixtures and fixed timing
+threshold:
+
+- fluent request: “Please book a screen repair for Friday at ten.”
+- repetition and correction: “I want Tuesday, Tuesday, actually Wednesday at five.”
+- two-part request with a labeled 1.2 second inserted break.
+
+Faster Whisper base.en CPU INT8 recognized all three cases through LocalPerception.observe.
+The model emitted numerals for “ten” and “five”; the repeated phrase and correction wording
+were retained.
+
+WebRTC VAD at aggressiveness 2 and 20 ms found no internal candidate in the fluent or
+repetition case. In the pause case it found 1.880-3.860 seconds, overlapping the labeled
+2.549-3.749 second break. The candidate's interval-over-union was 0.606, with a -0.669
+second start error and +0.111 second end error. The early start is a known limitation of
+the fixed-window timing baseline.
+
+Evidence and provenance:
+
+- docs/feedback/HELD_OUT_CASES.json
+- docs/feedback/HELD_OUT_RESULTS.json
+- docs/feedback/ASR_MEASUREMENTS.md
+- docs/feedback/VAD_MEASUREMENTS.md
+- docs/feedback/PROVENANCE.md
+
+These are generated development cases held out from the earlier local examples. They do
+not establish human speech accuracy, representative generalization, endpoint quality or
+clinical benefit. The fixture metadata check passed; full-suite verification follows.
