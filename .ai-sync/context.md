@@ -198,3 +198,19 @@ kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Notes:** 178 tests and Ruff pass; installed-wheel local suite 4/4; actual packaged child failure route verified, no matching worker processes left. B2a4372a unchanged. No live model or official runtime claim; CI stays disabled. Next: real model/runtime and timing-contract/baseline work.
 
 ---
+
+## [2026-09-13 17:41] — Codex
+**Task:** Explain unwanted GitHub workflow failure emails.
+**Changes:** Verified live workflow and historical job status; no CI configuration changed or run dispatched.
+**Status:** completed (workflow explanation)
+**Notes:** Workflow 357005144 remains disabled_manually. Latest run is still 34749085599 from the original push: checks and Docker build passed, Docker execution failed. Missing-git handling was fixed in aa255bc; corrected Docker execution remains unverified. Two older runs remain queued. Preserve current uncommitted model work and the no-CI constraint.
+
+---
+
+## [2026-09-13 17:43] — Codex
+**Task:** Configure and measure actual local reasoning for Workstream A.
+**Changes:** Bounded model request evidence and separate warm-up deadline; replay telemetry; portable local Ollama start/stop and experiment scripts; local-model setup guide.
+**Status:** in-progress
+**Notes:** 185 tests and Ruff pass. Real cold readiness returned valid JSON in 144.93 s, but no task-completion evidence yet. Runtime/models live on D: outside repository. No hosted calls, paid fallback, B implementation edits or CI changes. Next: run clean-source live development cases, preserve failures and measure resource limits.
+
+---

@@ -53,3 +53,7 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
 
 ## Workflow status recheck (2026-09-13 16:51)
 Last updated by: Codex. Workflow remains disabled_manually; no new runs. Current task: workflow explanation completed. In-progress implementation and next steps above remain unchanged. Key files modified: sync context and handoff only.
+
+Workflow recheck (2026-09-13 17:41), Codex: still disabled_manually, manual-only YAML, no new runs. Explanation completed; existing Workstream A work and next steps above remain in progress. Only sync notes changed during this check.
+
+Local-model checkpoint (2026-09-13 17:43), Codex: 185 tests and Ruff pass; portable runtime and real readiness verified. Current task: clean-source live reasoning measurements. New files: scripts and docs/LOCAL_MODELS.md; model/replay telemetry updated. Model task quality, live vision, baseline and kit/Docker gates remain open. CI remains disabled.

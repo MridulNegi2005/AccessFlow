@@ -11,13 +11,14 @@ evidence, not an evaluated submission.
   reconciliation. Accepted read evidence expires when its dependencies change.
 - Atishay perception/policy integrated; final corrections, image readiness and clarification/write guard tested.
 - Native subprocess perception lifecycle, Windows PID correctness, cleanup traces and controller cancellation tested.
-- Gemini/Ollama reasoning adapters tested with HTTP doubles; no real model results yet.
+- Gemini/Ollama reasoning adapters tested with HTTP doubles and bounded request telemetry.
+  Local Ollama readiness succeeded; real task-completion measurements remain in progress.
 - Manifest-bound in-memory lookup/write/status environment with independent committed effects.
 - Four developer-authored text workflows, task criteria, isolated suite runs and causal traces.
 - Replay crash/timeout/cancellation evidence and nonzero CLI exits for failed runs or task criteria.
 - Late committed writes retained after earlier no-effect claims; contradictory transport status reported.
 - Four-condition synthetic controller responsiveness command with auditable raw timestamps.
-- 178 local tests and Ruff pass; four development workflows pass. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
+- 185 local tests and Ruff pass; four development workflows pass in fake reasoning mode. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
 - Public repository and teammate bootstrap. Atishay9828 was invited with write permission;
   invitation acceptance has not been checked in this slice.
 

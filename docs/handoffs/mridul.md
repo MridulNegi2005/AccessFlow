@@ -70,3 +70,6 @@ failure; no live inference. B2a4372a implementation unchanged. See PROCESS_WORKE
 Next: live reasoning/vision and model warm-up/runtime, activity-contract proposal review,
 baselines/ablation and broader scenario set. Official kit and Docker verification remain.
 CI disabled/manual-only. No new dependencies or public wire fields. Goal remains active.
+
+## Local-model instrumentation checkpoint
+185 tests and Ruff pass. Luna high drafted bounded request telemetry and warm-up validation; parent reviewed, integrated replay evidence and added portable runtime/measurement scripts. Real cold readiness: 144.93 s; not a task-quality result. D: runtime/model storage avoids nearly full C:. See LOCAL_MODELS.md. Next: clean-source live task measurements. No B-owned code, dependencies, CI or release changes.
