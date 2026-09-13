@@ -46,14 +46,14 @@ fully grounded per-field attribution. No accessibility benefit or live-model sco
 
 ## Next independent A tasks
 
-1. Review and integrate Atishay checkpoint d61d4dc in an isolated checkout; test shared interfaces before any merge.
+1. Bound native inference worker lifetime/concurrency after integrating checkpoint d61d4dc.
 2. Expand independently authored cases using the mock environment and outcome checks.
 3. Implement baseline/ablation comparisons without changing the shared inference/tools across variants.
-4. Configure and measure a real reasoning backend; integrate B only after its components arrive.
+4. Configure and measure actual reasoning/vision backends through the integrated component seams.
 
 ## Measured evidence and new integration input
 [Responsiveness report](results/RESPONSIVENESS_2026-09-13.md) links the raw 400 samples,
 configuration and tested code commit. Synthetic pending-I/O probes met internal targets;
 this does not certify actual model/media latency. Atishay pushed d61d4dc with perception,
 turn-policy and demo foundations. His handoff reports no live model validation; inspect and
-test that checkpoint before claiming integration. No B implementation was edited here.
+tests now cover that composition; see INTEGRATION_2026-09-13.md. No B implementation was edited.

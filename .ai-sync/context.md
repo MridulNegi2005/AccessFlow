@@ -84,3 +84,71 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 400/400 synthetic probes passed; acknowledgment p95 0.47073 ms and cancellation entry-to-output p95 0.144025 ms. CI remains disabled. Remote Atishay branch now d61d4dc; handoff read, no live model results claimed. Next: isolated integration review and tests, preserving B ownership.
 
 ---
+
+## [2026-09-13 15:00] — Codex
+**Task:** Prepare the public-repository handoff for Atishay.
+**Changes:** Verified the public clone and `atishay/perception` checkout; corrected
+`ATISHAY_START_HERE.md` to explain direct collaborator pushes versus fork-based work.
+**Status:** handoff-ready; no Workstream B implementation started.
+**Notes:** `uv run --python 3.12 --extra dev pytest tests/test_contract.py` passed 4 tests.
+The default 3.11 `uv` target is locally broken; no live ASR, vision or hosted-backend
+evidence exists.
+
+## [2026-09-13 15:30] - Codex
+**Task:** Implement the first turn-policy checkpoint for Atishay's Workstream B.
+**Changes:** Added the synchronous `HeuristicTurnPolicy` and focused tests for partial speech,
+corrections, repetitions, backchannels and stale revisions; updated the README and handoff.
+**Status:** checkpoint validated; no vision or UI implementation yet.
+**Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 29 tests and Ruff passed for owned
+paths. The current contract still lacks timer/silence events, so no acoustic pause claim is made.
+
+## [2026-09-13 16:00] - Codex
+**Task:** Implement the replaceable PNG vision checkpoint for Atishay's Workstream B.
+**Changes:** Added PNG validation and injected vision-provider support to `LocalPerception`,
+with frame identity/timestamp tests and updated checkpoint documentation.
+**Status:** checkpoint validated; minimal demo remains.
+**Notes:** Focused perception tests passed 15; full suite verification follows. No live vision
+backend or quality evidence is claimed.
+## [2026-09-13 16:30] - Codex
+**Task:** Implement the minimal fake-agent browser demo for Atishay's Workstream B.
+**Changes:** Added FastAPI WebSocket routing, typed browser-event translation, labeled mock
+perception/reasoning, plain HTML controls and an end-to-end smoke test.
+**Status:** checkpoint validated; real WAV provenance and timing/VAD remain.
+**Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 37 tests. Ruff passed for owned
+paths. FastAPI test-client dependency deprecation warnings remain; no live multimodal evidence.
+## [2026-09-13 17:00] - Codex
+**Task:** Add deterministic audio fixture provenance for Atishay's Workstream B.
+**Changes:** Generated a synthetic 16 kHz PCM tone with standard libraries, recorded its hash and
+provenance, and added a checked-in fixture validation test.
+**Status:** checkpoint validated; local ASR model and timing/VAD remain.
+**Notes:** Focused perception tests passed 16; the fixture is not speech and supplies no ASR quality
+evidence. No participant recording was used.
+## [2026-09-13 17:30] - Codex
+**Task:** Add PCM loading and an energy-activity timing baseline for Atishay's Workstream B.
+**Changes:** Added isolated mono/stereo loading, rate conversion, RMS activity frames and tests
+against the checked-in fixture; documented the `audioop` deprecation limitation.
+**Status:** checkpoint validated; local ASR and maintained VAD backend remain.
+**Notes:** `uv run --python 3.12 --extra dev pytest -q` passed 43 tests. No live ASR or VAD
+quality evidence is claimed.
+## [2026-09-13 18:00] - Codex
+**Task:** Harden the local Faster Whisper ASR seam for Atishay's Workstream B.
+**Changes:** Added local model-path validation, injectable factory configuration and focused
+CPU/int8 segment aggregation tests without downloading weights.
+**Status:** checkpoint validated; live model measurement remains.
+**Notes:** Perception tests passed 23; no live ASR quality or latency evidence is claimed.
+
+## [2026-09-13 16:51] — Codex
+**Task:** Verify workflow failure emails at user request.
+**Changes:** Read-only GitHub workflow/run checks; appended status to sync files. No workflow enabled or dispatched.
+**Status:** completed (status explanation)
+**Notes:** Workflow 357005144 remains disabled_manually; engine YAML manual-only. Latest failed run remains 34749085599 from the original push; two original runs still queued. Existing integration work is preserved; CI must stay disabled.
+
+---
+
+## [2026-09-13 16:56] — Codex
+**Task:** Integrate Atishay d61d4dc with Workstream A and validate component composition.
+**Changes:** A controller resolves final corrections, answers image-only informational requests and blocks contradictory clarification/write proposals. Added local replay/suite component profile and provenance; organized README with preserved teammate checkpoint history.
+**Status:** in-progress (persistent goal)
+**Notes:** Initial merged code 137 tests; four integration failures and two clarification/write regressions reproduced then fixed. Final 151 tests and Ruff pass; four development cases pass with fake and local components, including installed wheel. No live models or B-owned implementation edits. CI stays disabled. Next: native worker lifecycle, actual model validation and broader baseline/held-out evaluation.
+
+---

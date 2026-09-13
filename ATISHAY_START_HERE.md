@@ -3,6 +3,25 @@
 You own perception, turn policy and the minimal demo. Mridul owns the controller,
 tool execution and packaging. You do not need his engine, his API key or his machine.
 
+## Continue from the integrated checkpoint
+
+Your d61d4dc checkpoint is integrated on `mridul/engine`. In your own checkout, commit
+or otherwise preserve your current work before merging the tested shared engine:
+
+```powershell
+git fetch origin
+git switch atishay/perception
+git merge origin/mridul/engine
+uv sync --frozen --extra dev
+uv run pytest -q
+uv run accessflow suite scenarios/dev --components local --output-dir artifacts/integration-local
+```
+
+Read [the integration report](docs/INTEGRATION_2026-09-13.md). It records A-side fixes and
+B review items for browser utterance revisions, graceful shutdown and activity timing.
+Your owned implementation was preserved unchanged during integration. GitHub Actions is
+disabled; run checks locally. The initial setup instructions below remain a reference.
+
 ## First 30 minutes
 
 1. Clone the shared GitHub repository using the commands below.
@@ -19,9 +38,11 @@ tool execution and packaging. You do not need his engine, his API key or his mac
    uv run pytest tests/test_contract.py
    ```
 
-   `origin` is the shared GitHub repository. Commit to your branch and use
-   `git push -u origin atishay/perception` to share your work. A private repository
-   requires accepting the collaborator invitation before cloning.
+   The repository is public, so cloning and reading the code do not require an
+   invitation. `origin` points to the shared GitHub repository. Push directly with
+   `git push -u origin atishay/perception` only if Mridul has granted you collaborator
+   access; otherwise create your own fork, push `atishay/perception` there, and open a
+   pull request back to the shared repository.
 
    This repository is public. Atishay9828 has been invited with write permission;
    accept https://github.com/MridulNegi2005/AccessFlow/invitations before your first push.

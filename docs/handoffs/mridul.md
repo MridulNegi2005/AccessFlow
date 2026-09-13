@@ -38,3 +38,16 @@ and p95 checks passed. Evidence: docs/results/RESPONSIVENESS_2026-09-13.md and l
 Atishay remote advanced to d61d4dc (ASR/perception/timing/demo foundations). Read his branch
 handoff and review/test in isolation next. His handoff reports no live model validation.
 No shared/B files were changed to force integration; current engine worktree remains separate.
+
+## Integrated checkpoint d61d4dc
+
+Combined engine and B components: 151 tests and Ruff pass; both fake and local component
+profiles pass the four development cases. See INTEGRATION_2026-09-13.md for reproduced
+failures and A-only fixes. Contract v0.1 unchanged; existing semantic completion fields
+are documented. Raw-media callbacks are doubles, no model quality claim. No dependencies
+added. Next: bounded native worker lifecycle, actual model setup, baselines/ablation and
+broader evaluation. B browser revision/lifecycle findings are documented for Atishay.
+CI remains disabled. Human review has not been recorded.
+
+Before publication, Atishay advanced to 2a4372a. Review its PCM/timing changes and
+reported illustrative-speech ASR evidence next; this merge tests d61d4dc only.

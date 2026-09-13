@@ -59,3 +59,22 @@ perception accepts text or explicitly scripted observations; fake audio is never
 - A model-proposed retry after a definitively failed/no-effect attempt is bounded to one
   retry and keeps operation_id with a fresh call_id. Unknown/cancelled outcomes block writes.
   A new user request after a terminal write failure/success starts a new operation identity.
+
+## Completed corrections and image readiness
+
+A final speech observation classified `possible_correction` remains unresolved until a
+fresh, accepted semantic plan originating from that speech source sets `request_complete=True` without a clarification.
+Partial speech cannot be promoted by that flag. A clarification may be emitted for a
+final unresolved correction; a proposal containing a clarification cannot dispatch writes,
+even if it also claims completion and requests a write. Existing authorization and
+confirmed-dependency checks still apply.
+
+An image may support an informational answer when no speech is active. It does not finish
+partial speech or resolve another source's possible correction. An image cannot independently
+supply write intent. A current final speech-origin proposal may establish `write_requested`
+without complete details; a later image-origin proposal may complete those details. Both
+still require the independent environment authorization. Clarification blocks dispatch.
+The controller clears spoken write intent on new speech, interruption or a new request
+after a committed action. Informational speech and completed old requests cannot authorize
+image-origin writes. These are controller interpretations of existing v0.1 fields;
+Atishay's policy and public wire schema are unchanged.

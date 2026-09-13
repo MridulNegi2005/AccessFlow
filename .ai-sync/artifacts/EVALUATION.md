@@ -23,8 +23,9 @@ null. A successful exit with unscored cases is not evidence that every task pass
 
 These are Codex-authored development fixtures with scripted reasoning and mock external
 tools. They are not held-out examples, real Samsung documentation or live model results.
-The current CLI uses transcript pass-through and the final-flag baseline; raw WAV/PNG
-perception and Atishay's timing policy are not integrated into this runner yet.
+The default profile uses fake perception and the final-flag baseline. `--components local`
+selects Atishay's LocalPerception and HeuristicTurnPolicy. The four text cases pass through
+that composition; injected WAV/PNG integration tests prove routing, not model quality.
 
 ## Independent fixture authoring
 
@@ -78,7 +79,7 @@ uv run accessflow suite scenarios/dev --backend gemini --output-dir artifacts/ho
 ```
 
 Configure the selected provider as described in `RUNNING.md`. These options replace
-scripted reasoning only; tools remain mock and perception remains transcript pass-through.
+scripted reasoning only; tools remain mock. Select perception separately with `--components`.
 There is no automatic paid or alternate-provider fallback. Scripts and expected answers
 are not supplied to the real reasoner. Every case gets a fresh backend wrapper.
 
@@ -92,3 +93,27 @@ Still outstanding: the 60-case multimodal set, teammate-authored held-out labels
 model runs, timing baselines/ablation, memory measurements and official-kit adaptation.
 
 For a separate gated-worker controller timing benchmark, see [RESPONSIVENESS.md](RESPONSIVENESS.md).
+
+## Component profiles
+
+```powershell
+uv run accessflow suite scenarios/dev --components local --output-dir artifacts/integration-local
+uv run accessflow replay scenarios/dev/text_correction.json --components local
+```
+
+`--components local` does not imply live inference. Text uses `local/text-pass-through`;
+reasoning remains `offline-fake` unless selected separately. Each suite case gets fresh
+perception and policy instances. Traces record component classes, configuration and the
+backend labels actually emitted by perception. Labels from injected callbacks remain
+`local/injected-asr` or `local/injected-vision`, never live-model evidence.
+
+For WAV, install the optional audio dependencies and model during setup, then pass
+`--asr-model-path <existing-model-directory>` with `--components local`. No weights are
+downloaded by the runner. Without a configured transcriber, raw WAV fails visibly.
+The CLI has no vision provider configuration yet; programmatic `replay(perception=...)`
+supports an injected provider through LocalPerception. Unconfigured PNG fails visibly.
+
+Native ASR uses a thread in this checkpoint. Canceling its coroutine cannot stop the
+native computation, and Python may wait for it at process shutdown. A bounded worker
+lifecycle and actual warm-up/runtime measurements are still required before claiming
+120-second compatibility for real media scenarios. See INTEGRATION_2026-09-13.md.

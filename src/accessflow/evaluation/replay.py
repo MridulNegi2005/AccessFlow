@@ -43,7 +43,8 @@ def source_evidence(path):
             "worktree_dirty": dirty}
 
 
-async def replay(path, output, reasoner=None, backend="offline-fake"):
+async def replay(path, output, reasoner=None, backend="offline-fake", *, perception=None, turn_policy=None,
+                 component_config=None):
     definition = load_scenario(path)
     scenario = definition.model_dump(mode="json")
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -81,7 +82,20 @@ async def replay(path, output, reasoner=None, backend="offline-fake"):
                 perception_inputs, definition.proposals, strict=True)})
         else:
             raise ValueError("Offline fake mode requires explicit proposals or reasoning_steps")
-    agent = Agent(FakePerception(), FinalFlagPolicy(), reasoner,
+    perception_profile = "text-pass-through" if perception is None else (
+        f"{type(perception).__module__}.{type(perception).__name__}")
+    policy_profile = "final-flag-baseline" if turn_policy is None else (
+        f"{type(turn_policy).__module__}.{type(turn_policy).__name__}")
+    selected_perception = perception if perception is not None else FakePerception()
+    observed_backends = set()
+
+    class RecordedPerception:
+        async def observe(self, event):
+            async for observation in selected_perception.observe(event):
+                observed_backends.add(observation.backend)
+                yield observation
+
+    agent = Agent(RecordedPerception(), turn_policy if turn_policy is not None else FinalFlagPolicy(), reasoner,
                   tools, MockOnlyAuthorization())
     runner = asyncio.create_task(agent.run(incoming, outgoing))
     events = []
@@ -170,15 +184,17 @@ async def replay(path, output, reasoner=None, backend="offline-fake"):
     tool_profile = "manifest-mock" if definition.environment is not None else "fake"
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
                 "provenance": definition.provenance,
-                "tools": tool_profile, "perception": "text-pass-through", "commit": commit_revision(),
+                "tools": tool_profile, "perception": perception_profile, "commit": commit_revision(),
+                "perception_backends_observed": sorted(observed_backends),
                 "python": platform.python_version(), "platform": platform.platform(),
                 "runtime_s": time.perf_counter() - started, "expected_slots": scenario.get("expected_slots", {}),
                 "measurement_clock": "perf_counter", "clock_resolution_s": time.get_clock_info("perf_counter").resolution,
                 "completion_status": completion_status,
                 "failure_type": failure_type,
                 "mock_executor_effect_count": len(tools.effects),
-                "config": {"partial_debounce_s": agent.partial_debounce_s, "turn_policy": "final-flag-baseline",
-                           "tools": tool_profile, "perception": "text-pass-through"}}
+                "config": {"partial_debounce_s": agent.partial_debounce_s, "turn_policy": policy_profile,
+                           "tools": tool_profile, "perception": perception_profile,
+                           "component_config": component_config or {}}}
     metadata.update(source_evidence(path))
     outcome = evaluate_task(definition.expectation, events, tools.effects, inputs[0].payload.tools, completion_status)
     metadata["task_oracle"] = outcome

@@ -15,3 +15,19 @@ Compatibility: Existing SessionView construction and input/output envelope field
 valid. No edits to Atishay-owned components. Verified by contract and reconciliation tests,
 including a planner that reads only its public view and a no-effect retry preserving identity.
 Timer/speech activity contracts remain proposals; this change does not implement Atishay's policy.
+
+## A-side integration interpretation — 2026-09-13
+
+Reproductions: tests/engine/test_component_integration.py. Final `possible_correction`
+was permanently blocked; image-only information never completed. A contradictory
+clarification/write proposal could dispatch while asking a question.
+Decision: use the existing PlanProposal.request_complete flag to resolve final corrections
+only when no clarification remains; require speech readiness for writes and allow image
+information independently. No field or version change. B-owned implementations unchanged.
+Tests cover correction resolution, clarification, raw WAV provenance and image/write guards.
+
+Review follow-up: correction resolution also requires the matching speech source. A private
+controller flag records write intent only from accepted complete-turn speech planning;
+image evidence may fill details but cannot invent intent or revive a completed request.
+Four regression/positive cases verify image-source isolation and valid multimodal completion.
+No new public authorization field; the independent authorization provider still governs effects.

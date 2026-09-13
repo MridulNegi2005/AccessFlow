@@ -11,6 +11,16 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Bootstrap in progress, not an evaluat
 - Interfaces and ownership: [docs/CONTRACT.md](docs/CONTRACT.md), [AGENTS.md](AGENTS.md)
 - Daily notes: [docs/handoffs/](docs/handoffs/)
 
+## Current progress
+
+The engine is integrated with Atishay's perception adapter and heuristic turn policy.
+Correction, raw-media routing and authorization integration checks run locally; model
+callbacks in those checks are explicitly injected doubles. No live model quality result
+is claimed. See [the integration report](docs/INTEGRATION_2026-09-13.md) and
+[Atishay's checkpoint history](docs/WORKSTREAM_B_CHECKPOINTS.md).
+
+## Local setup
+
 Python 3.11 and `uv` are required:
 
 ```powershell
@@ -41,8 +51,14 @@ mock external effects. It proves no ASR/vision capability. Explicit `--backend o
 or `--backend gemini` exercises actual reasoning while external tools remain fake.
 See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits.
 
-The engine branch contains offline contract/safety/metrics tests, four scripted development
-workflows and model HTTP adapters tested with mocked responses. The suite checks confirmed
-slots and actual mock effects; see [docs/EVALUATION.md](docs/EVALUATION.md). Atishay's audio,
-image, turn-timing and demo implementation is still open. GitHub Actions remains disabled;
-run the development checks locally.
+Use `--components local` with replay or suite to connect `LocalPerception` and
+`HeuristicTurnPolicy` to the engine. Reasoning stays scripted unless `--backend` is changed:
+
+```powershell
+uv run accessflow suite scenarios/dev --components local --output-dir artifacts/integration-local
+```
+
+The suite checks confirmed slots and actual mock effects; see
+[docs/EVALUATION.md](docs/EVALUATION.md). Raw audio requires a preinstalled ASR model;
+real vision, adaptive timing and model evaluation remain incomplete. GitHub Actions
+remains disabled; run the development checks locally.
