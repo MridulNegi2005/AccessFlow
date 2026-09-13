@@ -87,3 +87,27 @@ need no new method. Direct Agent callers own provider cleanup, using an async co
 or `finally`. A closed ProcessPerception is not reusable; suite factories create fresh instances.
 The controller requests cancellation on superseded same-utterance revisions, replaced frames
 and explicit interruption, while retaining all stale source/revision/epoch checks.
+
+## Grounded tool arguments
+
+`ProposedCall.argument_slots` is an optional parameter-to-slot mapping, default `{}`.
+For example, `arguments={"visit_day": "Wednesday"}`, `argument_slots={"visit_day": "day"}`
+and `dependencies=["day"]` require the authoritative `day` slot to equal `"Wednesday"`.
+Without a mapping, each dynamic argument uses its own name as the slot name. Arguments
+do not create slots: the proposal must include any new slot values in `slot_updates`.
+
+Both read and write dispatch check dependencies and JSON value equality. Writes additionally
+require confirmed slots and the existing completion/authorization gates. A mapping key must
+be a supplied argument. Include contextual dependencies even if absent from tool arguments;
+the engine cannot infer hidden semantic relationships. Unrelated correctly tracked reads
+can continue when other slots change.
+
+Direct manifest `const` or singleton `enum` arguments may be literals. The controller owns
+the idempotency parameter, strips any model value before deriving operation identity, and
+injects its stable identity. A declared read-only status tool may use an actual unresolved
+write operation ID directly, regardless of its parameter name. Arbitrary operation strings
+or unrelated tools receive no such exception. Full manifest argument validation still applies.
+
+Error codes: `missing_dependency` for absent/unlisted required slots;
+`argument_dependency_mismatch` for contradictory values or extraneous mapping keys.
+These errors prevent dispatch; they are not confirmed tool effects.

@@ -24,6 +24,9 @@ in this response. Tool arguments alone do not create slots. Include all argument
 slots in dependencies, for reads as well as writes; do not leave these dependencies empty.
 arguments contains actual parameter values, not JSON Schema keywords. The controller
 inserts manifest-declared idempotency parameters; omit those generated parameters.
+argument_slots may map a tool parameter name to a different slot name; when omitted,
+the parameter uses a same-name slot. Dependencies are still required for every slot
+that affects the call, and each argument value must match its referenced slot value.
 You are a task planner, not only a slot extractor. Explicitly decide request_complete,
 write_requested and calls on every response. A final transcript with a resolved correction
 and all required details is complete; correction_pending describes the controller's current
@@ -219,7 +222,14 @@ class ModelReasoner:
                                "the listed operation_id and its parameter schema. If there is no status tool, "
                                "explain the unknown outcome instead of inventing success or retrying."}
         kwargs = {"_validator": PlanProposal.model_validate} if isinstance(self.backend, JsonBackend) else {}
-        result = await self.backend.generate(SYSTEM, request, self.output_schema(), **kwargs)
+        # Bind model generation to the caller's manifest.  An unresolved write is
+        # deliberately a read-only planning turn; the controller remains the final
+        # authority even when a backend does not enforce this JSON schema.
+        result = await self.backend.generate(
+            SYSTEM,
+            request,
+            self.output_schema(manifests, allow_write_calls=not bool(unresolved)),
+            **kwargs)
         return PlanProposal.model_validate(result)
 
     @staticmethod
@@ -230,7 +240,7 @@ class ModelReasoner:
                 for call in view.calls if call.effect == "write" and call.status in {"unknown", "cancelled"}]
 
     @staticmethod
-    def output_schema():
+    def output_schema(manifests=None, *, allow_write_calls=True):
         # Internal proposals retain defaults for fixtures and backwards compatibility.
         # Model generation must make each safety/action decision explicitly rather than
         # satisfying an all-optional schema with only extracted slots (or an empty object).
@@ -249,12 +259,27 @@ class ModelReasoner:
         proposed_call["properties"]["dependencies"]["description"] = (
             "Slot names from session.state.slots or this proposal's slot_updates that affect this call. "
             "Use names, not slot values, utterance IDs, tool names or boolean preconditions.")
+        if "argument_slots" in proposed_call["properties"]:
+            proposed_call["properties"]["argument_slots"]["description"] = (
+                "Optional parameter_name: slot_name aliases for arguments. When omitted, each parameter "
+                "uses a same-name slot by default. Dependencies must still list every slot affecting this "
+                "call, and each argument value must match its referenced slot value.")
         schema["properties"]["request_complete"]["description"] = (
             "True when the final user request is understood and its explicit corrections are resolved. "
             "Do not copy correction_pending: resolving it is the planner's job.")
         schema["properties"]["write_requested"]["description"] = (
             "True only when the user's current request asks for the state-changing effect. "
             "The controller separately checks authorization before dispatch.")
+        if manifests is not None:
+            calls = schema["properties"]["calls"]
+            available = [manifest for manifest in manifests
+                         if allow_write_calls or manifest.effect == "read"]
+            names = list(dict.fromkeys(manifest.name for manifest in available))
+            schema["$defs"]["ProposedCall"]["properties"]["tool"]["enum"] = names
+            if not names:
+                # An empty enum documents the bound tool set; maxItems also makes
+                # the no-tool case unambiguous to providers that skip item checks.
+                calls["maxItems"] = 0
         return schema
 
     def evidence(self):

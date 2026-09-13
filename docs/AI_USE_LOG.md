@@ -224,3 +224,8 @@ Final validation for local-model experiment slice:204 tests and Ruff passed. Cod
 
 ## 2026-09-13 — Planner accuracy investigation
 Codex parent installed Qwen2.5:3b as an explicitly selected local reasoning comparison (same prompt,4k context,20s request limit). Original clean82a9d0c suite1/4 task criteria passed; other failures and all raw plans retained. Luna high independently drafted four new ignored development probes and validated schema/fake/local plumbing4/4 without revealing labels to parent before first live scoring. Parent copied them without reading labels. They are not teammate-heldout or clinical data. Parent clarified slot/argument/completion semantics and projected unknown operations from the ledger into explicit reconciliation guidance.24 model tests and Ruff pass. A separate Luna audit is reviewing dependency omissions; no engine guards changed. No B changes, hosted calls or CI dispatch.
+
+- 2026-09-13 18:32, Codex: answered workflow-email question using public GitHub workflow/job status and committed missing-git fix. No tests rerun, inference executed, workflow dispatched or implementation changed in this check.
+
+
+- 2026-09-13 18:40, Codex with Luna high planner worker and read-only review: generated dependency/nonce regressions and controller checks; reviewed and incorporated exact manifest model schema changes. Two A race fixtures now declare their existing dummy argument as a manifest constant. Full224 tests/Ruff pass; seven pre-fix failures observed. Human review pending; no B/CI changes.

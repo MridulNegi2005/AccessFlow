@@ -90,7 +90,9 @@ async def test_partial_replacement_restores_prior_confirmed_slot():
                         update={"arguments": {"day": "any"}, "dependencies": ["device"]})])
             return PlanProposal(response="Noted")
 
-    agent, iq, oq, task = await start([], reasoner=Planner(), manifests=[manifest(effect="read")],
+    tool = manifest(effect="read")
+    tool.parameters["properties"]["day"] = {"const": "any"}
+    agent, iq, oq, task = await start([], reasoner=Planner(), manifests=[tool],
                                      tools=FakeTools(gate=asyncio.Event()))
     try:
         await iq.put(transcript("confirmed"))

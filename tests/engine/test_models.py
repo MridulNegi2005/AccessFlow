@@ -47,12 +47,77 @@ def test_model_generation_requires_explicit_completion_and_action_decisions():
         jsonschema.validate({"slot_updates": {"day": "Wednesday"}}, schema)
     complete = {"intent": "appointment", "slot_updates": {"day": "Wednesday"},
                 "calls": [{"tool": "unfamiliar_reserve", "arguments": {"day": "Wednesday"},
-                           "dependencies": ["day"]}], "clarification": None, "response": None,
+                           "dependencies": ["day"], "argument_slots": {}}],
+                "clarification": None, "response": None,
                 "request_complete": True, "write_requested": True}
     jsonschema.validate(complete, schema)
     del complete["calls"][0]["dependencies"]
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(complete, schema)
+
+
+def test_model_generation_schema_binds_calls_to_supplied_manifest_names():
+    manifest = ToolManifest(name="calendar_lookup_v2", description="Look up availability",
+                            effect="read", parameters={"type": "object"})
+    schema = ModelReasoner.output_schema([manifest])
+    assert schema["$defs"]["ProposedCall"]["properties"]["tool"]["enum"] == [manifest.name]
+    valid = {"intent": "availability", "slot_updates": {},
+             "calls": [{"tool": manifest.name, "arguments": {}, "dependencies": [],
+                        "argument_slots": {}}],
+             "clarification": None, "response": None, "request_complete": True,
+             "write_requested": False}
+    jsonschema.validate(valid, schema)
+    valid["calls"][0]["tool"] = "invented_lookup"
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(valid, schema)
+
+
+def test_model_generation_schema_for_no_tools_disallows_calls():
+    schema = ModelReasoner.output_schema([])
+    assert schema["$defs"]["ProposedCall"]["properties"]["tool"]["enum"] == []
+    assert schema["properties"]["calls"]["maxItems"] == 0
+    proposal = {"intent": None, "slot_updates": {}, "calls": [], "clarification": None,
+                "response": "General information", "request_complete": True,
+                "write_requested": False}
+    jsonschema.validate(proposal, schema)
+    proposal["calls"] = [{"tool": "invented", "arguments": {}, "dependencies": [],
+                           "argument_slots": {}}]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(proposal, schema)
+
+
+def test_unresolved_writes_make_model_schema_read_only():
+    read = ToolManifest(name="inspect_v2", description="Inspect outcome", effect="read",
+                        parameters={"type": "object"})
+    write = ToolManifest(name="reserve_v2", description="Reserve item", effect="write",
+                         parameters={"type": "object"})
+    schema = ModelReasoner.output_schema([read, write], allow_write_calls=False)
+    assert schema["$defs"]["ProposedCall"]["properties"]["tool"]["enum"] == [read.name]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate({"intent": None, "slot_updates": {}, "calls": [
+            {"tool": write.name, "arguments": {}, "dependencies": [], "argument_slots": {}}],
+            "clarification": None, "response": None, "request_complete": False,
+            "write_requested": False}, schema)
+
+
+async def test_plan_passes_read_only_schema_when_write_outcome_is_unresolved():
+    observed = []
+
+    class Backend:
+        async def generate(self, system, data, schema):
+            observed.append(schema)
+            return PlanProposal(clarification="I am checking the outcome").model_dump()
+
+    read = ToolManifest(name="inspect_v2", description="Inspect outcome", effect="read",
+                        parameters={"type": "object"})
+    write = ToolManifest(name="reserve_v2", description="Reserve item", effect="write",
+                         parameters={"type": "object"})
+    view = SessionView(
+        session_id="s", state=Snapshot(), observations=[], results=[],
+        calls=[ToolCall(call_id="c", operation_id="op", tool=write.name, arguments={},
+                        dependencies={}, effect="write", status="unknown")])
+    await ModelReasoner(Backend()).plan(view, [read, write])
+    assert observed[0]["$defs"]["ProposedCall"]["properties"]["tool"]["enum"] == [read.name]
 
 
 async def test_reasoner_sends_required_decision_schema_without_changing_internal_defaults():
@@ -65,6 +130,7 @@ async def test_reasoner_sends_required_decision_schema_without_changing_internal
         grounded_schema = payload["messages"][-1]["content"].split("\nJSON schema:\n")[1]
         assert json.loads(grounded_schema) == schema
         assert "Slot names" in schema["$defs"]["ProposedCall"]["properties"]["dependencies"]["description"]
+        assert "same-name slot" in schema["$defs"]["ProposedCall"]["properties"]["argument_slots"]["description"]
         return httpx.Response(200, json={"message": {"content": json.dumps(
             PlanProposal(clarification="Which day?").model_dump())}})
 

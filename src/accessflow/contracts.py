@@ -170,6 +170,9 @@ class ProposedCall(Model):
     # Every argument affecting an effect must be tied to a slot. Literals are permitted
     # for schema constants, but the controller also invalidates all writes on new speech.
     dependencies: list[str] = Field(default_factory=list)
+    # Optional parameter -> slot aliases; omitted parameters use their own names.
+    # Aliases do not replace dependencies or authorize unmatched argument values.
+    argument_slots: dict[str, str] = Field(default_factory=dict)
 
 
 class PlanProposal(Model):
