@@ -3,6 +3,12 @@
   "provenance": "Codex-authored synthetic orchestration example, 2026-09-13; not held out or clinical data",
   "event_spacing_s": 0.05,
   "expected_slots": {"day": "Wednesday", "hour": "17:00"},
+  "expectation": {
+    "slots": {"day": "Wednesday", "hour": "17:00"},
+    "effects": [{"tool": "reserve_service_slot", "arguments": {"day": "Wednesday", "hour": "17:00"}}],
+    "final_basis": "confirmed_tool_effect"
+  },
+  "environment": {"reserve_service_slot": {"kind": "write", "identity_fields": ["day", "hour"]}},
   "events": [
     {"kind": "session_start", "session_id": "demo", "payload": {"tools": [{
       "name": "reserve_service_slot", "description": "Create one mock device service appointment", "effect": "write",

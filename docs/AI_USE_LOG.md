@@ -25,3 +25,15 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 
 ## 2026-09-13 — Continued engine goal
 User authorized persistent Workstream A development and Luna high workers. Codex implemented controller/replay changes; gpt-5.6-luna high performed a bounded read-only controller audit and authored trace_metrics.py plus tests. Codex reviewed the metrics, requested fixes for outcome identity, causality, timing semantics and duplicate-count naming, integrated and tested. 47 tests and Ruff passed; no human validation or live-model results claimed.
+
+## 2026-09-13 — Mock workflows and outcome evaluation
+- Prompt: Continue Mridul-only implementation with optional Luna high workers; keep CI disabled.
+- Codex outputs: Scenario/schema validation, task outcome checker, suite CLI, replay evidence,
+  dependency invalidation fixes, fictional development cases, tests and evaluation/handoff docs.
+- gpt-5.6-luna high outputs: Initial mock executor and bounded cancellation/retry revisions.
+- Codex review/modifications: Requested atomic commit/cancel decision, shielded duplicate waits,
+  full semantic argument conflicts, truthful unknown outcomes, attempt ownership, distinct call
+  IDs in tests and late cleanup coverage. Integrated and tested; added crash/exit failure traces.
+- Validation: 92 local tests and Ruff pass; four scripted development cases pass. Built wheel
+  installed in isolated environment; same four cases pass. No real provider/media run performed.
+- Human modifications/review: Not recorded. These cases are developer-authored, not held out.

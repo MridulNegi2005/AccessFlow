@@ -1,16 +1,21 @@
 import asyncio
 import json
+import hashlib
 import os
 import platform
 import subprocess
 import time
 from pathlib import Path
 
-from accessflow.contracts import EndEvent, PlanProposal, ResultEvent
-from accessflow.adapters.internal import parse_event
+from accessflow.contracts import EndEvent, ResultEvent
 from accessflow.engine import Agent
 from accessflow.fakes import EventReasoner, FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization
 from accessflow.evaluation.trace_metrics import evaluate_trace
+from accessflow.evaluation.scenarios import StepReasoner, load_scenario
+from accessflow.evaluation.oracle import evaluate_task
+from accessflow.evaluation.mock_environment import MockEnvironment
+
+SHUTDOWN_TIMEOUT_S = 2
 
 
 def commit_revision():
@@ -24,29 +29,61 @@ def commit_revision():
         return None
 
 
+def source_evidence(path):
+    root = Path(__file__).resolve().parents[1]
+    digest = hashlib.sha256()
+    for source in sorted(root.rglob("*.py")):
+        digest.update(source.relative_to(root).as_posix().encode() + b"\0" + source.read_bytes() + b"\0")
+    try:
+        status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, timeout=2)
+        dirty = bool(status.stdout.strip()) if status.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        dirty = None
+    return {"source_sha256": digest.hexdigest(), "scenario_sha256": hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+            "worktree_dirty": dirty}
+
+
 async def replay(path, output, reasoner=None, backend="offline-fake"):
-    scenario = json.loads(Path(path).read_text(encoding="utf-8"))
+    definition = load_scenario(path)
+    scenario = definition.model_dump(mode="json")
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
-    class RecordedTools(FakeTools):
+    inputs = definition.events
+    executor = MockEnvironment(inputs[0].payload.tools, definition.environment) if definition.environment is not None else FakeTools()
+
+    class RecordedTools:
         async def execute(self, call):
-            result = await super().execute(call)
+            result = await executor.execute(call)
             record("input", ResultEvent(session_id=scenario["events"][0]["session_id"], payload=result),
                    transport="executor_return")
             return result
 
+        async def cancel(self, call_id):
+            return await executor.cancel(call_id)
+
+        @property
+        def effects(self):
+            return executor.effects
+
     tools = RecordedTools()
-    inputs = [parse_event(entry) for entry in scenario["events"]]
     perception_inputs = [entry for entry in inputs if entry.kind in {"transcript", "audio", "frame"}]
-    fixture_plans = {} if reasoner is not None else {
-        event.event_id: PlanProposal.model_validate(plan)
-        for event, plan in zip(perception_inputs, scenario["proposals"], strict=True)}
-    agent = Agent(FakePerception(), FinalFlagPolicy(), reasoner or EventReasoner(fixture_plans),
+    if reasoner is None:
+        if definition.reasoning_steps:
+            reasoner = StepReasoner(definition.reasoning_steps)
+        elif definition.proposals is not None:
+            reasoner = EventReasoner({event.event_id: plan for event, plan in zip(
+                perception_inputs, definition.proposals, strict=True)})
+        else:
+            raise ValueError("Offline fake mode requires explicit proposals or reasoning_steps")
+    agent = Agent(FakePerception(), FinalFlagPolicy(), reasoner,
                   tools, MockOnlyAuthorization())
     runner = asyncio.create_task(agent.run(incoming, outgoing))
     events = []
     started = time.perf_counter()
     terminal = asyncio.Event()
     completion_status = "completed"
+    failure_type = None
+    criterion = definition.terminal_output
+    terminal_cause = criterion.caused_by_event_id or inputs[-1].event_id
 
     def record(kind, event, transport="queue"):
         events.append({"type": kind, "event": event.model_dump(mode="json"),
@@ -55,48 +92,94 @@ async def replay(path, output, reasoner=None, backend="offline-fake"):
     async def collect():
         while True:
             event = await outgoing.get()
-            record("output", event)
-            if event.kind == "final" or event.payload.get("code") == "backend_failure":
-                terminal.set()
-            if event.state.status == "ended":
-                return
+            try:
+                record("output", event)
+                if (event.kind == criterion.kind and event.payload.get("caused_by_event_id") == terminal_cause
+                        and (criterion.code is None or event.payload.get("code") == criterion.code)):
+                    terminal.set()
+                if event.payload.get("code") == "backend_failure":
+                    terminal.set()
+                if event.state.status == "ended":
+                    return
+            finally:
+                outgoing.task_done()
 
-    collector = asyncio.create_task(collect())
-    try:
-        for entry in inputs:
+    async def feed_and_wait():
+        for index, entry in enumerate(inputs):
             record("input", entry)
             await incoming.put(entry)
             # Explicit test pacing, not an inferred speech/end-of-turn measurement.
-            await asyncio.sleep(scenario.get("event_spacing_s", 0.01))
-        await asyncio.wait_for(terminal.wait(), min(scenario.get("completion_timeout_s", 30), 110))
+            if index < len(inputs) - 1:
+                await asyncio.sleep(definition.event_spacing_s)
+        await asyncio.wait_for(terminal.wait(), definition.completion_timeout_s)
+
+    collector = asyncio.create_task(collect())
+    feeder = asyncio.create_task(feed_and_wait())
+    try:
+        done, _ = await asyncio.wait({runner, collector, feeder}, return_when=asyncio.FIRST_COMPLETED)
+        # An agent/collector exit must not strand the replay until the scenario deadline.
+        for task in (runner, collector):
+            if task in done:
+                task.result()
+        if feeder in done:
+            feeder.result()
+        elif not terminal.is_set():
+            completion_status = "agent_stopped"
     except TimeoutError:
         completion_status = "timeout"
+    except Exception as exc:
+        completion_status = "agent_error"
+        failure_type = type(exc).__name__
     finally:
+        feeder.cancel()
+        await asyncio.gather(feeder, return_exceptions=True)
         ending = EndEvent(session_id=scenario["events"][0]["session_id"])
         record("input", ending)
         await incoming.put(ending)
         try:
-            await runner
-            await asyncio.wait_for(collector, 1)
+            await asyncio.wait_for(asyncio.shield(runner), SHUTDOWN_TIMEOUT_S)
+        except TimeoutError:
+            completion_status = "shutdown_timeout"
+            runner.cancel()
+        except Exception as exc:
+            completion_status = "agent_error"
+            failure_type = type(exc).__name__
+        finally:
+            await asyncio.gather(runner, return_exceptions=True)
+        try:
+            # Drain output already emitted even when the runner failed before an ended event.
+            await asyncio.wait_for(outgoing.join(), 1)
+        except TimeoutError:
+            completion_status = "collector_error"
         finally:
             collector.cancel()
-            await asyncio.gather(collector, return_exceptions=True)
-    if any(row["type"] == "output" and row["event"]["payload"].get("code") == "backend_failure" for row in events):
+            collected = await asyncio.gather(collector, return_exceptions=True)
+            if isinstance(collected[0], Exception):
+                completion_status = "collector_error"
+                failure_type = type(collected[0]).__name__
+    if completion_status == "completed" and any(
+            row["type"] == "output" and row["event"]["payload"].get("code") == "backend_failure" for row in events):
         completion_status = "backend_failure"
+    tool_profile = "manifest-mock" if definition.environment is not None else "fake"
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
-                "tools": "fake", "perception": "text-pass-through", "commit": commit_revision(),
+                "provenance": definition.provenance,
+                "tools": tool_profile, "perception": "text-pass-through", "commit": commit_revision(),
                 "python": platform.python_version(), "platform": platform.platform(),
                 "runtime_s": time.perf_counter() - started, "expected_slots": scenario.get("expected_slots", {}),
                 "measurement_clock": "perf_counter", "clock_resolution_s": time.get_clock_info("perf_counter").resolution,
                 "completion_status": completion_status,
+                "failure_type": failure_type,
                 "mock_executor_effect_count": len(tools.effects),
                 "config": {"partial_debounce_s": agent.partial_debounce_s, "turn_policy": "final-flag-baseline",
-                           "tools": "fake", "perception": "text-pass-through"}}
+                           "tools": tool_profile, "perception": "text-pass-through"}}
+    metadata.update(source_evidence(path))
+    outcome = evaluate_task(definition.expectation, events, tools.effects, inputs[0].payload.tools, completion_status)
+    metadata["task_oracle"] = outcome
     destination = Path(output)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text("\n".join(json.dumps(e) for e in [metadata, *events]) + "\n", encoding="utf-8")
     return {"trace": str(destination), "backend": backend, "events": len(events), "mock_effects": len(tools.effects),
-            "completion_status": completion_status}
+            "completion_status": completion_status, "task_oracle": outcome}
 
 
 def metrics(path):

@@ -9,6 +9,7 @@ uv run pytest -q
 uv run ruff check .
 uv run accessflow replay scenarios/dev/text_correction.json
 uv run accessflow metrics artifacts/replay.jsonl
+uv run accessflow suite scenarios/dev --output-dir artifacts/development-suite
 ```
 
 `uv.lock` pins the dependency resolution. `artifacts/` is local output and ignored by Git.
@@ -30,7 +31,7 @@ labels or timing evidence remain null. Repeated attempts are not called duplicat
 
 No provider switch is automatic. There are zero automatic retries on quota/network failure.
 The controller bounds inference; HTTP adapters use a single async worker and a bounded context.
-MockOnlyAuthorization is appropriate here only because the replay always uses FakeTools.
+MockOnlyAuthorization is appropriate here only because replay uses in-memory mock tools.
 The generic engine defaults to denying writes. Do not connect that mock authorization to
 a real executor. All external booking/service effects remain excluded by project scope.
 
@@ -62,8 +63,12 @@ docker run --rm accessflow
 ```
 
 The image runs the offline text replay. It contains no downloaded ASR/LLM weights. Docker
-was unavailable on Mridul's host during bootstrap; CI performs build/run verification.
-Do not call Docker tested until the corresponding CI run succeeds.
+was unavailable on Mridul's host during bootstrap. A prior GitHub run built it successfully,
+but execution failed on a missing-git metadata lookup. That code is fixed and locally
+regression-tested; corrected container execution remains unverified. GitHub Actions is
+disabled and the workflow is manual-only. Do not enable or dispatch it without user request.
+
+See [EVALUATION.md](EVALUATION.md) for suite criteria, failure traces and fixture authoring.
 
 ## Official kit
 
