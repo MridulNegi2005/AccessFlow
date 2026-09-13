@@ -44,7 +44,7 @@ def source_evidence(path):
 
 
 async def replay(path, output, reasoner=None, backend="offline-fake", *, perception=None, turn_policy=None,
-                 component_config=None):
+                 component_config=None, inference_timeout=None):
     definition = load_scenario(path)
     scenario = definition.model_dump(mode="json")
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -95,8 +95,9 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                 observed_backends.add(observation.backend)
                 yield observation
 
+    agent_kwargs = {} if inference_timeout is None else {"inference_timeout": inference_timeout}
     agent = Agent(RecordedPerception(), turn_policy if turn_policy is not None else FinalFlagPolicy(), reasoner,
-                  tools, MockOnlyAuthorization())
+                  tools, MockOnlyAuthorization(), **agent_kwargs)
     runner = asyncio.create_task(agent.run(incoming, outgoing))
     events = []
     started = time.perf_counter()
