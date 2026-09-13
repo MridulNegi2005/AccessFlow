@@ -85,3 +85,5 @@ development tuning, not a held-out comparison. CI remains disabled.
 
 ## Grounded planning and fair live fixtures
 Original pilots remain failures; schema grounding follows official Ollama guidance. Parent added explicit dependency descriptions and input-size accounting. Final correction gets immediate acknowledgment while model runs, with write guards intact. 194 full tests passed before adding two focused runner cancellation tests; those pass (runner6). Four live-dev variants pass scripted plumbing only. PowerShell actual stop/restart and port refusal pass. No OS listener ownership check in Python runner; use only verified project server. Next: clean-source actual live suite.
+
+Full live development run on79bd263 completed0/4; reports/traces preserved. Next isolate GPU placement with ACCESSFLOW_OLLAMA_NUM_GPU; same planner and timeouts, not a claimed semantic fix. Missing raw model accuracy, baselines, full60 cases, officialkit and Docker gates remain. CI stays off.

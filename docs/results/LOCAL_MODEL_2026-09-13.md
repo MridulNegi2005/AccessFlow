@@ -43,3 +43,23 @@ hashes remain unchanged. Setup instructions are in [LOCAL_MODELS.md](../LOCAL_MO
 Next: record typed proposals, fix demonstrated interpretation errors without weakening
 execution guards, and run all four live development variants. Real vision, full scenario
 coverage, independent held-out tests and baseline comparisons remain outstanding.
+
+## Grounded schema, automatic GPU placement: 79bd263
+
+All four live-development variants failed on clean source 79bd263. Device correction and
+lost-response reconciliation reached the 20-second HTTP timeout, before any effect.
+Support and text-correction plans returned structurally valid JSON in 18.97 and 19.74
+seconds, but neither completed within its 100-second scenario wait. All model resets
+and cleanup checks succeeded. Evidence: `grounded-auto-report.json` and four matching
+`grounded-auto-case-*.jsonl` files in the evidence directory above.
+
+The recorded support plan nested its values under a `slots` key and included a schema
+keyword in actual tool arguments. The correction plan supplied `05:00 PM` instead of
+the manifest's required HH:MM and left request_complete false while proposing a write
+and a premature success message. The controller dispatched no effect and did not expose
+that false success claim as a final answer. Correctness safeguards worked, but task
+completion was 0/4. A model JSON success must not be counted as a task success.
+
+Next experiment: explicit GPU layer placement with identical planner instructions and
+timeouts, to distinguish hardware limits from these reasoning errors. The opt-in
+ACCESSFLOW_OLLAMA_NUM_GPU setting is recorded in request evidence; unset retains auto.

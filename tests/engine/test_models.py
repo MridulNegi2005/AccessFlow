@@ -57,6 +57,35 @@ async def test_context_bound_includes_schema_and_system_before_network():
         assert backend.evidence()["outcome_counts"]["failure"] == 1
 
 
+@pytest.mark.parametrize("layers", [None, "0", "35", "-1"])
+async def test_explicit_gpu_profile_is_sent_and_recorded(monkeypatch, layers):
+    monkeypatch.delenv("ACCESSFLOW_OLLAMA_NUM_GPU", raising=False)
+    if layers is not None:
+        monkeypatch.setenv("ACCESSFLOW_OLLAMA_NUM_GPU", layers)
+    def handler(request):
+        options = json.loads(request.content)["options"]
+        if layers is None:
+            assert "num_gpu" not in options
+        else:
+            assert options["num_gpu"] == int(layers)
+        return httpx.Response(200, json={"message": {"content": "{}"},
+                                      "total_duration": 15, "load_duration": 5,
+                                      "prompt_eval_cached_count": 0})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        backend = JsonBackend(client=client)
+        await backend.generate("", {}, {})
+        evidence = backend.evidence()
+        assert evidence["config"]["num_gpu"] == (int(layers) if layers is not None else None)
+        assert evidence["requests"][0]["load_duration"] == 5
+        assert evidence["requests"][0]["total_duration"] == 15
+
+
+@pytest.mark.parametrize("layers", [-2, True, 1.5, "35"])
+def test_invalid_constructor_gpu_profile_rejected(layers):
+    with pytest.raises(ValueError, match="num_gpu"):
+        JsonBackend(num_gpu=layers)
+
+
 async def test_ollama_request_uses_explicit_model_and_schema():
     def handler(request):
         assert request.url.path == "/api/chat"

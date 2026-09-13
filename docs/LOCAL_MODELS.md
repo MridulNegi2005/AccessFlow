@@ -82,3 +82,9 @@ evaluation. The model was only partially placed on the GPU and available RAM fel
 0.5 GiB during that probe. The first two model-backed pilots failed; see the
 [preserved results](results/LOCAL_MODEL_2026-09-13.md). Further measurements are in progress.
 Current hardware: i5-10300H, about 16 GiB RAM and GTX 1650 4 GiB.
+
+For a separate placement experiment, set process variable `ACCESSFLOW_OLLAMA_NUM_GPU`
+to a supported number of GPU layers before running. Omit it for unchanged automatic
+placement; 0 requests CPU. This option is recorded alongside server-reported placement
+after warm-up, so requesting layers is not confused with proving GPU residency.
+Its meaning follows Ollama's [versioned runner options](https://github.com/ollama/ollama/blob/v0.34.0/api/types.go).
