@@ -11,7 +11,8 @@ Updated 13 September 2026. This file records implementation, not aspirational co
   duplicates, intentional repeat writes and authorization.
 - Atishay's owned Workstream B now includes transcript/audio/frame perception seams,
   deterministic turn policy, a labeled fake-agent browser demo, fixture provenance,
-  dependency-free PCM loading and local Faster Whisper configuration tests.
+  dependency-free PCM loading, local Faster Whisper configuration and optional Ollama
+  vision provider tests.
 - Git has main, mridul/engine and atishay/perception; the public branch is published.
 
 ## Still required
