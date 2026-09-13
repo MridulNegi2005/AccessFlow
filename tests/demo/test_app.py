@@ -166,6 +166,56 @@ def test_websocket_returns_controller_output_event():
     assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
 
+def _receive_controller_outputs(socket):
+    received = []
+    while not any(item["kind"] in {"final", "error"} for item in received):
+        received.append(socket.receive_json())
+    return received
+
+
+def test_websocket_audio_upload_reaches_mock_controller():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {"kind": "audio", "payload": {"data_base64": encoded, "utterance_id": "ws-audio"}}
+            )
+            media_status = socket.receive_json()
+            received = _receive_controller_outputs(socket)
+
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert media_status["payload"] == {"media_received": "audio", "source_id": "ws-audio"}
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Mock agent received audio input" in final["payload"]["text"]
+    assert final["payload"]["backend"] == "reasoner"
+
+
+def test_websocket_png_upload_reaches_mock_controller():
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded = base64.b64encode(png).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {"kind": "frame", "payload": {"data_base64": encoded, "frame_id": "ws-frame"}}
+            )
+            media_status = socket.receive_json()
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
+            )
+            received = _receive_controller_outputs(socket)
+
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert media_status["payload"] == {"media_received": "frame", "source_id": "ws-frame"}
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Mock agent received text input" in final["payload"]["text"]
+    assert final["payload"]["backend"] == "reasoner"
+
+
 def test_browser_path_is_not_used_when_session_upload_root_exists(tmp_path: Path):
     event = event_from_message(
         "session-1",

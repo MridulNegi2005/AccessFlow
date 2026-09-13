@@ -259,3 +259,12 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - **Result:** ollama command not found and loopback port 11434 was closed.
 - **Status:** No installation or download attempted; live vision remains unverified.
 - **Notes:** No source, contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay WebSocket media protocol smoke
+
+- **Task:** Verify browser WAV and PNG transport through the session-scoped demo route.
+- **Changes:** Added media-received status events with source IDs and end-to-end WebSocket
+  regression tests for base64 WAV and PNG payloads.
+- **Status:** Demo suite 18 passed; full suite 77 passed; Ruff and git diff --check clean.
+- **Notes:** WAV reaches the mock controller final. PNG transport is validated and preserved,
+  but the current v0.1 agent requires a paired transcript for a controller final. No shared
+  contract, dependency or lockfile change.

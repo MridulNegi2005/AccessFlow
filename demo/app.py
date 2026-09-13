@@ -277,6 +277,19 @@ async def websocket(websocket: WebSocket) -> None:
                     await websocket.receive_json(),
                     media_root=media_root,
                 )
+                if isinstance(event, AudioEvent):
+                    source_id = event.payload.utterance_id
+                elif isinstance(event, FrameEvent):
+                    source_id = event.payload.frame_id
+                else:
+                    source_id = None
+                if source_id is not None:
+                    await websocket.send_json(
+                        {
+                            "kind": "demo_status",
+                            "payload": {"media_received": event.kind, "source_id": source_id},
+                        }
+                    )
                 await incoming.put(event)
 
         sender = asyncio.create_task(send_outputs())

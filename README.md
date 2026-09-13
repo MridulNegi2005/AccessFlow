@@ -474,3 +474,16 @@ shape errors. Text remains mock; audio stays independently configurable.
 The provider and demo delegate are covered with mocked responses. No ollama executable or
 loopback service was available on this machine, so model availability and live vision
 quality remain unverified.
+## Checkpoint 24 - 13 September 2026: WebSocket media protocol smoke
+
+Added end-to-end demo coverage for browser media messages after session materialization.
+
+- A base64 WAV upload is acknowledged as received, reaches the mock controller and produces
+  the expected informational final output.
+- A base64 PNG upload is acknowledged as received and preserved for the session; the current
+  v0.1 agent still needs a paired transcript before it emits a controller final output.
+- The transport status includes the media kind and source ID without changing perception
+  backend labels or shared contracts.
+
+Verification: pytest tests/demo -q -> 18 passed; pytest -q -> 77 passed; Ruff clean;
+git diff --check clean. FastAPI/Starlette dependency deprecation warnings remain informational.
