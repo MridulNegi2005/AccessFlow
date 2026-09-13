@@ -26,3 +26,12 @@
 
 Both fixtures are generated development assets with provenance recorded in
 docs/feedback/PROVENANCE.md. No participant audio was used.
+
+## 2026-09-13 - Endpoint candidates over WebRTC activity
+
+- Threshold: 0.400 seconds
+- synthetic_speech.wav: internal candidate 2.520-3.300 seconds (0.780 s); trailing candidate 4.660-5.300 seconds (0.640 s)
+- synthetic_pause_correction.wav: internal candidate 0.960-3.220 seconds (2.260 s); trailing candidate 5.380-6.020 seconds (0.640 s)
+
+The pause-correction internal candidate spans the generated 1.5 second break plus speech
+classification margins. Candidates are timing signals only and do not complete an utterance.

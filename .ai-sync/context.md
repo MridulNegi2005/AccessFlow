@@ -132,3 +132,10 @@ session route and static UI checks; kept downstream perception demo/mock.
 **Status:** checkpoint validated at code level; manual browser device smoke, held-out endpoint quality,
 feedback and live vision remain.
 **Notes:** Demo suite 9 passed; no shared contract or dependency change.
+
+## [2026-09-13 22:30] - Codex
+**Task:** Add internal and trailing endpoint candidates over activity windows.
+**Changes:** Added timestamped PauseCandidate values with short-gap and all-silence guards.
+**Status:** checkpoint validated; held-out endpoint quality, manual browser smoke, feedback and live vision remain.
+**Notes:** WebRTC on pause-correction produced a 2.260 s internal and 0.640 s trailing candidate.
+No shared contract or dependency change.

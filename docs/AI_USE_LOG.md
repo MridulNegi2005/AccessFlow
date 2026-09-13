@@ -166,3 +166,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay review.
 - Validation: Demo suite 9 passed; Ruff passed for owned paths. Browser permission and device capture were not available for this run.
 - Backend/dependencies: Existing browser APIs and FastAPI WebSocket route; no dependency or contract change.
+
+## 2026-09-13 - Codex Atishay endpoint candidate extraction
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Extract internal and trailing pause candidates from activity windows without treating any pause as semantic completion.
+- Output: Added timestamped PauseCandidate values and focused tests for short gaps, all-silence input and internal/trailing separation.
+- Human modifications/review: Awaiting Atishay and Mridul review.
+- Validation: Perception suite 18 passed; Ruff passed for owned paths. WebRTC found a 2.260 s internal and 0.640 s trailing candidate on the pause-correction fixture.
+- Backend/dependencies: Existing optional webrtcvad-wheels 2.0.14 local environment; no tracked dependency, lockfile or contract change.

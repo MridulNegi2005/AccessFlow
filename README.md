@@ -306,6 +306,19 @@ uv run --python 3.12 --extra dev ruff check demo tests/demo
 A real browser permission/device smoke run is still required before claiming microphone
 capture works on evaluator hardware.
 
+## Checkpoint 16 - 13 September 2026: endpoint candidate extraction
+
+Added internal and trailing pause candidates over activity windows.
+
+- Internal gaps and end-of-recording silence are returned separately with timestamps and durations.
+- Short gaps and all-silence input produce no endpoint candidate at the default threshold.
+- The helper remains timing-only; consumers must combine it with transcript revisions and turn policy.
+- On generated speech, WebRTC found an internal 0.780 s gap and a 0.640 s trailing gap.
+- On the pause-correction fixture, WebRTC found the designed 2.260 s internal gap and a 0.640 s trailing gap.
+
+This is endpointing evidence for development fixtures, not a semantic completion or held-out
+benchmark. The detailed measurements are in docs/feedback/VAD_MEASUREMENTS.md.
+
 Python 3.11 and `uv` are required:
 
 ```powershell
