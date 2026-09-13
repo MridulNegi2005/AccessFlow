@@ -13,6 +13,17 @@
 
 Append each future milestone with prompts, outputs, edits, tests and reviewer. This log
 supports the mandatory organizer form; it is not a completed or signed disclosure form.
+
+## 2026-09-13 - Codex Atishay vision checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Add a replaceable PNG provider path while preserving frame and event provenance.
+- Output: Added standard-library PNG validation, injected provider execution and focused tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Focused perception suite 15 passed; Ruff passed for owned paths.
+- Backend/dependencies: Injected provider seam; no dependency or contract changes.
+
 ## 2026-09-13 - Codex Atishay turn-policy checkpoint
 
 - Feature origin: The approved AccessFlow Workstream B plan.
