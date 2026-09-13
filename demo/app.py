@@ -30,7 +30,7 @@ from accessflow.contracts import (
 )
 from accessflow.engine import Agent
 from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
-from accessflow.perception import LocalPerception, validate_wav
+from accessflow.perception import LocalPerception, OllamaVisionProvider, validate_wav
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
@@ -40,26 +40,52 @@ app = FastAPI(title="AccessFlow mock demo")
 class DemoPerception:
     """Demo adapter with an explicit mock default and optional local audio."""
 
-    def __init__(self, *, audio_backend=None):
+    def __init__(self, *, audio_backend=None, vision_backend=None):
         self._audio_backend = audio_backend
+        self._vision_backend = vision_backend
 
     @classmethod
     def from_environment(cls):
         model_path = os.environ.get("ACCESSFLOW_DEMO_WHISPER_MODEL", "").strip()
         if not model_path:
-            return cls()
-        resolved_model_path = Path(model_path).expanduser()
-        if not resolved_model_path.is_dir():
+            audio_backend = None
+        else:
+            resolved_model_path = Path(model_path).expanduser()
+        if model_path and not resolved_model_path.is_dir():
             raise ValueError(
                 "ACCESSFLOW_DEMO_WHISPER_MODEL must point to an existing local model directory"
             )
-        return cls(audio_backend=LocalPerception(model_path=resolved_model_path))
+        if model_path:
+            audio_backend = LocalPerception(model_path=resolved_model_path)
+
+        vision_model = os.environ.get("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "").strip()
+        vision_backend = None
+        if vision_model:
+            vision_backend = OllamaVisionProvider(
+                model=vision_model,
+                endpoint=os.environ.get(
+                    "ACCESSFLOW_DEMO_OLLAMA_ENDPOINT",
+                    "http://127.0.0.1:11434/api/generate",
+                ),
+            )
+        return cls(audio_backend=audio_backend, vision_backend=vision_backend)
 
     @property
     def backend_label(self):
-        if self._audio_backend is None:
+        if self._audio_backend is None and self._vision_backend is None:
             return "demo/mock"
-        return "local/Faster Whisper CPU INT8 audio + demo/mock text/image"
+        labels = []
+        labels.append(
+            "local/Faster Whisper CPU INT8 audio"
+            if self._audio_backend is not None
+            else "demo/mock audio"
+        )
+        labels.append(
+            f"local/Ollama {self._vision_backend.model} image"
+            if self._vision_backend is not None
+            else "demo/mock text/image"
+        )
+        return " + ".join(labels)
 
     async def observe(self, event):
         if isinstance(event, TranscriptEvent):
@@ -95,6 +121,12 @@ class DemoPerception:
             )
             return
         if isinstance(event, FrameEvent):
+            if self._vision_backend is not None:
+                async for observation in LocalPerception(
+                    vision_provider=self._vision_backend
+                ).observe(event):
+                    yield observation
+                return
             payload = event.payload
             yield Observation(
                 event_id=event.event_id,

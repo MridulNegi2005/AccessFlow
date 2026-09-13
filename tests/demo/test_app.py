@@ -57,6 +57,33 @@ async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
 
 
 @pytest.mark.asyncio
+async def test_demo_perception_can_delegate_image_to_injected_local_backend(tmp_path: Path):
+    class LocalVision:
+        model = "gemma3:4b"
+        backend_name = "ollama/gemma3:4b"
+
+        def __call__(self, path: Path) -> str:
+            assert path.name == "screen.png"
+            return "screen evidence"
+
+    image = tmp_path / "screen.png"
+    image.write_bytes(
+        b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 4, 5)
+    )
+    event = event_from_message(
+        "session-1",
+        {"kind": "frame", "payload": {"path": str(image), "frame_id": "frame-local"}},
+    )
+
+    perception = DemoPerception(vision_backend=LocalVision())
+    observations = [item async for item in perception.observe(event)]
+
+    assert observations[0].text == "screen evidence"
+    assert observations[0].backend == "ollama/gemma3:4b"
+    assert "local/Ollama gemma3:4b image" in perception.backend_label
+
+
+@pytest.mark.asyncio
 async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path: Path):
     event = event_from_message(
         "session-1",
@@ -80,6 +107,15 @@ def test_demo_perception_environment_can_enable_local_audio(monkeypatch, tmp_pat
     perception = DemoPerception.from_environment()
 
     assert "local/Faster Whisper CPU INT8" in perception.backend_label
+
+
+def test_demo_perception_environment_can_enable_local_vision(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "gemma3:4b")
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_ENDPOINT", "http://127.0.0.1:11434/api/generate")
+
+    perception = DemoPerception.from_environment()
+
+    assert "local/Ollama gemma3:4b image" in perception.backend_label
 
 
 def test_demo_perception_environment_rejects_missing_local_model(monkeypatch, tmp_path: Path):

@@ -456,3 +456,21 @@ session.
 - This prevents the page from advertising a local backend that cannot run.
 
 The guard is covered by unit and WebSocket tests. No shared contract or dependency changed.
+## Checkpoint 23 - 13 September 2026: opt-in local Ollama vision path
+
+Added an optional local PNG provider using the Ollama generate API.
+
+~~~powershell
+$env:ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL = 'gemma3:4b'
+$env:ACCESSFLOW_DEMO_OLLAMA_ENDPOINT = 'http://127.0.0.1:11434/api/generate'
+uv run --python 3.12 uvicorn demo.app:app
+~~~
+
+When configured, the demo routes PNG input through the existing LocalPerception validation
+and displays an ollama/gemma3:4b observation backend. The provider sends image bytes only
+to a loopback endpoint, never downloads a model, trims the response and surfaces service or
+shape errors. Text remains mock; audio stays independently configurable.
+
+The provider and demo delegate are covered with mocked responses. No ollama executable or
+loopback service was available on this machine, so model availability and live vision
+quality remain unverified.

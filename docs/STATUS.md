@@ -18,7 +18,7 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 
 - Broader engine race tests and validation of the normalized status reconciliation route.
 - Live reasoning adapters, official-kit adapter after the kit is supplied, replay and metrics.
-- Held-out generated-case ASR and endpoint measurements are recorded; human speech and endpoint quality, live vision backend and real multimodal
+- Held-out generated-case ASR and endpoint measurements are recorded; human speech and endpoint quality, live vision service and real multimodal
   benchmark on declared hardware.
 - Manual browser/device smoke proof, a completed voluntary feedback session, demo video and final presentation assembly.
 - Docker/CI verification, the 60-scenario authored/provenance-tracked set, reviewed disclosure
@@ -81,3 +81,13 @@ Added explicit validation for the optional local model path.
 - Invalid configuration is reported as demo/config before an agent starts.
 - The default mock mode and valid local configuration remain unchanged.
 - Demo tests cover both the error event and the valid opt-in label.
+## Checkpoint 23 - 13 September 2026: opt-in local Ollama vision path
+
+Added an optional Ollama PNG provider and environment-gated demo routing.
+
+- The provider accepts only loopback HTTP(S) endpoints.
+- PNG bytes are sent to an already-running service; no model download occurs.
+- LocalPerception preserves frame identity and reports the provider backend name.
+- Mocked provider and demo tests cover successful responses and configuration/service errors.
+- No Ollama executable or loopback service was available on this machine; live model
+  availability and vision quality remain unverified.

@@ -79,7 +79,8 @@ Verified:
 - WAV and PNG payloads are size/type validated and stored in a session temporary directory.
 - The microphone path encodes mono PCM to WAV in the browser.
 - Optional local audio uses an existing Faster Whisper model when configured.
-- Text and image demo responses remain mock; live vision is not certified.
+- Text and image demo responses remain mock by default; optional local Ollama vision is
+  loopback-only and live vision quality is not certified.
 
 ## Slide 7 — Evidence
 

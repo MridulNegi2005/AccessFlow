@@ -249,3 +249,26 @@ the path is invalid. Added direct and WebSocket regression tests.
 
 **Notes:** Default demo/mock behavior and valid local mode remain unchanged. No shared
 contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay opt-in local Ollama vision path
+
+**Task:** Add an optional local PNG provider behind the existing replaceable vision seam.
+
+**Changes:** Added a standard-library Ollama generate provider with base64 PNG encoding,
+loopback endpoint validation, response/error handling and backend labeling. The demo can
+enable it with ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL and an optional loopback endpoint.
+LocalPerception preserves frame identity and reports ollama/<model>.
+
+**Status:** Provider and demo delegate verified with mocked responses. No live Ollama service
+or vision-quality result is claimed.
+
+**Notes:** Perception and demo tests pass; no shared contract, dependency or lockfile change.
+## 2026-09-13 - Codex Atishay local vision availability check
+
+**Task:** Check whether the optional local Ollama service is available for live evidence.
+
+**Result:** No ollama executable was found and the expected loopback port 11434 was not
+open. No service was installed or downloaded.
+
+**Status:** The provider remains mocked and the live vision-quality checkpoint remains open.
+
+**Notes:** No source, contract, dependency or lockfile change.
