@@ -33,18 +33,42 @@ $record = [ordered]@{
     models = $modelDirectory
     stdout = $stdout
     stderr = $stderr
+    state = 'starting'
 }
-$record | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtimePath 'ollama-server.json') -Encoding UTF8
-$ready = $false
-for ($attempt = 0; $attempt -lt 30; $attempt++) {
+$recordPath = Join-Path $runtimePath 'ollama-server.json'
+try {
+    $record | ConvertTo-Json | Set-Content -LiteralPath $recordPath -Encoding UTF8
+    $ready = $false
+    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        $server.Refresh()
+        if ($server.HasExited) { throw "Ollama exited during startup. Inspect $stderr" }
+        $listeners = @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)
+        if ($listeners | Where-Object OwningProcess -ne $server.Id) {
+            throw 'Another process acquired the requested port during startup.'
+        }
+        if ($listeners.Count -gt 0) {
+            try {
+                $version = Invoke-RestMethod -Uri "$($record.url)/api/version" -TimeoutSec 1
+                if (-not $version.version) { throw 'Missing server version' }
+                $ready = $true
+                break
+            } catch { }
+        }
+        Start-Sleep -Milliseconds 250
+    }
+    if (-not $ready) { throw "Ollama did not become ready. Inspect $stderr" }
+    $record['version'] = $version.version
+    $record['state'] = 'ready'
+    $record | ConvertTo-Json | Set-Content -LiteralPath $recordPath -Encoding UTF8
+} catch {
+    $startupError = $_
     $server.Refresh()
-    if ($server.HasExited) { throw "Ollama exited during startup. Inspect $stderr" }
-    try {
-        $version = Invoke-RestMethod -Uri "$($record.url)/api/version" -TimeoutSec 1
-        $ready = $true
-        break
-    } catch { Start-Sleep -Milliseconds 250 }
+    if (-not $server.HasExited) {
+        Stop-Process -InputObject $server -Force
+        if (-not $server.WaitForExit(5000)) { throw 'Startup failed and the launched process did not exit.' }
+    }
+    $record['state'] = 'startup_failed_stopped'
+    $record | ConvertTo-Json | Set-Content -LiteralPath $recordPath -Encoding UTF8
+    throw $startupError
 }
-if (-not $ready) { throw "Ollama did not become ready. Its PID and logs are in $runtimePath\ollama-server.json" }
-$record['version'] = $version.version
 $record | ConvertTo-Json

@@ -213,3 +213,6 @@ requires explicit output fields and dependencies in the model schema, explains r
 corrections and action planning in the system prompt; internal v0.1 defaults unchanged.
 Focused model tests 13 pass and Ruff passes. Same-fixture live retry follows; this is
 development tuning, not a held-out comparison. CI remains disabled.
+
+## 2026-09-13 — Live failure analysis and experiment review
+Codex parent preserved two failed live pilots, grounded planner schema per Ollama structured-output documentation, added completed-correction acknowledgments and fair-format/model-deadline fixture variants. Luna high reviewed scripts and implemented runner failure/reset/typed-plan diagnostics and four tests. Parent added precise phases and two cooperative cancellation tests, and hardened PowerShell listener/process lifecycle (actually stop/restart/port-refusal tested). Full suite194 passed before last2 tests; runner6 and focused model/integration28 pass, Ruff pass. No model success inferred from mocks; no B edits or dependency/CI change. Human review pending.

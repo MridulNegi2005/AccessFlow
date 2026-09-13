@@ -304,7 +304,10 @@ class Agent:
                 return
             if decision.kind == "backchannel":
                 return
-            if self.latest_complete:
+            if self.latest_complete or (obs.final and decision.kind == "possible_correction"):
+                # A final correction can be acknowledged while semantics are still
+                # unresolved. This does not mark the request complete or authorize
+                # a write; partial speech continues without an interjection.
                 await self._emit("acknowledge", text="I'll check that.", backend=obs.backend)
             # Partial plans may prepare reads but may never authorize writes.
             self._start_plan(source=key)

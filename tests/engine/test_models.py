@@ -28,8 +28,12 @@ async def test_reasoner_sends_required_decision_schema_without_changing_internal
     from accessflow.contracts import PlanProposal
 
     def handler(request):
-        schema = json.loads(request.content)["format"]
+        payload = json.loads(request.content)
+        schema = payload["format"]
         assert set(schema["required"]) == set(PlanProposal.model_fields)
+        grounded_schema = payload["messages"][-1]["content"].split("\nJSON schema:\n")[1]
+        assert json.loads(grounded_schema) == schema
+        assert "Slot names" in schema["$defs"]["ProposedCall"]["properties"]["dependencies"]["description"]
         return httpx.Response(200, json={"message": {"content": json.dumps(
             PlanProposal(clarification="Which day?").model_dump())}})
 
@@ -38,6 +42,19 @@ async def test_reasoner_sends_required_decision_schema_without_changing_internal
         result = await ModelReasoner(JsonBackend(client=client)).plan(
             SessionView(session_id="s", state=Snapshot(), observations=[], results=[]), [])
         assert result.clarification == "Which day?"
+
+
+async def test_context_bound_includes_schema_and_system_before_network():
+    requests = []
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, json={"message": {"content": "{}"}})
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        backend = JsonBackend(client=client)
+        with pytest.raises(ValueError, match="Bounded context"):
+            await backend.generate("s" * 7000, {}, {"description": "x" * 7000})
+        assert not requests
+        assert backend.evidence()["outcome_counts"]["failure"] == 1
 
 
 async def test_ollama_request_uses_explicit_model_and_schema():
