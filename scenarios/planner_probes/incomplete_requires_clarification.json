@@ -1,0 +1,83 @@
+{
+  "id": "planner-probe-incomplete-clarification",
+  "provenance": "Independently drafted AI development probe for AccessFlow Workstream A; mock service scheduling only, not teammate-heldout and not a clinical case.",
+  "completion_timeout_s": 100,
+  "terminal_output": {
+    "kind": "clarify",
+    "caused_by_event_id": "incomplete-request"
+  },
+  "expectation": {
+    "effects": [],
+    "require_final": false
+  },
+  "environment": {
+    "open_service_case": {
+      "kind": "write",
+      "mode": "action",
+      "identity_fields": ["station_id", "service_day", "arrival_24h"]
+    }
+  },
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "incomplete-clarification",
+      "payload": {
+        "tools": [
+          {
+            "name": "open_service_case",
+            "description": "Create one fictional service appointment after all details are supplied.",
+            "effect": "write",
+            "idempotency_parameter": "client_nonce",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "station_id": {
+                  "type": "string",
+                  "enum": ["MicaHub-9", "MicaHub-10"]
+                },
+                "service_day": {
+                  "type": "string",
+                  "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                },
+                "arrival_24h": {
+                  "type": "string",
+                  "description": "Arrival time in local 24-hour HH:MM format.",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "client_nonce": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{8,64}$"
+                }
+              },
+              "required": ["station_id", "service_day", "arrival_24h", "client_nonce"],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "incomplete-clarification",
+      "event_id": "incomplete-request",
+      "sequence": 1,
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "text": "I need a service visit for MicaHub-9, but I have not chosen a day or an arrival time yet.",
+        "final": true
+      }
+    }
+  ],
+  "proposals": [
+    {
+      "intent": "service_appointment",
+      "slot_updates": {
+        "station_id": "MicaHub-9"
+      },
+      "clarification": "Which weekday and local 24-hour HH:MM arrival time should I use?",
+      "request_complete": false,
+      "write_requested": false
+    }
+  ]
+}

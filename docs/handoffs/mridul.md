@@ -90,3 +90,6 @@ Full live development run on79bd263 completed0/4; reports/traces preserved. Next
 
 ## Final live-measurement checkpoint
 204 tests and Ruff pass; two existing TestClient warnings. Real gemma3:4b suite0/4 and GPU35 textpilot still failed. All reports/typed plans/source hashes saved under docs/results/local-model-2026-09-13. GPU35 readiness12.68s, modelrequest11.11s versus19.74s auto on same case; generated tokens differed, so not a latency distribution. Server explicitly unloaded/stopped. Next: request-completion and data-shape semantics plus alternate local-model comparison, then actual modalities and broader benchmarks. No B/CI/dependency changes. Human review pending.
+
+## Planner accuracy iteration
+Explicit Qwen2.5:3b comparison on clean82a9d0c:1/4 task criteria passed with original prompt. Raw plans expose missing slot updates and repeated writes after unknown outcomes (retry blocked). Source now clarifies required flat slot state and argument format; ledger-derived status guidance uses dynamic manifests.24 model tests and Ruff pass. Four independently drafted AI probes are copied without parent reading expected labels before first scoring; not final held-out evidence. Next: clean-source known suite and new probes. Dependency coverage audit pending; don't claim full live safety from one task pass.

@@ -7,7 +7,38 @@ import pytest
 from pydantic import ValidationError
 
 from accessflow.adapters.models import JsonBackend, ModelReasoner
-from accessflow.contracts import SessionView, Snapshot
+from accessflow.contracts import PlanProposal, SessionView, Snapshot, ToolCall, ToolManifest
+
+
+async def test_unknown_effect_guidance_uses_ledger_identity_and_manifest_status_tool():
+    observed = []
+    class Backend:
+        async def generate(self, system, data, schema):
+            observed.append(data)
+            return PlanProposal(clarification="Outcome unknown").model_dump()
+    writer = ToolManifest(name="opaque_dispatch", description="Mock write", effect="write",
+                          parameters={"type": "object"}, status_tool="opaque_lookup")
+    calls = [ToolCall(call_id=f"c-{status}", operation_id=f"op-{status}", tool=writer.name,
+                      arguments={}, dependencies={}, effect="write", status=status)
+             for status in ("unknown", "cancelled", "success", "failed", "pending")]
+    calls.append(ToolCall(call_id="r", operation_id="read-op", tool="opaque_lookup",
+                          arguments={}, dependencies={}, effect="read", status="unknown"))
+    view = SessionView(session_id="s", state=Snapshot(), observations=[], results=[], calls=calls)
+    await ModelReasoner(Backend()).plan(view, [writer])
+    assert observed[0]["required_next_step"]["operations"] == [
+        {"operation_id": "op-unknown", "write_tool": "opaque_dispatch", "status_tool": "opaque_lookup"},
+        {"operation_id": "op-cancelled", "write_tool": "opaque_dispatch", "status_tool": "opaque_lookup"}]
+    assert view.calls == calls
+    view.calls = []
+    await ModelReasoner(Backend()).plan(view, [writer])
+    assert "required_next_step" not in observed[1]
+
+
+def test_missing_manifest_does_not_invent_a_status_tool():
+    view = SessionView(session_id="s", state=Snapshot(), observations=[], results=[], calls=[
+        ToolCall(call_id="c", operation_id="op", tool="missing", arguments={}, dependencies={},
+                 effect="write", status="unknown")])
+    assert ModelReasoner.reconciliation_context(view, [])[0]["status_tool"] is None
 
 
 def test_model_generation_requires_explicit_completion_and_action_decisions():
