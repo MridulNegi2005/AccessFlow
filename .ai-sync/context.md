@@ -214,3 +214,11 @@ kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Notes:** 185 tests and Ruff pass. Real cold readiness returned valid JSON in 144.93 s, but no task-completion evidence yet. Runtime/models live on D: outside repository. No hosted calls, paid fallback, B implementation edits or CI changes. Next: run clean-source live development cases, preserve failures and measure resource limits.
 
 ---
+
+## [2026-09-13 17:57] — Codex
+**Task:** Turn live-model failures into reproducible diagnostics and A-side fixes.
+**Changes:** Preserved two failed live pilots; required and grounded planner schema; final correction acknowledgment without action authorization; explicit live fixture variants; verified local server lifecycle; runner reset/failure/plan diagnostics.
+**Status:** in-progress
+**Notes:** Full suite 194 passed before two additional cancellation tests; focused runner6 and model/integration28 pass. Ruff passes. PowerShell stop/restart and occupied-port refusal verified. Four live variants pass only their scripted plumbing check. Next: clean-source actual four-case run. No B-owned implementation or CI changes.
+
+---

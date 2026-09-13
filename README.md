@@ -49,7 +49,8 @@ for contract tests.
 The default replay is **offline-fake**: scripted reasoning, transcript pass-through and
 mock external effects. It proves no ASR/vision capability. Explicit `--backend ollama`
 or `--backend gemini` exercises actual reasoning while external tools remain fake.
-See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits.
+See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits, and
+[local model setup and measurements](docs/LOCAL_MODELS.md) for the portable runtime.
 
 Use `--components local` with replay or suite to connect the process-isolated local adapter and
 `HeuristicTurnPolicy` to the engine. Reasoning stays scripted unless `--backend` is changed:

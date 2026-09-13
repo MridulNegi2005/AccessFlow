@@ -64,6 +64,36 @@ async def test_unresolved_final_correction_can_ask_without_authorizing_write():
         assert not agent.executor.effects
 
 
+@pytest.mark.parametrize("final", [True, False])
+async def test_correction_acknowledgment_does_not_wait_for_model_or_authorize_effect(final):
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    class SlowReasoner:
+        async def plan(self, view, manifests):
+            entered.set()
+            await release.wait()
+            return proposal()
+
+    async with components([]) as (agent, iq, oq, applied):
+        agent.reasoner = SlowReasoner()
+        await iq.put(transcript("Actually Wednesday", final=final))
+        await asyncio.wait_for(entered.wait(), 1)
+        assert agent.state.correction_pending
+        assert not agent.executor.calls
+        if final:
+            ack = await wait_for(oq, lambda event: event.kind == "acknowledge")
+            assert ack.state.correction_pending
+            assert not ack.state.pending_call_ids
+        else:
+            assert oq.empty()
+        release.set()
+        await asyncio.wait_for(applied.get(), 1)
+        if final:
+            await wait_for(oq, lambda event: event.kind == "final")
+        else:
+            assert not agent.executor.calls
+
+
 @pytest.mark.parametrize("text", ["Book Wednesday", "Actually Wednesday"])
 async def test_contradictory_clarification_and_write_proposal_cannot_execute(text):
     plan = proposal().model_copy(update={"clarification": "Which day do you want?"})

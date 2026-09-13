@@ -57,3 +57,5 @@ Last updated by: Codex. Workflow remains disabled_manually; no new runs. Current
 Workflow recheck (2026-09-13 17:41), Codex: still disabled_manually, manual-only YAML, no new runs. Explanation completed; existing Workstream A work and next steps above remain in progress. Only sync notes changed during this check.
 
 Local-model checkpoint (2026-09-13 17:43), Codex: 185 tests and Ruff pass; portable runtime and real readiness verified. Current task: clean-source live reasoning measurements. New files: scripts and docs/LOCAL_MODELS.md; model/replay telemetry updated. Model task quality, live vision, baseline and kit/Docker gates remain open. CI remains disabled.
+
+Live evidence checkpoint (2026-09-13 17:57), Codex: two failed real pilots preserved in docs/results/LOCAL_MODEL_2026-09-13.md. Source fixes include grounded explicit planner schema, correction acknowledgment, fixture formats and diagnostics. Runner verifies model reset and aborts on cleanup failure; parent added cooperative cancellation reports. Next: clean-source live four-case experiment. B ownership and CI-off constraint unchanged.

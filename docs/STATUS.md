@@ -12,7 +12,8 @@ evidence, not an evaluated submission.
 - Atishay perception/policy integrated; final corrections, image readiness and clarification/write guard tested.
 - Native subprocess perception lifecycle, Windows PID correctness, cleanup traces and controller cancellation tested.
 - Gemini/Ollama reasoning adapters tested with HTTP doubles and bounded request telemetry.
-  Local Ollama readiness succeeded; real task-completion measurements remain in progress.
+  Local Ollama readiness succeeded; the first two live task pilots failed and are preserved
+  in results/LOCAL_MODEL_2026-09-13.md. Further model evaluation remains in progress.
 - Manifest-bound in-memory lookup/write/status environment with independent committed effects.
 - Four developer-authored text workflows, task criteria, isolated suite runs and causal traces.
 - Replay crash/timeout/cancellation evidence and nonzero CLI exits for failed runs or task criteria.

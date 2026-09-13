@@ -82,3 +82,6 @@ requires explicit output fields and dependencies in the model schema, explains r
 corrections and action planning in the system prompt; internal v0.1 defaults unchanged.
 Focused model tests 13 pass and Ruff passes. Same-fixture live retry follows; this is
 development tuning, not a held-out comparison. CI remains disabled.
+
+## Grounded planning and fair live fixtures
+Original pilots remain failures; schema grounding follows official Ollama guidance. Parent added explicit dependency descriptions and input-size accounting. Final correction gets immediate acknowledgment while model runs, with write guards intact. 194 full tests passed before adding two focused runner cancellation tests; those pass (runner6). Four live-dev variants pass scripted plumbing only. PowerShell actual stop/restart and port refusal pass. No OS listener ownership check in Python runner; use only verified project server. Next: clean-source actual live suite.

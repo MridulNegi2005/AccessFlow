@@ -99,8 +99,9 @@ class JsonBackend:
         started = time.monotonic()
         metrics = None
         try:
-            prompt = json.dumps(data, ensure_ascii=False)
-            if len(prompt) > 14000:
+            prompt = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+            prompt += "\nJSON schema:\n" + json.dumps(schema, separators=(",", ":"))
+            if len(system) + len(prompt) > 14000:
                 raise ValueError("Bounded context exceeded; reduce input instead of silently truncating evidence")
             async with self.lock:
                 if self.client is not None:
@@ -141,7 +142,7 @@ class JsonBackend:
                 raise ValueError("ACCESSFLOW_GEMINI_API_KEY is required for explicit hosted mode")
             request_kwargs = {"headers": {"x-goog-api-key": key}, "json": {
                     "systemInstruction": {"parts": [{"text": system}]},
-                    "contents": [{"role": "user", "parts": [{"text": prompt + "\nJSON schema:\n" + json.dumps(schema)}]}],
+                    "contents": [{"role": "user", "parts": [{"text": prompt}]}],
                     "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
@@ -203,6 +204,15 @@ class ModelReasoner:
             field.pop("default", None)
         proposed_call = schema["$defs"]["ProposedCall"]
         proposed_call["required"] = list(proposed_call["properties"])
+        proposed_call["properties"]["dependencies"]["description"] = (
+            "Slot names from session.state.slots or this proposal's slot_updates that affect this call. "
+            "Use names, not slot values, utterance IDs, tool names or boolean preconditions.")
+        schema["properties"]["request_complete"]["description"] = (
+            "True when the final user request is understood and its explicit corrections are resolved. "
+            "Do not copy correction_pending: resolving it is the planner's job.")
+        schema["properties"]["write_requested"]["description"] = (
+            "True only when the user's current request asks for the state-changing effect. "
+            "The controller separately checks authorization before dispatch.")
         return schema
 
     def evidence(self):

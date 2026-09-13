@@ -1,0 +1,153 @@
+{
+  "id": "live-dev-lost-response-status-reconciliation",
+  "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+  "completion_timeout_s": 100,
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "reconcile",
+      "payload": {
+        "tools": [
+          {
+            "name": "submit_ticket_v3",
+            "description": "Create one mock device service request",
+            "effect": "write",
+            "idempotency_parameter": "nonce",
+            "status_tool": "query_receipt_v3",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {
+                  "type": "string"
+                },
+                "visit_day": {
+                  "type": "string"
+                },
+                "nonce": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "device",
+                "visit_day",
+                "nonce"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "query_receipt_v3",
+            "description": "Read the outcome of an operation using its receipt",
+            "effect": "read",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "receipt": {
+                  "type": "string",
+                  "description": "The operation_id of the original write from the session call ledger."
+                }
+              },
+              "required": [
+                "receipt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "reconcile",
+      "event_id": "reconcile-request",
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "final": true,
+        "text": "Create a Wednesday service request for Panel-A."
+      }
+    }
+  ],
+  "environment": {
+    "submit_ticket_v3": {
+      "kind": "write",
+      "identity_fields": [
+        "device",
+        "visit_day"
+      ],
+      "lost_response": true
+    },
+    "query_receipt_v3": {
+      "kind": "status",
+      "operation_id_parameter": "receipt"
+    }
+  },
+  "reasoning_steps": [
+    {
+      "input_event_id": "reconcile-request",
+      "proposal": {
+        "intent": "service",
+        "slot_updates": {
+          "device": "Panel-A",
+          "visit_day": "Wednesday"
+        },
+        "request_complete": true,
+        "write_requested": true,
+        "calls": [
+          {
+            "tool": "submit_ticket_v3",
+            "arguments": {
+              "device": "Panel-A",
+              "visit_day": "Wednesday"
+            },
+            "dependencies": [
+              "device",
+              "visit_day"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input_event_id": "reconcile-request",
+      "after_tools": {
+        "submit_ticket_v3": "unknown"
+      },
+      "proposal": {
+        "calls": [
+          {
+            "tool": "query_receipt_v3",
+            "arguments": {
+              "receipt": {
+                "$operation_of": "submit_ticket_v3"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "expected_slots": {
+    "device": "Panel-A",
+    "visit_day": "Wednesday"
+  },
+  "expectation": {
+    "slots": {
+      "device": "Panel-A",
+      "visit_day": "Wednesday"
+    },
+    "effects": [
+      {
+        "tool": "submit_ticket_v3",
+        "arguments": {
+          "device": "Panel-A",
+          "visit_day": "Wednesday"
+        }
+      }
+    ],
+    "final_basis": "reconciled_tool_effect",
+    "required_error_codes": [
+      "write_outcome_unknown"
+    ]
+  }
+}
