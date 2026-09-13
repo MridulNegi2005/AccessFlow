@@ -204,3 +204,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
   break was fully overlapped by a 1.980 second candidate with 0.606 IoU.
 - **Notes:** Generated voice only; this is not human speech accuracy or endpoint-quality
   evidence. Fixture check passed; no shared contract or dependency change.
+## 2026-09-13 - Codex Atishay opt-in local audio demo path
+
+- **Task:** Verify real WAV routing through the browser demo with an existing local model.
+- **Changes:** Added an environment-gated LocalPerception delegate, dynamic backend label and
+  configuration/test coverage.
+- **Status:** Cached Faster Whisper base.en CPU INT8 completed a checked-in WAV through the
+  WebSocket route; acknowledgment backend was faster-whisper/cpu-int8 and the controller
+  produced an informational final.
+- **Notes:** Demo default remains demo/mock for text and image. Browser device capture, live
+  vision and non-mock reasoning remain unverified. No shared contract or dependency change.

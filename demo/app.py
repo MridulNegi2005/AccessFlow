@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import os
 import binascii
 import struct
 import tempfile
@@ -29,7 +30,7 @@ from accessflow.contracts import (
 )
 from accessflow.engine import Agent
 from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
-from accessflow.perception import validate_wav
+from accessflow.perception import LocalPerception, validate_wav
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
@@ -37,7 +38,23 @@ app = FastAPI(title="AccessFlow mock demo")
 
 
 class DemoPerception:
-    """Explicitly labeled mock input adapter for the browser demo."""
+    """Demo adapter with an explicit mock default and optional local audio."""
+
+    def __init__(self, *, audio_backend=None):
+        self._audio_backend = audio_backend
+
+    @classmethod
+    def from_environment(cls):
+        model_path = os.environ.get("ACCESSFLOW_DEMO_WHISPER_MODEL", "").strip()
+        if not model_path:
+            return cls()
+        return cls(audio_backend=LocalPerception(model_path=model_path))
+
+    @property
+    def backend_label(self):
+        if self._audio_backend is None:
+            return "demo/mock"
+        return "local/Faster Whisper CPU INT8 audio + demo/mock text/image"
 
     async def observe(self, event):
         if isinstance(event, TranscriptEvent):
@@ -55,6 +72,10 @@ class DemoPerception:
             )
             return
         if isinstance(event, AudioEvent):
+            if self._audio_backend is not None:
+                async for observation in self._audio_backend.observe(event):
+                    yield observation
+                return
             payload = event.payload
             yield Observation(
                 event_id=event.event_id,
@@ -182,8 +203,10 @@ async def websocket(websocket: WebSocket) -> None:
     session_id = str(uuid.uuid4())
     incoming: asyncio.Queue = asyncio.Queue()
     outgoing: asyncio.Queue = asyncio.Queue()
+    perception = DemoPerception.from_environment()
+    await websocket.send_json({"kind": "demo_status", "payload": {"perception_backend": perception.backend_label}})
     agent = Agent(
-        DemoPerception(),
+        perception,
         FinalFlagPolicy(),
         DemoReasoner(),
         FakeTools(),
