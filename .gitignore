@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.env
+!\.env.example
+artifacts/*
+!artifacts/.gitkeep
+models/
+*.wav
+*.png
+!tests/fixtures/*.png
+!tests/fixtures/*.wav
