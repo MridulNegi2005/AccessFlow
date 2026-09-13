@@ -82,6 +82,28 @@ This proves the adapter seam and provenance behavior only. No live vision model 
 hardware latency is claimed. Next: add a minimal fake-agent demo that renders output events
 without duplicating authoritative engine state.
 
+## Checkpoint 4 - 13 September 2026: minimal fake-agent demo
+
+Added a small FastAPI WebSocket demo under `demo/` that uses the existing queue-based
+controller and renders serialized `OutputEvent` snapshots.
+
+- Text, WAV/mock-audio, microphone/mock-audio and PNG/mock-image controls are visible in the browser.
+- Browser messages are translated into typed v0.1 events before entering the controller.
+- The frontend renders returned state snapshots and does not maintain slots, planning or action state.
+- Every mock input and response is labeled `demo/mock`; this demo is not live ASR or vision evidence.
+- The WebSocket smoke test confirms a transcript produces both acknowledgment and final output events.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest tests/demo -q  -> 6 passed
+uv run --python 3.12 --extra dev ruff check demo tests/demo
+                                                       -> All checks passed
+```
+
+FastAPI's test client currently emits dependency deprecation warnings; they do not fail the
+suite. Next: add real WAV fixture provenance and timing/VAD integration while retaining the
+mock demo as an explicit development mode.
 Python 3.11 and `uv` are required:
 
 ```powershell
