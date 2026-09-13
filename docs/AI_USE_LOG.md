@@ -194,3 +194,13 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - **Status:** HTTP 200; full suite 61 passed with 2 dependency deprecation warnings.
 - **Notes:** Browser-control initialization failed, so permission and physical-device
   microphone capture remain unverified. Temporary server was stopped.
+## 2026-09-13 - Codex Atishay held-out generated speech evaluation
+
+- **Task:** Measure fluent, repetition/correction and labeled-pause cases after the
+  development fixtures.
+- **Changes:** Added generated WAV cases, machine-readable labels/results and a provenance
+  check. Ran Faster Whisper base.en CPU INT8 and WebRTC VAD with the fixed local settings.
+- **Status:** All three transcripts preserved the intended wording; the labeled 1.2 second
+  break was fully overlapped by a 1.980 second candidate with 0.606 IoU.
+- **Notes:** Generated voice only; this is not human speech accuracy or endpoint-quality
+  evidence. Fixture check passed; no shared contract or dependency change.
