@@ -236,3 +236,16 @@ payload.
 
 **Notes:** Base64 media validation remains unchanged. No shared contract, dependency or
 lockfile change.
+## 2026-09-13 - Codex Atishay local model configuration guard
+
+**Task:** Make invalid opt-in local model configuration fail before the demo advertises a
+local backend.
+
+**Changes:** DemoPerception validates ACCESSFLOW_DEMO_WHISPER_MODEL as an existing directory.
+The WebSocket sends a labeled demo/config error and closes before creating the Agent when
+the path is invalid. Added direct and WebSocket regression tests.
+
+**Status:** Demo suite 14 passed; full suite 67 passed; Ruff clean.
+
+**Notes:** Default demo/mock behavior and valid local mode remain unchanged. No shared
+contract, dependency or lockfile change.

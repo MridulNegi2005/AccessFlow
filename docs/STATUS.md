@@ -74,3 +74,10 @@ Hardened the browser media boundary against client-supplied filesystem paths.
 - Session WebSocket traffic now roots no-byte fallbacks in the session temporary directory.
 - Existing base64 WAV/PNG validation and cleanup remain unchanged.
 - The boundary has a focused regression test; no shared contract or dependency changed.
+## Checkpoint 22 - 13 September 2026: local model configuration guard
+
+Added explicit validation for the optional local model path.
+
+- Invalid configuration is reported as demo/config before an agent starts.
+- The default mock mode and valid local configuration remain unchanged.
+- Demo tests cover both the error event and the valid opt-in label.

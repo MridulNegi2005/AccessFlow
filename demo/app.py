@@ -48,7 +48,12 @@ class DemoPerception:
         model_path = os.environ.get("ACCESSFLOW_DEMO_WHISPER_MODEL", "").strip()
         if not model_path:
             return cls()
-        return cls(audio_backend=LocalPerception(model_path=model_path))
+        resolved_model_path = Path(model_path).expanduser()
+        if not resolved_model_path.is_dir():
+            raise ValueError(
+                "ACCESSFLOW_DEMO_WHISPER_MODEL must point to an existing local model directory"
+            )
+        return cls(audio_backend=LocalPerception(model_path=resolved_model_path))
 
     @property
     def backend_label(self):
@@ -206,7 +211,14 @@ async def websocket(websocket: WebSocket) -> None:
     session_id = str(uuid.uuid4())
     incoming: asyncio.Queue = asyncio.Queue()
     outgoing: asyncio.Queue = asyncio.Queue()
-    perception = DemoPerception.from_environment()
+    try:
+        perception = DemoPerception.from_environment()
+    except ValueError as error:
+        await websocket.send_json(
+            {"kind": "demo_error", "payload": {"backend": "demo/config", "message": str(error)}}
+        )
+        await websocket.close(code=1008)
+        return
     await websocket.send_json({"kind": "demo_status", "payload": {"perception_backend": perception.backend_label}})
     agent = Agent(
         perception,

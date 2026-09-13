@@ -444,3 +444,15 @@ arbitrary client-supplied filesystem path.
 
 This is a demo boundary hardening change; it does not alter shared contracts or authorize
 real actions.
+## Checkpoint 22 - 13 September 2026: local model configuration guard
+
+The opt-in local audio mode now validates its model directory before starting the demo
+session.
+
+- A missing or invalid ACCESSFLOW_DEMO_WHISPER_MODEL value produces a labeled demo/config
+  error and closes the WebSocket with a policy error code.
+- A valid existing directory still enables local Faster Whisper audio.
+- The default unset configuration remains demo/mock.
+- This prevents the page from advertising a local backend that cannot run.
+
+The guard is covered by unit and WebSocket tests. No shared contract or dependency changed.

@@ -74,15 +74,19 @@ async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path
     assert "device.png" in observation.text
 
 
-def test_demo_perception_environment_can_enable_local_audio(monkeypatch):
-    monkeypatch.setenv(
-        "ACCESSFLOW_DEMO_WHISPER_MODEL",
-        "models/models--Systran--faster-whisper-base.en/snapshots/local",
-    )
+def test_demo_perception_environment_can_enable_local_audio(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(tmp_path))
 
     perception = DemoPerception.from_environment()
 
     assert "local/Faster Whisper CPU INT8" in perception.backend_label
+
+
+def test_demo_perception_environment_rejects_missing_local_model(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(tmp_path / "missing"))
+
+    with pytest.raises(ValueError, match="existing local model directory"):
+        DemoPerception.from_environment()
 
 
 def test_demo_page_exposes_input_controls_and_backend_label():
@@ -96,6 +100,18 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="backend-label"' in html
     assert 'getUserMedia' in html
     assert 'encodeWav' in html
+
+
+def test_websocket_reports_invalid_local_model_configuration(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(tmp_path / "missing"))
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            error = socket.receive_json()
+
+    assert error["kind"] == "demo_error"
+    assert error["payload"]["backend"] == "demo/config"
+    assert "existing local model directory" in error["payload"]["message"]
 
 
 def test_websocket_returns_controller_output_event():
