@@ -15,15 +15,15 @@ def main():
     replay_parser = commands.add_parser("replay")
     replay_parser.add_argument("scenario")
     replay_parser.add_argument("--output", default="artifacts/replay.jsonl")
-    replay_parser.add_argument("--backend", choices=["offline-fake", "ollama", "gemini"], default="offline-fake")
+    replay_parser.add_argument("--backend", choices=["offline-fake", "ollama", "gemini", "groq"], default="offline-fake")
     metrics_parser = commands.add_parser("metrics")
     metrics_parser.add_argument("trace")
     warmup = commands.add_parser("warmup")
-    warmup.add_argument("--backend", choices=["ollama", "gemini"], required=True)
+    warmup.add_argument("--backend", choices=["ollama", "gemini", "groq"], required=True)
     suite = commands.add_parser("suite")
     suite.add_argument("scenario_directory")
     suite.add_argument("--output-dir", default="artifacts/suite")
-    suite.add_argument("--backend", choices=["offline-fake", "ollama", "gemini"], default="offline-fake")
+    suite.add_argument("--backend", choices=["offline-fake", "ollama", "gemini", "groq"], default="offline-fake")
     for component_parser in (replay_parser, suite):
         component_parser.add_argument("--components", choices=["fake", "local"], default="fake",
                                       help="Use fakes or process-isolated local media plus HeuristicTurnPolicy")

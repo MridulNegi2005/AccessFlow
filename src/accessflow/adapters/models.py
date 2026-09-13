@@ -47,18 +47,26 @@ Do not place a final success claim in response for a state-changing request.
 """
 
 
+DEFAULT_MODELS = {
+    "ollama": ("ACCESSFLOW_OLLAMA_MODEL", "gemma3:4b"),
+    "gemini": ("ACCESSFLOW_GEMINI_MODEL", "gemini-2.5-flash-lite"),
+    "groq": ("ACCESSFLOW_GROQ_MODEL", "llama-3.3-70b-versatile"),
+}
+BACKENDS = frozenset(DEFAULT_MODELS)
+
+
 class JsonBackend:
     def __init__(self, backend="ollama", client=None, timeout=20, warmup_timeout=290,
                  history_limit=128, num_gpu=None):
-        if backend not in {"ollama", "gemini"}:
-            raise ValueError("Explicit backend must be ollama or gemini")
+        if backend not in BACKENDS:
+            raise ValueError("Explicit backend must be " + " or ".join(sorted(BACKENDS)))
         if warmup_timeout <= 0:
             raise ValueError("warmup_timeout must be positive")
         if history_limit <= 0:
             raise ValueError("history_limit must be positive")
         self.backend = backend
-        self.model = os.getenv("ACCESSFLOW_OLLAMA_MODEL", "gemma3:4b") if backend == "ollama" else os.getenv(
-            "ACCESSFLOW_GEMINI_MODEL", "gemini-2.5-flash-lite")
+        variable, default = DEFAULT_MODELS[backend]
+        self.model = os.getenv(variable, default)
         self.client = client
         self.timeout = timeout
         self.warmup_timeout = warmup_timeout
@@ -91,6 +99,8 @@ class JsonBackend:
                 "history_limit": self.history_limit,
                 "num_ctx": 4096 if self.backend == "ollama" else None,
                 "num_gpu": self.num_gpu,
+                "response_format": (self._groq_response_format({"stub": True})["type"]
+                                    if self.backend == "groq" else None),
                 "temperature": 0,
                 "ollama_duration_unit": "nanoseconds",
             },
@@ -159,6 +169,24 @@ class JsonBackend:
             payload = response.json()
             text = payload["message"]["content"]
             metrics = self._ollama_metrics(payload)
+        elif self.backend == "groq":
+            key = os.getenv("ACCESSFLOW_GROQ_API_KEY")
+            if not key:
+                raise ValueError("ACCESSFLOW_GROQ_API_KEY is required for explicit hosted mode")
+            request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": {
+                    "model": self.model, "stream": False, "temperature": 0,
+                    "response_format": self._groq_response_format(schema),
+                    "messages": [{"role": "system", "content": system},
+                                 {"role": "user", "content": prompt}]}}
+            if timeout is not None:
+                request_kwargs["timeout"] = timeout
+            response = await client.post(
+                os.getenv("ACCESSFLOW_GROQ_URL", "https://api.groq.com/openai/v1") + "/chat/completions",
+                **request_kwargs)
+            response.raise_for_status()
+            payload = response.json()
+            text = payload["choices"][0]["message"]["content"]
+            metrics = self._groq_metrics(payload)
         else:
             key = os.getenv("ACCESSFLOW_GEMINI_API_KEY")
             if not key:
@@ -177,6 +205,30 @@ class JsonBackend:
             text = "".join(part.get("text", "") for part in parts)
             metrics = None
         return text, metrics
+
+    @staticmethod
+    def _groq_response_format(schema):
+        # Schema is already appended to the prompt for every backend. Strict structured output
+        # is opt-in because it rejects schemas this project generates from Pydantic.
+        if schema and os.getenv("ACCESSFLOW_GROQ_STRUCTURED") == "1":
+            return {"type": "json_schema", "json_schema": {"name": "plan", "schema": schema}}
+        return {"type": "json_object"}
+
+    @staticmethod
+    def _groq_metrics(payload):
+        if not isinstance(payload, Mapping):
+            return None
+        usage = payload.get("usage")
+        if not isinstance(usage, Mapping):
+            return None
+        metrics = {}
+        for key in ("queue_time", "prompt_tokens", "prompt_time", "completion_tokens",
+                    "completion_time", "total_tokens", "total_time"):
+            value = usage.get(key)
+            if (isinstance(value, (int, float)) and not isinstance(value, bool)
+                    and value >= 0 and math.isfinite(value)):
+                metrics[key] = value
+        return metrics or None
 
     @staticmethod
     def _ollama_metrics(payload):
