@@ -126,3 +126,15 @@ so the cause is account-side and Gemma 4 remains untested. No B-owned files chan
 disabled. Nothing pushed.
 
 ---
+
+## [2026-09-14 03:40] — Claude Code
+**Task:** Write-continuation constraint for lower-parameter models.
+**Status:** qwen3:4b reached 4/4 locally; it had never passed support-read-then-service before.
+**Notes:** The trace showed the failure was continuation, not extraction: correct slots and a
+correct read, then the model answered with the read result instead of calling the write tool.
+`SessionView` gains an additive `write_pending` field, defaulted false. While a requested write
+is outstanding the planner sends a `complete_requested_write` step and types `response` as null,
+so a tool call or clarification are the only valid answers. Hosted qwen3.8-27b stays 4/4.
+244 tests, Ruff and the offline dev suite pass. No B-owned files changed. Nothing pushed.
+
+---

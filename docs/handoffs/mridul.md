@@ -262,3 +262,29 @@ rotated at build.nvidia.com. It is stored only in the gitignored `.env`.
 **Next independent task:** Baselines and ablation, then multimodal.
 **AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
 **Atishay:** No B-owned files changed. CI disabled. Nothing pushed.
+
+## [2026-09-14 03:40] — Claude Code
+**Task:** Make lower-parameter models complete the two-step chain.
+**Changes:** Additive `write_pending` field on `SessionView`, defaulted false. The controller
+sets it from `speech_write_requested`. When a requested write is outstanding, `ModelReasoner`
+adds a `complete_requested_write` next step and builds the schema with `response` typed null,
+so prose is not a valid answer while the effect is unperformed. New `write_outstanding` helper.
+Added results/CONTINUATION_2026-09-14.md.
+**Status:** in-progress.
+**Tests run and results:** 244 passed, Ruff passed, offline `scenarios/dev` 4/4.
+**Live-model results:** qwen3:4b (2.5 GB, GTX 1650) went from 3/4, 2/4, 2/4 to 3/4 and 4/4.
+`support-read-then-service` had failed in all three earlier trials and now passes at 78 s and
+58 s, with one 100-second scenario-cap timeout. Hosted regression check on `qwen/qwen3.8-27b`
+is 4/4 unchanged at 0.83 to 1.53 s per request.
+**Known failures/limits:** The trace shows the earlier "omits slots" description was wrong for
+qwen3:4b. Slots, tool and dependencies were correct; the model answered with the read result
+instead of continuing to the write. Local runs remain latency-bound at 16 to 41 s per request
+against the 120-second cap. One earlier attempt added a `write_pending` keyword to
+`Reasoner.plan`, which broke 75 tests because every fake reasoner takes two arguments; the
+additive view field replaced it.
+**Dependency or contract proposals:** `SessionView.write_pending`, additive and defaulted.
+No wire change and no new dependency. Atishay's components need no change.
+**Next independent task:** Re-measure the sweep under the new contract, then baselines and
+ablation, then multimodal.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI disabled. Nothing pushed.

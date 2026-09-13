@@ -252,7 +252,8 @@ class Agent:
         return SessionView(session_id=self.session_id, state=self.state.model_copy(deep=True),
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
-                           calls=[c.model_copy(deep=True) for c in self.ledger.values()])
+                           calls=[c.model_copy(deep=True) for c in self.ledger.values()],
+                           write_pending=self.speech_write_requested)
 
     async def _emit(self, kind, **payload):
         if self.current_event_id is not None:

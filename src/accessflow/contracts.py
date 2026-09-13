@@ -193,6 +193,7 @@ class SessionView(Model):
     observations: list[Observation]
     results: list[ToolResult]
     calls: list["ToolCall"] = Field(default_factory=list)
+    write_pending: bool = False
 
 
 class ToolCall(Model):
