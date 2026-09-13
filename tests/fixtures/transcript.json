@@ -1,0 +1,1 @@
+{"contract_version":"0.1","session_id":"example","event_id":"utterance-1-revision-2","timestamp":3.2,"sequence":2,"kind":"transcript","payload":{"utterance_id":"utterance-1","revision":2,"text":"Tuesday, actually Wednesday at five","final":true,"speech_start":0.3,"speech_end":3.1}}
