@@ -165,3 +165,10 @@ async def test_image_input_rejects_malformed_png(tmp_path: Path):
 
     with pytest.raises(ValueError, match="Invalid PNG"):
         await _one(LocalPerception(vision_provider=lambda _: "never"), event)
+
+@pytest.mark.asyncio
+async def test_checked_in_audio_fixture_uses_the_raw_wav_route():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    metadata = validate_wav(fixture)
+
+    assert metadata == WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=8_000)
