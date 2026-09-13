@@ -242,3 +242,23 @@ so the rejection is account-side. Gemma 4 remains untested.
 ablation, then multimodal.
 **AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
 **Atishay:** No B-owned files changed. CI disabled. Nothing pushed.
+
+## [2026-09-14 02:55] — Claude Code
+**Task:** Test `google/gemma-4-31b-it` after the NVIDIA key was corrected.
+**Changes:** Updated results/MODEL_SWEEP_2026-09-14.md. No source change.
+**Status:** in-progress.
+**Live-model results:** The earlier 403 was a wrong key in `.env`, 115 characters instead of
+70, not an account restriction. Gemma 4 31B scored 4/4 on the first run and 2/4 on the
+second. It is the third independent model to complete the four-slot two-step chain.
+**Known failures/limits:** Both second-run failures were latency, not planning. One scenario
+timed out after a successful 13.52 s request and one ended in a 90 s read timeout with no
+successful request. Request times on this endpoint ranged from 5.76 s to over 90 s for the
+same work, which is free-tier queueing. Against a 120-second cap and a 15 percent latency
+weight this endpoint is unsuitable for a scored run, though useful as an accuracy check.
+NVIDIA NIM requires `response_format` `json_object`; without it Gemma 4 wraps JSON in
+Markdown fences.
+**Security note:** The working NVIDIA key was pasted into a chat transcript and should be
+rotated at build.nvidia.com. It is stored only in the gitignored `.env`.
+**Next independent task:** Baselines and ablation, then multimodal.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI disabled. Nothing pushed.

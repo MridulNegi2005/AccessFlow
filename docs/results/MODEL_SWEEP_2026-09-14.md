@@ -12,6 +12,7 @@ Not the held-out set and not an official score.
 | `openai/gpt-oss-120b` | pass | pass | pass | pass | **4/4** | 1.95 s |
 | `openai/gpt-oss-20b` | pass | pass | pass | fail | 3/4 | 1.32 s |
 | `qwen/qwen3.6-27b` | pass | fail | fail | fail | 1/4 | 1.72 s |
+| `google/gemma-4-31b-it` (NVIDIA) | pass | pass | pass | pass | **4/4** | 32.41 s |
 
 qwen3.6-27b is not a quality result. Three of its four runs never reached the model.
 
@@ -57,22 +58,39 @@ so it could not produce valid JSON for this schema.
 
 Pacing one scenario per 55 to 95 seconds avoided throttling for the other models.
 
-## NVIDIA NIM
+## NVIDIA NIM and Gemma 4
 
-Blocked. The key lists models successfully but every inference request returns
-`403 Forbidden, Authorization failed`, across `google/gemma-4-31b-it`,
-`mistralai/mistral-7b-instruct-v0.3`, `nvidia/llama-3.1-nemotron-70b-instruct` and
-`openai/gpt-oss-20b`. The key is well formed: 115 characters, `nvapi-` prefix, no
-whitespace or quotes. The rejection is account-side, not a client defect. Gemma 4 remains
-untested.
+The first 403 failures came from a wrong key in `.env`, 115 characters instead of 70. With
+the correct key, `google/gemma-4-31b-it` runs and accepts `response_format` `json_object`.
+Without that field the model wraps its JSON in Markdown fences, which would break parsing.
+
+| Run | Score | Mean request | Slowest |
+|---|---|---|---|
+| v2 | **4/4** | 32.41 s | 60.69 s |
+| v3 | 2/4 | 13.65 s | 17.23 s, plus one 90 s read timeout |
+
+Gemma 4 31B passes all four cases when its requests land. It is the third independent model
+to complete the four-slot two-step chain, which supports the 20 B to 27 B wall above.
+
+Both v3 failures were latency, not planning. `support-read-then-service` timed out after one
+successful 13.52 s request, and `development-text-correction-01` ended in a 90 s read timeout
+with no successful request.
+
+Observed request times on this endpoint range from 5.76 s to over 90 s for the same work.
+That is shared free-tier queueing, not model speed. Against a 120-second scenario cap and a
+latency weight of 15 percent, this endpoint is not usable for a scored run. It remains useful
+as an independent accuracy check.
 
 ## Recommendation
 
-1. `qwen/qwen3.8-27b` is the best tested option: 4/4 and the fastest at 0.91 s mean.
+1. `qwen/qwen3.8-27b` is the best tested option: 4/4 and the fastest at 0.91 s mean, with a
+   1.03 s slowest request. Its latency is far more consistent than any other endpoint tested.
 2. `openai/gpt-oss-120b` is a verified 4/4 fallback on a separate per-model budget.
    Configuring two backends protects a long run from one provider's limit.
 3. Do not rely on any model at or below 20 B for the two-step chain.
-4. Keep the local backend working. The official guide never states that the evaluation
+4. `google/gemma-4-31b-it` reaches 4/4 but the free NVIDIA endpoint varies from 5.76 s to
+   over 90 s per request. Use it to confirm accuracy, not for a scored run.
+5. Keep the local backend working. The official guide never states that the evaluation
    environment has outbound network access.
 
 Traces: `artifacts/groq-paced`, `artifacts/groq-gptoss120b`, `artifacts/groq-gptoss20b_*`,
