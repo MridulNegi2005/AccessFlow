@@ -117,6 +117,11 @@ class JsonBackend:
         }
         if exception is not None:
             record["exception_type"] = type(exception).__name__
+            response = getattr(exception, "response", None)
+            if response is not None:
+                record["status_code"] = response.status_code
+                # Provider error text explains 4xx rejections; bound it and keep it out of plan data.
+                record["error_detail"] = response.text[:400]
         if metrics:
             record.update(metrics)
         if len(self._request_history) == self.history_limit:
