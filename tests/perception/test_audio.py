@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, summarize_activity, validate_wav
+from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, summarize_activity, validate_wav, webrtc_activity
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -127,3 +127,31 @@ def test_activity_summary_rejects_empty_frames_and_invalid_threshold():
 
     with pytest.raises(ValueError, match="pause_after_s"):
         summarize_activity((ActivityFrame(0.0, 0.02, 0, False),), pause_after_s=-1)
+
+
+def test_webrtc_activity_uses_injected_detector_without_optional_import():
+    calls = []
+
+    class Detector:
+        def __init__(self, aggressiveness: int):
+            assert aggressiveness == 2
+
+        def is_speech(self, chunk: bytes, sample_rate: int) -> bool:
+            calls.append((len(chunk), sample_rate))
+            return len(calls) == 1
+
+    buffer = AudioBuffer(b"\x00\x00" * 640, 16_000, 2)
+
+    frames = webrtc_activity(buffer, frame_ms=20, vad_factory=Detector)
+
+    assert len(frames) == 2
+    assert [frame.active for frame in frames] == [True, False]
+    assert calls == [(640, 16_000), (640, 16_000)]
+
+
+def test_webrtc_activity_rejects_unsupported_format():
+    with pytest.raises(ValueError, match="requires 16-bit"):
+        webrtc_activity(AudioBuffer(b"\x00" * 640, 16_000, 1))
+
+    with pytest.raises(ValueError, match="frame_ms"):
+        webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), frame_ms=25)

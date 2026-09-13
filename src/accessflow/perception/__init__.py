@@ -2,6 +2,7 @@
 
 from .timing import ActivitySummary, ActivityWindow, summarize_activity
 from .audio import ActivityFrame, AudioBuffer, energy_activity, load_pcm
+from .vad import webrtc_activity
 from .local import LocalPerception, WavFormat, validate_wav
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "load_pcm",
     "summarize_activity",
     "validate_wav",
+    "webrtc_activity",
 ]

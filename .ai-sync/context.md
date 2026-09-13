@@ -102,3 +102,10 @@ known script apart from the final number wording. No tracked dependency or contr
 kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Status:** checkpoint validated; held-out speech cases, acoustic VAD and live vision evidence remain.
 **Notes:** Focused audio/timing suite expected 12 tests; no pause is treated as semantic completion.
+## [2026-09-13 20:30] - Codex
+**Task:** Add and evaluate an optional WebRTC activity backend.
+**Changes:** Added lazy WebRTC VAD loading, format checks, deterministic injection tests and
+comparative measurements against the energy baseline.
+**Status:** checkpoint validated; held-out VAD quality, acoustic pause evaluation and live vision evidence remain.
+**Notes:** webrtcvad-wheels 2.0.14, aggressiveness 2, 20 ms frames. Tone 25/25 active; generated
+speech 189/265 active with 0.640 s trailing silence. No tracked dependency or contract change.
