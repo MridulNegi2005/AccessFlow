@@ -15,8 +15,10 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Bootstrap in progress, not an evaluat
 
 The engine is integrated with Atishay's perception adapter and heuristic turn policy.
 Correction, raw-media routing and authorization integration checks run locally; model
-callbacks in those checks are explicitly injected doubles. No live model quality result
-is claimed. See [the integration report](docs/INTEGRATION_2026-09-13.md) and
+callbacks in those checks are explicitly injected doubles. Separate
+[actual local reasoning measurements](docs/results/LOCAL_MODEL_2026-09-13.md) currently
+show failed tasks; a working live-model submission is not claimed. See
+[the integration report](docs/INTEGRATION_2026-09-13.md) and
 [Atishay's checkpoint history](docs/WORKSTREAM_B_CHECKPOINTS.md).
 
 ## Local setup
