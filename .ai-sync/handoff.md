@@ -1,32 +1,27 @@
 # Active handoff
 
-Last updated by: Codex (2026-09-13 16:35)
+Last updated by: Codex (2026-09-13 16:38)
 
 ## Current Task
-Continue the user's persistent Workstream A goal until manually stopped. Goal remains active.
+Persistent Workstream A goal remains active until user stops it. CI must stay disabled.
 
 ## In Progress
-Engine and evaluation implementation. 108 local tests and Ruff pass. Four developer-authored
-scripted workflows pass their slot/effect criteria, including cancellation and lost-response
-reconciliation. Built wheel runs all four cases in an isolated environment. No real inference,
-official-kit, multimodal or accessibility benefit results are claimed.
-
-## Latest Slice
-Gated-worker responsiveness CLI and tests added (smoke: 8/8). Conflicting late write effects
-are preserved and reported; metrics and cancellation trace evidence corrected. Next action:
-commit source and preserve a 100-sample-per-condition measurement from that clean commit.
+Engine and evaluation improvements committed. 108 tests and Ruff pass; four developer-authored
+mock workflows pass. Clean source 7a67b44 produced 400/400 gated-worker probes. Ack p95 0.471 ms;
+_cancel-entry-to-output p95 0.144 ms. See docs/results/RESPONSIVENESS_2026-09-13.md for raw evidence.
+This is synthetic queue/controller timing, not speech/model/user-benefit validation.
 
 ## Next Steps
-Read docs/ENGINE_PROGRESS.md and docs/EVALUATION.md. Next A work: causal cancellation/ack
-measurements under load, baseline/ablation comparisons and broader scenario coverage. Actual
-reasoning access and official kit remain external setup gaps. Atishay continues perception,
-timing and UI; no B-owned files or public contract changes in this slice.
+Remote origin/atishay/perception advanced to d61d4dc. Read its handoff and review/test in an
+isolated checkout before integration. It contains perception/local ASR seam, PCM activity,
+turn-policy baseline and fake-agent demo; his handoff states no actual model validation.
+Respect B ownership; do not silently patch his modules to fix interface failures. After
+integration: actual reasoning setup, broader scenarios and baseline/ablation comparisons.
 
 ## Key Files Modified
-Engine dependency/evidence handling; evaluation mock_environment/oracle/scenarios/suite/replay;
-CLI; engine regression tests; four development cases; README and current progress/run docs.
+engine.py, replay.py, trace_metrics.py, responsiveness.py and CLI; focused engine/evaluation
+tests; docs/RESPONSIVENESS.md, progress/handoff/AI-use docs; measured reports in docs/results.
 
 ## CI constraint
-Workflow 357005144 verified disabled remotely; YAML manual-only. Do not re-enable or dispatch.
-Prior container runtime failure was missing git; fixed lookup tested locally. Full corrected
-Docker execution remains unverified. Old queued runs may still appear in GitHub.
+Workflow 357005144 disabled remotely; YAML manual-only. Do not enable or dispatch. Corrected
+Docker execution still unverified. No final release tag, forms or participant contact.

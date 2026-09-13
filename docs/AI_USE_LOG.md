@@ -50,3 +50,7 @@ User authorized persistent Workstream A development and Luna high workers. Codex
 - Validation: 108 local tests and Ruff pass, four development workflows pass; CLI smoke: 8/8.
   Main measured results will identify the tested code commit. No real model/media benchmark.
 - Human modifications/review: Not recorded.
+
+Measured evidence: Codex ran 100 samples per condition after committing source 7a67b44;
+400/400 passed. Codex independently recomputed durations and aggregate p95 from raw timestamps,
+saved reports/raw samples in docs/results. No human validation or live-model claim added.

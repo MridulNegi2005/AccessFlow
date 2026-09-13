@@ -44,3 +44,5 @@ conditions rather than relying only on an aggregate that could hide a slower pat
 Local output is under ignored `artifacts/`. Selected measured evidence may be copied into
 `docs/results/` with its tested code commit and raw samples. This does not replace the
 planned turn-policy baselines, stale-result ablation, real-media evaluation or held-out set.
+
+Measured development evidence: [13 September run](results/RESPONSIVENESS_2026-09-13.md).

@@ -30,3 +30,11 @@ failed before the fix. The fifth guards duplicate/conflicting delivery after a l
 exclude ordinary failed reads from write outcomes. Confirmed cancellation evidence is traced.
 Next: commit source, measure 100 samples per condition against that clean commit, save reviewed
 raw samples/report, then real reasoning access and baseline/ablation. CI remains disabled.
+
+## Measured result and next integration
+Code commit 7a67b44 (clean): 100 samples per condition, 400/400 passed. Aggregate acknowledgment
+p95 0.47073 ms; cancellation method-entry-to-output p95 0.144025 ms. Independent raw timestamp
+and p95 checks passed. Evidence: docs/results/RESPONSIVENESS_2026-09-13.md and linked JSON/JSONL.
+Atishay remote advanced to d61d4dc (ASR/perception/timing/demo foundations). Read his branch
+handoff and review/test in isolation next. His handoff reports no live model validation.
+No shared/B files were changed to force integration; current engine worktree remains separate.

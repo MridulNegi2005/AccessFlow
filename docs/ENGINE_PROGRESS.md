@@ -31,7 +31,7 @@ and executor-effect criteria. They are development fixtures, not held-out cases.
 | Dynamic planning | Manifest validation, generic dispatch, provider HTTP tests | Real reasoning on unfamiliar schemas and held-out wording |
 | Correct local corrections | Provisional rollback and source/race tests | More multi-slot/in-flight permutations and end-to-end model behavior |
 | Action ledger | Duplicate handling, unknown-write block, reconciliation, safe retry tests and generic mock workflows | Broader conflicting-result/cancellation measurements |
-| Responsiveness | Async workers, final bypass, causal traces and four-condition gated-worker benchmark | Reviewed measured run; real-model/resource-load, playback and speech latency |
+| Responsiveness | 400/400 gated-worker probes; ack p95 0.471 ms and cancel method-entry p95 0.144 ms on clean 7a67b44 | Real-model/resource-load, playback and speech latency |
 | Evaluation | Typed traces, failure evidence, explicit missing values, task criteria against actual mock effects, four-case suite, source/scenario hashes | Full corpus, baselines/ablation, modality reports and held-out/live runs |
 | Session isolation | Reused-agent reset and detached view tests | Provider/cache lifecycle tests under concurrent independent sessions |
 | Local/hosted reasoning | Adapter code and mocked HTTP tests | No local Ollama service or configured Gemini key found; actual model runs pending |
@@ -46,7 +46,14 @@ fully grounded per-field attribution. No accessibility benefit or live-model sco
 
 ## Next independent A tasks
 
-1. Preserve measured controller results, then evaluate real reasoning and resource-load behavior.
+1. Review and integrate Atishay checkpoint d61d4dc in an isolated checkout; test shared interfaces before any merge.
 2. Expand independently authored cases using the mock environment and outcome checks.
 3. Implement baseline/ablation comparisons without changing the shared inference/tools across variants.
 4. Configure and measure a real reasoning backend; integrate B only after its components arrive.
+
+## Measured evidence and new integration input
+[Responsiveness report](results/RESPONSIVENESS_2026-09-13.md) links the raw 400 samples,
+configuration and tested code commit. Synthetic pending-I/O probes met internal targets;
+this does not certify actual model/media latency. Atishay pushed d61d4dc with perception,
+turn-policy and demo foundations. His handoff reports no live model validation; inspect and
+test that checkpoint before claiming integration. No B implementation was edited here.

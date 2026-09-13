@@ -15,7 +15,7 @@ evidence, not an evaluated submission.
 - Replay crash/timeout/cancellation evidence and nonzero CLI exits for failed runs or task criteria.
 - Late committed writes retained after earlier no-effect claims; contradictory transport status reported.
 - Four-condition synthetic controller responsiveness command with auditable raw timestamps.
-- 108 local tests and Ruff pass; four development workflows pass. Timing smoke run: 8/8 probes.
+- 108 local tests and Ruff pass; four development workflows pass. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
 - Public repository and teammate bootstrap. Atishay9828 was invited with write permission;
   invitation acceptance has not been checked in this slice.
 
@@ -28,7 +28,7 @@ recorded in [handoffs/mridul.md](handoffs/mridul.md).
 - Real reasoning on unfamiliar manifests and held-out wording.
 - Broader timing/fault measurements, baseline comparison and dependency-rejection ablation.
 - Full scenario set, independently authored held-out cases and modality/backend reports.
-- Integration with Atishay's raw audio, image and turn-policy implementations when available.
+- Review/integration of Atishay checkpoint d61d4dc; raw model and modality validation are still required.
 - Corrected Docker execution on a Docker-capable host; hardware/warm-up measurements.
 - Official-kit translation and public-kit runs after the organizer supplies the schema.
 - Submission assembly, reviewed disclosure and human registration/template/release checks.

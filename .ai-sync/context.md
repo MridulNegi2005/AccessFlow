@@ -76,3 +76,11 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 108 local tests and Ruff pass, four development cases pass; CLI smoke: 8/8. Commit code before preserving measured 100-sample-per-condition results. No B-owned code or shared wire-contract changes. CI disabled/manual-only; no model/media/official score claims.
 
 ---
+
+## [2026-09-13 16:38] — Codex
+**Task:** Preserve measured controller evidence and locate teammate integration checkpoint.
+**Changes:** Saved report and 400 raw timing probes from clean source 7a67b44. Independently recomputed durations and aggregate p95. Updated current status and next integration step.
+**Status:** in-progress
+**Notes:** 400/400 synthetic probes passed; acknowledgment p95 0.47073 ms and cancellation entry-to-output p95 0.144025 ms. CI remains disabled. Remote Atishay branch now d61d4dc; handoff read, no live model results claimed. Next: isolated integration review and tests, preserving B ownership.
+
+---
