@@ -9,6 +9,9 @@ evidence, not an evaluated submission.
 - Corrections, provisional rollback, source revisions and stale perception/result rejection.
 - Manifest-driven tool scheduling, cancellation, operation ledger and uncertain-write status
   reconciliation. Accepted read evidence expires when its dependencies change.
+- Dynamic read/write arguments must match tracked slots, with explicit parameter aliases;
+  model-provided nonce values cannot split retry identities. Manifest-bound generation
+  restricts tool names and uses read-only choices during unresolved writes.
 - Atishay perception/policy integrated; final corrections, image readiness and clarification/write guard tested.
 - Native subprocess perception lifecycle, Windows PID correctness, cleanup traces and controller cancellation tested.
 - Gemini/Ollama reasoning adapters tested with HTTP doubles and bounded request telemetry.
@@ -53,4 +56,5 @@ Workflow 357005144 is disabled on GitHub and source is manual-only. Do not enabl
 dispatch it without user request. The prior run passed lint/tests/replay and Docker build;
 container execution failed because metadata lookup assumed git was installed. That lookup
 is fixed and regression-tested locally. Corrected container execution remains unverified.
-Two older push runs still appeared queued on the latest check; no new run was dispatched.
+On the 18:32 IST check, one older run reported startup failure and another remained queued;
+the latest run was still from 09:11:24 UTC. No new run was dispatched.

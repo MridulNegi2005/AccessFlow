@@ -93,3 +93,20 @@ Full live development run on79bd263 completed0/4; reports/traces preserved. Next
 
 ## Planner accuracy iteration
 Explicit Qwen2.5:3b comparison on clean82a9d0c:1/4 task criteria passed with original prompt. Raw plans expose missing slot updates and repeated writes after unknown outcomes (retry blocked). Source now clarifies required flat slot state and argument format; ledger-derived status guidance uses dynamic manifests.24 model tests and Ruff pass. Four independently drafted AI probes are copied without parent reading expected labels before first scoring; not final held-out evidence. Next: clean-source known suite and new probes. Dependency coverage audit pending; don't claim full live safety from one task pass.
+
+## [2026-09-13 18:32] — Codex
+**Task:** Explain GitHub workflow failure emails.
+**Changes:** Read-only GitHub verification; no workflow enabled, dispatched or changed.
+**Status:** completed (workflow check only).
+**Notes:** Workflow 357005144 remains disabled_manually; local YAML is manual-only. Latest run 34749085599 still dates to 09:11:24 UTC: lint/tests/replay/build passed, container execution failed. Missing-git handling fixed in aa255bc; corrected container execution unverified. Run 34749085594 now reports startup_failure; 34749085039 remains queued. Existing Workstream A remains in progress.
+
+---
+
+
+## [2026-09-13 18:40] — Codex
+**Task:** Repair dynamic argument dependencies and retry identities; constrain model tool selection.
+**Changes:** Optional argument_slots mapping; read/write parameter grounding; model nonce excluded from operation signature; exact manifest tool-name generation and read-only choices while outcomes are unknown. Preserved guided Qwen run and contract notes.
+**Status:** in-progress (persistent Workstream A goal).
+**Notes:** Seven reproduced failures fixed; full224 tests and Ruff pass with two existing TestClient warnings. Guided Qwen before repairs:1/4 known text cases. Next: clean-source real run and unread independent probes. No B-owned changes or CI runs.
+
+---

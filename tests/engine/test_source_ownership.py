@@ -84,7 +84,9 @@ async def test_replaced_frame_rolls_back_visual_provisional_slot():
     iq, oq = asyncio.Queue(), asyncio.Queue()
     task = asyncio.create_task(agent.run(iq, oq))
     try:
-        await iq.put(StartEvent(session_id="s", payload=Start(tools=[manifest(effect="read")])))
+        tool = manifest(effect="read")
+        tool.parameters["properties"]["day"] = {"const": "any"}
+        await iq.put(StartEvent(session_id="s", payload=Start(tools=[tool])))
         await iq.put(FrameEvent(session_id="s", payload=Frame(path="scripted-only.png", frame_id="f1")))
         await wait_for(oq, lambda e: e.kind == "tool_call")
         await iq.put(FrameEvent(session_id="s", payload=Frame(path="scripted-only.png", frame_id="f2")))

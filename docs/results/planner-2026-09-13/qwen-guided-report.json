@@ -1,0 +1,1803 @@
+{
+  "backend": "ollama/qwen2.5:3b",
+  "server": {
+    "version": "0.34.0"
+  },
+  "installed_model": [
+    {
+      "name": "qwen2.5:3b",
+      "model": "qwen2.5:3b",
+      "modified_at": "2026-09-13T18:13:30.5278283+05:30",
+      "size": 1929912432,
+      "digest": "357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen2",
+        "families": [
+          "qwen2"
+        ],
+        "parameter_size": "3.1B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 32768,
+        "embedding_length": 2048
+      },
+      "capabilities": [
+        "completion",
+        "tools"
+      ]
+    }
+  ],
+  "case_count": 4,
+  "finished_count": 4,
+  "not_run_count": 0,
+  "counts": {
+    "passed": 1,
+    "failed": 3,
+    "error": 0,
+    "cancelled": 0,
+    "not_run": 0
+  },
+  "status": "failed",
+  "limitation": "Live local reasoning, text inputs, mock tools, developer-authored cases; not held out.",
+  "cases": [
+    {
+      "scenario": "device_correction_before_plan.json",
+      "status": "failed",
+      "model_cleanup": "unloaded",
+      "model_reset": {
+        "before": [],
+        "after": []
+      },
+      "warmup_s": 4.476456299991696,
+      "model_placement_after_warmup": {
+        "models": [
+          {
+            "name": "qwen2.5:3b",
+            "model": "qwen2.5:3b",
+            "size": 2159374499,
+            "digest": "357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "3.1B",
+              "quantization_level": "Q4_K_M"
+            },
+            "expires_at": "2026-09-13T18:28:00.9545857+05:30",
+            "size_vram": 2159374499,
+            "context_length": 4096
+          }
+        ]
+      },
+      "result": {
+        "trace": "artifacts\\live-local-qwen25-guided\\case-001.jsonl",
+        "backend": "ollama/qwen2.5:3b",
+        "events": 8,
+        "mock_effects": 0,
+        "completion_status": "timeout",
+        "task_oracle": {
+          "passed": false,
+          "checks": [
+            {
+              "name": "run_completed",
+              "passed": false,
+              "expected": "completed",
+              "actual": "timeout"
+            },
+            {
+              "name": "final_response",
+              "passed": false,
+              "expected": true,
+              "actual": false
+            },
+            {
+              "name": "final_basis",
+              "passed": false,
+              "expected": "confirmed_tool_effect",
+              "actual": null
+            },
+            {
+              "name": "slot:device",
+              "passed": false,
+              "expected": "Panel-B",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "slot:day",
+              "passed": false,
+              "expected": "Wednesday",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "slot:hour",
+              "passed": false,
+              "expected": "17:00",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "committed_effects",
+              "passed": false,
+              "expected": [
+                {
+                  "tool": "reserve_repair_window",
+                  "arguments": {
+                    "device": "Panel-B",
+                    "day": "Wednesday",
+                    "hour": "17:00"
+                  }
+                }
+              ],
+              "actual": []
+            },
+            {
+              "name": "unexpected_errors",
+              "passed": false,
+              "expected": [],
+              "actual": [
+                "unknown_tool"
+              ]
+            }
+          ],
+          "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+        }
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "ollama/qwen2.5:3b",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "component_config": {
+            "profile": "local",
+            "native_worker": "subprocess",
+            "model_reset": "unload_between_cases"
+          }
+        },
+        "run_metadata": {
+          "scenario": "live-dev-device-correction-before-plan",
+          "backend": "ollama/qwen2.5:3b",
+          "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "commit": "f543d3cbe3c01edbc192928dc7d2ed6c4d497187",
+          "perception_backends_observed": [
+            "local/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 100.28123819999746,
+          "expected_slots": {
+            "device": "Panel-B",
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "timeout",
+          "perception_cleanup": "closed",
+          "failure_type": null,
+          "mock_executor_effect_count": 0,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+            "tools": "manifest-mock",
+            "perception": "accessflow.adapters.process_perception.ProcessPerception",
+            "component_config": {
+              "profile": "local",
+              "native_worker": "subprocess",
+              "model_reset": "unload_between_cases"
+            }
+          },
+          "source_sha256": "28f9840eadd21076f21a25b616ac4e7bc7ac629d45d6acb105e10ba22b8e4c71",
+          "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+          "worktree_dirty": false,
+          "reasoner_evidence": {
+            "backend": "ollama",
+            "model": "qwen2.5:3b",
+            "config": {
+              "request_timeout_seconds": 20,
+              "warmup_timeout_seconds": 290,
+              "history_limit": 128,
+              "num_ctx": 4096,
+              "num_gpu": 99,
+              "temperature": 0,
+              "ollama_duration_unit": "nanoseconds"
+            },
+            "request_count": 2,
+            "omitted_count": 0,
+            "outcome_counts": {
+              "success": 1,
+              "failure": 0,
+              "cancelled": 1
+            },
+            "requests": [
+              {
+                "elapsed_seconds": 0.046999999991385266,
+                "outcome": "cancelled",
+                "exception_type": "CancelledError"
+              },
+              {
+                "elapsed_seconds": 9.25,
+                "outcome": "success",
+                "total_duration": 9200716800,
+                "load_duration": 4701500,
+                "prompt_eval_cached_count": 3,
+                "prompt_eval_count": 1210,
+                "prompt_eval_duration": 6191514000,
+                "eval_count": 168,
+                "eval_duration": 2981896000
+              }
+            ]
+          },
+          "task_oracle": {
+            "passed": false,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": false,
+                "expected": "completed",
+                "actual": "timeout"
+              },
+              {
+                "name": "final_response",
+                "passed": false,
+                "expected": true,
+                "actual": false
+              },
+              {
+                "name": "final_basis",
+                "passed": false,
+                "expected": "confirmed_tool_effect",
+                "actual": null
+              },
+              {
+                "name": "slot:device",
+                "passed": false,
+                "expected": "Panel-B",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "slot:day",
+                "passed": false,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "slot:hour",
+                "passed": false,
+                "expected": "17:00",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": false,
+                "expected": [
+                  {
+                    "tool": "reserve_repair_window",
+                    "arguments": {
+                      "device": "Panel-B",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ],
+                "actual": []
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": false,
+                "expected": [],
+                "actual": [
+                  "unknown_tool"
+                ]
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "transcript": 2
+          },
+          "output": {
+            "acknowledge": 3,
+            "error": 1
+          },
+          "total": 8
+        },
+        "operation_ids": {
+          "observed_call_events": 0,
+          "unique": 0,
+          "distinct_call_ids": 0,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": null,
+        "attempt_outcomes": null,
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": null,
+        "slot_accuracy_detail": {
+          "correct": 0,
+          "labeled": 0,
+          "sample_count": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 2,
+            "min_s": 0.0025782,
+            "p50_s": 0.0036756,
+            "p95_s": 0.00466326,
+            "p99_s": 0.004751052,
+            "max_s": 0.004773
+          },
+          "substantive_response_from_input_receipt_s": null,
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 8,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 8,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "plans": [
+        {
+          "state_revision": 0,
+          "observation_event_ids": [
+            "original-device",
+            "corrected-device"
+          ],
+          "proposal": {
+            "intent": null,
+            "slot_updates": {
+              "device": "Panel-B",
+              "day": "Wednesday",
+              "hour": "17:00"
+            },
+            "calls": [
+              {
+                "tool": "manifest-reserve_repair_window",
+                "arguments": {
+                  "device": "Panel-B",
+                  "day": "Wednesday",
+                  "hour": "17:00",
+                  "dedupe_key": "device-Panel-B-day-Wednesday-hour-17:00"
+                },
+                "dependencies": [
+                  "device",
+                  "day",
+                  "hour"
+                ]
+              }
+            ],
+            "clarification": null,
+            "response": null,
+            "request_complete": true,
+            "write_requested": true
+          }
+        }
+      ],
+      "warmup_evidence": {
+        "backend": "ollama",
+        "model": "qwen2.5:3b",
+        "config": {
+          "request_timeout_seconds": 20,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": 4096,
+          "num_gpu": 99,
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        },
+        "request_count": 1,
+        "omitted_count": 0,
+        "outcome_counts": {
+          "success": 1,
+          "failure": 0,
+          "cancelled": 0
+        },
+        "requests": [
+          {
+            "elapsed_seconds": 4.467999999993481,
+            "outcome": "success",
+            "total_duration": 4432578100,
+            "load_duration": 3834991500,
+            "prompt_eval_cached_count": 0,
+            "prompt_eval_count": 43,
+            "prompt_eval_duration": 421668000,
+            "eval_count": 9,
+            "eval_duration": 171636000
+          }
+        ]
+      },
+      "model_cleanup_observation": {
+        "before": [
+          "qwen2.5:3b"
+        ],
+        "after": []
+      }
+    },
+    {
+      "scenario": "lost_response_reconcile.json",
+      "status": "failed",
+      "model_cleanup": "unloaded",
+      "model_reset": {
+        "before": [],
+        "after": []
+      },
+      "warmup_s": 6.764821999997366,
+      "model_placement_after_warmup": {
+        "models": [
+          {
+            "name": "qwen2.5:3b",
+            "model": "qwen2.5:3b",
+            "size": 2159374499,
+            "digest": "357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "3.1B",
+              "quantization_level": "Q4_K_M"
+            },
+            "expires_at": "2026-09-13T18:29:48.4113177+05:30",
+            "size_vram": 2159374499,
+            "context_length": 4096
+          }
+        ]
+      },
+      "result": {
+        "trace": "artifacts\\live-local-qwen25-guided\\case-002.jsonl",
+        "backend": "ollama/qwen2.5:3b",
+        "events": 8,
+        "mock_effects": 1,
+        "completion_status": "timeout",
+        "task_oracle": {
+          "passed": false,
+          "checks": [
+            {
+              "name": "run_completed",
+              "passed": false,
+              "expected": "completed",
+              "actual": "timeout"
+            },
+            {
+              "name": "final_response",
+              "passed": false,
+              "expected": true,
+              "actual": false
+            },
+            {
+              "name": "final_basis",
+              "passed": false,
+              "expected": "reconciled_tool_effect",
+              "actual": null
+            },
+            {
+              "name": "slot:device",
+              "passed": false,
+              "expected": "Panel-A",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "slot:visit_day",
+              "passed": false,
+              "expected": "Wednesday",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "committed_effects",
+              "passed": true,
+              "expected": [
+                {
+                  "tool": "submit_ticket_v3",
+                  "arguments": {
+                    "device": "Panel-A",
+                    "visit_day": "Wednesday"
+                  }
+                }
+              ],
+              "actual": [
+                {
+                  "tool": "submit_ticket_v3",
+                  "arguments": {
+                    "device": "Panel-A",
+                    "visit_day": "Wednesday"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "error:write_outcome_unknown",
+              "passed": true,
+              "expected": "present",
+              "actual": "present"
+            },
+            {
+              "name": "unexpected_errors",
+              "passed": true,
+              "expected": [],
+              "actual": []
+            }
+          ],
+          "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+        }
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "ollama/qwen2.5:3b",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "component_config": {
+            "profile": "local",
+            "native_worker": "subprocess",
+            "model_reset": "unload_between_cases"
+          }
+        },
+        "run_metadata": {
+          "scenario": "live-dev-lost-response-status-reconciliation",
+          "backend": "ollama/qwen2.5:3b",
+          "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "commit": "f543d3cbe3c01edbc192928dc7d2ed6c4d497187",
+          "perception_backends_observed": [
+            "local/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 100.07484739999927,
+          "expected_slots": {
+            "device": "Panel-A",
+            "visit_day": "Wednesday"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "timeout",
+          "perception_cleanup": "closed",
+          "failure_type": null,
+          "mock_executor_effect_count": 1,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+            "tools": "manifest-mock",
+            "perception": "accessflow.adapters.process_perception.ProcessPerception",
+            "component_config": {
+              "profile": "local",
+              "native_worker": "subprocess",
+              "model_reset": "unload_between_cases"
+            }
+          },
+          "source_sha256": "28f9840eadd21076f21a25b616ac4e7bc7ac629d45d6acb105e10ba22b8e4c71",
+          "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+          "worktree_dirty": false,
+          "reasoner_evidence": {
+            "backend": "ollama",
+            "model": "qwen2.5:3b",
+            "config": {
+              "request_timeout_seconds": 20,
+              "warmup_timeout_seconds": 290,
+              "history_limit": 128,
+              "num_ctx": 4096,
+              "num_gpu": 99,
+              "temperature": 0,
+              "ollama_duration_unit": "nanoseconds"
+            },
+            "request_count": 2,
+            "omitted_count": 0,
+            "outcome_counts": {
+              "success": 2,
+              "failure": 0,
+              "cancelled": 0
+            },
+            "requests": [
+              {
+                "elapsed_seconds": 8.797000000005937,
+                "outcome": "success",
+                "total_duration": 8738268600,
+                "load_duration": 5459000,
+                "prompt_eval_cached_count": 3,
+                "prompt_eval_count": 1176,
+                "prompt_eval_duration": 6010380000,
+                "eval_count": 138,
+                "eval_duration": 2688561000
+              },
+              {
+                "elapsed_seconds": 8.906000000002678,
+                "outcome": "success",
+                "total_duration": 8826368200,
+                "load_duration": 4972900,
+                "prompt_eval_cached_count": 513,
+                "prompt_eval_count": 1576,
+                "prompt_eval_duration": 5668946000,
+                "eval_count": 170,
+                "eval_duration": 3096505000
+              }
+            ]
+          },
+          "task_oracle": {
+            "passed": false,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": false,
+                "expected": "completed",
+                "actual": "timeout"
+              },
+              {
+                "name": "final_response",
+                "passed": false,
+                "expected": true,
+                "actual": false
+              },
+              {
+                "name": "final_basis",
+                "passed": false,
+                "expected": "reconciled_tool_effect",
+                "actual": null
+              },
+              {
+                "name": "slot:device",
+                "passed": false,
+                "expected": "Panel-A",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "slot:visit_day",
+                "passed": false,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": true,
+                "expected": [
+                  {
+                    "tool": "submit_ticket_v3",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "visit_day": "Wednesday"
+                    }
+                  }
+                ],
+                "actual": [
+                  {
+                    "tool": "submit_ticket_v3",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "visit_day": "Wednesday"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "error:write_outcome_unknown",
+                "passed": true,
+                "expected": "present",
+                "actual": "present"
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": true,
+                "expected": [],
+                "actual": []
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "tool_result": 1,
+            "transcript": 1
+          },
+          "output": {
+            "acknowledge": 2,
+            "error": 1,
+            "tool_call": 1
+          },
+          "total": 8
+        },
+        "operation_ids": {
+          "observed_call_events": 1,
+          "unique": 1,
+          "distinct_call_ids": 1,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 0,
+            "not_committed": 0,
+            "unknown": 1
+          }
+        },
+        "attempt_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 0,
+            "not_committed": 0,
+            "unknown": 1
+          }
+        },
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": null,
+        "slot_accuracy_detail": {
+          "correct": 0,
+          "labeled": 0,
+          "sample_count": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.000874,
+            "p50_s": 0.000874,
+            "p95_s": 0.000874,
+            "p99_s": 0.000874,
+            "max_s": 0.000874
+          },
+          "substantive_response_from_input_receipt_s": null,
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 8,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 8,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "plans": [
+        {
+          "state_revision": 0,
+          "observation_event_ids": [
+            "reconcile-request"
+          ],
+          "proposal": {
+            "intent": "create_a_wednesday_service_request_for_panel_a",
+            "slot_updates": {
+              "device": "Panel-A",
+              "visit_day": "Wednesday"
+            },
+            "calls": [
+              {
+                "tool": "submit_ticket_v3",
+                "arguments": {
+                  "device": "Panel-A",
+                  "visit_day": "Wednesday",
+                  "nonce": "generated_nonce"
+                },
+                "dependencies": [
+                  "device",
+                  "visit_day"
+                ]
+              }
+            ],
+            "clarification": null,
+            "response": null,
+            "request_complete": true,
+            "write_requested": true
+          }
+        },
+        {
+          "state_revision": 1,
+          "observation_event_ids": [
+            "reconcile-request"
+          ],
+          "proposal": {
+            "intent": "create_a_wednesday_service_request_for_panel_a",
+            "slot_updates": {
+              "device": "Panel-A",
+              "visit_day": "Wednesday"
+            },
+            "calls": [
+              {
+                "tool": "submit_ticket_v3",
+                "arguments": {
+                  "device": "Panel-A",
+                  "visit_day": "Wednesday",
+                  "nonce": "9e29f3ca-01d3-4a69-9293-2cf7c83a2a29"
+                },
+                "dependencies": [
+                  "device",
+                  "visit_day"
+                ]
+              }
+            ],
+            "clarification": null,
+            "response": null,
+            "request_complete": true,
+            "write_requested": false
+          }
+        }
+      ],
+      "warmup_evidence": {
+        "backend": "ollama",
+        "model": "qwen2.5:3b",
+        "config": {
+          "request_timeout_seconds": 20,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": 4096,
+          "num_gpu": 99,
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        },
+        "request_count": 1,
+        "omitted_count": 0,
+        "outcome_counts": {
+          "success": 1,
+          "failure": 0,
+          "cancelled": 0
+        },
+        "requests": [
+          {
+            "elapsed_seconds": 6.76600000000326,
+            "outcome": "success",
+            "total_duration": 6700417500,
+            "load_duration": 6147520600,
+            "prompt_eval_cached_count": 0,
+            "prompt_eval_count": 43,
+            "prompt_eval_duration": 374812000,
+            "eval_count": 9,
+            "eval_duration": 173934000
+          }
+        ]
+      },
+      "model_cleanup_observation": {
+        "before": [
+          "qwen2.5:3b"
+        ],
+        "after": []
+      }
+    },
+    {
+      "scenario": "support_then_service.json",
+      "status": "passed",
+      "model_cleanup": "unloaded",
+      "model_reset": {
+        "before": [],
+        "after": []
+      },
+      "warmup_s": 4.695519400003832,
+      "model_placement_after_warmup": {
+        "models": [
+          {
+            "name": "qwen2.5:3b",
+            "model": "qwen2.5:3b",
+            "size": 2159374499,
+            "digest": "357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "3.1B",
+              "quantization_level": "Q4_K_M"
+            },
+            "expires_at": "2026-09-13T18:31:33.5300607+05:30",
+            "size_vram": 2159374499,
+            "context_length": 4096
+          }
+        ]
+      },
+      "result": {
+        "trace": "artifacts\\live-local-qwen25-guided\\case-003.jsonl",
+        "backend": "ollama/qwen2.5:3b",
+        "events": 11,
+        "mock_effects": 1,
+        "completion_status": "completed",
+        "task_oracle": {
+          "passed": true,
+          "checks": [
+            {
+              "name": "run_completed",
+              "passed": true,
+              "expected": "completed",
+              "actual": "completed"
+            },
+            {
+              "name": "final_response",
+              "passed": true,
+              "expected": true,
+              "actual": true
+            },
+            {
+              "name": "final_basis",
+              "passed": true,
+              "expected": "confirmed_tool_effect",
+              "actual": "confirmed_tool_effect"
+            },
+            {
+              "name": "slot:device",
+              "passed": true,
+              "expected": "Panel-A",
+              "actual": {
+                "value": "Panel-A",
+                "confirmed": true,
+                "present": true
+              }
+            },
+            {
+              "name": "slot:day",
+              "passed": true,
+              "expected": "Wednesday",
+              "actual": {
+                "value": "Wednesday",
+                "confirmed": true,
+                "present": true
+              }
+            },
+            {
+              "name": "slot:hour",
+              "passed": true,
+              "expected": "17:00",
+              "actual": {
+                "value": "17:00",
+                "confirmed": true,
+                "present": true
+              }
+            },
+            {
+              "name": "committed_effects",
+              "passed": true,
+              "expected": [
+                {
+                  "tool": "file_visit_request",
+                  "arguments": {
+                    "device": "Panel-A",
+                    "day": "Wednesday",
+                    "hour": "17:00"
+                  }
+                }
+              ],
+              "actual": [
+                {
+                  "tool": "file_visit_request",
+                  "arguments": {
+                    "device": "Panel-A",
+                    "day": "Wednesday",
+                    "hour": "17:00"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "unexpected_errors",
+              "passed": true,
+              "expected": [],
+              "actual": []
+            }
+          ],
+          "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+        }
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "ollama/qwen2.5:3b",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "component_config": {
+            "profile": "local",
+            "native_worker": "subprocess",
+            "model_reset": "unload_between_cases"
+          }
+        },
+        "run_metadata": {
+          "scenario": "live-dev-support-read-then-service",
+          "backend": "ollama/qwen2.5:3b",
+          "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "commit": "f543d3cbe3c01edbc192928dc7d2ed6c4d497187",
+          "perception_backends_observed": [
+            "local/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 18.187575300005847,
+          "expected_slots": {
+            "device": "Panel-A",
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "completed",
+          "perception_cleanup": "closed",
+          "failure_type": null,
+          "mock_executor_effect_count": 1,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+            "tools": "manifest-mock",
+            "perception": "accessflow.adapters.process_perception.ProcessPerception",
+            "component_config": {
+              "profile": "local",
+              "native_worker": "subprocess",
+              "model_reset": "unload_between_cases"
+            }
+          },
+          "source_sha256": "28f9840eadd21076f21a25b616ac4e7bc7ac629d45d6acb105e10ba22b8e4c71",
+          "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+          "worktree_dirty": false,
+          "reasoner_evidence": {
+            "backend": "ollama",
+            "model": "qwen2.5:3b",
+            "config": {
+              "request_timeout_seconds": 20,
+              "warmup_timeout_seconds": 290,
+              "history_limit": 128,
+              "num_ctx": 4096,
+              "num_gpu": 99,
+              "temperature": 0,
+              "ollama_duration_unit": "nanoseconds"
+            },
+            "request_count": 2,
+            "omitted_count": 0,
+            "outcome_counts": {
+              "success": 2,
+              "failure": 0,
+              "cancelled": 0
+            },
+            "requests": [
+              {
+                "elapsed_seconds": 9.921999999991385,
+                "outcome": "success",
+                "total_duration": 9878270800,
+                "load_duration": 4119400,
+                "prompt_eval_cached_count": 3,
+                "prompt_eval_count": 1241,
+                "prompt_eval_duration": 6346307000,
+                "eval_count": 196,
+                "eval_duration": 3504118000
+              },
+              {
+                "elapsed_seconds": 8.125,
+                "outcome": "success",
+                "total_duration": 8079176500,
+                "load_duration": 4729500,
+                "prompt_eval_cached_count": 511,
+                "prompt_eval_count": 1508,
+                "prompt_eval_duration": 5290142000,
+                "eval_count": 149,
+                "eval_duration": 2737257000
+              }
+            ]
+          },
+          "task_oracle": {
+            "passed": true,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": true,
+                "expected": "completed",
+                "actual": "completed"
+              },
+              {
+                "name": "final_response",
+                "passed": true,
+                "expected": true,
+                "actual": true
+              },
+              {
+                "name": "final_basis",
+                "passed": true,
+                "expected": "confirmed_tool_effect",
+                "actual": "confirmed_tool_effect"
+              },
+              {
+                "name": "slot:device",
+                "passed": true,
+                "expected": "Panel-A",
+                "actual": {
+                  "value": "Panel-A",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:day",
+                "passed": true,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": "Wednesday",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:hour",
+                "passed": true,
+                "expected": "17:00",
+                "actual": {
+                  "value": "17:00",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": true,
+                "expected": [
+                  {
+                    "tool": "file_visit_request",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ],
+                "actual": [
+                  {
+                    "tool": "file_visit_request",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": true,
+                "expected": [],
+                "actual": []
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "tool_result": 2,
+            "transcript": 1
+          },
+          "output": {
+            "acknowledge": 3,
+            "final": 1,
+            "tool_call": 2
+          },
+          "total": 11
+        },
+        "operation_ids": {
+          "observed_call_events": 2,
+          "unique": 2,
+          "distinct_call_ids": 2,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "attempt_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": 1.0,
+        "slot_accuracy_detail": {
+          "correct": 3,
+          "labeled": 3,
+          "sample_count": 1
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0005147,
+            "p50_s": 0.0005147,
+            "p95_s": 0.0005147,
+            "p99_s": 0.0005147,
+            "max_s": 0.0005147
+          },
+          "substantive_response_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 18.0576732,
+            "p50_s": 18.0576732,
+            "p95_s": 18.0576732,
+            "p99_s": 18.0576732,
+            "max_s": 18.0576732
+          },
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 11,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 11,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "plans": [
+        {
+          "state_revision": 0,
+          "observation_event_ids": [
+            "support-request"
+          ],
+          "proposal": {
+            "intent": "request_support",
+            "slot_updates": {
+              "symptom": "flicker",
+              "device": "Panel-A",
+              "day": "Wednesday",
+              "hour": "17:00"
+            },
+            "calls": [
+              {
+                "tool": "inspect_support_notes",
+                "arguments": {
+                  "symptom": "flicker"
+                },
+                "dependencies": [
+                  "symptom"
+                ]
+              },
+              {
+                "tool": "file_visit_request",
+                "arguments": {
+                  "device": "Panel-A",
+                  "day": "Wednesday",
+                  "hour": "17:00",
+                  "request_token": "visit_request_token"
+                },
+                "dependencies": [
+                  "device",
+                  "day",
+                  "hour"
+                ]
+              }
+            ],
+            "clarification": null,
+            "response": null,
+            "request_complete": true,
+            "write_requested": false
+          }
+        },
+        {
+          "state_revision": 1,
+          "observation_event_ids": [
+            "support-request"
+          ],
+          "proposal": {
+            "intent": "request_support",
+            "slot_updates": {
+              "request_token": "u1-visit-1"
+            },
+            "calls": [
+              {
+                "tool": "file_visit_request",
+                "arguments": {
+                  "device": "Panel-A",
+                  "day": "Wednesday",
+                  "hour": "17:00",
+                  "request_token": "u1-visit-1"
+                },
+                "dependencies": [
+                  "symptom",
+                  "device",
+                  "day",
+                  "hour"
+                ]
+              }
+            ],
+            "clarification": null,
+            "response": null,
+            "request_complete": true,
+            "write_requested": true
+          }
+        }
+      ],
+      "warmup_evidence": {
+        "backend": "ollama",
+        "model": "qwen2.5:3b",
+        "config": {
+          "request_timeout_seconds": 20,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": 4096,
+          "num_gpu": 99,
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        },
+        "request_count": 1,
+        "omitted_count": 0,
+        "outcome_counts": {
+          "success": 1,
+          "failure": 0,
+          "cancelled": 0
+        },
+        "requests": [
+          {
+            "elapsed_seconds": 4.687000000005355,
+            "outcome": "success",
+            "total_duration": 4651622000,
+            "load_duration": 4102539200,
+            "prompt_eval_cached_count": 0,
+            "prompt_eval_count": 43,
+            "prompt_eval_duration": 380176000,
+            "eval_count": 9,
+            "eval_duration": 163876000
+          }
+        ]
+      },
+      "model_cleanup_observation": {
+        "before": [
+          "qwen2.5:3b"
+        ],
+        "after": []
+      }
+    },
+    {
+      "scenario": "text_correction.json",
+      "status": "failed",
+      "model_cleanup": "unloaded",
+      "model_reset": {
+        "before": [],
+        "after": []
+      },
+      "warmup_s": 4.317383800007519,
+      "model_placement_after_warmup": {
+        "models": [
+          {
+            "name": "qwen2.5:3b",
+            "model": "qwen2.5:3b",
+            "size": 2159374499,
+            "digest": "357c53fb659c5076de1d65ccb0b397446227b71a42be9d1603d46168015c9e4b",
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "qwen2",
+              "families": [
+                "qwen2"
+              ],
+              "parameter_size": "3.1B",
+              "quantization_level": "Q4_K_M"
+            },
+            "expires_at": "2026-09-13T18:31:56.337417+05:30",
+            "size_vram": 2159374499,
+            "context_length": 4096
+          }
+        ]
+      },
+      "result": {
+        "trace": "artifacts\\live-local-qwen25-guided\\case-004.jsonl",
+        "backend": "ollama/qwen2.5:3b",
+        "events": 7,
+        "mock_effects": 0,
+        "completion_status": "timeout",
+        "task_oracle": {
+          "passed": false,
+          "checks": [
+            {
+              "name": "run_completed",
+              "passed": false,
+              "expected": "completed",
+              "actual": "timeout"
+            },
+            {
+              "name": "final_response",
+              "passed": false,
+              "expected": true,
+              "actual": false
+            },
+            {
+              "name": "final_basis",
+              "passed": false,
+              "expected": "confirmed_tool_effect",
+              "actual": null
+            },
+            {
+              "name": "slot:day",
+              "passed": false,
+              "expected": "Wednesday",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "slot:hour",
+              "passed": false,
+              "expected": "17:00",
+              "actual": {
+                "value": null,
+                "confirmed": false,
+                "present": false
+              }
+            },
+            {
+              "name": "committed_effects",
+              "passed": false,
+              "expected": [
+                {
+                  "tool": "reserve_service_slot",
+                  "arguments": {
+                    "day": "Wednesday",
+                    "hour": "17:00"
+                  }
+                }
+              ],
+              "actual": []
+            },
+            {
+              "name": "unexpected_errors",
+              "passed": false,
+              "expected": [],
+              "actual": [
+                "unknown_tool"
+              ]
+            }
+          ],
+          "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+        }
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "ollama/qwen2.5:3b",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "component_config": {
+            "profile": "local",
+            "native_worker": "subprocess",
+            "model_reset": "unload_between_cases"
+          }
+        },
+        "run_metadata": {
+          "scenario": "live-dev-development-text-correction-01",
+          "backend": "ollama/qwen2.5:3b",
+          "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+          "tools": "manifest-mock",
+          "perception": "accessflow.adapters.process_perception.ProcessPerception",
+          "commit": "f543d3cbe3c01edbc192928dc7d2ed6c4d497187",
+          "perception_backends_observed": [
+            "local/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 100.19574579999608,
+          "expected_slots": {
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "timeout",
+          "perception_cleanup": "closed",
+          "failure_type": null,
+          "mock_executor_effect_count": 0,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "accessflow.turn_policy.heuristic.HeuristicTurnPolicy",
+            "tools": "manifest-mock",
+            "perception": "accessflow.adapters.process_perception.ProcessPerception",
+            "component_config": {
+              "profile": "local",
+              "native_worker": "subprocess",
+              "model_reset": "unload_between_cases"
+            }
+          },
+          "source_sha256": "28f9840eadd21076f21a25b616ac4e7bc7ac629d45d6acb105e10ba22b8e4c71",
+          "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+          "worktree_dirty": false,
+          "reasoner_evidence": {
+            "backend": "ollama",
+            "model": "qwen2.5:3b",
+            "config": {
+              "request_timeout_seconds": 20,
+              "warmup_timeout_seconds": 290,
+              "history_limit": 128,
+              "num_ctx": 4096,
+              "num_gpu": 99,
+              "temperature": 0,
+              "ollama_duration_unit": "nanoseconds"
+            },
+            "request_count": 1,
+            "omitted_count": 0,
+            "outcome_counts": {
+              "success": 1,
+              "failure": 0,
+              "cancelled": 0
+            },
+            "requests": [
+              {
+                "elapsed_seconds": 8.110000000000582,
+                "outcome": "success",
+                "total_duration": 8064242600,
+                "load_duration": 4195800,
+                "prompt_eval_cached_count": 3,
+                "prompt_eval_count": 1135,
+                "prompt_eval_duration": 5765027000,
+                "eval_count": 127,
+                "eval_duration": 2275527000
+              }
+            ]
+          },
+          "task_oracle": {
+            "passed": false,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": false,
+                "expected": "completed",
+                "actual": "timeout"
+              },
+              {
+                "name": "final_response",
+                "passed": false,
+                "expected": true,
+                "actual": false
+              },
+              {
+                "name": "final_basis",
+                "passed": false,
+                "expected": "confirmed_tool_effect",
+                "actual": null
+              },
+              {
+                "name": "slot:day",
+                "passed": false,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "slot:hour",
+                "passed": false,
+                "expected": "17:00",
+                "actual": {
+                  "value": null,
+                  "confirmed": false,
+                  "present": false
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": false,
+                "expected": [
+                  {
+                    "tool": "reserve_service_slot",
+                    "arguments": {
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ],
+                "actual": []
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": false,
+                "expected": [],
+                "actual": [
+                  "unknown_tool"
+                ]
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "transcript": 2
+          },
+          "output": {
+            "acknowledge": 2,
+            "error": 1
+          },
+          "total": 7
+        },
+        "operation_ids": {
+          "observed_call_events": 0,
+          "unique": 0,
+          "distinct_call_ids": 0,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": null,
+        "attempt_outcomes": null,
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": null,
+        "slot_accuracy_detail": {
+          "correct": 0,
+          "labeled": 0,
+          "sample_count": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.00065,
+            "p50_s": 0.00065,
+            "p95_s": 0.00065,
+            "p99_s": 0.00065,
+            "max_s": 0.00065
+          },
+          "substantive_response_from_input_receipt_s": null,
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 7,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 7,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "plans": [
+        {
+          "state_revision": 0,
+          "observation_event_ids": [
+            "live-dev-development-text-correction-01:event:2"
+          ],
+          "proposal": {
+            "intent": "reserve_service_slot",
+            "slot_updates": {
+              "day": "Wednesday",
+              "hour": "17:00"
+            },
+            "calls": [
+              {
+                "tool": "manifest-reserve_service_slot",
+                "arguments": {
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                },
+                "dependencies": [
+                  "day",
+                  "hour"
+                ]
+              }
+            ],
+            "clarification": null,
+            "response": null,
+            "request_complete": true,
+            "write_requested": true
+          }
+        }
+      ],
+      "warmup_evidence": {
+        "backend": "ollama",
+        "model": "qwen2.5:3b",
+        "config": {
+          "request_timeout_seconds": 20,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": 4096,
+          "num_gpu": 99,
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        },
+        "request_count": 1,
+        "omitted_count": 0,
+        "outcome_counts": {
+          "success": 1,
+          "failure": 0,
+          "cancelled": 0
+        },
+        "requests": [
+          {
+            "elapsed_seconds": 4.312999999994645,
+            "outcome": "success",
+            "total_duration": 4266259100,
+            "load_duration": 3737563900,
+            "prompt_eval_cached_count": 0,
+            "prompt_eval_count": 43,
+            "prompt_eval_duration": 360142000,
+            "eval_count": 9,
+            "eval_duration": 164769000
+          }
+        ]
+      },
+      "model_cleanup_observation": {
+        "before": [
+          "qwen2.5:3b"
+        ],
+        "after": []
+      }
+    }
+  ]
+}

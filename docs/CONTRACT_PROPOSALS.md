@@ -6,6 +6,29 @@ Pending considerations: typed output payloads; timer/speech activity observation
 turn policy; structured reconciliation observations; per-modality generation handling.
 These are not permission to silently change v0.1. Preserve existing fields and fixtures.
 
+## Accepted additive A-side argument mapping — 2026-09-13
+
+Reproduction: `tests/engine/test_argument_dependencies.py` originally failed seven cases:
+untracked read/write parameters, unrelated dependencies, contradictory slot/argument values,
+and changing model nonce values splitting a retry's operation identity.
+
+Addition: `ProposedCall.argument_slots: dict[str, str] = {}` maps a tool parameter to its
+session slot when names differ. Otherwise the same-name slot is required. Every dynamic
+argument must equal its mapped slot and list that slot in dependencies. Writes retain
+the existing confirmed-slot and independent authorization requirements. Direct schema
+constants/singleton enums, controller-generated idempotency arguments and actual unresolved
+operation IDs passed to their declared read-only status tools are narrowly exempt.
+
+Compatibility: Existing valid same-name proposals and all perception/UI contracts remain
+valid. Previously untracked dynamic arguments now fail closed with `missing_dependency`;
+contradictory values or malformed mappings report `argument_dependency_mismatch`. Two A-side
+race fixtures explicitly declare their dummy `day=any` parameter as a schema constant.
+No B-owned implementation changes. The field is internal v0.1, not an organizer wire claim.
+
+The controller cannot infer omitted semantic context not represented in arguments. Extra
+context dependencies must still be supplied; arbitrary alias guessing is deliberately absent.
+The operation signature ignores model-provided idempotency values before controller injection.
+
 ## Accepted additive A-side change — 2026-09-13
 
 Problem: The reasoner previously had call IDs in ToolResult but no operation ID needed

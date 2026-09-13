@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from uuid import uuid4
 
-from jsonschema import validate
+from jsonschema import Draft202012Validator, validate
 
 from .clock import RealClock
 from .contracts import (
@@ -390,8 +390,9 @@ class Agent:
             if not manifest:
                 await self._emit("error", code="unknown_tool", tool=proposed.tool)
                 continue
-            if any(name not in self.state.slots for name in proposed.dependencies):
-                await self._emit("error", code="missing_dependency")
+            dependency_error = self._argument_dependency_error(proposed, manifest)
+            if dependency_error:
+                await self._emit("error", code=dependency_error, tool=proposed.tool)
                 continue
             if manifest.effect == "write":
                 if not (self.latest_complete and self.speech_ready and self.speech_write_requested
@@ -405,12 +406,16 @@ class Agent:
                     await self._emit("clarify", text="The earlier action has an unresolved outcome; check its status first.")
                     continue
             dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies}
-            signature = json.dumps([self.request_id, proposed.tool, proposed.arguments, dependencies], sort_keys=True)
+            args = dict(proposed.arguments)
+            # This field belongs to the controller, including when a model supplies
+            # a different value on each retry. It cannot split a logical operation.
+            if manifest.idempotency_parameter:
+                args.pop(manifest.idempotency_parameter, None)
+            signature = json.dumps([self.request_id, proposed.tool, args, dependencies], sort_keys=True)
             previous = self.ledger.get(self.dispatched.get(signature))
             if previous and (previous.status != "failed" or self.attempt_counts[signature] >= 2):
                 continue
             operation_id = previous.operation_id if previous else str(uuid4())
-            args = dict(proposed.arguments)
             if manifest.idempotency_parameter:
                 args[manifest.idempotency_parameter] = operation_id
             try:
@@ -433,6 +438,47 @@ class Agent:
         if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
             if not any(c.effect == "write" for c in self.ledger.values()):
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
+
+    def _argument_dependency_error(self, proposed, manifest):
+        """Ground dynamic arguments in tracked state before read or write dispatch.
+
+        This checks declared data dependencies; semantic context not represented in
+        arguments must still be listed by the planner. No fuzzy alias/value inference.
+        """
+        if any(name not in self.state.slots for name in proposed.dependencies):
+            return "missing_dependency"
+        if any(name not in proposed.arguments for name in proposed.argument_slots):
+            return "argument_dependency_mismatch"
+        properties = manifest.parameters.get("properties", {})
+        unresolved_operations = {
+            call.operation_id for call in self.ledger.values()
+            if call.effect == "write" and call.status in {"unknown", "cancelled"}
+            and self.manifests[call.tool].status_tool == manifest.name
+        } if manifest.effect == "read" else set()
+        for parameter, value in proposed.arguments.items():
+            if parameter == manifest.idempotency_parameter:
+                continue  # Replaced with the controller's stable operation identity.
+            explicit_slot = proposed.argument_slots.get(parameter)
+            if explicit_slot is None:
+                schema = properties.get(parameter, {})
+                if isinstance(schema, dict):
+                    # Inspect only direct constants here; the complete manifest is
+                    # validated later with its original reference scope intact.
+                    if "const" in schema or len(schema.get("enum", [])) == 1:
+                        fixed = schema["const"] if "const" in schema else schema["enum"][0]
+                        if Draft202012Validator({"const": fixed}).is_valid(value):
+                            continue
+                # Only an actual unresolved identity sent to its declared status
+                # tool can be a ledger literal, regardless of that tool's arg name.
+                if isinstance(value, str) and value in unresolved_operations:
+                    continue
+            slot_name = explicit_slot if explicit_slot is not None else parameter
+            slot = self.state.slots.get(slot_name)
+            if slot is None or slot_name not in proposed.dependencies:
+                return "missing_dependency"
+            if not Draft202012Validator({"const": slot.value}).is_valid(value):
+                return "argument_dependency_mismatch"
+        return None
 
     async def _rollback_hypothesis(self, source):
         changed = set()

@@ -230,3 +230,20 @@ kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Notes:** Final204 tests and Ruff pass. Live suite0/4; GPU placement improved one request to11.11 s but the task still failed. No wrong effects or false final success emitted. Server stopped and unloaded. Next: improve measured plan semantics or compare another explicit local model, then real modalities/baselines/full coverage. CI remains disabled; no B files or dependencies changed.
 
 ---
+
+## [2026-09-13 18:32] — Codex
+**Task:** Explain GitHub workflow failure emails.
+**Changes:** Read-only GitHub verification; no workflow enabled, dispatched or changed.
+**Status:** completed (workflow check only).
+**Notes:** Workflow 357005144 remains disabled_manually; local YAML is manual-only. Latest run 34749085599 still dates to 09:11:24 UTC: lint/tests/replay/build passed, container execution failed. Missing-git handling fixed in aa255bc; corrected container execution unverified. Run 34749085594 now reports startup_failure; 34749085039 remains queued. Existing Workstream A remains in progress.
+
+---
+
+
+## [2026-09-13 18:40] — Codex
+**Task:** Repair dynamic argument dependencies and retry identities; constrain model tool selection.
+**Changes:** Optional argument_slots mapping; read/write parameter grounding; model nonce excluded from operation signature; exact manifest tool-name generation and read-only choices while outcomes are unknown. Preserved guided Qwen run and contract notes.
+**Status:** in-progress (persistent Workstream A goal).
+**Notes:** Seven reproduced failures fixed; full224 tests and Ruff pass with two existing TestClient warnings. Guided Qwen before repairs:1/4 known text cases. Next: clean-source real run and unread independent probes. No B-owned changes or CI runs.
+
+---
