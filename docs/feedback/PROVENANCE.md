@@ -25,3 +25,14 @@ Do not commit private recordings or infer clinical representativeness from team 
 - Script: My screen keeps flickering after the update. Book Wednesday at five.
 - SHA-256: B42354F90462A08AD23DF835256289116DEFDE4287AB2AC3D9D3CF2E87BCD5E6
 - Backend: Faster Whisper measurement only; not a clinical or representative speech sample
+
+## synthetic_pause_correction.wav
+
+- Author: Codex for AccessFlow development
+- Date: 2026-09-13
+- Consent/license: Generated locally with the installed Windows speech synthesizer; no participant or third-party recording
+- Modality: 6.024 second mono PCM WAV, 16-bit, 22.05 kHz
+- Intended split: Development-only pause, correction and endpoint timing check
+- Script: Book Tuesday. [1.5 second break] Actually, Wednesday at five.
+- SHA-256: 49B0B26FD1EBCAE0772B2559A4ABA3782444F59FAB7E7E7038122F06157C872B
+- Backend: Faster Whisper and WebRTC timing measurements only; not a held-out case

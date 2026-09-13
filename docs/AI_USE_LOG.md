@@ -179,6 +179,36 @@ saved reports/raw samples in docs/results. No human validation or live-model cla
 - Human modifications/review: Awaiting Atishay and Mridul review.
 - Validation: Focused audio/timing suite 13 passed; Ruff passed for owned paths; no shared contract changed.
 - Backend/dependencies: Standard library energy frames; no dependency or lockfile change.
+## 2026-09-13 - Codex Atishay optional WebRTC activity backend
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Add a lazy optional WebRTC VAD adapter with deterministic injection tests, then compare it with the energy baseline on the two generated fixtures.
+- Output: Added 8/16/32/48 kHz and 10/20/30 ms format validation, optional package loading, and activity comparison evidence.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Focused perception suite 15 passed; Ruff passed for owned paths. Tone: WebRTC 25/25 active frames. Generated speech: WebRTC 189/265 active frames and 0.640 s trailing silence.
+- Backend/dependencies: webrtcvad-wheels 2.0.14 in the ignored environment only; no tracked dependency, lockfile or contract change.
+
+## 2026-09-13 - Codex Atishay pause-and-correction fixture
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Generate a non-participant speech fixture with an explicit pause and self-correction, then measure ASR and acoustic activity.
+- Output: Added synthetic_pause_correction.wav with provenance and recorded WebRTC and Faster Whisper results.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: 6.024 s fixture; WebRTC 139/301 active frames across three windows with 0.640 s trailing silence; ASR elapsed 1.334 s and realtime factor 0.221; transcript preserved the correction wording.
+- Backend/dependencies: Faster Whisper 1.2.1 and webrtcvad-wheels 2.0.14 in the ignored environment; no tracked dependency, lockfile or contract change.
+
+## 2026-09-13 - Codex Atishay browser media upload boundary
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Make selected WAV and PNG files travel through the minimal browser demo as validated session-scoped media while retaining the explicit mock perception boundary.
+- Output: Added base64 upload decoding, size/type validation, temporary session storage, browser file encoding and focused tests.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Demo suite 9 passed; full suite verification follows; Ruff passed for owned paths.
+- Backend/dependencies: Existing FastAPI WebSocket stack; no dependency or contract change. Microphone remains mock.
+
 
 ## 2026-09-13 — Codex second B integration
 Feature origin: ongoing A integration ownership. Prompt: review and integrate 2a4372a
