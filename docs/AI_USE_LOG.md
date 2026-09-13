@@ -80,3 +80,32 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Human modifications/review: Awaiting Atishay’s review.
 - Validation: `uv run --python 3.12 --extra dev pytest tests/test_contract.py` — 4 passed.
 - Backend/dependencies: No live backend and no committed dependency changes.
+
+## 2026-09-13 - Codex Atishay PCM maintenance checkpoint
+
+- Feature origin: The approved AccessFlow Workstream B plan and the handoff requirement to replace deprecated audioop.
+- Tool: Codex (current coding session).
+- Prompt: Replace the owned audioop PCM path with a small maintained implementation without changing the shared contract.
+- Output: Added standard-library PCM decoding, stereo downmixing, linear resampling and RMS helpers; added 1/2/3/4-byte coverage.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Focused audio suite 9 passed; Ruff passed for owned paths; no audioop import remains.
+- Backend/dependencies: No dependency or lockfile change; no live ASR/VAD evidence.
+
+## 2026-09-13 - Codex Atishay local ASR measurement
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Run the explicitly installed Faster Whisper base.en CPU INT8 backend on the checked-in audio fixture and record timing honestly.
+- Output: Installed the optional runtime in the ignored virtual environment, downloaded the model into the ignored models directory and recorded the first local pass.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Model loaded in 0.464 s; inference took 0.677 s for 0.500 s of audio; realtime factor 1.354; transcript was empty as expected for a synthetic tone.
+- Backend/dependencies: Faster Whisper 1.2.1, Systran/faster-whisper-base.en, CPU int8; no tracked dependency or contract change.
+## 2026-09-13 - Codex Atishay demo teardown repair
+
+- Feature origin: Full-suite verification of the Workstream B demo.
+- Tool: Codex (current coding session).
+- Prompt: Fix the WebSocket demo cleanup so normal disconnects await the queue-driven agent shutdown cleanly.
+- Output: The demo now cancels only transport tasks, sends a typed session-end event and waits briefly for the agent before cancelling as a last resort.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: Demo suite 6 passed; full suite 49 passed; Ruff passed for owned paths.
+- Backend/dependencies: No dependency or contract change.
