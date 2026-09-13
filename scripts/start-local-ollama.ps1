@@ -1,6 +1,10 @@
 param(
     [string]$RuntimeDirectory = 'D:\AccessFlow-LocalRuntime',
-    [ValidateRange(1024, 65535)][int]$Port = 11435
+    [ValidateRange(1024, 65535)][int]$Port = 11435,
+    # Flash attention is required for a quantized KV cache and frees VRAM for more layers.
+    [ValidateSet('0', '1')][string]$FlashAttention = '0',
+    [ValidateSet('f16', 'q8_0', 'q4_0')][string]$KvCacheType = 'f16',
+    [ValidateRange(512, 32768)][int]$ContextLength = 4096
 )
 $ErrorActionPreference = 'Stop'
 $runtimePath = [IO.Path]::GetFullPath($RuntimeDirectory)
@@ -18,7 +22,9 @@ $env:OLLAMA_HOST = "127.0.0.1:$Port"
 $env:OLLAMA_NO_CLOUD = '1'
 $env:OLLAMA_NUM_PARALLEL = '1'
 $env:OLLAMA_MAX_LOADED_MODELS = '1'
-$env:OLLAMA_CONTEXT_LENGTH = '4096'
+$env:OLLAMA_CONTEXT_LENGTH = "$ContextLength"
+$env:OLLAMA_FLASH_ATTENTION = $FlashAttention
+$env:OLLAMA_KV_CACHE_TYPE = $KvCacheType
 $env:OLLAMA_KEEP_ALIVE = '5m'
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $stdout = Join-Path $runtimePath "ollama-$stamp.stdout.log"
@@ -31,6 +37,9 @@ $record = [ordered]@{
     executable = $executable
     url = "http://127.0.0.1:$Port"
     models = $modelDirectory
+    context_length = $ContextLength
+    flash_attention = $FlashAttention
+    kv_cache_type = $KvCacheType
     stdout = $stdout
     stderr = $stderr
     state = 'starting'
