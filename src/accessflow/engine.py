@@ -52,6 +52,7 @@ class Agent:
         self.out = output_queue
         self.inbox = asyncio.Queue()
         self.workers = set()
+        self.perception_workers = {}
         self.state = Snapshot()
         self.session_id = None
         self.manifests = {}
@@ -142,6 +143,10 @@ class Agent:
                 if isinstance(event, InterruptEvent):
                     self.generation += 1
                     self.perception_epoch += 1
+                    for worker in tuple(self.perception_workers.values()):
+                        worker.cancel()
+                    if self.planner and not self.planner.done():
+                        self.planner.cancel()
                     self.latest_complete = False
                     self.speech_ready = False
                     self.speech_write_requested = False
@@ -168,6 +173,9 @@ class Agent:
                         continue
                     if source[0] == "image" and self.active_frame is not None:
                         previous_source = ("image", self.active_frame)
+                        previous_worker = self.perception_workers.get(previous_source)
+                        if previous_worker:
+                            previous_worker.cancel()
                         await self._rollback_hypothesis(previous_source)
                         self.observations.pop(previous_source, None)
                     await self._rollback_hypothesis(source)
@@ -190,7 +198,7 @@ class Agent:
                     self.state.status = "listening"
                     # Conservative write guard until semantic/dependency resolution.
                     await self._cancel_writes("new_evidence")
-                    self._spawn(self._perceive(event.model_copy(deep=True), self.generation, self.perception_epoch))
+                    self._start_perception(event, source)
         finally:
             pending = list(self.workers)
             for task in pending:
@@ -203,6 +211,19 @@ class Agent:
         self.workers.add(task)
         task.add_done_callback(self.workers.discard)
         return task
+
+    def _start_perception(self, event, source):
+        previous = self.perception_workers.get(source)
+        if previous:
+            previous.cancel()
+        task = self._spawn(self._perceive(event.model_copy(deep=True), self.generation, self.perception_epoch))
+        self.perception_workers[source] = task
+
+        def retire(done):
+            if self.perception_workers.get(source) is done:
+                self.perception_workers.pop(source)
+
+        task.add_done_callback(retire)
 
     async def _bounded(self, awaitable, seconds):
         work = asyncio.create_task(awaitable)

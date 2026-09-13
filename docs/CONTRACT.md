@@ -78,3 +78,12 @@ The controller clears spoken write intent on new speech, interruption or a new r
 after a committed action. Informational speech and completed old requests cannot authorize
 image-origin writes. These are controller interpretations of existing v0.1 fields;
 Atishay's policy and public wire schema are unchanged.
+
+## Optional resource ownership hook
+
+Replay owns its injected perception instance once a run starts and invokes async `aclose()`
+when provided. The existing Perception.observe protocol is unchanged; stateless implementations
+need no new method. Direct Agent callers own provider cleanup, using an async context manager
+or `finally`. A closed ProcessPerception is not reusable; suite factories create fresh instances.
+The controller requests cancellation on superseded same-utterance revisions, replaced frames
+and explicit interruption, while retaining all stale source/revision/epoch checks.

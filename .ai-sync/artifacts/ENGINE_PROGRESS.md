@@ -33,7 +33,7 @@ and executor-effect criteria. They are development fixtures, not held-out cases.
 | Action ledger | Duplicate handling, unknown-write block, reconciliation, safe retry tests and generic mock workflows | Broader conflicting-result/cancellation measurements |
 | Responsiveness | 400/400 gated-worker probes; ack p95 0.471 ms and cancel method-entry p95 0.144 ms on clean 7a67b44 | Real-model/resource-load, playback and speech latency |
 | Evaluation | Typed traces, failure evidence, explicit missing values, task criteria against actual mock effects, four-case suite, source/scenario hashes | Full corpus, baselines/ablation, modality reports and held-out/live runs |
-| Session isolation | Reused-agent reset and detached view tests | Provider/cache lifecycle tests under concurrent independent sessions |
+| Session isolation | Reused-agent reset, detached views and per-replay process cleanup/cancellation tests | Real provider/cache lifecycle measurements and concurrent-session resource limits |
 | Local/hosted reasoning | Adapter code and mocked HTTP tests | No local Ollama service or configured Gemini key found; actual model runs pending |
 | Packaging | Prior remote Docker build passed; missing-git runtime fix locally regression-tested | Corrected image execution on Docker-capable environment; no automatic CI restart |
 | Official adapter | Explicit unimplemented marker, internal adapter | Organizer kit and public scenarios; don't invent wire compatibility |
@@ -46,7 +46,7 @@ fully grounded per-field attribution. No accessibility benefit or live-model sco
 
 ## Next independent A tasks
 
-1. Bound native inference worker lifetime/concurrency after integrating checkpoint d61d4dc.
+1. Measure actual model warm-up/reload/runtime through the tested process adapter after integrating 2a4372a.
 2. Expand independently authored cases using the mock environment and outcome checks.
 3. Implement baseline/ablation comparisons without changing the shared inference/tools across variants.
 4. Configure and measure actual reasoning/vision backends through the integrated component seams.
@@ -57,3 +57,5 @@ configuration and tested code commit. Synthetic pending-I/O probes met internal 
 this does not certify actual model/media latency. Atishay pushed d61d4dc with perception,
 turn-policy and demo foundations. His handoff reports no live model validation; inspect and
 tests now cover that composition; see INTEGRATION_2026-09-13.md. No B implementation was edited.
+
+Native process lifecycle evidence and remaining runtime limits: [PROCESS_WORKER.md](PROCESS_WORKER.md).

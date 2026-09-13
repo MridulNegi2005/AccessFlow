@@ -185,3 +185,19 @@ Feature origin: ongoing A integration ownership. Prompt: review and integrate 2a
 without modifying B-owned code. Codex preserved B changes and checkpoint narrative,
 resolved shared documentation conflicts and verified WAV hashes/durations. 159 tests and
 Ruff pass. No independent live-model run or human review recorded. No dependency change.
+
+## 2026-09-13 — Native perception lifecycle (Workstream A)
+
+- Feature origin: approved bounded inference/session-lifecycle requirements and persistent A-only goal.
+- Tools: Codex parent implementation/review; GPT-5.6-Luna high worker drafted process adapter,
+  child protocol and nine focused subprocess tests. No B-owned implementation edits.
+- Prompts: implement persistent bounded child, cancellation/timeout/restart/close and protocol
+  failures; review startup races and Windows background launch. Parent added replay ownership,
+  CLI composition, process-ready PID checks and controller-to-worker integration.
+- Corrections to generated output: clear stale canceled-startup handle; bypass the Windows venv
+  redirector while preserving import paths; use actual provider-entry/PID gates; connect
+  controller cancellation while preserving late-result rejection; test actual packaged child.
+- Validation: final 178 tests and Ruff pass; wheel built; fresh installed-wheel local suite 4/4;
+  packaged missing-WAV failure path and no remaining worker PID verified.
+- Evidence/backend: real Python subprocesses with fake providers; no live model run. No additional
+  dependency, CI trigger, human review or submission recorded.

@@ -190,3 +190,11 @@ kept the v0.1 engine contract unchanged and recorded the proposal for review.
 **Notes:** 159 tests and Ruff pass. WAV hashes/durations verified; ASR results remain teammate-reported. Native process worker under development in A-owned adapter files. CI remains disabled.
 
 ---
+
+## [2026-09-13 17:23] — Codex
+**Task:** Implement and verify native perception lifecycle for Workstream A.
+**Changes:** Process adapter/protocol, replay cleanup ownership and metadata, local CLI composition; controller cancellation for superseded revisions/frames and interrupts. Parent fixed startup restart and Windows redirector PID bugs in Luna draft; stronger OS-process integration tests added.
+**Status:** in-progress (persistent goal)
+**Notes:** 178 tests and Ruff pass; installed-wheel local suite 4/4; actual packaged child failure route verified, no matching worker processes left. B2a4372a unchanged. No live model or official runtime claim; CI stays disabled. Next: real model/runtime and timing-contract/baseline work.
+
+---

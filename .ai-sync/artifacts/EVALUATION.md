@@ -24,7 +24,7 @@ null. A successful exit with unscored cases is not evidence that every task pass
 These are Codex-authored development fixtures with scripted reasoning and mock external
 tools. They are not held-out examples, real Samsung documentation or live model results.
 The default profile uses fake perception and the final-flag baseline. `--components local`
-selects Atishay's LocalPerception and HeuristicTurnPolicy. The four text cases pass through
+selects ProcessPerception (wrapping Atishay's LocalPerception) and HeuristicTurnPolicy. The four text cases pass through
 that composition; injected WAV/PNG integration tests prove routing, not model quality.
 
 ## Independent fixture authoring
@@ -101,7 +101,8 @@ uv run accessflow suite scenarios/dev --components local --output-dir artifacts/
 uv run accessflow replay scenarios/dev/text_correction.json --components local
 ```
 
-`--components local` does not imply live inference. Text uses `local/text-pass-through`;
+`--components local` uses the process lifecycle adapter described in PROCESS_WORKER.md.
+It does not imply live inference. Text uses `local/text-pass-through`;
 reasoning remains `offline-fake` unless selected separately. Each suite case gets fresh
 perception and policy instances. Traces record component classes, configuration and the
 backend labels actually emitted by perception. Labels from injected callbacks remain
@@ -113,7 +114,7 @@ downloaded by the runner. Without a configured transcriber, raw WAV fails visibl
 The CLI has no vision provider configuration yet; programmatic `replay(perception=...)`
 supports an injected provider through LocalPerception. Unconfigured PNG fails visibly.
 
-Native ASR uses a thread in this checkpoint. Canceling its coroutine cannot stop the
-native computation, and Python may wait for it at process shutdown. A bounded worker
-lifecycle and actual warm-up/runtime measurements are still required before claiming
-120-second compatibility for real media scenarios. See INTEGRATION_2026-09-13.md.
+The CLI now isolates native media inference in a subprocess that it closes after each
+scenario. Direct programmatic LocalPerception still uses threads; callers choosing that
+adapter must manage its lifetime. See PROCESS_WORKER.md for cancellation, protocol tests
+and limits. Actual model warm-up/runtime and official-kit compatibility remain unverified.

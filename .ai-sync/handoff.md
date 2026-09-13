@@ -1,31 +1,31 @@
 # Active handoff
 
-Last updated by: Codex (2026-09-13 17:07)
+Last updated by: Codex (2026-09-13 17:23)
 
 ## Current Task
-Persistent Workstream A goal remains active. Integration of engine c92a7da and Atishay
-2a4372a is tested; A-only correction/image/proposal fixes accompany the merge.
+Persistent Workstream A goal remains active. B checkpoint 2a4372a integrated unchanged.
+Native process lifecycle is implemented and locally verified; CI must remain disabled.
 
 ## In Progress
-159 tests and Ruff pass; fake and local component suites 4/4, including installed wheel.
-Raw WAV/PNG callback tests are injected doubles. No live model quality claim. B-owned
-implementation is unchanged. README checkpoint history moved to WORKSTREAM_B_CHECKPOINTS.md.
-See docs/INTEGRATION_2026-09-13.md for reproductions, commands and remaining B review items.
+178 tests and Ruff pass; installed-wheel local profile 4/4. ProcessPerception serializes
+native inference, handles cancellation/startup/close, and launches the actual interpreter
+on Windows instead of leaving a venv-redirector child alive. Replay closes owned providers
+and records cleanup outcome. Controller cancels superseded/interrupt workers; late-result
+checks remain. See docs/PROCESS_WORKER.md for actual PID evidence and honest limits.
+No actual model was run in this slice. B's ASR report remains teammate-reported evidence.
 
 ## Next Steps
-Atishay 2a4372a is now integrated and tested; see the follow-up section in the integration
-report. His ASR timings are teammate-reported; fixture bytes/durations verified here.
-Bound native inference lifetime/concurrency; configure and measure actual reasoning/vision;
-expand scenarios, baseline/ablation and independently authored held-out checks. Official kit
-and corrected Docker execution remain outstanding. Preserve B ownership.
+Measure/configure actual reasoning/vision and local model warm-up/reload/runtime. Review
+B's activity timing contract proposal; add baseline/ablation and broader/held-out cases.
+Official-kit schema and corrected Docker execution remain outstanding. Preserve B ownership.
 
 ## Key Files Modified
-engine.py, CLI/replay/suite; A integration tests; README and integration/contract/status docs.
-AI-use and sync logs record provenance. No dependency or public schema change.
+A process adapter/worker, engine worker cancellation, CLI/replay, A lifecycle tests;
+PROCESS_WORKER.md, setup/contract/status and AI/sync notes. No public wire/dependency change.
 
 ## CI constraint
 Workflow 357005144 disabled remotely and YAML manual-only. Do not enable or dispatch.
-No release tag, forms or participant contact. Original failed/queued runs are historical.
+No final release tag, forms or participant contact.
 
 ## Incoming teammate handoff at d61d4dc (historical snapshot)
 

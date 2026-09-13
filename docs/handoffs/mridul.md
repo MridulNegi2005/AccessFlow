@@ -57,3 +57,16 @@ reported illustrative-speech ASR evidence next; this merge tests d61d4dc only.
 both WAV hashes/durations match provenance. ASR measurements are B-reported, not rerun here.
 Next: A subprocess perception adapter and replay ownership/cleanup; worker development is
 in progress on the canonical checkout. No CI trigger, dependency or public schema change.
+
+## Native process lifecycle checkpoint
+178 tests and Ruff pass. CLI local profile uses ProcessPerception; replay owns optional
+aclose, reports cleanup failures, and closes on cancellation. Controller cancels superseded
+same-source perception, old frames and interrupted perception/reasoning without awaiting
+native work on the dispatcher. Source/epoch checks still reject late callbacks.
+Luna drafted the adapter; parent fixed canceled-startup restart and Windows venv redirector
+PID behavior and added integration tests. Real worker-entry PID and exit verified.
+Fresh installed-wheel local suite 4/4; actual packaged child starts and reports missing-WAV
+failure; no live inference. B2a4372a implementation unchanged. See PROCESS_WORKER.md.
+Next: live reasoning/vision and model warm-up/runtime, activity-contract proposal review,
+baselines/ablation and broader scenario set. Official kit and Docker verification remain.
+CI disabled/manual-only. No new dependencies or public wire fields. Goal remains active.

@@ -26,7 +26,7 @@ def main():
     suite.add_argument("--backend", choices=["offline-fake", "ollama", "gemini"], default="offline-fake")
     for component_parser in (replay_parser, suite):
         component_parser.add_argument("--components", choices=["fake", "local"], default="fake",
-                                      help="Use fakes or LocalPerception plus HeuristicTurnPolicy")
+                                      help="Use fakes or process-isolated local media plus HeuristicTurnPolicy")
         component_parser.add_argument("--asr-model-path", type=Path,
                                       help="Already-installed Faster Whisper directory; requires --components local")
     responsiveness = commands.add_parser("responsiveness", help="Measure synthetic controller responsiveness")
@@ -40,13 +40,14 @@ def main():
             parser.error("--asr-model-path requires --components local")
         component_config = {"profile": args.components}
         if args.components == "local":
-            from .perception import LocalPerception
+            from .adapters.process_perception import ProcessPerception
             from .turn_policy import HeuristicTurnPolicy
             def perception_factory():
-                return LocalPerception(model_path=args.asr_model_path)
+                return ProcessPerception(model_path=args.asr_model_path)
             policy_factory = HeuristicTurnPolicy
             component_config["asr_model_path"] = str(args.asr_model_path) if args.asr_model_path else None
             component_config["vision_provider"] = "not_configured"
+            component_config["native_worker"] = "subprocess"
     if args.command == "metrics":
         result = metrics(args.trace)
     elif args.command == "warmup":
