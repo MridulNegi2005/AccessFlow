@@ -5,7 +5,7 @@ turn policy, UI, feedback and presentation ownership remains intact. Automatic C
 
 ## This slice
 
-47 offline tests pass and Ruff passes. Coverage added for:
+The offline safety suite and Ruff pass; exact current counts are in handoffs/mridul.md. Coverage includes:
 
 - delayed perception after interruption and from superseded utterances;
 - input origin IDs, detached policy/reasoner state and manifest copies;
@@ -17,8 +17,10 @@ turn policy, UI, feedback and presentation ownership remains intact. Automatic C
 - recorded input/output/executor events, timeout traces and honest causal metrics.
 
 Tests are synthetic software evidence, not the 60 independently authored scenarios or a
-claim about actual speech recognition. One development text replay still uses mock tools
-and scripted reasoning; recorded effect evidence and final output resolve to one operation.
+claim about actual speech recognition. Four development workflows use mock tools and
+scripted reasoning: date correction, support lookup then booking, device correction during
+a pending write, and lost-response reconciliation. All four pass explicit confirmed-slot
+and executor-effect criteria. They are development fixtures, not held-out cases.
 
 ## Requirements still needing work/evidence
 
@@ -26,9 +28,9 @@ and scripted reasoning; recorded effect evidence and final output resolve to one
 |---|---|---|
 | Dynamic planning | Manifest validation, generic dispatch, provider HTTP tests | Real reasoning on unfamiliar schemas and held-out wording |
 | Correct local corrections | Provisional rollback and source/race tests | More multi-slot/in-flight permutations and end-to-end model behavior |
-| Action ledger | Duplicate result handling, unknown-write block, status reconciliation, safe retry tests | Broader conflicting-result/cancellation cases and generic mock workflow |
+| Action ledger | Duplicate handling, unknown-write block, reconciliation, safe retry tests and generic mock workflows | Broader conflicting-result/cancellation measurements |
 | Responsiveness | Async workers, 80 ms partial debounce, final bypass, causal traces | Sampled cancellation/ack p95 measurements under realistic load |
-| Evaluation | Typed traces, receipt versus speech-end metrics, explicit missing values | Scenario corpus, task completion oracle, baselines/ablation, modality reports |
+| Evaluation | Typed traces, failure evidence, explicit missing values, task criteria against actual mock effects, four-case suite, source/scenario hashes | Full corpus, baselines/ablation, modality reports and held-out/live runs |
 | Session isolation | Reused-agent reset and detached view tests | Provider/cache lifecycle tests under concurrent independent sessions |
 | Local/hosted reasoning | Adapter code and mocked HTTP tests | No local Ollama service or configured Gemini key found; actual model runs pending |
 | Packaging | Prior remote Docker build passed; missing-git runtime fix locally regression-tested | Corrected image execution on Docker-capable environment; no automatic CI restart |
@@ -43,6 +45,6 @@ fully grounded per-field attribution. No accessibility benefit or live-model sco
 ## Next independent A tasks
 
 1. Expand the fault suite and complete reliable causal cancellation measurements.
-2. Add a general manifest-driven mock support/status environment and development cases.
-3. Extend evaluation to per-scenario completion, baseline comparison and reproducibility metadata.
+2. Expand independently authored cases using the mock environment and outcome checks.
+3. Implement baseline/ablation comparisons without changing the shared inference/tools across variants.
 4. Configure and measure a real reasoning backend; integrate B only after its components arrive.

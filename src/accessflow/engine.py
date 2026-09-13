@@ -328,9 +328,7 @@ class Agent:
             elif self.latest_complete:
                 self.provisional_intent = None
             self.state.intent = proposal.intent
-        for call in list(self.ledger.values()):
-            if call.status == "pending" and changed.intersection(call.dependencies):
-                await self._cancel(call, "dependency_changed")
+        await self._invalidate_dependencies(changed, "dependency_changed")
         if proposal.clarification and self.latest_complete:
             self.state.status = "clarifying"
             await self._emit("clarify", text=proposal.clarification)
@@ -400,11 +398,24 @@ class Agent:
                 self.state.slots[name] = prior.model_copy(update={"revision": self.slot_revisions[name]}, deep=True)
         if changed:
             self.state.revision += 1
-            for call in list(self.ledger.values()):
-                if call.status == "pending" and changed.intersection(call.dependencies):
-                    await self._cancel(call, "hypothesis_replaced")
+            await self._invalidate_dependencies(changed, "hypothesis_replaced")
+
+    async def _invalidate_dependencies(self, changed, reason):
+        for call in list(self.ledger.values()):
+            if not changed.intersection(call.dependencies):
+                continue
+            if call.status == "pending":
+                await self._cancel(call, reason)
+            elif call.effect == "read" and call.status == "success":
+                # Previously accepted evidence can become obsolete after a correction.
+                # Keep the call in the audit ledger but remove it from planning evidence.
+                call.status = "stale"
+                self.results = [result for result in self.results if result.call_id != call.call_id]
 
     async def _execute(self, call, timeout):
+        if self.executor is not None and call.status != "pending":
+            await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
+            return
         try:
             if self.executor is None:
                 await self.clock.sleep(timeout)

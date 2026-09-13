@@ -19,6 +19,7 @@ uv run pytest tests/test_contract.py
 uv run pytest -q
 uv run accessflow replay scenarios/dev/text_correction.json
 uv run accessflow metrics artifacts/replay.jsonl
+uv run accessflow suite scenarios/dev --output-dir artifacts/development-suite
 ```
 
 This is the canonical repository root. Organizer PDFs and prior research live outside
@@ -40,6 +41,8 @@ mock external effects. It proves no ASR/vision capability. Explicit `--backend o
 or `--backend gemini` exercises actual reasoning while external tools remain fake.
 See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits.
 
-The engine branch currently contains 47 offline unit/contract/safety/metrics tests, a synthetic text
-correction replay and model HTTP adapters tested with mocked HTTP responses. Atishay's
-actual audio, image, turn-timing and demo implementation is intentionally still open.
+The engine branch contains offline contract/safety/metrics tests, four scripted development
+workflows and model HTTP adapters tested with mocked responses. The suite checks confirmed
+slots and actual mock effects; see [docs/EVALUATION.md](docs/EVALUATION.md). Atishay's audio,
+image, turn-timing and demo implementation is still open. GitHub Actions remains disabled;
+run the development checks locally.

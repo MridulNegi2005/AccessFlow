@@ -1,0 +1,34 @@
+{
+  "id": "device-correction-during-pending-write",
+  "provenance": "Codex-authored illustrative correction sequence with a delayed mock commit. Development fixture, not real speech evidence.",
+  "event_spacing_s": 0.04,
+  "completion_timeout_s": 3,
+  "events": [
+    {"kind": "session_start", "session_id": "device-change", "payload": {"tools": [
+      {"name": "reserve_repair_window", "description": "Create a mock service appointment", "effect": "write", "idempotency_parameter": "dedupe_key",
+       "parameters": {"type": "object", "properties": {"device": {"type": "string"}, "day": {"type": "string"}, "hour": {"type": "string"}, "dedupe_key": {"type": "string"}},
+         "required": ["device", "day", "hour", "dedupe_key"], "additionalProperties": false}}
+    ]}},
+    {"kind": "transcript", "session_id": "device-change", "event_id": "original-device", "payload": {
+      "utterance_id": "u1", "revision": 0, "final": true, "text": "Book Panel-A for Wednesday at five PM."
+    }},
+    {"kind": "transcript", "session_id": "device-change", "event_id": "corrected-device", "payload": {
+      "utterance_id": "u1", "revision": 1, "final": true, "text": "Wait, use Panel-B instead. Keep Wednesday at five PM."
+    }}
+  ],
+  "environment": {
+    "reserve_repair_window": {"kind": "write", "identity_fields": ["device", "day", "hour"], "commit_delay_s": 0.2}
+  },
+  "proposals": [
+    {"intent": "service", "slot_updates": {"device": "Panel-A", "day": "Wednesday", "hour": "17:00"}, "request_complete": true, "write_requested": true,
+     "calls": [{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A", "day": "Wednesday", "hour": "17:00"}, "dependencies": ["device", "day", "hour"]}]},
+    {"slot_updates": {"device": "Panel-B"}, "request_complete": true, "write_requested": true,
+     "calls": [{"tool": "reserve_repair_window", "arguments": {"device": "Panel-B", "day": "Wednesday", "hour": "17:00"}, "dependencies": ["device", "day", "hour"]}]}
+  ],
+  "expected_slots": {"device": "Panel-B", "day": "Wednesday", "hour": "17:00"},
+  "expectation": {
+    "slots": {"device": "Panel-B", "day": "Wednesday", "hour": "17:00"},
+    "effects": [{"tool": "reserve_repair_window", "arguments": {"device": "Panel-B", "day": "Wednesday", "hour": "17:00"}}],
+    "final_basis": "confirmed_tool_effect"
+  }
+}

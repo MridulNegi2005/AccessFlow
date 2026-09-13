@@ -52,3 +52,19 @@ Official kit, live model benchmarks and final submission remain outstanding. No 
 **Notes:** 47 tests and Ruff passed; offline replay yielded one confirmed mock operation and correct labeled slots. No live model access configured. CI remains disabled/manual-only. Next: broader fault/cancellation metrics, dynamic mock workflow and scenario evaluation. See docs/ENGINE_PROGRESS.md.
 
 ---
+
+## [2026-09-13 16:12] — Codex
+**Task:** Explain GitHub workflow failure notifications at user request.
+**Changes:** Read-only GitHub verification; no workflow dispatched or enabled. Added this status note.
+**Status:** completed (workflow explanation)
+**Notes:** Workflow 357005144 is still disabled_manually; source is workflow_dispatch only. Run 34749085599 passed lint, tests, replay and Docker build; docker run failed. Prior investigation identified missing git during metadata lookup, fixed in aa255bc. Two older push runs still appear queued; earlier cancellation attempts returned 409. Uncommitted engine/evaluation work preserved.
+
+---
+
+## [2026-09-13 16:20] — Codex
+**Task:** Continue Workstream A; complete mock scenario evaluation and safety evidence.
+**Changes:** Added manifest-driven lookup/write/status environment, task criteria against committed effects, four-case runner, source/scenario hashes and runtime failure traces. Fixed cancellation-before-dispatch and expiration of accepted stale read evidence. Reviewed and hardened immediate retry/late cleanup with Luna high worker. Updated reproducible instructions and handoffs.
+**Status:** in-progress (persistent goal)
+**Notes:** 92 local tests, Ruff, four development workflows and isolated installed-wheel four-case run pass. No B paths or shared contract changed. No live inference, official scores or held-out claims. CI stays disabled; no workflow triggered. Next: measured controller responsiveness, baseline/ablation and broader cases.
+
+---
