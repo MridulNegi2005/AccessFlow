@@ -220,3 +220,25 @@ the smallest tag is 12b at 7.6 GB against 4 GB of VRAM.
 `ACCESSFLOW_NVIDIA_API_KEY`. Then baselines and ablation, then multimodal.
 **AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
 **Atishay:** No B-owned files changed. CI disabled. Nothing pushed.
+
+## [2026-09-14 02:20] — Claude Code
+**Task:** Sweep well-known hosted models; test Gemma 4 through NVIDIA NIM.
+**Changes:** Added results/MODEL_SWEEP_2026-09-14.md. No source change in this slice.
+**Status:** in-progress.
+**Live-model results:** `qwen/qwen3.8-27b` 4/4 at 0.91 s mean and `openai/gpt-oss-120b` 4/4
+at 1.95 s mean. `openai/gpt-oss-20b` 3/4; it fails support-read-then-service on a timeout
+with no rate-limit error after one successful 1.45 s request, which is the small-model
+signature at hosted speed. The capacity wall for the four-slot two-step chain sits between
+20 B and 27 B.
+**Known failures/limits:** `qwen/qwen3.6-27b` is unusable: a 1000 output-token-per-minute
+limit against plans needing 660 to 1120 output tokens, plus `400 json_validate_failed` with
+an empty failed_generation. Free-tier limits are enforced per model and differ by dimension;
+qwen3.8-27b and gpt-oss-120b are input-limited, qwen3.6-27b is output-limited. NVIDIA NIM is
+blocked: the key lists models but every inference request returns 403 Authorization failed
+across four different models. The key is well formed at 115 characters with an nvapi- prefix,
+so the rejection is account-side. Gemma 4 remains untested.
+**Dependency or contract proposals:** None.
+**Next independent task:** Resolve NVIDIA authorization or drop it, then baselines and
+ablation, then multimodal.
+**AI tools and human modifications:** Claude Code (Opus 5). No human review recorded.
+**Atishay:** No B-owned files changed. CI disabled. Nothing pushed.

@@ -114,3 +114,15 @@ so it must be tested hosted; NVIDIA NIM backend added and awaiting a key. 240 te
 pass. No B-owned files changed. CI disabled. Nothing pushed.
 
 ---
+
+## [2026-09-14 02:20] — Claude Code
+**Task:** Hosted model sweep.
+**Status:** Two models reach 4/4: qwen/qwen3.8-27b at 0.91 s and openai/gpt-oss-120b at 1.95 s.
+**Notes:** gpt-oss-20b scores 3/4 and fails the four-slot two-step chain, so the capacity wall
+sits between 20 B and 27 B. qwen3.6-27b is unusable at 1000 output tokens per minute and also
+fails JSON validation. Free-tier limits are per model and differ by dimension. NVIDIA NIM is
+blocked by a 403 on every inference call while model listing succeeds; the key is well formed,
+so the cause is account-side and Gemma 4 remains untested. No B-owned files changed. CI
+disabled. Nothing pushed.
+
+---
