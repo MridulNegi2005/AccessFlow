@@ -203,6 +203,21 @@ checked-in WAV fixture.
 The full measurement record is in docs/feedback/ASR_MEASUREMENTS.md. The model remains in the
 ignored models directory and is not committed.
 
+## Checkpoint 10 - 13 September 2026: illustrative speech ASR run
+
+Added a locally synthesized, non-participant speech fixture and ran it through
+LocalPerception with the installed Faster Whisper base.en CPU INT8 backend.
+
+- Fixture: 5.304 s mono PCM, 16-bit, 22.05 kHz; generated with the installed Windows speech synthesizer.
+- SHA-256: B42354F90462A08AD23DF835256289116DEFDE4287AB2AC3D9D3CF2E87BCD5E6.
+- Transcript: “My screen keeps flickering after the update. Book Wednesday at 5.”
+- Adapter elapsed time: 5.874 s; realtime factor: 1.108.
+- This is one illustrative generated-voice case, not a held-out accuracy benchmark or a claim
+  about participant speech.
+
+The fixture and ASR details are recorded in docs/feedback/PROVENANCE.md and
+docs/feedback/ASR_MEASUREMENTS.md.
+
 Python 3.11 and `uv` are required:
 
 ```powershell

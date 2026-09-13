@@ -88,3 +88,11 @@ model into ignored models storage and recorded a real CPU INT8 fixture run.
 **Notes:** Intel Core Ultra 5 125H, Python 3.12.10, faster-whisper 1.2.1. Model load 0.464 s;
 0.500 s tone inference 0.677 s; realtime factor 1.354; transcript empty as expected. No tracked
 dependency or contract changes.
+
+## [2026-09-13 19:30] - Codex
+**Task:** Add a non-participant speech fixture and measure local ASR through LocalPerception.
+**Changes:** Added a Windows speech-synthesized WAV with provenance and recorded an adapter-level
+Faster Whisper base.en CPU INT8 run.
+**Status:** checkpoint validated; held-out speech accuracy, acoustic VAD and live vision evidence remain.
+**Notes:** 5.304 s fixture, 5.874 s adapter elapsed, realtime factor 1.108. Transcript matched the
+known script apart from the final number wording. No tracked dependency or contract changes.

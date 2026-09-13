@@ -18,7 +18,7 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 
 - Broader engine race tests and validation of the normalized status reconciliation route.
 - Live reasoning adapters, official-kit adapter after the kit is supplied, replay and metrics.
-- Speech-quality ASR measurement, acoustic VAD backend, live vision backend and real multimodal
+- Held-out speech-quality ASR measurement, acoustic VAD backend, live vision backend and real multimodal
   benchmark on declared hardware.
 - Real browser audio capture/upload, voluntary feedback notes, demo video and presentation draft.
 - Docker/CI verification, the 60-scenario authored/provenance-tracked set, reviewed disclosure

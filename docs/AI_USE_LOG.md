@@ -107,5 +107,14 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Prompt: Fix the WebSocket demo cleanup so normal disconnects await the queue-driven agent shutdown cleanly.
 - Output: The demo now cancels only transport tasks, sends a typed session-end event and waits briefly for the agent before cancelling as a last resort.
 - Human modifications/review: Awaiting Atishay review.
-- Validation: Demo suite 6 passed; full suite 49 passed; Ruff passed for owned paths.
+- Validation: Demo suite 6 passed; full suite 50 passed; Ruff passed for owned paths.
 - Backend/dependencies: No dependency or contract change.
+## 2026-09-13 - Codex Atishay illustrative speech ASR run
+
+- Feature origin: The approved AccessFlow Workstream B plan.
+- Tool: Codex (current coding session).
+- Prompt: Generate a clearly labeled non-participant speech fixture and run the installed Faster Whisper base.en CPU INT8 adapter.
+- Output: Added synthetic_speech.wav with provenance and recorded a LocalPerception.observe run.
+- Human modifications/review: Awaiting Atishay review.
+- Validation: 5.304 s fixture; adapter elapsed 5.874 s; realtime factor 1.108; transcript matched the known script apart from the final number wording.
+- Backend/dependencies: Faster Whisper 1.2.1, CPU int8; no tracked dependency or contract change.

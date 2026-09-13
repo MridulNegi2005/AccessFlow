@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import AudioBuffer, WavFormat, energy_activity, load_pcm
+from accessflow.perception import AudioBuffer, WavFormat, energy_activity, load_pcm, validate_wav
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -78,3 +78,14 @@ def test_loader_preserves_common_pcm_widths(tmp_path: Path, sample_width: int, f
 
     assert buffer.sample_width == sample_width
     assert buffer.pcm == frames
+
+
+def test_checked_in_speech_fixture_has_declared_format():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_speech.wav"
+
+    assert validate_wav(fixture) == WavFormat(
+        channels=1,
+        sample_width=2,
+        sample_rate=22_050,
+        frames=116_949,
+    )
