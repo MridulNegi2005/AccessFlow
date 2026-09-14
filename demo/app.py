@@ -236,9 +236,11 @@ def event_from_message(
     payload = message.get("payload", {})
     if not isinstance(payload, dict):
         raise ValueError("browser event payload must be an object")
+    timestamp = payload.get("timestamp", 0)
     if kind == "transcript":
         return TranscriptEvent(
             session_id=session_id,
+            timestamp=timestamp,
             payload=Transcript(
                 utterance_id=payload.get("utterance_id", str(uuid.uuid4())),
                 revision=payload.get("revision", 0),
@@ -251,15 +253,19 @@ def event_from_message(
     if kind == "audio":
         return AudioEvent(
             session_id=session_id,
+            timestamp=timestamp,
             payload=Audio(
                 path=_materialize_upload("audio", payload, media_root),
                 utterance_id=payload.get("utterance_id", str(uuid.uuid4())),
                 revision=payload.get("revision", 0),
+                speech_start=payload.get("speech_start", 0),
+                speech_end=payload.get("speech_end", 0),
             ),
         )
     if kind == "frame":
         return FrameEvent(
             session_id=session_id,
+            timestamp=timestamp,
             payload=Frame(
                 path=_materialize_upload("frame", payload, media_root),
                 frame_id=payload.get("frame_id", str(uuid.uuid4())),
