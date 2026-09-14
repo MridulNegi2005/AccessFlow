@@ -489,3 +489,15 @@ final retains image context in the same session.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay malformed image recovery
+
+**Task:** Verify recoverable handling of malformed PNG input in the WebSocket session.
+
+**Changes:** Added a demo regression that receives a labeled demo/input error for invalid image data
+and then accepts a text request through the same session.
+
+**Status:** Demo suite 30 passed, 2 strict xfailed; full suite 89 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

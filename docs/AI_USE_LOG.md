@@ -465,3 +465,15 @@ and asserts that the later audio final retains image context and both source IDs
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay malformed image recovery
+
+**Task:** Verify malformed PNG input is recoverable without terminating the browser session.
+
+**Changes:** Added a demo WebSocket regression that sends invalid base64 PNG content, asserts the
+labeled demo/input error, then submits text successfully through the same session.
+
+**Status:** Demo suite 30 passed, 2 strict xfailed; full suite 89 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

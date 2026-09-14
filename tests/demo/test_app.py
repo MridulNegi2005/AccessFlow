@@ -283,6 +283,26 @@ def test_websocket_reports_recoverable_media_input_error():
     assert "Still connected" in final["payload"]["text"]
 
 
+def test_websocket_reports_recoverable_image_input_error():
+    encoded = base64.b64encode(b"not a png").decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json({"kind": "frame", "payload": {"data_base64": encoded}})
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert error["kind"] == "demo_error"
+    assert error["payload"]["backend"] == "demo/input"
+    assert "PNG" in error["payload"]["message"]
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Still connected" in final["payload"]["text"]
+
+
+
 def test_websocket_png_upload_reaches_mock_controller():
     png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
     encoded = base64.b64encode(png).decode("ascii")
