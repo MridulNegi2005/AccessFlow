@@ -3,9 +3,9 @@
 Date and branch: 2026-09-14 / atishay/perception
 Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, opt-in local audio demo path, opt-in local Ollama vision path, session path isolation, local model configuration guard, synthetic audio provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, feedback-session template, demo recording script, template-neutral presentation outline and multimodal end-to-end evidence implemented in owned paths; shared fakes/interfaces remain unchanged.
 Contract version used: 0.1
-Tests run and results: uv run --python 3.12 --extra dev pytest -q — 110 passed, 3 strict xfailed;
+Tests run and results: uv run --python 3.12 --extra dev pytest -q — 111 passed, 3 strict xfailed;
 Configured vision environment wiring is covered through a loopback HTTP provider at the WebSocket route; the final retains image evidence with the later spoken question.
-perception run — 49 passed; demo run — 45 passed, 3 strict xfailed; held-out fixture check included;
+perception run — 49 passed; demo run — 46 passed, 3 strict xfailed; held-out fixture check included;
 Ruff and git diff --check clean for owned paths.
 Live-model/backend results: Local Faster Whisper base.en CPU INT8 measured on the development and three generated held-out cases; a real local ASR plus injected-vision Agent composition completed in 3.222 seconds with both observations in one view; fresh Chrome also routed the speech fixture through faster-whisper/cpu-int8 before accepting a PNG in the same session, and the WebSocket route retains the latest transcript revision alongside the frame; the mock final exposed both prior modalities; the opt-in WebSocket demo route completed a checked-in WAV with the cached model and emitted a local-backend acknowledgment; an isolated Chrome run without a fake audio-device flag used the present Microphone Array and completed getUserMedia, AudioWorklet capture, WAV upload and the mock final; no human speech accuracy, live vision quality or endpoint-quality claim.
 Configured vision failure is covered at the WebSocket boundary: backend_failure is emitted and a later text request completes in the same session.
@@ -57,3 +57,12 @@ PNG validation now also checks the concatenated IDAT zlib stream for a complete,
 **Changes:** The owned Ollama vision provider now rejects non-object JSON roots with a stable invalid JSON shape error instead of leaking an attribute error. Focused coverage uses list and null response bodies.
 
 **Status:** Full suite 110 passed, 3 strict xfailed; focused vision suite 8 passed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
+
+
+## 2026-09-14 - Codex Atishay malformed vision JSON route recovery
+
+**Task:** Verify malformed model JSON remains recoverable through the configured multimodal WebSocket route.
+
+**Changes:** Added a loopback service returning a JSON list, exercised it through the configured OllamaVisionProvider and demo route, and verified the emitted backend_failure is followed by a successful transcript final in the same session.
+
+**Status:** Full suite 111 passed, 3 strict xfailed; focused route and provider regressions 9 passed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
