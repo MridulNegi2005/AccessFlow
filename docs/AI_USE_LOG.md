@@ -666,3 +666,7 @@ passing cross-modal race regression. Validation: 120 passed, 4 strict xfailed; n
 
 2026-09-15: Added direct invalid-PNG upload cleanup regression. Validation: 121 passed, 4 strict
 xfailed; no protected files changed.
+
+
+2026-09-15: Added truthful unknown-vision labeling and regression coverage for identity-free
+injected adapters. Validation: 122 passed, 4 strict xfailed; no protected files changed.

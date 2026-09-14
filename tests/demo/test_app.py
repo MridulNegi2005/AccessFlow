@@ -144,6 +144,15 @@ def test_demo_perception_labels_injected_audio_backend_truthfully():
     assert perception.backend_label == "local/injected-asr audio + demo/mock text/image"
 
 
+def test_demo_perception_does_not_overclaim_unknown_vision_backend():
+    class UnknownVision:
+        pass
+
+    perception = DemoPerception(vision_backend=UnknownVision())
+
+    assert perception.backend_label == "demo/mock audio + local/unknown-vision image"
+
+
 @pytest.mark.asyncio
 async def test_demo_perception_can_delegate_image_to_injected_local_backend(tmp_path: Path):
     class LocalVision:

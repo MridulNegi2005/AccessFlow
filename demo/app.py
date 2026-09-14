@@ -85,11 +85,17 @@ class DemoPerception:
                 labels.append(f"{audio_backend_name} audio")
             else:
                 labels.append("local/unknown-audio")
-        labels.append(
-            f"local/Ollama {self._vision_backend.model} image"
-            if self._vision_backend is not None
-            else "demo/mock text/image"
-        )
+        if self._vision_backend is None:
+            labels.append("demo/mock text/image")
+        else:
+            vision_model = getattr(self._vision_backend, "model", None)
+            vision_backend_name = getattr(self._vision_backend, "backend_name", None)
+            if vision_model:
+                labels.append(f"local/Ollama {vision_model} image")
+            elif vision_backend_name:
+                labels.append(f"{vision_backend_name} image")
+            else:
+                labels.append("local/unknown-vision image")
         return " + ".join(labels)
 
     async def observe(self, event):
