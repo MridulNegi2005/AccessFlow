@@ -35,6 +35,27 @@ def test_invalid_scenarios_fail_before_starting_agent(mutation):
         Scenario.model_validate(raw)
 
 
+def test_event_gaps_default_to_uniform_spacing():
+    parsed = Scenario.model_validate({**scenario(), "event_spacing_s": 0.25})
+    assert parsed.gaps() == [0.25]
+
+
+def test_event_gaps_pace_each_pair_independently():
+    raw = {**scenario(), "event_gaps_s": [3.5]}
+    assert Scenario.model_validate(raw).gaps() == [3.5]
+
+
+@pytest.mark.parametrize("gaps", [[], [1.0, 1.0], [-1.0], [61.0]])
+def test_invalid_event_gaps_fail_before_starting_agent(gaps):
+    with pytest.raises(ValidationError):
+        Scenario.model_validate({**scenario(), "event_gaps_s": gaps})
+
+
+def test_event_gaps_count_against_the_replay_budget():
+    with pytest.raises(ValidationError):
+        Scenario.model_validate({**scenario(), "event_gaps_s": [30.0], "completion_timeout_s": 90})
+
+
 async def test_step_reasoner_uses_public_call_state_to_resolve_status_query():
     steps = [ScriptedStep(input_event_id="e", after_tools={"renamed_write": "unknown"}, proposal={
         "calls": [{"tool": "renamed_status", "arguments": {"receipt": {"$operation_of": "renamed_write"}}}]

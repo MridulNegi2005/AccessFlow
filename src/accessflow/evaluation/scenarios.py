@@ -27,6 +27,9 @@ class Scenario(Model):
     provenance: str = "Provenance not supplied"
     events: list[InputEvent] = Field(min_length=2)
     event_spacing_s: float = Field(default=0.01, ge=0, le=5)
+    # Per-gap pacing for multi-turn live cases, where one uniform spacing cannot
+    # place a later utterance after an earlier tool result on a slow backend.
+    event_gaps_s: list[float] | None = Field(default=None)
     completion_timeout_s: float = Field(default=30, gt=0, le=110)
     proposals: list[PlanProposal] | None = None
     reasoning_steps: list[ScriptedStep] = Field(default_factory=list)
@@ -66,9 +69,19 @@ class Scenario(Model):
             raise ValueError("Scripted step references an unknown input event")
         if self.terminal_output.caused_by_event_id and self.terminal_output.caused_by_event_id not in ids:
             raise ValueError("Terminal criterion references an unknown input event")
-        if (len(self.events) - 1) * self.event_spacing_s + self.completion_timeout_s > 114:
+        if self.event_gaps_s is not None:
+            if len(self.event_gaps_s) != len(self.events) - 1:
+                raise ValueError("event_gaps_s must supply one gap between each pair of events")
+            if any(gap < 0 or gap > 60 for gap in self.event_gaps_s):
+                raise ValueError("Each event gap must be between 0 and 60 seconds")
+        if sum(self.gaps()) + self.completion_timeout_s > 114:
             raise ValueError("Scheduled scenario exceeds the internal 114-second replay budget")
         return self
+
+    def gaps(self):
+        if self.event_gaps_s is not None:
+            return list(self.event_gaps_s)
+        return [self.event_spacing_s] * (len(self.events) - 1)
 
 
 def load_scenario(path):

@@ -131,13 +131,15 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
             finally:
                 outgoing.task_done()
 
+    gaps = definition.gaps()
+
     async def feed_and_wait():
         for index, entry in enumerate(inputs):
             record("input", entry)
             await incoming.put(entry)
             # Explicit test pacing, not an inferred speech/end-of-turn measurement.
             if index < len(inputs) - 1:
-                await asyncio.sleep(definition.event_spacing_s)
+                await asyncio.sleep(gaps[index])
         await asyncio.wait_for(terminal.wait(), definition.completion_timeout_s)
 
     collector = asyncio.create_task(collect())
