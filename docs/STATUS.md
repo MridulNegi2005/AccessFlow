@@ -22,9 +22,9 @@ Updated 15 September 2026.
 - Multimodal end to end evidence now covers one session carrying a validated WAV and PNG through
   event_from_message, injected local ASR and vision providers, DemoPerception, and one Agent
   context. Source IDs and backend labels are preserved; the final response is informational.
-- Browser event timestamps now cross the owned demo boundary, audio speech_start/speech_end values
-  are forwarded into typed audio events, and frame timestamps reach image observations. The browser
-  stamps each sent event from its capture clock while preserving any supplied source timestamp.
+- Browser event timestamps now cross the owned demo boundary on the event envelope, audio
+  speech_start/speech_end values are forwarded into typed audio events, and frame timestamps reach
+  image observations. The adapter still accepts the earlier payload timestamp form for compatibility.
 - The multimodal regression also covers both arrival orders, a revised audio hypothesis and
   WebSocket paths: the latest transcript revision replaces the prior one while the frame remains
   in the same context, and the combined WAV, PNG and text response exposes both retained

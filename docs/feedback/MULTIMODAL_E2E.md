@@ -175,3 +175,16 @@ contract proposal because the protected controller has no structured visual conf
 **Status:** Full suite 119 passed, 4 strict expected failures; demo suite 51 passed, 4 strict expected
 failures; perception suite 52 passed; Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change. Live vision quality remains unverified.
+
+
+
+## 2026-09-15 - Codex Atishay envelope timestamp alignment
+
+**Task:** Align browser timing with the v0.1 event envelope.
+
+**Changes:** The browser now emits its capture timestamp beside kind and payload, while the adapter
+accepts both envelope timestamps and the prior payload form. The existing frame observation and audio
+speech-bound regressions cover the preserved timing.
+
+**Status:** Full suite 119 passed, 4 strict expected failures; no engine, contract, dependency or
+lockfile change.

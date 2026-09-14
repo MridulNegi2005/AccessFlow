@@ -116,3 +116,8 @@ atishay/perception. Quota failures emit backend_failure and allow later transcri
 WebSocket. Conflicting frames remain a protected controller gap; an additive provenance/conflict
 proposal is recorded. Full validation: 119 passed, 4 strict xfailed; demo 51 passed plus 4 strict
 xfailed; perception 52 passed. No protected files changed.
+
+
+2026-09-15: Aligned browser capture timing with the event envelope while retaining payload timestamp
+compatibility. Existing provenance regressions pass. Full validation: 119 passed, 4 strict xfailed;
+no protected files changed.
