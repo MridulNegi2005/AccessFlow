@@ -10,6 +10,7 @@ import asyncio
 import struct
 import threading
 import wave
+import zlib
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -49,18 +50,82 @@ def validate_wav(path: Path) -> WavFormat:
     return metadata
 
 
-def _validate_png(path: Path) -> None:
-    signature = b"\x89PNG\r\n\x1a\n"
+@dataclass(frozen=True)
+class PngFormat:
+    """Structurally validated PNG metadata used by local vision backends."""
+
+    width: int
+    height: int
+    bit_depth: int
+    color_type: int
+
+
+def validate_png(path: Path) -> PngFormat:
+    """Validate PNG chunks, CRCs and termination without decoding pixel data."""
     try:
-        with path.open("rb") as handle:
-            header = handle.read(24)
+        data = path.read_bytes()
     except OSError as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
-    if len(header) != 24 or header[:8] != signature or header[12:16] != b"IHDR":
+
+    signature = b"\x89PNG\r\n\x1a\n"
+    if len(data) < len(signature) or data[:8] != signature:
         raise ValueError(f"Invalid PNG file: {path}")
-    width, height = struct.unpack(">II", header[16:24])
-    if width < 1 or height < 1:
-        raise ValueError(f"PNG has invalid dimensions: {path}")
+
+    offset = len(signature)
+    ihdr: tuple[int, int, int, int] | None = None
+    saw_idat = False
+    saw_iend = False
+    while offset < len(data):
+        if len(data) - offset < 12:
+            raise ValueError(f"Invalid PNG file: {path}")
+        length = struct.unpack(">I", data[offset : offset + 4])[0]
+        chunk_end = offset + 12 + length
+        if chunk_end > len(data):
+            raise ValueError(f"Invalid PNG file: {path}")
+        chunk_type = data[offset + 4 : offset + 8]
+        chunk_data = data[offset + 8 : offset + 8 + length]
+        chunk_crc = struct.unpack(">I", data[offset + 8 + length : chunk_end])[0]
+        if zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF != chunk_crc:
+            raise ValueError(f"Invalid PNG file: {path}")
+
+        if ihdr is None:
+            if chunk_type != b"IHDR" or length != 13:
+                raise ValueError(f"Invalid PNG file: {path}")
+            width, height, bit_depth, color_type, compression, filter_method, interlace = struct.unpack(
+                ">IIBBBBB", chunk_data
+            )
+            valid_depths = {
+                0: {1, 2, 4, 8, 16},
+                2: {8, 16},
+                3: {1, 2, 4, 8},
+                4: {8, 16},
+                6: {8, 16},
+            }
+            if (
+                width < 1
+                or height < 1
+                or bit_depth not in valid_depths.get(color_type, set())
+                or compression != 0
+                or filter_method != 0
+                or interlace not in (0, 1)
+            ):
+                raise ValueError(f"Invalid PNG file: {path}")
+            ihdr = (width, height, bit_depth, color_type)
+        elif chunk_type == b"IHDR":
+            raise ValueError(f"Invalid PNG file: {path}")
+
+        if chunk_type == b"IDAT":
+            saw_idat = True
+        if chunk_type == b"IEND":
+            if length != 0 or chunk_end != len(data):
+                raise ValueError(f"Invalid PNG file: {path}")
+            saw_iend = True
+            break
+        offset = chunk_end
+
+    if ihdr is None or not saw_idat or not saw_iend:
+        raise ValueError(f"Invalid PNG file: {path}")
+    return PngFormat(*ihdr)
 
 
 def _transcribe_with_whisper(model: Any, path: Path) -> str:
@@ -129,7 +194,7 @@ class LocalPerception:
             if self._vision_provider is None:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
-            await asyncio.to_thread(_validate_png, path)
+            await asyncio.to_thread(validate_png, path)
             text = await asyncio.to_thread(self._vision_provider, path)
             yield Observation(
                 event_id=event.event_id,

@@ -4,6 +4,7 @@ import importlib.util
 import json
 import struct
 import threading
+import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -35,6 +36,20 @@ demo_app = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(demo_app)
 DemoPerception = demo_app.DemoPerception
 event_from_message = demo_app.event_from_message
+
+def _png_bytes(*, width: int = 2, height: int = 3) -> bytes:
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data))
+            + kind
+            + data
+            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+        )
+
+    row = b"\x00" + b"\x00\x40\x80\xff" * width
+    pixels = row * height
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(pixels)) + chunk(b"IEND", b"")
 
 
 @pytest.mark.parametrize(
@@ -87,7 +102,7 @@ async def test_demo_perception_can_delegate_image_to_injected_local_backend(tmp_
 
     image = tmp_path / "screen.png"
     image.write_bytes(
-        b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 4, 5)
+        _png_bytes(width=4, height=5)
     )
     event = event_from_message(
         "session-1",
@@ -305,9 +320,26 @@ def test_websocket_reports_recoverable_image_input_error():
     assert "Still connected" in final["payload"]["text"]
 
 
+def test_websocket_reports_recoverable_truncated_image_input_error():
+    encoded = base64.b64encode(_png_bytes()[:-4]).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json({"kind": "frame", "payload": {"data_base64": encoded}})
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert error["kind"] == "demo_error"
+    assert error["payload"]["backend"] == "demo/input"
+    assert "valid PNG" in error["payload"]["message"]
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Still connected" in final["payload"]["text"]
 
 def test_websocket_png_upload_reaches_mock_controller():
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded = base64.b64encode(png).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -332,7 +364,7 @@ def test_websocket_png_upload_reaches_mock_controller():
 def test_websocket_combined_media_context_is_visible():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -377,7 +409,7 @@ def test_websocket_combined_media_context_is_visible():
 def test_websocket_image_before_audio_context_is_visible():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -431,7 +463,7 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
         "from_environment",
         classmethod(configured_perception),
     )
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -468,7 +500,7 @@ async def test_configured_vision_failure_emits_backend_error_without_final(tmp_p
             assert path.parent == tmp_path
             raise RuntimeError("vision service unavailable")
 
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     image = event_from_message(
         "vision-failure-session",
         {
@@ -513,7 +545,7 @@ async def test_configured_vision_failure_emits_backend_error_without_final(tmp_p
     reason="The current Agent retains prior frame observations when the active frame changes.",
 )
 def test_websocket_new_frame_replaces_previous_frame():
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -549,7 +581,7 @@ def test_websocket_new_frame_replaces_previous_frame():
 def test_websocket_multimodal_revision_keeps_latest_text_and_frame():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -625,7 +657,7 @@ async def test_multimodal_audio_and_image_reach_one_agent_context(
 ):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     class LocalVision:
@@ -833,7 +865,7 @@ async def test_multimodal_context_uses_loopback_ollama_transport(tmp_path: Path)
     try:
         fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
         encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
-        png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+        png = _png_bytes(width=2, height=3)
         encoded_image = base64.b64encode(png).decode("ascii")
 
         def transcribe(path: Path) -> str:
@@ -918,7 +950,7 @@ async def test_multimodal_context_uses_loopback_ollama_transport(tmp_path: Path)
 async def test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
     class LocalVision:
@@ -1072,7 +1104,7 @@ async def test_image_evidence_never_authorizes_a_write_without_spoken_request(tm
             "additionalProperties": False,
         },
     )
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     image = event_from_message(
         "image-only-safety-session",
         {
@@ -1156,7 +1188,7 @@ async def test_partial_speech_and_final_image_never_authorize_a_write(tmp_path: 
             "additionalProperties": False,
         },
     )
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
     session_id = "partial-image-safety-session"
     partial = event_from_message(
@@ -1354,7 +1386,7 @@ def test_browser_audio_upload_is_materialized_and_validated(tmp_path: Path):
 
 
 def test_browser_png_upload_is_materialized_and_validated(tmp_path: Path):
-    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    png = _png_bytes(width=2, height=3)
     encoded = base64.b64encode(png).decode("ascii")
 
     event = event_from_message(
