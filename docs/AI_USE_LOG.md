@@ -650,3 +650,7 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-15: Preserved browser multimodal source timing in the owned demo path: event timestamps,
 audio speech bounds and frame observation timing now have focused regressions. Validation: 117 passed,
 3 strict xfailed; no protected files changed.
+
+
+2026-09-15: Added multimodal vision quota recovery coverage and a strict conflicting-frame example with
+an additive controller proposal. Validation: 119 passed, 4 strict xfailed; no protected files changed.
