@@ -155,3 +155,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Multimodal boundary follow-up committed locally on atishay/perception: failed WAV materializations are cleaned up and injected ASR receives an accurate backend label. Validation: 101 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Combined configured multimodal route regression added on atishay/perception. Validation: 102 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: ASR failure multimodal recovery regression added on atishay/perception. Validation: 103 passed, 3 strict xfailed; no protected files changed.

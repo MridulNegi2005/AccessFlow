@@ -613,3 +613,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Continued multimodal E2E hardening on atishay/perception. LocalPerception now exposes audio_backend_name for truthful injected-ASR versus Faster Whisper labeling, and failed post-header WAV validation removes its temporary materialization. Full suite: 101 passed, 3 strict xfailed.
 
 2026-09-14: Added combined configured multimodal route coverage on atishay/perception: one WebSocket session sends validated WAV and PNG through local ASR and loopback vision, preserving labels, source IDs and informational output. Full suite: 102 passed, 3 strict xfailed.
+
+2026-09-14: Added ASR failure recovery coverage on atishay/perception: a WebSocket backend_failure is followed by validated PNG and spoken input, with retained image context and informational output. Full suite: 103 passed, 3 strict xfailed.
