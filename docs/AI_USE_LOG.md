@@ -452,3 +452,16 @@ write tool.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay WebSocket image-first ordering
+
+**Task:** Verify that image evidence remains available when it arrives before audio in one browser
+session.
+
+**Changes:** Added a demo WebSocket regression that sends a validated PNG before a validated WAV
+and asserts that the later audio final retains image context and both source IDs.
+
+**Status:** Demo suite 29 passed, 2 strict xfailed; full suite 88 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

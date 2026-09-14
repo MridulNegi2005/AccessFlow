@@ -351,6 +351,47 @@ def test_websocket_combined_media_context_is_visible():
     assert "image:" in text_final["payload"]["text"]
 
 
+def test_websocket_image_before_audio_context_is_visible():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "ws-frame-first"},
+                }
+            )
+            frame_status = socket.receive_json()
+
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "payload": {"data_base64": encoded_audio, "utterance_id": "ws-audio-after-frame"},
+                }
+            )
+            audio_status = socket.receive_json()
+            outputs = _receive_controller_outputs(socket)
+
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert frame_status["payload"] == {
+        "media_received": "frame",
+        "source_id": "ws-frame-first",
+    }
+    assert audio_status["payload"] == {
+        "media_received": "audio",
+        "source_id": "ws-audio-after-frame",
+    }
+    assert "Mock agent received audio input" in final["payload"]["text"]
+    assert "multimodal context: image:" in final["payload"]["text"]
+
+
+
 def test_websocket_multimodal_revision_keeps_latest_text_and_frame():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
