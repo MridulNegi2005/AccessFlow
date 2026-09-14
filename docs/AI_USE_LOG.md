@@ -684,3 +684,8 @@ becomes backend_failure and the same session accepts a later transcript. Validat
 
 2026-09-15: Added a slow-image worker responsiveness regression. The event loop remains usable while a
 vision provider is blocked. Validation: 125 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Added a slow-ASR worker responsiveness regression alongside the existing slow-image check.
+Both perception paths keep the event loop responsive. Validation: 126 passed, 4 strict xfailed; no
+protected files changed.

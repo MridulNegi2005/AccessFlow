@@ -678,3 +678,8 @@ becomes backend_failure and the same session accepts a later transcript. Full va
 
 2026-09-15: Added slow-image worker responsiveness evidence: a blocked vision provider no longer blocks
 an async heartbeat. Full validation: 125 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Added slow-ASR worker responsiveness evidence alongside slow-image coverage. Both
+replaceable perception paths keep an async heartbeat usable. Full validation: 126 passed, 4 strict
+xfailed; no protected files changed.

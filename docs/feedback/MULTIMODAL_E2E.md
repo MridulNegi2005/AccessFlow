@@ -260,3 +260,14 @@ a worker while an async heartbeat completes, and the final image observation ret
 
 **Status:** Full suite 125 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
 failures; perception suite 54 passed. No engine, contract, dependency or lockfile change.
+
+
+## 2026-09-15 - Codex Atishay audio worker responsiveness
+
+**Task:** Verify that slow raw audio transcription does not block the multimodal event loop.
+
+**Changes:** Added a regression with a deliberately slow injected ASR provider. The worker-backed audio
+path allows an async heartbeat to complete and preserves the final utterance identity and text.
+
+**Status:** Full suite 126 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
+failures; perception suite 55 passed. No engine, contract, dependency or lockfile change.
