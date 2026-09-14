@@ -688,3 +688,8 @@ xfailed; no protected files changed.
 2026-09-15: Browser multimodal output now uses textContent-backed DOM nodes rather than innerHTML; the
 existing UI test covers the safe rendering path. Full validation: 126 passed, 4 strict xfailed; no
 protected files changed.
+
+
+2026-09-15: Browser media event translation now runs through asyncio.to_thread, keeping base64 decoding
+and WAV/PNG validation off the WebSocket receive loop. Full validation: 126 passed, 4 strict xfailed;
+no protected files changed.

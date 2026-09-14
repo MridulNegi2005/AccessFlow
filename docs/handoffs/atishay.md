@@ -164,3 +164,8 @@ files changed.
 2026-09-15: Hardened browser rendering of untrusted multimodal output by replacing innerHTML with
 textContent-backed DOM nodes. The existing UI regression now proves model and transcript payloads are
 rendered as text. Full validation remains 126 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Moved browser media decoding and WAV/PNG validation off the WebSocket receive loop with
+asyncio.to_thread while preserving the synchronous event adapter API. Focused media/recovery tests and
+full validation remain green at 126 passed, 4 strict xfailed; no protected files changed.

@@ -317,7 +317,8 @@ async def websocket(websocket: WebSocket) -> None:
             while True:
                 message = await websocket.receive_json()
                 try:
-                    event = event_from_message(
+                    event = await asyncio.to_thread(
+                        event_from_message,
                         session_id,
                         message,
                         media_root=media_root,

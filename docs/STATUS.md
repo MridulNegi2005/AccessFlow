@@ -96,6 +96,8 @@ Updated 15 September 2026.
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
   PNG in the same session. The result is mixed evidence, not a live multimodal model benchmark.
+- Browser base64 decoding and WAV/PNG materialization validation now run in a worker from the WebSocket
+  receive path, keeping upload handling off the event loop.
 - The browser demo renders untrusted multimodal event kinds and payloads through text nodes, so model or
   transcript output is displayed without interpreting markup.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and

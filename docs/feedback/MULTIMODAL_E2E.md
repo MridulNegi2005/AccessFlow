@@ -282,3 +282,15 @@ extended the existing UI regression to require the safe rendering path.
 
 **Status:** Full suite 126 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
 failures; perception suite 55 passed. No engine, contract, dependency or lockfile change.
+
+
+## 2026-09-15 - Codex Atishay nonblocking browser media intake
+
+**Task:** Keep base64 decoding and WAV/PNG validation from blocking the WebSocket receive loop.
+
+**Changes:** The route now offloads synchronous event translation and session-scoped media validation to
+a worker while retaining the existing adapter API. Existing raw media, combined context and recovery
+regressions pass through the updated boundary.
+
+**Status:** Full suite 126 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
+failures; perception suite 55 passed. No engine, contract, dependency or lockfile change.
