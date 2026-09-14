@@ -604,3 +604,11 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 **Changes:** Strengthened the WebSocket regression to call DemoPerception.from_environment with both modality settings, substituting only the ASR implementation for deterministic text. It verifies validated WAV and PNG transport, backend labels, source IDs, both observations in one reasoner view and informational output.
 
 **Status:** Full suite 102 passed, 3 strict xfailed; owned demo and perception suites 86 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
+
+## 2026-09-14 - Codex Atishay ASR failure multimodal recovery
+
+**Task:** Verify that an audio backend failure can recover into a later multimodal request through the demo WebSocket.
+
+**Changes:** Added a route regression that emits backend_failure for ASR, then accepts a validated PNG and spoken follow-up in the same session. It verifies retained image evidence and informational output; the test waits for the actual image observation to avoid assuming worker completion order.
+
+**Status:** Full suite 103 passed, 3 strict xfailed; owned demo and perception suites 87 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. One existing WebSocket teardown cancellation was transient: the affected test passed in three isolated reruns and the subsequent full suite passed. No engine, contract, dependency or lockfile change.

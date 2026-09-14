@@ -672,6 +672,82 @@ def test_websocket_configured_audio_and_vision_share_context(monkeypatch, tmp_pa
         server.server_close()
         server_thread.join(timeout=1)
 
+def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeypatch):
+    class FailingAudio:
+        async def observe(self, event):
+            if False:
+                yield None
+            raise RuntimeError("audio service unavailable")
+
+    class LocalVision:
+        model = "injected-vision"
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            return "screen shows the approval prompt"
+
+    class ObservingReasoner(demo_app.DemoReasoner):
+        image_seen = threading.Event()
+
+        async def plan(self, view, manifests):
+            if any(item.modality == "image" for item in view.observations):
+                ObservingReasoner.image_seen.set()
+            return await super().plan(view, manifests)
+
+    def configured_perception(cls):
+        return DemoPerception(audio_backend=FailingAudio(), vision_backend=LocalVision())
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    monkeypatch.setattr(demo_app, "DemoReasoner", ObservingReasoner)
+
+    def receive_media_status(socket, media_kind):
+        while True:
+            message = socket.receive_json()
+            if (
+                message.get("kind") == "demo_status"
+                and message.get("payload", {}).get("media_received") == media_kind
+            ):
+                return message
+
+    png = _png_bytes(width=2, height=3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            socket.receive_json()
+            socket.send_json(
+                {"kind": "audio", "payload": {"data_base64": encoded_audio, "utterance_id": "failed-audio"}}
+            )
+            audio_status = receive_media_status(socket, "audio")
+            failed_outputs = _receive_controller_outputs(socket)
+            socket.send_json(
+                {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "after-audio-failure"}}
+            )
+            frame_status = receive_media_status(socket, "frame")
+            assert ObservingReasoner.image_seen.wait(timeout=1)
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
+            )
+            continued_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in continued_outputs if item["kind"] == "final")
+    assert audio_status["payload"] == {"media_received": "audio", "source_id": "failed-audio"}
+    assert frame_status["payload"] == {
+        "media_received": "frame",
+        "source_id": "after-audio-failure",
+    }
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert "What is on this screen?" in final["payload"]["text"]
+    assert "screen shows the approval prompt" in final["payload"]["text"]
+    assert final["payload"]["basis"] == "informational"
+
 def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     class FailingVision:
         model = "failing-vision"
