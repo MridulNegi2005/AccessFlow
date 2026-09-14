@@ -537,3 +537,16 @@ backend_failure and no final response.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay WebSocket vision failure recovery
+
+**Task:** Verify configured vision failure recovery through the real demo WebSocket boundary.
+
+**Changes:** Added an owned regression with a failing injected vision provider. The route emits a
+backend_failure error and the same session remains usable for a later text request.
+
+**Status:** Focused regression passed. Expected suite counts after this change are 92 passed, 3 strict
+xfailed; demo suite 33 passed, 3 strict xfailed; perception suite 43 passed.
+
+**Notes:** This records failure propagation and session recovery only; it makes no live vision quality
+claim. No engine, contract, lockfile or dependency manifest changes were made.

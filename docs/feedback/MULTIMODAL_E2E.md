@@ -92,6 +92,9 @@ is a strict expected failure on this branch: two frames arrive through the WebSo
 currently retains both until the integrated controller removes the prior active frame.
 The configured vision failure companion, tests/demo/test_app.py::test_configured_vision_failure_emits_backend_error_without_final,
 confirms that a vision backend exception becomes a backend_failure event without a misleading final.
+The route-level companion, tests/demo/test_app.py::test_websocket_configured_vision_failure_is_recoverable,
+confirms the same failure behavior through WebSocket transport and verifies that the session remains
+usable for a later text request.
 
 ## Limits
 
