@@ -1,4 +1,7 @@
+import asyncio
 import struct
+import threading
+import time
 import zlib
 import wave
 from pathlib import Path
@@ -169,6 +172,35 @@ async def test_image_input_preserves_frame_identity_with_injected_provider(tmp_p
     assert observation.speech_start == observation.speech_end == 2.5
     assert observation.backend == "local/injected-vision"
 
+
+@pytest.mark.asyncio
+async def test_slow_image_provider_does_not_block_event_loop(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "device.png"
+    _write_png(image_path)
+    provider_started = threading.Event()
+
+    def provider(path: Path) -> str:
+        provider_started.set()
+        time.sleep(0.15)
+        return "screen evidence"
+
+    event = FrameEvent(
+        session_id="s1",
+        event_id="slow-image-event",
+        payload=Frame(path=str(image_path), frame_id="slow-frame"),
+    )
+    observation_task = asyncio.create_task(_one(LocalPerception(vision_provider=provider), event))
+
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    heartbeat = asyncio.create_task(asyncio.sleep(0.02))
+    await asyncio.wait_for(heartbeat, timeout=0.1)
+    assert not observation_task.done()
+
+    observation = await asyncio.wait_for(observation_task, timeout=1)
+    assert observation.source_id == "slow-frame"
+    assert observation.text == "screen evidence"
 
 def test_png_validation_returns_structural_metadata(tmp_path: Path):
     image_path = tmp_path / "valid.png"
