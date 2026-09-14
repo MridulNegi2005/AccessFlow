@@ -662,3 +662,7 @@ retained. Validation: 119 passed, 4 strict xfailed; no protected files changed.
 
 2026-09-15: Verified delayed audio remains in multimodal context when a newer frame arrives; added a
 passing cross-modal race regression. Validation: 120 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Added direct invalid-PNG upload cleanup regression. Validation: 121 passed, 4 strict
+xfailed; no protected files changed.
