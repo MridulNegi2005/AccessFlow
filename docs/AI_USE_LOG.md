@@ -620,3 +620,11 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 **Run:** Enabled the cached Faster Whisper base.en CPU INT8 snapshot and configured OllamaVisionProvider against a local loopback protocol service. A validated WAV and PNG passed through one session, and a follow-up text final retained both observations.
 
 **Result:** 1.326 seconds; Faster Whisper returned the known fixture sentence, the provider request checked model, safety prompt, PNG bytes and stream=false, and the final was informational. Vision was a deterministic loopback response and reasoning remained the demo mock; this is not live vision-quality or non-mock-reasoning evidence.
+
+## 2026-09-14 - Codex Atishay PNG IDAT integrity
+
+**Task:** Prevent CRC-valid but corrupt PNG compression streams from reaching the vision backend.
+
+**Changes:** Added concatenated IDAT zlib stream validation with complete-stream and trailing-data checks, plus a focused malformed-IDAT regression. Pixel data is still not decoded or interpreted.
+
+**Status:** Full suite 104 passed, 3 strict xfailed; owned demo and perception suites 88 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
