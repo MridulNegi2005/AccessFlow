@@ -636,3 +636,8 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-15: Demo upload boundary now rejects oversized encoded media before base64 decode and file creation. Full validation: 114 passed, 3 strict xfails.
 
 2026-09-15: Added configured vision-timeout route recovery evidence; provider timeout emits backend_failure and later transcript completes in the same session. Full validation: 115 passed, 3 strict xfails.
+
+
+2026-09-15: Multimodal provenance follow-up added on atishay/perception. Browser capture timestamps
+now survive event translation, audio speech bounds are forwarded, and frame timestamps reach image
+observations. Full validation: 117 passed, 3 strict xfailed; no protected files changed.

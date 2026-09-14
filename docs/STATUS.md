@@ -22,6 +22,9 @@ Updated 15 September 2026.
 - Multimodal end to end evidence now covers one session carrying a validated WAV and PNG through
   event_from_message, injected local ASR and vision providers, DemoPerception, and one Agent
   context. Source IDs and backend labels are preserved; the final response is informational.
+- Browser event timestamps now cross the owned demo boundary, audio speech_start/speech_end values
+  are forwarded into typed audio events, and frame timestamps reach image observations. The browser
+  stamps each sent event from its capture clock while preserving any supplied source timestamp.
 - The multimodal regression also covers both arrival orders, a revised audio hypothesis and
   WebSocket paths: the latest transcript revision replaces the prior one while the frame remains
   in the same context, and the combined WAV, PNG and text response exposes both retained
@@ -82,7 +85,7 @@ Updated 15 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 115 tests passed with 3 strict expected failures, including 49 passing demo
+- Final verification is 117 tests passed with 3 strict expected failures, including 51 passing demo
   tests and 50 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational

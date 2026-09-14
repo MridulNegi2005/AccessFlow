@@ -63,6 +63,38 @@ def test_browser_message_becomes_typed_event(kind, expected):
     assert event.session_id == "session-1"
 
 
+def test_browser_message_preserves_event_and_audio_source_timestamps():
+    event = event_from_message(
+        "session-1",
+        {
+            "kind": "audio",
+            "payload": {
+                "path": "speech.wav",
+                "utterance_id": "audio-1",
+                "timestamp": 12.5,
+                "speech_start": 8.25,
+                "speech_end": 11.75,
+            },
+        },
+    )
+
+    assert event.timestamp == 12.5
+    assert event.payload.speech_start == 8.25
+    assert event.payload.speech_end == 11.75
+
+
+def test_browser_frame_preserves_source_timestamp():
+    event = event_from_message(
+        "session-1",
+        {
+            "kind": "frame",
+            "payload": {"path": "screen.png", "frame_id": "frame-1", "timestamp": 17.25},
+        },
+    )
+
+    assert event.timestamp == 17.25
+
+
 @pytest.mark.asyncio
 async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
     class LocalAudio:
@@ -142,7 +174,10 @@ async def test_demo_perception_can_delegate_image_to_injected_local_backend(tmp_
 async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path: Path):
     event = event_from_message(
         "session-1",
-        {"kind": "frame", "payload": {"path": "device.png", "frame_id": "frame-9"}},
+        {
+            "kind": "frame",
+            "payload": {"path": "device.png", "frame_id": "frame-9", "timestamp": 19.5},
+        },
     )
 
     observations = [item async for item in DemoPerception().observe(event)]
@@ -153,6 +188,7 @@ async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path
     assert observation.revision == 0
     assert observation.modality == "image"
     assert observation.backend == "demo/mock-image"
+    assert observation.speech_start == observation.speech_end == 19.5
     assert "device.png" in observation.text
 
 
@@ -214,6 +250,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'encodeWav' in html
     assert 'AudioWorkletNode' in html
     assert 'recorder-worklet.js' in html
+    assert 'performance.timeOrigin' in html
 
 
 @pytest.mark.asyncio

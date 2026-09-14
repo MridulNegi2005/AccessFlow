@@ -146,4 +146,18 @@ inspection remains unverified.
 
 The demo now removes a WAV materialization when post-header PCM validation fails. LocalPerception also exposes its configured audio backend identity, so injected ASR is labeled as local/injected-asr while the installed Faster Whisper path keeps its Faster Whisper label; an injected backend without an identity is labeled local/unknown-audio. Encoded media uploads are rejected before base64 decoding when they exceed the 8 MiB raw-media budget. PNG validation also rejects CRC-valid but corrupt IDAT zlib streams before vision inference.
 
-Automated coverage: tests/demo/test_app.py::test_websocket_configured_audio_and_vision_share_context calls DemoPerception.from_environment with both modality settings, substitutes only the ASR implementation for deterministic text, and verifies both configured backends through one WebSocket session. The focused boundary tests also cover truthful labeling and failed WAV cleanup. The companion test tests/demo/test_app.py::test_websocket_audio_backend_failure_keeps_multimodal_session_usable verifies that a backend_failure from ASR is recoverable before a later PNG and spoken request. The full suite is 115 passed with 3 strict expected failures; demo and perception coverage is 49 passed plus 3 strict xfailed and 50 passed. The turn-policy companion, tests/perception/test_turn_policy.py::test_image_captions_cannot_drive_speech_turn_policy, confirms that correction and backchannel words in image captions are treated as context rather than speech cues; existing text cue coverage remains unchanged.
+Automated coverage: tests/demo/test_app.py::test_websocket_configured_audio_and_vision_share_context calls DemoPerception.from_environment with both modality settings, substitutes only the ASR implementation for deterministic text, and verifies both configured backends through one WebSocket session. The focused boundary tests also cover truthful labeling and failed WAV cleanup. The companion test tests/demo/test_app.py::test_websocket_audio_backend_failure_keeps_multimodal_session_usable verifies that a backend_failure from ASR is recoverable before a later PNG and spoken request. The full suite is 117 passed with 3 strict expected failures; demo and perception coverage is 51 passed plus 3 strict xfailed and 50 passed. The turn-policy companion, tests/perception/test_turn_policy.py::test_image_captions_cannot_drive_speech_turn_policy, confirms that correction and backchannel words in image captions are treated as context rather than speech cues; existing text cue coverage remains unchanged.
+
+
+## 2026-09-15 - Codex Atishay timestamp provenance
+
+**Task:** Preserve source timing when browser multimodal events enter the demo.
+
+**Changes:** The owned event adapter now carries a supplied capture timestamp into transcript, audio
+and frame envelopes, forwards audio speech bounds, and maps frame event timing into image observation
+bounds. The browser stamps outgoing events from its capture clock while allowing an explicit source
+timestamp to survive.
+
+**Status:** Full suite 117 passed, 3 strict expected failures; demo suite 51 passed, 3 strict expected
+failures; perception suite 50 passed; Ruff, compilation and git diff --check clean. No engine, contract,
+dependency or lockfile change.

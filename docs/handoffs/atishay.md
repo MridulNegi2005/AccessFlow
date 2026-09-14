@@ -102,3 +102,10 @@ PNG validation now also checks the concatenated IDAT zlib stream for a complete,
 **Changes:** Added a route regression using the actual OllamaVisionProvider with a timeout opener, then verified a later transcript final in the same session.
 
 **Status:** Full suite 115 passed, 3 strict xfailed; focused provider and route timeout regressions passed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
+
+
+2026-09-15: Timestamp provenance follow-up on atishay/perception. The owned demo adapter now preserves
+supplied event timestamps, forwards audio speech_start/speech_end, and carries frame timestamps into
+image observations. The browser adds a capture-clock timestamp to every outgoing event. Full validation:
+117 passed, 3 strict xfailed; demo 51 passed plus 3 strict xfailed; perception 50 passed. No protected
+files changed.

@@ -645,3 +645,8 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-15: Added a pre-decode base64 length guard for the demo's 8 MiB raw-media budget; oversized multimodal uploads are rejected without materialization. Validation: 114 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-15: Added configured WebSocket coverage for vision transport timeout recovery; actual OllamaVisionProvider failure emits backend_failure and a later transcript completes. Validation: 115 passed, 3 strict xfailed; no protected files changed.
+
+
+2026-09-15: Preserved browser multimodal source timing in the owned demo path: event timestamps,
+audio speech bounds and frame observation timing now have focused regressions. Validation: 117 passed,
+3 strict xfailed; no protected files changed.
