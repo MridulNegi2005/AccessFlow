@@ -401,3 +401,16 @@ The browser event stream was clean and layout had no overflow.
 Physical capture, live vision quality and non-mock reasoning remain unverified.
 
 **Notes:** No source, engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay changed-frame integration gap
+
+**Task:** Expose the active-frame replacement requirement for multimodal scenarios.
+
+**Changes:** Added a strict expected-failure demo example showing that frame 2 reaches the current
+reasoner while frame 1 remains in the view. The integrated engine branch already removes its prior
+active frame; this branch records the boundary without editing engine-owned code.
+
+**Status:** Full suite 83 passed, 2 strict xfailed; demo 24 passed, 2 strict xfailed; perception
+43 passed; Ruff and git diff --check clean.
+
+**Notes:** The image-only expected failure and additive proposal remain in place.

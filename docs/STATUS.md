@@ -31,12 +31,12 @@ Updated 14 September 2026.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and synthetic
   microphone capture through the served AudioWorklet. The fresh CDP run had no console or page
   errors and no horizontal overflow.
-- Final verification is 83 tests passed with 1 strict expected failure, including 24 passing demo
+- Final verification is 83 tests passed with 2 strict expected failures, including 24 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
-- The expected failure records the image-only informational controller gap: the current Agent
-  requires completed speech before emitting an informational final. An additive proposal is recorded
-  for the engine owner; no engine or contract file was changed here.
+- The two expected failures record current controller integration gaps: image-only informational
+  response and replacement of a prior active frame. Proposals and corresponding integrated-branch
+  behavior are available for the engine owner; no engine or contract file was changed here.
 - Evidence is mixed and still bounded: physical microphone capture, live vision quality, and
   non mock reasoning are still open. Pixel inspection is also unverified
   because the local image helper could not open the captures.

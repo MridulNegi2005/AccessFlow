@@ -78,3 +78,12 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
   clean console and no overflow were observed.
 - **Limits:** Image/text remained demo/mock; live vision quality, physical capture and non-mock
   reasoning remain unverified.
+
+## 2026-09-14 - Codex Atishay changed-frame integration gap
+
+- **Task:** Expose active-frame replacement for multimodal scenarios.
+- **Changes:** Added a strict expected-failure demo example for frame 2 replacing frame 1 in the
+  reasoner context; no engine-owned files changed.
+- **Status:** Full suite 83 passed, 2 strict xfailed; demo 24 passed, 2 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only response and changed-frame behavior await engine integration.

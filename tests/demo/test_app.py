@@ -479,6 +479,66 @@ async def test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame(tmp
 @pytest.mark.asyncio
 @pytest.mark.xfail(
     strict=True,
+    reason="The current Agent retains prior frame observations when the active frame changes.",
+)
+async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: Path):
+    class FrameReasoner:
+        def __init__(self):
+            self.views = []
+            self.frame_one_seen = asyncio.Event()
+            self.frame_two_seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            snapshot = view.model_copy(deep=True)
+            self.views.append(snapshot)
+            frame_ids = [item.source_id for item in snapshot.observations if item.modality == "image"]
+            if "frame-1" in frame_ids:
+                self.frame_one_seen.set()
+            if "frame-2" in frame_ids:
+                self.frame_two_seen.set()
+            return PlanProposal()
+
+    session_id = "changed-frame-session"
+    frame_one = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "first.png", "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+    frame_two = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "second.png", "frame_id": "frame-2"}},
+        media_root=tmp_path,
+    )
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    reasoner = FrameReasoner()
+    agent = Agent(
+        DemoPerception(),
+        FinalFlagPolicy(),
+        reasoner,
+        scenario_timeout=1,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+        await incoming.put(frame_one)
+        await asyncio.wait_for(reasoner.frame_one_seen.wait(), timeout=1)
+        await incoming.put(frame_two)
+        await asyncio.wait_for(reasoner.frame_two_seen.wait(), timeout=1)
+        latest_view = reasoner.views[-1]
+        assert [item.source_id for item in latest_view.observations if item.modality == "image"] == [
+            "frame-2"
+        ]
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+
+@pytest.mark.asyncio
+@pytest.mark.xfail(
+    strict=True,
     reason="The current Agent only emits informational responses after completed speech.",
 )
 async def test_image_only_informational_response_needs_additive_controller_support(tmp_path: Path):

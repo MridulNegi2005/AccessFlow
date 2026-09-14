@@ -61,8 +61,10 @@ prove live vision quality or non-mock reasoning.
 The deterministic regression coverage remains in
 tests/demo/test_app.py::test_multimodal_audio_and_image_reach_one_agent_context and
 tests/demo/test_app.py::test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame. The
-image-only controller limitation remains captured by the strict expected failure in
-tests/demo/test_app.py::test_image_only_informational_response_needs_additive_controller_support.
+image-only response and changed-frame controller limitations remain captured by strict expected
+failures in
+tests/demo/test_app.py::test_image_only_informational_response_needs_additive_controller_support and
+tests/demo/test_app.py::test_new_frame_replaces_previous_frame_in_reasoner_context.
 
 ## Limits
 
