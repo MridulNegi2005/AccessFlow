@@ -399,6 +399,21 @@ def test_invalid_wav_materialization_is_removed(tmp_path: Path):
 
     assert list(tmp_path.iterdir()) == []
 
+
+def test_invalid_png_materialization_is_removed(tmp_path: Path):
+    with pytest.raises(ValueError, match="valid PNG"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "frame",
+                "payload": {"data_base64": base64.b64encode(b"not a png").decode()},
+            },
+            media_root=tmp_path,
+        )
+
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_websocket_reports_recoverable_image_input_error():
     encoded = base64.b64encode(b"not a png").decode("ascii")
 

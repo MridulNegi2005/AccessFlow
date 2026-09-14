@@ -656,3 +656,7 @@ protected files changed.
 2026-09-15: Cross-modal in-flight race coverage passes: a delayed audio observation survives frame
 arrival and reaches the same reasoner view. Full validation: 120 passed, 4 strict xfailed; no protected
 files changed.
+
+
+2026-09-15: Invalid PNG materialization cleanup now has direct regression evidence. Full validation:
+121 passed, 4 strict xfailed; no protected files changed.

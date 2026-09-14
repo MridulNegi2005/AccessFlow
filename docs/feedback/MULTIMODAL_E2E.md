@@ -201,3 +201,15 @@ source acceptance preserves independent cross-modal results.
 
 **Status:** Full suite 120 passed, 4 strict expected failures; demo suite 52 passed, 4 strict expected
 failures; perception suite 52 passed; Ruff, compilation and git diff --check clean.
+
+
+
+## 2026-09-15 - Codex Atishay invalid PNG cleanup
+
+**Task:** Verify rejected PNG uploads do not remain in the session directory.
+
+**Changes:** Added direct materialization cleanup coverage for structurally invalid PNG bytes, complementing
+the existing WebSocket recovery path.
+
+**Status:** Full suite 121 passed, 4 strict expected failures; demo suite 53 passed, 4 strict expected
+failures; perception suite 52 passed; Ruff, compilation and git diff --check clean.
