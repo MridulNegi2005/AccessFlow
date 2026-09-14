@@ -49,7 +49,8 @@ Updated 14 September 2026.
 - A configured vision-backend failure is also covered: it emits backend_failure without a
   misleading final response.
 - The Ollama vision provider normalizes syntactically valid non-object JSON roots into a classified
-  invalid JSON shape error, with list and null response coverage.
+  invalid JSON shape error, with list and null response coverage, and normalizes provider timeouts
+  into the same stable runtime failure boundary.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
   emitted and the same session completes a later text request. A malformed list response follows the
   same route and is also recoverable.
@@ -78,8 +79,8 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 111 tests passed with 3 strict expected failures, including 46 passing demo
-  tests and 49 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 112 tests passed with 3 strict expected failures, including 46 passing demo
+  tests and 50 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational
   response and direct or WebSocket replacement of a prior active frame. Proposals and corresponding integrated-branch

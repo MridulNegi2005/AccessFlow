@@ -170,3 +170,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Vision provider now rejects non-object JSON roots with RuntimeError invalid JSON shape; focused and full validation passed. Full suite: 110 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Configured Ollama route regression now covers malformed list JSON and same-session transcript recovery. Full suite: 111 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Ollama vision timeout regression added on atishay/perception; timeout now has explicit stable failure evidence. Full suite: 112 passed, 3 strict xfailed; no protected files changed.

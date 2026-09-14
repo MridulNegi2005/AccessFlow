@@ -51,6 +51,17 @@ def test_ollama_provider_posts_one_png_and_returns_trimmed_response(tmp_path: Pa
     assert seen["body"]["images"] == [base64.b64encode(image_bytes).decode("ascii")]
 
 
+def test_ollama_provider_normalizes_timeout(tmp_path: Path):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    def opener(request, *, timeout):
+        raise TimeoutError("vision request timed out")
+
+    with pytest.raises(RuntimeError, match="Ollama vision request failed"):
+        OllamaVisionProvider(opener=opener)(image)
+
+
 @pytest.mark.parametrize("body", [[], None])
 def test_ollama_provider_rejects_non_object_json_response(tmp_path: Path, body):
     image = tmp_path / "screen.png"
