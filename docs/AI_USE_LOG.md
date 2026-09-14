@@ -425,3 +425,17 @@ live vision quality, human speech accuracy and non-mock reasoning remain open.
 
 **Notes:** The run used an isolated Chrome profile and temporary CDP harness; no fake audio-device
 flag was used and no person or recording was stored in the repository.
+
+## 2026-09-14 - Codex Atishay WebSocket multimodal revision retention
+
+**Task:** Verify that the browser transport preserves the latest speech revision beside image
+evidence in one session.
+
+**Changes:** Added a demo WebSocket regression that uploads a validated WAV, sends two transcript
+revisions for one utterance, uploads a PNG and submits follow-up text. It asserts the older speech
+hypothesis is absent while the revised text and image context remain visible.
+
+**Status:** Demo suite 27 passed, 2 strict xfailed; full suite 86 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.
