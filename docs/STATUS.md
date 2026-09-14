@@ -22,17 +22,20 @@ Updated 14 September 2026.
 - Multimodal end to end evidence now covers one session carrying a validated WAV and PNG through
   event_from_message, injected local ASR and vision providers, DemoPerception, and one Agent
   context. Source IDs and backend labels are preserved; the final response is informational.
+- A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
+  audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
+  The result is mixed evidence, not a live multimodal model benchmark.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and synthetic
   microphone capture through the served AudioWorklet. The fresh CDP run had no console or page
   errors and no horizontal overflow.
-- Final verification is 81 tests passed with 1 strict expected failure, including 22 passing demo
+- Final verification is 82 tests passed with 1 strict expected failure, including 23 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The expected failure records the image-only informational controller gap: the current Agent
   requires completed speech before emitting an informational final. An additive proposal is recorded
   for the engine owner; no engine or contract file was changed here.
-- Evidence remains synthetic or injected: physical microphone capture, live ASR quality, live
-  vision quality, and non mock reasoning are still open. Pixel inspection is also unverified
+- Evidence is mixed and still bounded: physical microphone capture, live vision quality, and
+  non mock reasoning are still open. Pixel inspection is also unverified
   because the local image helper could not open the captures.
 - origin/mridul/engine was fetched at ad04bca for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.

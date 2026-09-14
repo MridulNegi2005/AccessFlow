@@ -347,3 +347,29 @@ keeps state-changing calls behind the existing speech and authorization gates.
 
 **Notes:** The expected failure is intentional integration evidence. Branch remains
 atishay/perception; no engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay live local audio plus injected vision
+
+**Task:** Strengthen multimodal end-to-end evidence with the installed local ASR model.
+
+**Changes:** Ran the checked-in synthetic speech WAV through the cached Faster Whisper base.en CPU
+INT8 snapshot, paired it with a validated PNG and injected vision provider in one Agent context,
+and recorded the mixed evidence in docs/feedback/MULTIMODAL_E2E.md.
+
+**Status:** Local ASR transcribed the fixture and the paired context completed in 3.222 seconds.
+Live vision was unavailable; the final remains informational and the reasoner remains a test double.
+
+**Notes:** No source, engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay multimodal ordering coverage
+
+**Task:** Broaden the deterministic multimodal end-to-end case across arrival orderings.
+
+**Changes:** Parameterized the shared Agent-context test for audio-then-image and image-then-audio.
+Both orderings preserve the two observations and produce the informational multimodal response.
+
+**Status:** Full suite 82 passed, 1 strict xfailed; demo 23 passed, 1 strict xfailed; perception
+43 passed; Ruff and git diff --check clean.
+
+**Notes:** The image-only strict xfail and additive proposal remain unchanged. No engine, contract,
+lockfile or dependency manifest changes were made.

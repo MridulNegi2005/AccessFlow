@@ -319,3 +319,28 @@ controller integration gap, not a perception or transport failure.
 
 **Notes:** Branch remains atishay/perception. No engine, contract, lockfile or dependency manifest
 changes were made.
+
+## 2026-09-14 - Codex Atishay live local audio plus injected vision
+
+**Task:** Strengthen the multimodal end-to-end evidence with a real local audio backend.
+
+**Changes:** Ran synthetic_speech.wav through the cached Faster Whisper base.en CPU INT8 model,
+paired it with a validated PNG and injected vision provider in one Agent context, and added
+docs/feedback/MULTIMODAL_E2E.md.
+
+**Status:** The local ASR transcript and injected frame observation reached one context and produced
+an informational final in 3.222 seconds. Live vision and non-mock reasoning remain unverified.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay multimodal ordering coverage
+
+**Task:** Broaden multimodal end-to-end coverage across input arrival orderings.
+
+**Changes:** Parameterized the demo Agent-context test for audio-then-image and image-then-audio.
+Both sequences pass while the image-only controller gap remains an explicit strict xfail.
+
+**Status:** Full suite 82 passed, 1 strict xfailed; demo suite 23 passed, 1 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

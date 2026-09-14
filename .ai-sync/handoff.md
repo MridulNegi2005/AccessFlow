@@ -41,3 +41,22 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
   43 passed; Ruff and git diff --check clean.
 - **Limits:** The expected failure remains until the engine owner implements and reviews the
   additive proposal. Live ASR/vision, physical capture and pixel inspection remain unverified.
+
+## 2026-09-14 - Codex Atishay live local audio plus injected vision
+
+- **Task:** Strengthen multimodal end-to-end evidence with the cached local ASR model.
+- **Changes:** Ran synthetic_speech.wav through Faster Whisper base.en CPU INT8, paired the result
+  with a validated PNG and injected vision provider in one Agent context, and recorded the run in
+  docs/feedback/MULTIMODAL_E2E.md.
+- **Status:** Both observations reached one context and produced an informational final in 3.222
+  seconds. Vision was injected because Ollama is unavailable.
+- **Limits:** This does not certify live multimodal model quality or non-mock reasoning.
+
+## 2026-09-14 - Codex Atishay multimodal ordering coverage
+
+- **Task:** Broaden multimodal end-to-end coverage across arrival orderings.
+- **Changes:** The Agent-context test now covers audio-to-image and image-to-audio sequences.
+- **Status:** Full suite 82 passed, 1 strict xfailed; demo 23 passed, 1 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only controller gap remains the intentional strict xfail pending the additive
+  engine proposal.
