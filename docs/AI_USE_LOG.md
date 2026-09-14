@@ -344,3 +344,15 @@ Both sequences pass while the image-only controller gap remains an explicit stri
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay multimodal revision and frame retention
+
+**Task:** Cover revised audio hypotheses alongside image evidence in one Agent context.
+
+**Changes:** Added a demo regression for two audio revisions and one PNG. Revision 1 replaces
+revision 0 while frame provenance remains available to the reasoner.
+
+**Status:** Full suite 83 passed, 1 strict xfailed; demo suite 24 passed, 1 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.
