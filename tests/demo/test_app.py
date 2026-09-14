@@ -268,7 +268,10 @@ def test_websocket_png_upload_reaches_mock_controller():
 
 
 @pytest.mark.asyncio
-async def test_multimodal_audio_then_image_reaches_one_agent_context(tmp_path: Path):
+@pytest.mark.parametrize("event_order", [("audio", "image"), ("image", "audio")])
+async def test_multimodal_audio_and_image_reach_one_agent_context(
+    tmp_path: Path, event_order: tuple[str, str]
+):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
     png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
@@ -333,9 +336,10 @@ async def test_multimodal_audio_then_image_reaches_one_agent_context(tmp_path: P
 
     task = asyncio.create_task(agent.run(incoming, outgoing))
     await incoming.put(StartEvent(session_id=session_id, payload=Start()))
-    await incoming.put(audio_event)
+    events = {"audio": audio_event, "image": image_event}
+    for kind in event_order:
+        await incoming.put(events[kind])
     await asyncio.wait_for(reasoner.audio_seen.wait(), timeout=1)
-    await incoming.put(image_event)
     await asyncio.wait_for(reasoner.both_seen.wait(), timeout=1)
 
     outputs = []
