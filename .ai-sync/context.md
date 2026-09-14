@@ -634,3 +634,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Added two-connection multimodal session isolation regression; fresh WebSocket state excludes prior audio and image context. Full validation: 113 passed, 3 strict xfails.
 
 2026-09-15: Demo upload boundary now rejects oversized encoded media before base64 decode and file creation. Full validation: 114 passed, 3 strict xfails.
+
+2026-09-15: Added configured vision-timeout route recovery evidence; provider timeout emits backend_failure and later transcript completes in the same session. Full validation: 115 passed, 3 strict xfails.

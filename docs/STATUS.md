@@ -55,8 +55,8 @@ Updated 15 September 2026.
   invalid JSON shape error, with list and null response coverage, and normalizes provider timeouts
   into the same stable runtime failure boundary.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
-  emitted and the same session completes a later text request. A malformed list response follows the
-  same route and is also recoverable.
+  emitted and the same session completes a later text request. A malformed list response and a
+  provider timeout follow the same route and are also recoverable.
 - An audio backend failure is also covered through the WebSocket route: backend_failure is emitted,
   then a later PNG and spoken request complete in the same multimodal session with image context retained.
 - A protocol-level loopback regression now runs the actual OllamaVisionProvider HTTP path with local
@@ -82,7 +82,7 @@ Updated 15 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 114 tests passed with 3 strict expected failures, including 48 passing demo
+- Final verification is 115 tests passed with 3 strict expected failures, including 49 passing demo
   tests and 50 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational
