@@ -57,6 +57,9 @@ Updated 14 September 2026.
   context after frame 2 arrives; only the current frame is presented to the reasoner.
 - The changed-frame WebSocket reproducer is a strict expected failure until the controller
   removes the prior frame from the active context.
+- A fresh local WebSocket run used the installed Faster Whisper base.en CPU INT8 snapshot and the
+  configured OllamaVisionProvider against a loopback protocol service; in 1.326 seconds it retained the
+  recognized speech and returned image evidence in the same session. Vision quality and reasoning remain unverified.
 - A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a

@@ -47,7 +47,20 @@ same WebSocket session.
 - Browser layout: scroll width 741, viewport width 756
 - Browser event stream: no Runtime exceptions, console errors, deprecation warnings or page errors
 
-The image remains demo/mock in this browser run because Ollama is unavailable. The visible
+The image remains demo/mock in this browser run because Ollama is unavailable.
+
+## Fresh local-ASR and loopback-vision route
+
+A separate served WebSocket run enabled the cached Faster Whisper base.en CPU INT8 snapshot and a configured OllamaVisionProvider pointed at a loopback protocol service. It completed in 1.326 seconds.
+
+- Backend label: local/Faster Whisper CPU INT8 audio + local/Ollama gemma3:4b image
+- Audio acknowledgment backend: faster-whisper/cpu-int8
+- Recognized fixture speech: My screen keeps flickering after the update. Book Wednesday at 5.
+- Vision response: screen shows the approval prompt
+- Follow-up final retained both audio and image context
+- Protocol request checked model, default safety prompt, PNG bytes and stream=false
+
+This is mixed runtime evidence: local audio inference and the HTTP provider path are real, while the vision service is a deterministic loopback stub and the reasoner remains the demo mock. It does not establish live vision quality or non-mock reasoning. The visible
 mock final after the follow-up text included both prior audio and image context. This proves browser
 transport into the local audio backend plus continued multimodal session handling; it does not prove
 live vision quality or non-mock reasoning.

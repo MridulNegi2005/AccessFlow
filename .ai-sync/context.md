@@ -615,3 +615,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Added combined configured multimodal route coverage on atishay/perception: one WebSocket session sends validated WAV and PNG through local ASR and loopback vision, preserving labels, source IDs and informational output. Full suite: 102 passed, 3 strict xfailed.
 
 2026-09-14: Added ASR failure recovery coverage on atishay/perception: a WebSocket backend_failure is followed by validated PNG and spoken input, with retained image context and informational output. Full suite: 103 passed, 3 strict xfailed.
+
+2026-09-14: Fresh runtime evidence on atishay/perception combined cached Faster Whisper CPU INT8 audio with configured OllamaVisionProvider over a loopback service in 1.326 seconds; one session retained recognized speech and image evidence. Vision and reasoning limits remain explicit.

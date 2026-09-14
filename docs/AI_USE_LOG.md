@@ -612,3 +612,11 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 **Changes:** Added a route regression that emits backend_failure for ASR, then accepts a validated PNG and spoken follow-up in the same session. It verifies retained image evidence and informational output; the test waits for the actual image observation to avoid assuming worker completion order.
 
 **Status:** Full suite 103 passed, 3 strict xfailed; owned demo and perception suites 87 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. One existing WebSocket teardown cancellation was transient: the affected test passed in three isolated reruns and the subsequent full suite passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-14 - Codex Atishay live local-ASR loopback-vision route
+
+**Task:** Capture a stronger mixed multimodal runtime result through the served WebSocket.
+
+**Run:** Enabled the cached Faster Whisper base.en CPU INT8 snapshot and configured OllamaVisionProvider against a local loopback protocol service. A validated WAV and PNG passed through one session, and a follow-up text final retained both observations.
+
+**Result:** 1.326 seconds; Faster Whisper returned the known fixture sentence, the provider request checked model, safety prompt, PNG bytes and stream=false, and the final was informational. Vision was a deterministic loopback response and reasoning remained the demo mock; this is not live vision-quality or non-mock-reasoning evidence.

@@ -157,3 +157,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Combined configured multimodal route regression added on atishay/perception. Validation: 102 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: ASR failure multimodal recovery regression added on atishay/perception. Validation: 103 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Fresh mixed runtime route evidence captured: cached Faster Whisper CPU INT8 plus loopback OllamaVisionProvider, 1.326 seconds, combined context retained. No protected files changed.
