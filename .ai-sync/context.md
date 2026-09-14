@@ -620,3 +620,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 
 2026-09-14: PNG IDAT integrity hardened on atishay/perception: CRC-valid corrupt or incomplete zlib streams are rejected before vision inference. Full suite: 104 passed, 3 strict xfailed.
 2026-09-14: Added the owned multimodal policy boundary: image captions cannot drive speech correction or backchannel decisions; focused and full validation passed at 105 tests with 3 strict xfails.
+
+2026-09-14: Added recoverable structural validation for demo WebSocket messages and payloads; malformed multimodal input no longer terminates the session. Full validation: 107 passed, 3 strict xfails.

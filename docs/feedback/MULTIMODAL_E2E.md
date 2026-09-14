@@ -91,7 +91,9 @@ sends two transcript revisions for one utterance between a WAV and PNG and verif
 latest speech hypothesis and image context survive the browser transport.
 The image boundary regression, tests/demo/test_app.py::test_websocket_reports_recoverable_image_input_error,
 returns a labeled demo/input error for malformed PNG data and confirms the WebSocket session remains
-usable for a later text request.
+usable for a later text request. The structural input companion,
+tests/demo/test_app.py::test_websocket_reports_recoverable_structural_input_error, covers a non-object
+frame payload and verifies the same recovery path.
 The image upload boundary now validates complete PNG chunk structure, CRCs, legal IHDR metadata, IDAT
 and terminal IEND before materializing a frame; focused tests cover truncated and CRC-invalid payloads.
 The loopback companion, tests/demo/test_app.py::test_multimodal_context_uses_loopback_ollama_transport,
@@ -134,4 +136,4 @@ inspection remains unverified.
 
 The demo now removes a WAV materialization when post-header PCM validation fails. LocalPerception also exposes its configured audio backend identity, so injected ASR is labeled as local/injected-asr while the installed Faster Whisper path keeps its Faster Whisper label. PNG validation also rejects CRC-valid but corrupt IDAT zlib streams before vision inference.
 
-Automated coverage: tests/demo/test_app.py::test_websocket_configured_audio_and_vision_share_context calls DemoPerception.from_environment with both modality settings, substitutes only the ASR implementation for deterministic text, and verifies both configured backends through one WebSocket session. The focused boundary tests also cover truthful labeling and failed WAV cleanup. The companion test tests/demo/test_app.py::test_websocket_audio_backend_failure_keeps_multimodal_session_usable verifies that a backend_failure from ASR is recoverable before a later PNG and spoken request. The full suite is 105 passed with 3 strict expected failures; demo and perception coverage is 42 passed plus 3 strict xfailed and 47 passed. The turn-policy companion, tests/perception/test_turn_policy.py::test_image_captions_cannot_drive_speech_turn_policy, confirms that correction and backchannel words in image captions are treated as context rather than speech cues; existing text cue coverage remains unchanged.
+Automated coverage: tests/demo/test_app.py::test_websocket_configured_audio_and_vision_share_context calls DemoPerception.from_environment with both modality settings, substitutes only the ASR implementation for deterministic text, and verifies both configured backends through one WebSocket session. The focused boundary tests also cover truthful labeling and failed WAV cleanup. The companion test tests/demo/test_app.py::test_websocket_audio_backend_failure_keeps_multimodal_session_usable verifies that a backend_failure from ASR is recoverable before a later PNG and spoken request. The full suite is 107 passed with 3 strict expected failures; demo and perception coverage is 44 passed plus 3 strict xfailed and 47 passed. The turn-policy companion, tests/perception/test_turn_policy.py::test_image_captions_cannot_drive_speech_turn_policy, confirms that correction and backchannel words in image captions are treated as context rather than speech cues; existing text cue coverage remains unchanged.

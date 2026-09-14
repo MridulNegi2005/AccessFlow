@@ -292,6 +292,28 @@ def test_websocket_audio_upload_reaches_mock_controller():
     assert final["payload"]["backend"] == "reasoner"
 
 
+def test_browser_message_rejects_non_object_payload():
+    with pytest.raises(ValueError, match="payload must be an object"):
+        event_from_message("session-1", {"kind": "frame", "payload": []})
+
+
+def test_websocket_reports_recoverable_structural_input_error():
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json({"kind": "frame", "payload": []})
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    assert status["kind"] == "demo_status"
+    assert error["kind"] == "demo_error"
+    assert error["payload"]["backend"] == "demo/input"
+    assert "payload must be an object" in error["payload"]["message"]
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Still connected" in final["payload"]["text"]
+
+
 def test_websocket_reports_recoverable_media_input_error():
     encoded = base64.b64encode(b"not a wav").decode("ascii")
 

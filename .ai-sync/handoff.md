@@ -162,3 +162,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 
 2026-09-14: PNG IDAT integrity regression added on atishay/perception. Validation: 104 passed, 3 strict xfailed; no protected files changed.
 2026-09-14: Speech cue modality guard committed locally on atishay/perception. Image observations return continue with uncertainty 1.0 before speech cue matching. Full suite: 105 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Demo input parser now rejects non-object messages and payloads with ValueError handled as demo/input errors; WebSocket recovery regression passes. Full suite: 107 passed, 3 strict xfailed; no protected files changed.
