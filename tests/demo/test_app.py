@@ -712,6 +712,104 @@ async def test_multimodal_audio_and_image_reach_one_agent_context(
 
 
 @pytest.mark.asyncio
+async def test_inflight_old_frame_cannot_enter_multimodal_context(tmp_path: Path):
+    class SlowPerception:
+        def __init__(self):
+            self.first_started = asyncio.Event()
+            self.release_first = asyncio.Event()
+            self.first_finished = asyncio.Event()
+
+        async def observe(self, event):
+            if event.payload.frame_id == "frame-1":
+                self.first_started.set()
+                await self.release_first.wait()
+                self.first_finished.set()
+                text = "stale first frame"
+            else:
+                text = "current second frame"
+            yield Observation(
+                event_id=event.event_id,
+                source_id=event.payload.frame_id,
+                revision=0,
+                modality="image",
+                text=text,
+                final=True,
+                speech_start=event.timestamp,
+                speech_end=event.timestamp,
+                backend="local/injected-vision",
+            )
+
+    class FrameReasoner:
+        def __init__(self):
+            self.views = []
+            self.second_seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            snapshot = view.model_copy(deep=True)
+            self.views.append(snapshot)
+            frame_ids = [item.source_id for item in snapshot.observations if item.modality == "image"]
+            if "frame-2" in frame_ids:
+                self.second_seen.set()
+            return PlanProposal()
+
+    perception = SlowPerception()
+    reasoner = FrameReasoner()
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    agent = Agent(
+        perception,
+        FinalFlagPolicy(),
+        reasoner,
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    session_id = "inflight-frame-session"
+    first = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "first.png", "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+    second = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "second.png", "frame_id": "frame-2"}},
+        media_root=tmp_path,
+    )
+
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+        await incoming.put(first)
+        for _ in range(100):
+            if perception.first_started.is_set():
+                break
+            await asyncio.sleep(0.01)
+        assert perception.first_started.is_set()
+        await incoming.put(second)
+        await asyncio.wait_for(reasoner.second_seen.wait(), timeout=1)
+        perception.release_first.set()
+        for _ in range(100):
+            if perception.first_finished.is_set():
+                break
+            await asyncio.sleep(0.01)
+        assert perception.first_finished.is_set()
+        await asyncio.sleep(0.05)
+
+        frame_views = [
+            view
+            for view in reasoner.views
+            if any(item.source_id == "frame-2" for item in view.observations)
+        ]
+        assert frame_views
+        assert all(
+            [item.source_id for item in view.observations if item.modality == "image"] == ["frame-2"]
+            for view in frame_views
+        )
+    finally:
+        perception.release_first.set()
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+@pytest.mark.asyncio
 async def test_multimodal_context_uses_loopback_ollama_transport(tmp_path: Path):
     class VisionHandler(BaseHTTPRequestHandler):
         requests = []
