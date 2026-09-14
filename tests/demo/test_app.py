@@ -412,6 +412,44 @@ def test_websocket_image_before_audio_context_is_visible():
 
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="The current Agent retains prior frame observations when the active frame changes.",
+)
+def test_websocket_new_frame_replaces_previous_frame():
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "ws-frame-1"},
+                }
+            )
+            first_status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "ws-frame-2"},
+                }
+            )
+            second_status = socket.receive_json()
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
+            )
+            outputs = _receive_controller_outputs(socket)
+
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert first_status["payload"] == {"media_received": "frame", "source_id": "ws-frame-1"}
+    assert second_status["payload"] == {"media_received": "frame", "source_id": "ws-frame-2"}
+    assert final["payload"]["text"].count("image:") == 1
+
+
+
 def test_websocket_multimodal_revision_keeps_latest_text_and_frame():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
