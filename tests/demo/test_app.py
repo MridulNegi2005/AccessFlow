@@ -356,6 +356,59 @@ async def test_multimodal_audio_then_image_reaches_one_agent_context(tmp_path: P
     assert next(item for item in outputs if item.kind == "final").payload["basis"] == "informational"
 
 
+@pytest.mark.asyncio
+@pytest.mark.xfail(
+    strict=True,
+    reason="The current Agent only emits informational responses after completed speech.",
+)
+async def test_image_only_informational_response_needs_additive_controller_support(tmp_path: Path):
+    class ImageOnlyReasoner:
+        def __init__(self):
+            self.view = None
+            self.seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            self.view = view.model_copy(deep=True)
+            self.seen.set()
+            return PlanProposal(
+                response="Screen evidence is available.",
+                request_complete=True,
+            )
+
+    session_id = "image-only-session"
+    image_event = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "screen.png", "frame_id": "frame-only"}},
+        media_root=tmp_path,
+    )
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    reasoner = ImageOnlyReasoner()
+    agent = Agent(
+        DemoPerception(),
+        FinalFlagPolicy(),
+        reasoner,
+        scenario_timeout=1,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+        await incoming.put(image_event)
+        await asyncio.wait_for(reasoner.seen.wait(), timeout=1)
+        assert reasoner.view is not None
+        assert [item.modality for item in reasoner.view.observations] == ["image"]
+        await asyncio.sleep(0.05)
+        outputs = []
+        while not outgoing.empty():
+            outputs.append(outgoing.get_nowait())
+        assert any(item.kind == "final" for item in outputs)
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+
 def test_browser_path_is_not_used_when_session_upload_root_exists(tmp_path: Path):
     event = event_from_message(
         "session-1",

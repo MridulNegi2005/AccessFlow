@@ -305,3 +305,17 @@ microphone, pixel inspection, live ASR/vision quality and non-mock reasoning rem
 
 **Notes:** origin/mridul/engine was fetched at ad04bca for review. Branch remains
 atishay/perception; no engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay image-only controller gap
+
+**Task:** Extend multimodal evidence to image-only informational planning.
+
+**Changes:** Added a strict expected-failure demo test for a frame-only Agent session and an
+additive proposal for an informational evidence basis that preserves write authorization gates.
+
+**Status:** Full suite 81 passed, 1 strict xfailed; demo suite 22 passed, 1 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean. The xfail is the known current
+controller integration gap, not a perception or transport failure.
+
+**Notes:** Branch remains atishay/perception. No engine, contract, lockfile or dependency manifest
+changes were made.
