@@ -13,6 +13,8 @@ from accessflow.contracts import (
     FrameEvent,
     Observation,
     PlanProposal,
+    SessionView,
+    Snapshot,
     Start,
     StartEvent,
     TranscriptEvent,
@@ -168,6 +170,41 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'encodeWav' in html
     assert 'AudioWorkletNode' in html
     assert 'recorder-worklet.js' in html
+
+
+@pytest.mark.asyncio
+async def test_demo_reasoner_surfaces_prior_multimodal_context():
+    view = SessionView(
+        session_id="session-1",
+        state=Snapshot(),
+        observations=[
+            Observation(
+                event_id="audio-event",
+                source_id="audio-1",
+                modality="audio",
+                text="Book Wednesday",
+                final=True,
+                backend="local/injected-asr",
+            ),
+            Observation(
+                event_id="frame-event",
+                source_id="frame-1",
+                modality="image",
+                text="screen shows the approval prompt",
+                final=True,
+                backend="local/injected-vision",
+            ),
+        ],
+        results=[],
+    )
+
+    proposal = await demo_app.DemoReasoner().plan(view, [])
+
+    assert proposal.request_complete
+    assert proposal.response == (
+        "Mock agent received image input: screen shows the approval prompt"
+        " | multimodal context: audio: Book Wednesday"
+    )
 
 
 def test_websocket_reports_invalid_local_model_configuration(monkeypatch, tmp_path: Path):

@@ -383,3 +383,16 @@ perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** The xfail is an engine integration boundary, alongside the existing image-only response
 xfail.
+
+## 2026-09-14 - Codex Atishay visible multimodal reasoner context
+
+**Task:** Make the demo's informational response expose retained audio and image context.
+
+**Changes:** DemoReasoner now appends prior observations to the latest-input response. Chrome
+verified a WAV, PNG and text sequence whose final visibly included both prior modalities.
+
+**Status:** Full suite 84 passed, 2 strict xfailed; demo suite 25 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** The response remains a labeled mock informational result; no engine, contract, lockfile
+or dependency manifest changes were made.

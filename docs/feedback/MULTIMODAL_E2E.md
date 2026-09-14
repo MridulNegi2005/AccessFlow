@@ -47,9 +47,10 @@ same WebSocket session.
 - Browser layout: scroll width 741, viewport width 756
 - Browser event stream: no Runtime exceptions, console errors, deprecation warnings or page errors
 
-The image remains demo/mock in this browser run because Ollama is unavailable. This proves browser
-transport into the local audio backend plus continued multimodal session handling; it does not
-prove live vision quality or non-mock reasoning.
+The image remains demo/mock in this browser run because Ollama is unavailable. The visible
+mock final after the follow-up text included both prior audio and image context. This proves browser
+transport into the local audio backend plus continued multimodal session handling; it does not prove
+live vision quality or non-mock reasoning.
 
 ## What this proves
 

@@ -414,3 +414,16 @@ active frame; this branch records the boundary without editing engine-owned code
 43 passed; Ruff and git diff --check clean.
 
 **Notes:** The image-only expected failure and additive proposal remain in place.
+
+## 2026-09-14 - Codex Atishay visible multimodal reasoner context
+
+**Task:** Make the browser demo's informational response visibly expose all retained modalities.
+
+**Changes:** DemoReasoner now includes prior observations in its response context. A fresh Chrome
+WAV, PNG and text sequence showed the final response containing both prior audio and image context.
+
+**Status:** Full suite 84 passed, 2 strict xfailed; demo 25 passed, 2 strict xfailed; perception
+43 passed; Ruff and git diff --check clean.
+
+**Notes:** The response remains an explicitly labeled mock informational result. No engine, contract,
+lockfile or dependency manifest changes were made.

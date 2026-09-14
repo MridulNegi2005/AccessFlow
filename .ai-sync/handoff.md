@@ -87,3 +87,13 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
 - **Status:** Full suite 83 passed, 2 strict xfailed; demo 24 passed, 2 strict xfailed; perception
   43 passed; Ruff and git diff --check clean.
 - **Limits:** The image-only response and changed-frame behavior await engine integration.
+
+## 2026-09-14 - Codex Atishay visible multimodal reasoner context
+
+- **Task:** Make the browser demo response expose all retained modalities.
+- **Changes:** DemoReasoner now includes prior observations; Chrome confirmed audio, image and text
+  context in the visible final.
+- **Status:** Full suite 84 passed, 2 strict xfailed; demo 25 passed, 2 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The response remains mock and informational; live vision and non-mock reasoning remain
+  unverified.

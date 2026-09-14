@@ -29,9 +29,9 @@ Updated 14 September 2026.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
   PNG in the same session. The result is mixed evidence, not a live multimodal model benchmark.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and synthetic
-  microphone capture through the served AudioWorklet. The fresh CDP run had no console or page
-  errors and no horizontal overflow.
-- Final verification is 83 tests passed with 2 strict expected failures, including 24 passing demo
+  microphone capture through the served AudioWorklet. The fresh CDP run also shows the mock final
+  carrying prior audio and image context, with no console or page errors or horizontal overflow.
+- Final verification is 84 tests passed with 2 strict expected failures, including 25 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The two expected failures record current controller integration gaps: image-only informational
