@@ -82,6 +82,16 @@ def test_ollama_provider_surfaces_service_and_shape_errors(tmp_path: Path):
         OllamaVisionProvider(opener=lambda request, timeout: FakeResponse({"response": ""}))(image)
 
 
+def test_ollama_provider_surfaces_quota_exhaustion(tmp_path: Path):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    with pytest.raises(RuntimeError, match="Ollama vision error: quota exhausted"):
+        OllamaVisionProvider(
+            opener=lambda request, timeout: FakeResponse({"error": "quota exhausted"})
+        )(image)
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [

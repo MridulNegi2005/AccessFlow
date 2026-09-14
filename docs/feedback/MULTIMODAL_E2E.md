@@ -161,3 +161,17 @@ timestamp to survive.
 **Status:** Full suite 117 passed, 3 strict expected failures; demo suite 51 passed, 3 strict expected
 failures; perception suite 50 passed; Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change.
+
+
+
+## 2026-09-15 - Codex Atishay quota and conflicting-frame coverage
+
+**Task:** Exercise vision quota exhaustion and contradictory visual evidence in the multimodal path.
+
+**Changes:** Added provider and WebSocket regressions showing quota errors become recoverable backend_failure
+events and the session remains usable. Added a strict conflicting-frame reproducer and an additive
+contract proposal because the protected controller has no structured visual conflict state.
+
+**Status:** Full suite 119 passed, 4 strict expected failures; demo suite 51 passed, 4 strict expected
+failures; perception suite 52 passed; Ruff, compilation and git diff --check clean. No engine, contract,
+dependency or lockfile change. Live vision quality remains unverified.

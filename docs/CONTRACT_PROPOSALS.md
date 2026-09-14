@@ -29,3 +29,18 @@ These are not permission to silently change v0.1. Preserve existing fields and f
   decisions, and keeps frame-only responses explicitly informational. The engine owner should
   implement and review this on mridul/engine; this branch intentionally contains only the
   failing example and proposal.
+
+
+## Conflicting visual evidence requires resolution
+
+- Author: Atishay Workstream B
+- Failing example: tests/demo/test_app.py::test_conflicting_frames_require_resolution_before_write
+  sends a completed spoken request followed by frames whose captions disagree. The current controller
+  retains both frame observations and can accept a write proposal without a structured conflict state.
+- Proposed additive change: Add optional frame provenance and conflict metadata, such as
+  supersedes_source_id and an evidence status of consistent, conflicting or uncertain. The controller
+  should retain the latest frame for ordinary replacement, mark unresolved visual conflict as
+  correction-pending, and require clarification or a new resolving observation before any write.
+- Compatibility: All fields are optional and default to the current v0.1 behavior. Existing frame IDs,
+  timestamps and image observations remain valid; older adapters can omit the metadata. This branch
+  contains the failing example only and does not modify the controller or shared contracts.

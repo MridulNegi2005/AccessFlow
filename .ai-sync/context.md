@@ -641,3 +641,8 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-15: Multimodal provenance follow-up added on atishay/perception. Browser capture timestamps
 now survive event translation, audio speech bounds are forwarded, and frame timestamps reach image
 observations. Full validation: 117 passed, 3 strict xfailed; no protected files changed.
+
+
+2026-09-15: Quota exhaustion now has provider and WebSocket recovery evidence on atishay/perception.
+Contradictory visual evidence is captured as a strict expected controller failure with an additive
+provenance/conflict proposal. Full validation: 119 passed, 4 strict xfailed; no protected files changed.

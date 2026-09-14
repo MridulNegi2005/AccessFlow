@@ -60,6 +60,8 @@ Updated 15 September 2026.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
   emitted and the same session completes a later text request. A malformed list response and a
   provider timeout follow the same route and are also recoverable.
+- Vision quota exhaustion is covered at provider and WebSocket boundaries: the quota error becomes
+  backend_failure, produces no misleading final, and the same session accepts a later transcript.
 - An audio backend failure is also covered through the WebSocket route: backend_failure is emitted,
   then a later PNG and spoken request complete in the same multimodal session with image context retained.
 - A protocol-level loopback regression now runs the actual OllamaVisionProvider HTTP path with local
@@ -73,6 +75,9 @@ Updated 15 September 2026.
   context after frame 2 arrives; only the current frame is presented to the reasoner.
 - The changed-frame WebSocket reproducer is a strict expected failure until the controller
   removes the prior frame from the active context.
+- A strict conflicting-frame reproducer shows that contradictory visual evidence currently has no
+  structured resolution state before a write; an additive provenance/conflict proposal is recorded
+  for the engine owner without changing shared contracts here.
 - A fresh local WebSocket run used the installed Faster Whisper base.en CPU INT8 snapshot and the
   configured OllamaVisionProvider against a loopback protocol service; in 1.326 seconds it retained the
   recognized speech and returned image evidence in the same session. Vision quality and reasoning remain unverified.
@@ -85,8 +90,8 @@ Updated 15 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 117 tests passed with 3 strict expected failures, including 51 passing demo
-  tests and 50 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 119 tests passed with 4 strict expected failures, including 51 passing demo
+  tests and 52 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational
   response and direct or WebSocket replacement of a prior active frame. Proposals and corresponding integrated-branch

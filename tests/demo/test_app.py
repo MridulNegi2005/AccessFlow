@@ -962,6 +962,54 @@ def test_websocket_malformed_vision_json_is_recoverable(monkeypatch):
     assert "Still connected" in final["payload"]["text"]
 
 
+def test_websocket_vision_quota_exhaustion_is_recoverable(monkeypatch):
+    class QuotaResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return json.dumps({"error": "quota exhausted"}).encode("utf-8")
+
+    provider = demo_app.OllamaVisionProvider(
+        model="gemma3:4b",
+        timeout_s=0.1,
+        opener=lambda request, timeout: QuotaResponse(),
+    )
+
+    def configured_perception(cls):
+        return DemoPerception(vision_backend=provider)
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "quota-frame"}}
+            )
+            frame_status = socket.receive_json()
+            failed_outputs = _receive_controller_outputs(socket)
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "Still connected"}}
+            )
+            continued_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in continued_outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
+    assert frame_status["payload"] == {"media_received": "frame", "source_id": "quota-frame"}
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert "Still connected" in final["payload"]["text"]
+
+
 def test_websocket_vision_timeout_is_recoverable(monkeypatch):
     def opener(request, *, timeout):
         raise TimeoutError("vision request timed out")
@@ -1749,6 +1797,104 @@ async def test_partial_speech_and_final_image_never_authorize_a_write(tmp_path: 
         assert agent.state.correction_pending
         assert not agent.executor.calls
         assert not agent.executor.effects
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+
+@pytest.mark.asyncio
+@pytest.mark.xfail(
+    strict=True,
+    reason="The current controller does not represent conflicting frame evidence before a write.",
+)
+async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path):
+    class ConflictingVision:
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            return "Wednesday" if path.name == "second.png" else "Tuesday"
+
+    class ConflictReasoner:
+        def __init__(self):
+            self.conflict_seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            frame_ids = {item.source_id for item in view.observations if item.modality == "image"}
+            if {"frame-1", "frame-2"} <= frame_ids:
+                self.conflict_seen.set()
+                return PlanProposal(
+                    intent="service",
+                    slot_updates={"day": "Wednesday"},
+                    request_complete=True,
+                    write_requested=True,
+                    calls=[
+                        ProposedCall(
+                            tool="calendar",
+                            arguments={"day": "Wednesday"},
+                            dependencies=["day"],
+                        )
+                    ],
+                )
+            return PlanProposal()
+
+    manifest = ToolManifest(
+        name="calendar",
+        description="Test calendar service",
+        effect="write",
+        timeout_s=1,
+        parameters={
+            "type": "object",
+            "properties": {"day": {"type": "string"}},
+            "required": ["day"],
+            "additionalProperties": False,
+        },
+    )
+    session_id = "conflicting-frame-session"
+    transcript = event_from_message(
+        session_id,
+        {
+            "kind": "transcript",
+            "payload": {
+                "utterance_id": "utterance-1",
+                "text": "Book the appointment using the date shown on screen",
+                "final": True,
+            },
+        },
+    )
+    frame_one = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "first.png", "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+    frame_two = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "second.png", "frame_id": "frame-2"}},
+        media_root=tmp_path,
+    )
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    reasoner = ConflictReasoner()
+    executor = FakeTools()
+    agent = Agent(
+        DemoPerception(vision_backend=ConflictingVision()),
+        FinalFlagPolicy(),
+        reasoner,
+        executor,
+        MockOnlyAuthorization(),
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id=session_id, payload=Start(tools=[manifest])))
+        await incoming.put(transcript)
+        await incoming.put(frame_one)
+        await incoming.put(frame_two)
+        await asyncio.wait_for(reasoner.conflict_seen.wait(), timeout=1)
+        await asyncio.sleep(0.05)
+        assert not executor.calls
+        assert not executor.effects
     finally:
         if agent.running:
             await incoming.put(EndEvent(session_id=session_id))

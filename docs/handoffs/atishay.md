@@ -109,3 +109,10 @@ supplied event timestamps, forwards audio speech_start/speech_end, and carries f
 image observations. The browser adds a capture-clock timestamp to every outgoing event. Full validation:
 117 passed, 3 strict xfailed; demo 51 passed plus 3 strict xfailed; perception 50 passed. No protected
 files changed.
+
+
+2026-09-15: Added vision quota recovery evidence and a strict contradictory-frame reproducer on
+atishay/perception. Quota failures emit backend_failure and allow later transcript recovery through
+WebSocket. Conflicting frames remain a protected controller gap; an additive provenance/conflict
+proposal is recorded. Full validation: 119 passed, 4 strict xfailed; demo 51 passed plus 4 strict
+xfailed; perception 52 passed. No protected files changed.
