@@ -1,15 +1,15 @@
 # Active Handoff
 
 > Last updated by: Claude Code
-> Timestamp: 2026-09-14T05:10:00+05:30
-> Branch: `mridul/engine` · merged Atishay `871c8cf` · 250 tests and Ruff pass · **unpushed** · CI disabled
+> Timestamp: 2026-09-15T00:35:00+05:30
+> Branch: `mridul/engine` = `main` = `ad04bca` · 254 tests and Ruff pass · **ablation work uncommitted** · CI disabled
 
 > Before starting: read `docs/STATUS.md` "Still required" and update it before you finish.
 
 ## Current Task
 
 Workstream A. Model selection and local inference speed are finished and documented.
-The next work is evaluation evidence, not more model work.
+The ablation is done and returned a negative result. Multimodal evidence is the next work.
 
 ## Completed this session
 
@@ -28,6 +28,17 @@ The next work is evaluation evidence, not more model work.
   `-FlashAttention 1 -KvCacheType q8_0`. See `docs/results/INFERENCE_TUNING_2026-09-14.md`.
 - **Diagnostics.** Failed requests now record the HTTP status code and bounded provider error
   text. `--request-timeout` and `--inference-timeout` replace a hard-coded 25 s deadline.
+- **Ablation complete, negative result.** `--disable dependency_invalidation` makes
+  `_invalidate_dependencies` a no-op and emits `ablation_skipped_invalidation`. Twelve Groq
+  runs across two new live fixtures: control 3/3 and ablated 3/3 on both, with identical
+  committed effects. The mechanism is correct and observable, but it changes no task outcome
+  for a strong model. Do not claim that wrong effects appear without it. See
+  `docs/results/ABLATION_2026-09-15.md`.
+- **Two live fixtures added.** `stale_read_after_correction` and
+  `stale_read_after_device_correction` place a correction after a read returns, with no write
+  in flight, so `_cancel_writes` cannot hide the mechanism under test.
+- **`Scenario.event_gaps_s` added.** One uniform `event_spacing_s` caps at 5 seconds and
+  cannot place a correction after a tool result when a local plan takes 12 to 14 seconds.
 - Registration is complete.
 
 ## In Progress
@@ -41,9 +52,9 @@ The next work is evaluation evidence, not more model work.
 
 1. **Multimodal end to end.** Audio and visual are 50 percent of the hidden set at a 1.5
    multiplier and have no evidence at all. Largest unclaimed score.
-2. **Baselines and ablation.** Disable dependency-aware stale-result rejection, rerun the same
-   scenarios, show wrong or duplicate effects appear. Same model, one component off. This is
-   the only thing that demonstrates the engine earns its place.
+2. **Fix the write-intent defect.** `qwen3:4b` never sets `write_requested`, so the
+   write-continuation constraint never starts. See the open defect below. This blocks every
+   local multi-step result.
 3. Run the four held-out probes once, after the engine stops changing.
 4. Verify Docker container execution on a Docker-capable host.
 5. Official kit adapter once the organizer publishes the schema. Do not invent wire compatibility.
@@ -56,8 +67,17 @@ The next work is evaluation evidence, not more model work.
   intermittently fails because the status tool's `receipt` parameter carries the controller
   operation id, which is not a slot, so listing it as a dependency is rejected. This is the
   compatibility edge recorded in the 13 September review entry.
-- **Do not pin `ACCESSFLOW_OLLAMA_NUM_GPU`.** Automatic fitting now selects all 37 layers and
-  adapts per model. A stale pin previously made `qwen2.5:7b` request more VRAM than the card has.
+- **Open defect: the write-continuation constraint is self-triggered.** It gates on
+  `speech_write_requested`, which the controller sets from the model's own `write_requested`
+  flag. `qwen3:4b` proposes the read again on every turn and never sets the flag, so the
+  safeguard never starts. The controller ignores the duplicate call and emits nothing, so the
+  turn stalls silently until the scenario deadline. A stall with no diagnostic is the second
+  half of this defect.
+- **Pin `ACCESSFLOW_OLLAMA_NUM_GPU=37` for `qwen3:4b` on the GTX 1650.** Automatic fitting is
+  not dependable. Ollama holds a 1024 MiB free-memory reserve and drops to 29/37 layers when
+  full offload does not clear it. The 14 September auto-fit result cleared the reserve by
+  17 MiB. Do not put the pin in `.env`; it is correct for exactly one model. See the
+  15 September correction in `docs/results/INFERENCE_TUNING_2026-09-14.md`.
 - **Three earlier results were infrastructure defects, not model failures.** A stale `num_gpu`
   pin, a hard-coded 25 s deadline, and an unsuppressed reasoning think block each produced
   scores that read as planning failures. Any older trace showing `backend_failure` is
@@ -76,7 +96,8 @@ The next work is evaluation evidence, not more model work.
 - **Append-only logs now use a union merge driver.** `.ai-sync/context.md` and
   `docs/AI_USE_LOG.md` concatenate both sides automatically. Never add a rewritten-in-place
   file such as `docs/STATUS.md` to that list.
-- Nothing has been pushed.
+- `main` and `mridul/engine` both sit at `ad04bca` and are pushed. Security review was run
+  over the whole range before pushing and returned clean.
 
 ## Key Files Modified
 
@@ -88,5 +109,7 @@ The next work is evaluation evidence, not more model work.
 - `scripts/start-local-ollama.ps1` — `-FlashAttention`, `-KvCacheType`, `-ContextLength`
 - `tests/engine/test_models.py` — backend, think, continuation and diagnostics coverage
 - `.env.example` — Groq, NVIDIA, think and layer-placement guidance
-- `docs/results/` — HOSTED_MODEL, LOCAL_REPEAT, MODEL_SWEEP, CONTINUATION, INFERENCE_TUNING
+- `src/accessflow/evaluation/scenarios.py` — `event_gaps_s` per-pair pacing
+- `scenarios/live_dev/stale_read_after_correction.json`, `stale_read_after_device_correction.json`
+- `docs/results/` — HOSTED_MODEL, LOCAL_REPEAT, MODEL_SWEEP, CONTINUATION, INFERENCE_TUNING, ABLATION
 - `docs/handoffs/mridul.md`, `.ai-sync/context.md`
