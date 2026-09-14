@@ -34,6 +34,7 @@ from accessflow.perception import LocalPerception, OllamaVisionProvider, validat
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
+MAX_CONTEXT_CHARS = 16_384
 app = FastAPI(title="AccessFlow mock demo")
 
 
@@ -159,10 +160,21 @@ class DemoReasoner:
 
     async def plan(self, view, manifests) -> PlanProposal:
         latest = view.observations[-1]
-        prior_context = "; ".join(
-            f"{observation.modality}: {observation.text}"
-            for observation in view.observations[:-1]
-        )
+        context_items = []
+        context_chars = 0
+        for observation in reversed(view.observations[:-1]):
+            item = f"{observation.modality}: {observation.text}"
+            separator = 2 if context_items else 0
+            available = MAX_CONTEXT_CHARS - context_chars - separator
+            if available <= 0:
+                break
+            if len(item) > available:
+                item = item[:available]
+                context_items.append(item)
+                break
+            context_items.append(item)
+            context_chars += separator + len(item)
+        prior_context = "; ".join(reversed(context_items))
         context_suffix = f" | multimodal context: {prior_context}" if prior_context else ""
         return PlanProposal(
             response=f"Mock agent received {latest.modality} input: {latest.text}{context_suffix}",

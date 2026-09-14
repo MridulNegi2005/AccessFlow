@@ -304,6 +304,61 @@ async def test_demo_reasoner_surfaces_prior_multimodal_context():
     )
 
 
+@pytest.mark.asyncio
+async def test_demo_reasoner_bounds_prior_multimodal_context():
+    history = [
+        Observation(
+            event_id=f"history-event-{index}",
+            source_id=f"history-{index}",
+            modality="audio" if index % 2 == 0 else "image",
+            text=f"history-{index} " + "x" * 100,
+            final=True,
+            backend="test/provider",
+        )
+        for index in range(240)
+    ]
+    history.append(
+        Observation(
+            event_id="latest-event",
+            source_id="latest",
+            modality="text",
+            text="latest request",
+            final=True,
+            backend="test/text",
+        )
+    )
+    view = SessionView(session_id="session-1", state=Snapshot(), observations=history, results=[])
+
+    proposal = await demo_app.DemoReasoner().plan(view, [])
+
+    assert proposal.response is not None
+    assert "latest request" in proposal.response
+    assert "history-239" in proposal.response
+    assert "history-0" not in proposal.response
+    context = proposal.response.split(" | multimodal context: ", 1)[1]
+    assert len(context) <= demo_app.MAX_CONTEXT_CHARS
+    assert proposal.request_complete is True
+
+    oversized = Observation(
+        event_id="oversized-event",
+        source_id="oversized",
+        modality="image",
+        text="oversized " + "y" * (demo_app.MAX_CONTEXT_CHARS * 2),
+        final=True,
+        backend="test/provider",
+    )
+    oversized_view = SessionView(
+        session_id="session-1",
+        state=Snapshot(),
+        observations=[oversized, history[-1]],
+        results=[],
+    )
+    oversized_proposal = await demo_app.DemoReasoner().plan(oversized_view, [])
+    oversized_context = oversized_proposal.response.split(" | multimodal context: ", 1)[1]
+    assert len(oversized_context) == demo_app.MAX_CONTEXT_CHARS
+    assert oversized_context.startswith("image: oversized ")
+
+
 def test_websocket_reports_invalid_local_model_configuration(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(tmp_path / "missing"))
 
