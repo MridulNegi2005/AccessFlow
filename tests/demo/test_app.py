@@ -925,6 +925,47 @@ def test_websocket_malformed_vision_json_is_recoverable(monkeypatch):
     assert "Still connected" in final["payload"]["text"]
 
 
+def test_websocket_vision_timeout_is_recoverable(monkeypatch):
+    def opener(request, *, timeout):
+        raise TimeoutError("vision request timed out")
+
+    provider = demo_app.OllamaVisionProvider(
+        model="gemma3:4b",
+        timeout_s=0.1,
+        opener=opener,
+    )
+
+    def configured_perception(cls):
+        return DemoPerception(vision_backend=provider)
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "timeout-frame"}}
+            )
+            frame_status = socket.receive_json()
+            failed_outputs = _receive_controller_outputs(socket)
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "Still connected"}}
+            )
+            continued_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in continued_outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
+    assert frame_status["payload"] == {"media_received": "frame", "source_id": "timeout-frame"}
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert "Still connected" in final["payload"]["text"]
+
+
 @pytest.mark.asyncio
 async def test_configured_vision_failure_emits_backend_error_without_final(tmp_path: Path):
     class FailingVision:
