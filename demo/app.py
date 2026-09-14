@@ -148,8 +148,13 @@ class DemoReasoner:
 
     async def plan(self, view, manifests) -> PlanProposal:
         latest = view.observations[-1]
+        prior_context = "; ".join(
+            f"{observation.modality}: {observation.text}"
+            for observation in view.observations[:-1]
+        )
+        context_suffix = f" | multimodal context: {prior_context}" if prior_context else ""
         return PlanProposal(
-            response=f"Mock agent received {latest.modality} input: {latest.text}",
+            response=f"Mock agent received {latest.modality} input: {latest.text}{context_suffix}",
             request_complete=True,
         )
 
