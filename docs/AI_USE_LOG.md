@@ -369,3 +369,17 @@ transcript, then uploaded a PNG and follow-up text in the same session.
 and text remained demo/mock; live vision and non-mock reasoning remain unverified.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay changed-frame integration gap
+
+**Task:** Expose active-frame replacement for multimodal scenarios.
+
+**Changes:** Added a strict expected-failure demo example proving frame 2 reaches the reasoner while
+frame 1 remains in the current view. The engine branch's integrated behavior was inspected; no
+engine-owned files were changed.
+
+**Status:** Full suite 83 passed, 2 strict xfailed; demo suite 24 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** The xfail is an engine integration boundary, alongside the existing image-only response
+xfail.
