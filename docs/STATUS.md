@@ -27,6 +27,8 @@ Updated 14 September 2026.
   in the same context, and the combined WAV, PNG and text response exposes both retained
   modalities. A browser transport regression verifies that the revised hypothesis survives the
   session route.
+- Partial speech followed by a final image is covered by a write-safety regression:
+  correction_pending stays true and no write tool is invoked.
 - A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
@@ -36,7 +38,7 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 86 tests passed with 2 strict expected failures, including 27 passing demo
+- Final verification is 87 tests passed with 2 strict expected failures, including 28 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The two expected failures record current controller integration gaps: image-only informational

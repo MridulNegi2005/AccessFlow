@@ -76,6 +76,9 @@ image context. This protects the browser-observed behavior at the demo route lev
 The companion tests/demo/test_app.py::test_websocket_multimodal_revision_keeps_latest_text_and_frame
 sends two transcript revisions for one utterance between a WAV and PNG and verifies that the
 latest speech hypothesis and image context survive the browser transport.
+The safety companion test, tests/demo/test_app.py::test_partial_speech_and_final_image_never_authorize_a_write,
+keeps correction_pending true and confirms that image evidence cannot authorize a write while speech
+is unfinished.
 
 ## Limits
 
