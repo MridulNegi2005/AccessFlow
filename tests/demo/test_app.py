@@ -66,6 +66,8 @@ def test_browser_message_becomes_typed_event(kind, expected):
 @pytest.mark.asyncio
 async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
     class LocalAudio:
+        audio_backend_name = "faster-whisper/cpu-int8"
+
         async def observe(self, event):
             yield Observation(
                 event_id=event.event_id,
@@ -88,6 +90,18 @@ async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
     assert observations[0].text == "local transcript"
     assert observations[0].backend == "faster-whisper/cpu-int8"
     assert "local/Faster Whisper CPU INT8" in perception.backend_label
+
+
+def test_demo_perception_does_not_overclaim_unknown_audio_backend():
+    class UnknownAudio:
+        async def observe(self, event):
+            if False:
+                yield None
+
+    perception = DemoPerception(audio_backend=UnknownAudio())
+
+    assert perception.backend_label == "local/unknown-audio + demo/mock text/image"
+
 
 def test_demo_perception_labels_injected_audio_backend_truthfully():
     perception = DemoPerception(
