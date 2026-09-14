@@ -291,6 +291,17 @@ class ModelReasoner:
                                "performed. A completed read is evidence for that effect, never a "
                                "substitute for it. Continue the plan: either call the write tool or ask "
                                "a specific clarification. Do not answer with the read result alone."}
+        repeating = getattr(view, "repeated_completed_call", False) and not unresolved
+        if repeating:
+            # Stronger than the write-continuation rule: this fires on the controller's own
+            # observation that the last proposal repeated finished work, so it does not
+            # depend on the model having recognised the request as a write.
+            request["required_next_step"] = {
+                "kind": "act_on_completed_result",
+                "instruction": "Your last proposal only repeated tool calls that already completed. "
+                               "Their results are in the session evidence. Do not propose them again. "
+                               "Read the evidence and take the next step: call a different tool, call the "
+                               "same tool with different arguments, or answer the user."}
         if unresolved:
             request["required_next_step"] = {
                 "kind": "reconcile_unknown_effects",

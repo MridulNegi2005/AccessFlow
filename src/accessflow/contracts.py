@@ -194,6 +194,8 @@ class SessionView(Model):
     results: list[ToolResult]
     calls: list["ToolCall"] = Field(default_factory=list)
     write_pending: bool = False
+    # Set when the previous proposal only repeated calls that already completed.
+    repeated_completed_call: bool = False
 
 
 class ToolCall(Model):
