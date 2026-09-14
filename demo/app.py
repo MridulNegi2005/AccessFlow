@@ -225,8 +225,12 @@ def event_from_message(
     media_root: Path | None = None,
 ):
     """Translate browser messages into typed v0.1 input events."""
+    if not isinstance(message, dict):
+        raise ValueError("browser event must be a JSON object")
     kind = message.get("kind")
     payload = message.get("payload", {})
+    if not isinstance(payload, dict):
+        raise ValueError("browser event payload must be an object")
     if kind == "transcript":
         return TranscriptEvent(
             session_id=session_id,
