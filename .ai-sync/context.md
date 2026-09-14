@@ -683,3 +683,8 @@ an async heartbeat. Full validation: 125 passed, 4 strict xfailed; no protected 
 2026-09-15: Added slow-ASR worker responsiveness evidence alongside slow-image coverage. Both
 replaceable perception paths keep an async heartbeat usable. Full validation: 126 passed, 4 strict
 xfailed; no protected files changed.
+
+
+2026-09-15: Browser multimodal output now uses textContent-backed DOM nodes rather than innerHTML; the
+existing UI test covers the safe rendering path. Full validation: 126 passed, 4 strict xfailed; no
+protected files changed.

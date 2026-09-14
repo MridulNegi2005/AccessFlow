@@ -159,3 +159,8 @@ files changed.
 replaceable perception providers leave an async heartbeat usable while blocked. Full validation: 126
 passed, 4 strict xfailed; demo 55 passed plus 4 strict xfailed; perception 55 passed. No protected
 files changed.
+
+
+2026-09-15: Hardened browser rendering of untrusted multimodal output by replacing innerHTML with
+textContent-backed DOM nodes. The existing UI regression now proves model and transcript payloads are
+rendered as text. Full validation remains 126 passed, 4 strict xfailed; no protected files changed.

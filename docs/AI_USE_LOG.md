@@ -689,3 +689,8 @@ vision provider is blocked. Validation: 125 passed, 4 strict xfailed; no protect
 2026-09-15: Added a slow-ASR worker responsiveness regression alongside the existing slow-image check.
 Both perception paths keep the event loop responsive. Validation: 126 passed, 4 strict xfailed; no
 protected files changed.
+
+
+2026-09-15: Hardened browser rendering of untrusted multimodal output with textContent-backed DOM
+nodes and extended the UI regression. Validation: 126 passed, 4 strict xfailed; no protected files
+changed.

@@ -96,6 +96,8 @@ Updated 15 September 2026.
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
   PNG in the same session. The result is mixed evidence, not a live multimodal model benchmark.
+- The browser demo renders untrusted multimodal event kinds and payloads through text nodes, so model or
+  transcript output is displayed without interpreting markup.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and
   microphone capture through the served AudioWorklet. A separate isolated Chrome run used the
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,

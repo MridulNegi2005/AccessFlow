@@ -67,8 +67,11 @@
       }
       const card = document.createElement('div');
       card.className = 'event';
-      card.innerHTML = '<strong>' + event.kind + '</strong><pre>' +
-        JSON.stringify(event, null, 2) + '</pre>';
+      const heading = document.createElement('strong');
+      heading.textContent = event.kind;
+      const details = document.createElement('pre');
+      details.textContent = JSON.stringify(event, null, 2);
+      card.append(heading, details);
       events.prepend(card);
     }
 

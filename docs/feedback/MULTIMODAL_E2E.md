@@ -271,3 +271,14 @@ path allows an async heartbeat to complete and preserves the final utterance ide
 
 **Status:** Full suite 126 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
 failures; perception suite 55 passed. No engine, contract, dependency or lockfile change.
+
+
+## 2026-09-15 - Codex Atishay safe multimodal output rendering
+
+**Task:** Keep untrusted vision and transcript output as display text in the browser demo.
+
+**Changes:** Replaced the event card's innerHTML construction with textContent-backed DOM nodes and
+extended the existing UI regression to require the safe rendering path.
+
+**Status:** Full suite 126 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
+failures; perception suite 55 passed. No engine, contract, dependency or lockfile change.
