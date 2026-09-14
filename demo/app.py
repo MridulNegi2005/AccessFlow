@@ -159,6 +159,16 @@ async def index() -> FileResponse:
     return FileResponse(ROOT / "index.html")
 
 
+@app.get("/favicon.svg")
+async def favicon() -> FileResponse:
+    return FileResponse(ROOT / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/recorder-worklet.js")
+async def recorder_worklet() -> FileResponse:
+    return FileResponse(ROOT / "recorder-worklet.js", media_type="application/javascript")
+
+
 def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | None) -> str:
     data = payload.get("data_base64")
     if data is None:

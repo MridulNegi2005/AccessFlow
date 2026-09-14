@@ -1,12 +1,13 @@
 # Browser smoke evidence
 
-Date and branch: 2026-09-13 / atishay/perception
+Date and branch: 2026-09-14 / atishay/perception
 
 Status: IN PROGRESS
 
-The functional browser smoke passed in a temporary isolated Chrome session. Pixel-level
-inspection remains unavailable in this environment because the image inspection helper failed
-to open the captured PNG. Physical microphone permission and device capture were not exercised.
+The functional browser smoke passed in a temporary isolated Chrome session, including the
+served AudioWorklet microphone path. Pixel-level inspection remains unavailable because the
+image inspection helper failed to open the captured PNG. Physical microphone permission and
+device capture were not exercised.
 
 ## Runtime
 
@@ -16,6 +17,7 @@ to open the captured PNG. Physical microphone permission and device capture were
 - Backend label: demo/mock
 - Local-only runtime addition: websockets 17.1 in the ignored development environment
 - Microphone run: Chrome fake UI and fake audio device flags; no person or physical recording
+- Recorder module: /recorder-worklet.js, served by the demo and loaded by AudioWorkletNode.
 - No committed pyproject or lockfile change; add a WebSocket runtime dependency through the
   shared owner before relying on Uvicorn for a fresh browser setup.
 
@@ -27,13 +29,14 @@ to open the captured PNG. Physical microphone permission and device capture were
 | WebSocket connection | Chrome event stream included connected and perception_backend statuses | PASS |
 | Text submission | Chrome event stream included acknowledge and informational final for Book Wednesday | PASS |
 | WAV file control | Chrome selected the checked-in synthetic tone and observed media_received=audio and a mock audio final | PASS |
-| Microphone control | Chrome fake device entered recording state, stopped, uploaded a WAV and observed media_received=audio plus a mock final | PASS |
+| Microphone control | Fresh Chrome fake device entered recording state, stopped, uploaded a WAV and observed media_received=audio plus a mock final | PASS |
 | PNG file control | Chrome selected a session PNG and observed media_received=frame; paired transcript produced its final | PASS |
+| Combined media session | Fresh Chrome sent a WAV, then a PNG and paired transcript in one browser session; both media statuses and finals were observed | PASS |
 | Layout overflow | body scroll width 741 was below inner viewport width 756 | PASS |
 | Physical microphone permission and capture | No physical device was used in headless Chrome | UNVERIFIED |
 | Visual pixel inspection | Captures were produced, but the local image helper could not open them | UNVERIFIED |
-| Console and hydration errors | No separate console capture was available in this run | UNVERIFIED |
+| Console and hydration errors | Fresh CDP run returned no Runtime exceptions, console errors, deprecation warnings or page errors | PASS |
 
-Captured files during the run: browser-smoke-initial.png, browser-smoke-media-final.png and
-browser-smoke-microphone-final.png
+Captured files during the run: browser-smoke-initial.png, browser-smoke-media-final.png,
+browser-smoke-microphone-final.png and browser-smoke-console-final.png
 in the local checkout. They contain only mock/demo data and are local evidence artifacts.

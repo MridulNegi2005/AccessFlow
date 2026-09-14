@@ -289,3 +289,19 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
   inspection and separate console capture remain unverified.
 - **Notes:** No participant or physical recording was used. No source, contract, dependency or
   lockfile change.
+
+## 2026-09-14 - Codex Atishay multimodal end-to-end evidence
+
+**Task:** Prioritize multimodal end-to-end coverage for the hidden scenario weighting.
+
+**Changes:** Replaced the browser's inline recorder Blob with the demo-served
+recorder-worklet.js, added the route and focused test, and added a combined audio-plus-image
+Agent test using injected local ASR and vision providers. Fresh Chrome CDP evidence covered text,
+synthetic microphone, WAV, PNG plus paired transcript, clean console output and no overflow.
+
+**Status:** Full suite 81 passed; demo suite 22 passed; perception suite 43 passed; Ruff and
+git diff --check clean. Evidence is functional synthetic/injected coverage only; physical
+microphone, pixel inspection, live ASR/vision quality and non-mock reasoning remain unverified.
+
+**Notes:** origin/mridul/engine was fetched at ad04bca for review. Branch remains
+atishay/perception; no engine, contract, lockfile or dependency manifest changes were made.

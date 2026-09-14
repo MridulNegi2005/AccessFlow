@@ -314,3 +314,20 @@ pixel inspection and separate console capture remain unverified.
 
 **Notes:** No participant or physical recording was used. No shared contract, dependency or
 lockfile change beyond the previously documented local-only websockets runtime.
+
+## 2026-09-14 - Codex Atishay multimodal end-to-end evidence
+
+**Task:** Prioritize multimodal end-to-end coverage for Workstream B.
+
+**Changes:** Added a demo-owned AudioWorklet recorder module and route, a recoverable input-error
+path, and a demo test that carries a validated WAV followed by a PNG through injected local ASR and
+vision, DemoPerception and one Agent context. Fresh Chrome CDP smoke covered text, WAV, PNG plus
+paired transcript, synthetic microphone capture and clean console output.
+
+**Status:** Focused demo suite 22 passed; perception suite 43 passed; final full suite 81 passed;
+Ruff and git diff --check clean. Browser status remains IN PROGRESS because physical microphone,
+pixel inspection, live ASR/vision quality and non-mock reasoning are unverified.
+
+**Notes:** Branch remains atishay/perception. origin/mridul/engine was fetched at ad04bca for review;
+no engine-owned files, shared contracts, lockfiles or dependency manifests were changed. The local
+only websockets 17.1 runtime requirement remains a shared dependency proposal.

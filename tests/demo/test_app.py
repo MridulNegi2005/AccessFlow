@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import importlib.util
 import struct
@@ -6,7 +7,18 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from accessflow.contracts import AudioEvent, FrameEvent, Observation, TranscriptEvent
+from accessflow.contracts import (
+    AudioEvent,
+    EndEvent,
+    FrameEvent,
+    Observation,
+    PlanProposal,
+    Start,
+    StartEvent,
+    TranscriptEvent,
+)
+from accessflow.engine import Agent
+from accessflow.fakes import FinalFlagPolicy
 
 
 demo_path = Path(__file__).parents[2] / "demo" / "app.py"
@@ -125,6 +137,24 @@ def test_demo_perception_environment_rejects_missing_local_model(monkeypatch, tm
         DemoPerception.from_environment()
 
 
+def test_demo_favicon_is_served():
+    with TestClient(demo_app.app) as client:
+        response = client.get("/favicon.svg")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/svg+xml")
+    assert "AccessFlow" in response.text
+
+
+def test_demo_recorder_worklet_is_served():
+    with TestClient(demo_app.app) as client:
+        response = client.get("/recorder-worklet.js")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/javascript")
+    assert "registerProcessor" in response.text
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = Path("demo/index.html").read_text(encoding="utf-8")
 
@@ -136,6 +166,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="backend-label"' in html
     assert 'getUserMedia' in html
     assert 'encodeWav' in html
+    assert 'AudioWorkletNode' in html
+    assert 'recorder-worklet.js' in html
 
 
 def test_websocket_reports_invalid_local_model_configuration(monkeypatch, tmp_path: Path):
@@ -233,6 +265,95 @@ def test_websocket_png_upload_reaches_mock_controller():
     final = next(item for item in received if item["kind"] == "final")
     assert "Mock agent received text input" in final["payload"]["text"]
     assert final["payload"]["backend"] == "reasoner"
+
+
+@pytest.mark.asyncio
+async def test_multimodal_audio_then_image_reaches_one_agent_context(tmp_path: Path):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+
+    class LocalVision:
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            assert path.parent == tmp_path
+            return "screen shows the approval prompt"
+
+    class MultimodalReasoner:
+        def __init__(self):
+            self.views = []
+            self.audio_seen = asyncio.Event()
+            self.both_seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            snapshot = view.model_copy(deep=True)
+            self.views.append(snapshot)
+            modalities = {item.modality for item in snapshot.observations}
+            if "audio" in modalities:
+                self.audio_seen.set()
+            if {"audio", "image"} <= modalities:
+                self.both_seen.set()
+                return PlanProposal(
+                    response="Audio context and screen evidence are available together.",
+                    request_complete=True,
+                )
+            return PlanProposal()
+
+    def transcribe(path: Path) -> str:
+        assert path.parent == tmp_path
+        return "Please inspect the attached screen"
+
+    perception = DemoPerception(
+        audio_backend=demo_app.LocalPerception(transcriber=transcribe),
+        vision_backend=LocalVision(),
+    )
+    reasoner = MultimodalReasoner()
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    agent = Agent(
+        perception,
+        FinalFlagPolicy(),
+        reasoner,
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    session_id = "multimodal-session"
+    audio_event = event_from_message(
+        session_id,
+        {"kind": "audio", "payload": {"data_base64": encoded_audio, "utterance_id": "audio-1"}},
+        media_root=tmp_path,
+    )
+    image_event = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+    await incoming.put(audio_event)
+    await asyncio.wait_for(reasoner.audio_seen.wait(), timeout=1)
+    await incoming.put(image_event)
+    await asyncio.wait_for(reasoner.both_seen.wait(), timeout=1)
+
+    outputs = []
+    while not any(item.kind == "final" for item in outputs):
+        outputs.append(await asyncio.wait_for(outgoing.get(), timeout=1))
+    await incoming.put(EndEvent(session_id=session_id))
+    await asyncio.wait_for(task, timeout=1)
+
+    multimodal_view = next(
+        view for view in reasoner.views
+        if {item.modality for item in view.observations} == {"audio", "image"}
+    )
+    observations = {item.source_id: item for item in multimodal_view.observations}
+    assert observations["audio-1"].text == "Please inspect the attached screen"
+    assert observations["audio-1"].backend == "local/injected-asr"
+    assert observations["frame-1"].text == "screen shows the approval prompt"
+    assert observations["frame-1"].backend == "local/injected-vision"
+    assert next(item for item in outputs if item.kind == "final").payload["basis"] == "informational"
 
 
 def test_browser_path_is_not_used_when_session_upload_root_exists(tmp_path: Path):

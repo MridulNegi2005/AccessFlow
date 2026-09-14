@@ -21,3 +21,13 @@ still needs an engine integration slice; the smoke pairs the image with a transc
 ## Key Files Modified
 contracts.py, interfaces.py, fakes.py, clock.py, engine.py; pyproject.toml/uv.lock;
 AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and start guide.
+
+## 2026-09-14 - Codex Atishay multimodal end-to-end evidence
+
+- **Task:** Complete the next Workstream B priority for multimodal coverage.
+- **Changes:** Added the served demo/recorder-worklet.js path, focused route coverage and one
+  Agent-level test for a validated WAV plus PNG sharing a context through injected local ASR/vision.
+- **Status:** Full suite 81 passed; demo 22 passed; perception 43 passed; fresh Chrome CDP smoke
+  passed synthetic microphone, text, WAV, PNG plus paired transcript, clean console and layout checks.
+- **Limits:** Physical microphone, pixel inspection, live ASR/vision quality and non-mock reasoning
+  remain unverified. No engine or contract files were changed.
