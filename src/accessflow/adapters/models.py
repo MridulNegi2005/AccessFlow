@@ -108,6 +108,7 @@ class JsonBackend:
                 "response_format": (self._openai_response_format({"stub": True}, OPENAI_COMPATIBLE[self.backend][0])["type"]
                                     if self.backend in OPENAI_COMPATIBLE else None),
                 "temperature": 0,
+                "max_output_tokens": os.getenv("ACCESSFLOW_MAX_OUTPUT_TOKENS"),
                 "ollama_duration_unit": "nanoseconds",
             },
             "request_count": self._request_count,
@@ -190,11 +191,17 @@ class JsonBackend:
             key = os.getenv(f"{prefix}_API_KEY")
             if not key:
                 raise ValueError(f"{prefix}_API_KEY is required for explicit hosted mode")
-            request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": {
-                    "model": self.model, "stream": False, "temperature": 0,
+            body = {"model": self.model, "stream": False, "temperature": 0,
                     "response_format": self._openai_response_format(schema, prefix),
                     "messages": [{"role": "system", "content": system},
-                                 {"role": "user", "content": prompt}]}}
+                                 {"role": "user", "content": prompt}]}
+            # Some free tiers reject a request whose default output ceiling exceeds their
+            # per-minute output budget, before any usage accrues. An explicit cap is the
+            # only way to reach those models. Unset by default so nothing else changes.
+            cap = os.getenv("ACCESSFLOW_MAX_OUTPUT_TOKENS")
+            if cap:
+                body["max_tokens"] = int(cap)
+            request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": body}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
             response = await client.post(
