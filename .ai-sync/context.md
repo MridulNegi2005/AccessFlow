@@ -608,3 +608,6 @@ suite 46 passed; Ruff, compilation and git diff --check clean.
 
 **Notes:** The loopback service is a deterministic protocol stub and does not provide live vision quality
 evidence. No engine, contract, lockfile or dependency manifest changes were made.
+
+
+2026-09-14: Continued multimodal E2E hardening on atishay/perception. LocalPerception now exposes audio_backend_name for truthful injected-ASR versus Faster Whisper labeling, and failed post-header WAV validation removes its temporary materialization. Full suite: 101 passed, 3 strict xfailed.

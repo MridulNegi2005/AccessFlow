@@ -38,6 +38,8 @@ Updated 14 September 2026.
 - PNG ingestion now validates chunk boundaries, CRCs, legal IHDR values, IDAT presence and terminal
   IEND structure before a frame reaches a vision backend; rejected uploads are removed from the
   session directory.
+- Failed WAV uploads now remove their post-header validation materialization, and local injected
+  audio backends identify themselves separately from the installed Faster Whisper path in the demo label.
 - A configured vision-backend failure is also covered: it emits backend_failure without a
   misleading final response.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
@@ -60,8 +62,8 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 99 tests passed with 3 strict expected failures, including 37 passing demo
-  tests and 46 passing perception tests; Ruff and git diff --check are clean. The browser runtime
+- Final verification is 101 tests passed with 3 strict expected failures, including 39 passing demo
+  tests and 46 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational
   response and direct or WebSocket replacement of a prior active frame. Proposals and corresponding integrated-branch

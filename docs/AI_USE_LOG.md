@@ -587,3 +587,12 @@ suite 46 passed; Ruff, compilation and git diff --check clean.
 
 **Notes:** The loopback service is a deterministic protocol stub and does not provide live vision quality
 evidence. No engine, contract, lockfile or dependency manifest changes were made.
+
+
+## 2026-09-14 - Codex Atishay upload cleanup and backend identity
+
+**Task:** Close two multimodal demo boundary ambiguities after the end-to-end coverage pass.
+
+**Changes:** Added an audio backend identity on LocalPerception so injected ASR is not presented as Faster Whisper, and removed temporary WAV files when post-header PCM validation rejects the upload. Added focused tests for truthful labeling and cleanup.
+
+**Status:** Full suite 101 passed, 3 strict xfailed; owned demo and perception suites 85 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.

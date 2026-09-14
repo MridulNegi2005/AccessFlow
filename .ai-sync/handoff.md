@@ -150,3 +150,6 @@ suite 46 passed; Ruff, compilation and git diff --check clean.
 
 **Notes:** The loopback service is a deterministic protocol stub and does not provide live vision quality
 evidence. No engine, contract, lockfile or dependency manifest changes were made.
+
+
+2026-09-14: Multimodal boundary follow-up committed locally on atishay/perception: failed WAV materializations are cleaned up and injected ASR receives an accurate backend label. Validation: 101 passed, 3 strict xfailed; no protected files changed.

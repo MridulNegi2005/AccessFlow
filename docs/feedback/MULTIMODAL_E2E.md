@@ -115,3 +115,10 @@ This is not a live multimodal model benchmark: the vision result was injected, O
 running, and the reasoner was a test double. The audio fixture is generated speech rather than
 participant audio. Live vision quality, non-mock reasoning and pixel
 inspection remains unverified.
+
+
+## Boundary follow-up
+
+The demo now removes a WAV materialization when post-header PCM validation fails. LocalPerception also exposes its configured audio backend identity, so injected ASR is labeled as local/injected-asr while the installed Faster Whisper path keeps its Faster Whisper label.
+
+Automated coverage: tests/demo/test_app.py::test_demo_perception_labels_injected_audio_backend_truthfully and tests/demo/test_app.py::test_invalid_wav_materialization_is_removed. The full suite is 101 passed with 3 strict expected failures; demo and perception coverage is 39 passed plus 3 strict xfailed and 46 passed.
