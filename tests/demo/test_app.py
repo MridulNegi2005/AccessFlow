@@ -412,6 +412,50 @@ def test_websocket_image_before_audio_context_is_visible():
 
 
 
+def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
+    class FailingVision:
+        model = "failing-vision"
+        backend_name = "local/failing-vision"
+
+        def __call__(self, path: Path) -> str:
+            raise RuntimeError("vision service unavailable")
+
+    def configured_perception(cls):
+        return DemoPerception(vision_backend=FailingVision())
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "frame-failure"},
+                }
+            )
+            media_status = socket.receive_json()
+            failed_outputs = _receive_controller_outputs(socket)
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "Still connected"}}
+            )
+            continued_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in continued_outputs if item["kind"] == "final")
+    assert "local/Ollama failing-vision image" in status["payload"]["perception_backend"]
+    assert media_status["payload"] == {"media_received": "frame", "source_id": "frame-failure"}
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert "Still connected" in final["payload"]["text"]
+
+
+
 @pytest.mark.asyncio
 async def test_configured_vision_failure_emits_backend_error_without_final(tmp_path: Path):
     class FailingVision:
