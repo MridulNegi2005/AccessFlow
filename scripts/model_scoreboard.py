@@ -107,6 +107,39 @@ def matrix(records, minimum=4):
     return "\n".join(lines)
 
 
+def per_model(records):
+    """One section per model, one row per scenario it has run.
+
+    The latest column matters more than the totals. Scores span several days, and
+    controller changes moved results independently of the model, so an old failure
+    still counts against a model that was never retested.
+    """
+    grouped = defaultdict(lambda: defaultdict(list))
+    for record in records:
+        if not record["ablated"]:
+            grouped[record["model"]][record["scenario"]].append(record)
+    sections = []
+    for model in sorted(grouped, key=lambda m: -sum(len(v) for v in grouped[m].values())):
+        rows = ["| Scenario | Runs | Passed | Completed | Mean request | Slowest | Latest | Last run |",
+                "|---|---|---|---|---|---|---|---|"]
+        for scenario in sorted(grouped[model]):
+            entries = sorted(grouped[model][scenario], key=lambda r: r["when"])
+            latencies = [value for entry in entries for value in entry["latencies"]]
+            scored = [entry for entry in entries if entry["oracle"] is not None]
+            passed = sum(1 for entry in scored if entry["oracle"])
+            done = sum(1 for entry in entries if entry["status"] == "completed")
+            latest = entries[-1]
+            verdict = {True: "pass", False: "fail", None: "unscored"}[latest["oracle"]]
+            if latest["status"] != "completed":
+                verdict = f"{verdict} ({latest['status']})"
+            mean = f"{statistics.mean(latencies):.2f} s" if latencies else "-"
+            slowest = f"{max(latencies):.2f} s" if latencies else "-"
+            rows.append(f"| {scenario} | {len(entries)} | {passed}/{len(scored)} | "
+                        f"{done}/{len(entries)} | {mean} | {slowest} | {verdict} | {latest['when']} |")
+        sections.append(f"### `{model}`\n\n" + "\n".join(rows))
+    return "\n\n".join(sections)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifacts", default=str(ROOT / "artifacts"))
@@ -116,7 +149,8 @@ def main():
     body = (f"Generated from {len(records)} recorded runs in `artifacts/`.\n"
             f"Regenerate with `python scripts/model_scoreboard.py --write docs/results/MODEL_COMPARISON.md`.\n\n"
             f"## Totals by model\n\n{table(summarize(records))}\n\n"
-            f"## Oracle results per scenario\n\n{matrix(records)}\n")
+            f"## Oracle results per scenario\n\n{matrix(records)}\n\n"
+            f"## Every model, every scenario\n\n{per_model(records)}\n")
     if args.write:
         target = Path(args.write)
         header = target.read_text(encoding="utf-8").split("<!-- generated -->")[0] if target.exists() else ""
