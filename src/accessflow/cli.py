@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from .adapters.models import JsonBackend, ModelReasoner
+from .engine import Agent
 from .evaluation.replay import metrics, replay
 from .evaluation.suite import run_suite
 from .evaluation.responsiveness import run_responsiveness
@@ -33,6 +34,10 @@ def main():
         model_parser.add_argument("--request-timeout", type=float, default=20.0,
                                   help="Seconds allowed per model request; record it with any result")
     for deadline_parser in (replay_parser, suite):
+        deadline_parser.add_argument("--disable", action="append", default=[],
+                                     choices=sorted(Agent.ABLATIONS),
+                                     help="Switch off one engine component for a baseline comparison. "
+                                          "Everything else stays identical.")
         deadline_parser.add_argument("--inference-timeout", type=float,
                                      help="Controller deadline per planning step; defaults to the Agent value")
     responsiveness = commands.add_parser("responsiveness", help="Measure synthetic controller responsiveness")
@@ -78,7 +83,8 @@ def main():
                         JsonBackend(args.backend, timeout=args.request_timeout))) if backend else None,
                     backend=backend.name if backend else "offline-fake",
                     perception_factory=perception_factory, turn_policy_factory=policy_factory,
-                    component_config=component_config, inference_timeout=args.inference_timeout))
+                    component_config=component_config, inference_timeout=args.inference_timeout,
+                    disabled=tuple(args.disable)))
         result = {key: value for key, value in report.items() if key != "cases"}
         result["report"] = str(Path(args.output_dir) / "report.json")
         print(json.dumps(result, indent=2))
@@ -92,7 +98,8 @@ def main():
                             backend=backend.name if backend else "offline-fake",
                             perception=perception_factory() if perception_factory else None,
                             turn_policy=policy_factory() if policy_factory else None,
-                            component_config=component_config, inference_timeout=args.inference_timeout))
+                            component_config=component_config, inference_timeout=args.inference_timeout,
+                    disabled=tuple(args.disable)))
     print(json.dumps(result, indent=2))
     if args.command == "replay" and (
             result["completion_status"] != "completed" or result["task_oracle"]["passed"] is False):

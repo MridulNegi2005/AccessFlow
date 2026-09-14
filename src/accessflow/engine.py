@@ -30,10 +30,19 @@ class WorkerMessage:
 
 
 class Agent:
+    ABLATIONS = frozenset({"dependency_invalidation"})
+
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
-                 scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08):
+                 scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
+                 disabled=()):
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
+        unknown = set(disabled) - self.ABLATIONS
+        if unknown:
+            raise ValueError(f"Unknown ablation: {sorted(unknown)}")
+        # Named components a baseline run may switch off. Every other behaviour, the model,
+        # the tools and the scenarios stay identical so only this component is compared.
+        self.disabled = frozenset(disabled)
         self.perception = perception
         self.turn_policy = turn_policy
         self.reasoner = reasoner
@@ -502,6 +511,15 @@ class Agent:
             await self._invalidate_dependencies(changed, "hypothesis_replaced")
 
     async def _invalidate_dependencies(self, changed, reason):
+        if "dependency_invalidation" in self.disabled:
+            # Ablation: obsolete calls keep running and accepted reads stay in evidence.
+            affected = [call.call_id for call in self.ledger.values()
+                        if changed.intersection(call.dependencies)
+                        and call.status in {"pending", "success"}]
+            if affected:
+                await self._emit("error", code="ablation_skipped_invalidation", reason=reason,
+                                 slots=sorted(changed), call_ids=affected)
+            return
         for call in list(self.ledger.values()):
             if not changed.intersection(call.dependencies):
                 continue
