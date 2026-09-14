@@ -61,7 +61,7 @@ class PngFormat:
 
 
 def validate_png(path: Path) -> PngFormat:
-    """Validate PNG chunks, CRCs and termination without decoding pixel data."""
+    """Validate PNG chunks, CRCs, compressed data and termination without decoding pixels."""
     try:
         data = path.read_bytes()
     except OSError as error:
@@ -74,6 +74,7 @@ def validate_png(path: Path) -> PngFormat:
     offset = len(signature)
     ihdr: tuple[int, int, int, int] | None = None
     saw_idat = False
+    idat_data = bytearray()
     saw_iend = False
     while offset < len(data):
         if len(data) - offset < 12:
@@ -116,6 +117,7 @@ def validate_png(path: Path) -> PngFormat:
 
         if chunk_type == b"IDAT":
             saw_idat = True
+            idat_data.extend(chunk_data)
         if chunk_type == b"IEND":
             if length != 0 or chunk_end != len(data):
                 raise ValueError(f"Invalid PNG file: {path}")
@@ -125,6 +127,14 @@ def validate_png(path: Path) -> PngFormat:
 
     if ihdr is None or not saw_idat or not saw_iend:
         raise ValueError(f"Invalid PNG file: {path}")
+    try:
+        decompressor = zlib.decompressobj()
+        decompressor.decompress(bytes(idat_data))
+        decompressor.flush()
+        if not decompressor.eof or decompressor.unused_data:
+            raise ValueError(f"Invalid PNG file: {path}")
+    except zlib.error as error:
+        raise ValueError(f"Invalid PNG file: {path}") from error
     return PngFormat(*ihdr)
 
 

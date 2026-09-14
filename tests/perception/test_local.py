@@ -178,7 +178,7 @@ def test_png_validation_returns_structural_metadata(tmp_path: Path):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("corruption", ["truncated", "bad-crc"])
+@pytest.mark.parametrize("corruption", ["truncated", "bad-crc", "bad-idat"])
 async def test_image_input_rejects_structurally_invalid_png(tmp_path: Path, corruption: str):
     from accessflow.contracts import Frame, FrameEvent
 
@@ -187,8 +187,16 @@ async def test_image_input_rejects_structurally_invalid_png(tmp_path: Path, corr
     data = bytearray(image_path.read_bytes())
     if corruption == "truncated":
         data = data[:-4]
-    else:
+    elif corruption == "bad-crc":
         data[-1] ^= 1
+    else:
+        idat_offset = 8 + 4 + 4 + 13 + 4
+        idat_length = struct.unpack(">I", data[idat_offset : idat_offset + 4])[0]
+        idat_data_start = idat_offset + 8
+        idat_data_end = idat_data_start + idat_length
+        data[idat_data_start:idat_data_end] = b"\x00" * idat_length
+        crc = zlib.crc32(b"IDAT" + data[idat_data_start:idat_data_end]) & 0xFFFFFFFF
+        data[idat_data_end : idat_data_end + 4] = struct.pack(">I", crc)
     image_path.write_bytes(data)
     event = FrameEvent(session_id="s1", payload=Frame(path=str(image_path), frame_id="frame-9"))
 

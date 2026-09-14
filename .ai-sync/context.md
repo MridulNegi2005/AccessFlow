@@ -617,3 +617,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Added ASR failure recovery coverage on atishay/perception: a WebSocket backend_failure is followed by validated PNG and spoken input, with retained image context and informational output. Full suite: 103 passed, 3 strict xfailed.
 
 2026-09-14: Fresh runtime evidence on atishay/perception combined cached Faster Whisper CPU INT8 audio with configured OllamaVisionProvider over a loopback service in 1.326 seconds; one session retained recognized speech and image evidence. Vision and reasoning limits remain explicit.
+
+2026-09-14: PNG IDAT integrity hardened on atishay/perception: CRC-valid corrupt or incomplete zlib streams are rejected before vision inference. Full suite: 104 passed, 3 strict xfailed.
