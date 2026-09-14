@@ -1,0 +1,181 @@
+{
+  "id": "live-dev-stale-read-after-correction",
+  "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. Fictional Panel-A support notes and mock effects only. Not held out, not real Samsung documentation.",
+  "event_gaps_s": [
+    0.5,
+    26.0
+  ],
+  "completion_timeout_s": 85,
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "stale-read",
+      "payload": {
+        "tools": [
+          {
+            "name": "inspect_support_notes",
+            "description": "Read the fictional support instructions for one symptom. Returns the recommended remedy for that symptom only.",
+            "effect": "read",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "symptom": {
+                  "type": "string",
+                  "description": "Canonical symptom category reported by the user.",
+                  "enum": [
+                    "flicker",
+                    "no_power"
+                  ]
+                }
+              },
+              "required": [
+                "symptom"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "file_visit_request",
+            "description": "Create a mock on-site technician visit. Use only when the support notes recommend a service visit.",
+            "effect": "write",
+            "idempotency_parameter": "request_token",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {
+                  "type": "string"
+                },
+                "day": {
+                  "type": "string"
+                },
+                "hour": {
+                  "type": "string",
+                  "description": "Local time in 24-hour HH:MM format, for example 09:30.",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "request_token": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "device",
+                "day",
+                "hour",
+                "request_token"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "order_replacement_part",
+            "description": "Order a mock user-replaceable part. Use only when the support notes recommend a part instead of a visit.",
+            "effect": "write",
+            "idempotency_parameter": "order_token",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {
+                  "type": "string"
+                },
+                "part": {
+                  "type": "string",
+                  "description": "Part code exactly as printed in the support notes."
+                },
+                "order_token": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "device",
+                "part",
+                "order_token"
+              ],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "stale-read",
+      "event_id": "notes-question",
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "final": true,
+        "text": "My Panel-A screen keeps flickering. Look up the support notes for that symptom and tell me what they recommend."
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "stale-read",
+      "event_id": "symptom-correction",
+      "payload": {
+        "utterance_id": "u2",
+        "revision": 0,
+        "final": true,
+        "text": "I described that wrong. Panel-A is not flickering at all, it has no power. Go ahead and do whatever the notes recommend for that symptom."
+      }
+    }
+  ],
+  "environment": {
+    "inspect_support_notes": {
+      "kind": "lookup",
+      "identity_fields": [
+        "symptom"
+      ],
+      "rows": [
+        {
+          "symptom": "flicker",
+          "document": "fictional-panel-a-support",
+          "remedy": "service_visit",
+          "recommendation": "Book an on-site technician visit. The backlight driver needs a trained technician."
+        },
+        {
+          "symptom": "no_power",
+          "document": "fictional-panel-a-support",
+          "remedy": "order_part",
+          "part": "PA-77",
+          "recommendation": "Do not book a technician visit. The power adapter is user replaceable. Order part PA-77."
+        }
+      ]
+    },
+    "file_visit_request": {
+      "kind": "write",
+      "identity_fields": [
+        "device",
+        "day",
+        "hour"
+      ],
+      "mode": "reservation"
+    },
+    "order_replacement_part": {
+      "kind": "write",
+      "identity_fields": [
+        "device",
+        "part"
+      ],
+      "mode": "action"
+    }
+  },
+  "expected_slots": {
+    "device": "Panel-A",
+    "symptom": "no_power"
+  },
+  "expectation": {
+    "slots": {
+      "device": "Panel-A"
+    },
+    "effects": [
+      {
+        "tool": "order_replacement_part",
+        "arguments": {
+          "device": "Panel-A",
+          "part": "PA-77"
+        }
+      }
+    ],
+    "final_basis": "confirmed_tool_effect"
+  }
+}
