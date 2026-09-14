@@ -109,6 +109,33 @@ async def test_audio_validates_wav_and_uses_injected_transcriber(tmp_path: Path)
     assert observation.backend == "local/injected-asr"
 
 
+@pytest.mark.asyncio
+async def test_slow_audio_transcriber_does_not_block_event_loop(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    transcriber_started = threading.Event()
+
+    def transcriber(path: Path) -> str:
+        transcriber_started.set()
+        time.sleep(0.15)
+        return "Book Wednesday"
+
+    event = AudioEvent(
+        session_id="s1",
+        event_id="slow-audio-event",
+        payload=Audio(path=str(wav_path), utterance_id="slow-audio"),
+    )
+    observation_task = asyncio.create_task(_one(LocalPerception(transcriber=transcriber), event))
+
+    assert await asyncio.to_thread(transcriber_started.wait, 1)
+    heartbeat = asyncio.create_task(asyncio.sleep(0.02))
+    await asyncio.wait_for(heartbeat, timeout=0.1)
+    assert not observation_task.done()
+
+    observation = await asyncio.wait_for(observation_task, timeout=1)
+    assert observation.source_id == "slow-audio"
+    assert observation.text == "Book Wednesday"
+
 def test_wav_validation_returns_metadata_for_backend_checks(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path, frames=320)
