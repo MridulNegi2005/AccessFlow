@@ -7,7 +7,7 @@ from accessflow.evaluation.replay import metrics, replay
 
 async def run_suite(paths, output_dir, reasoner_factory=None, backend="offline-fake", *,
                     perception_factory=None, turn_policy_factory=None, component_config=None,
-                    inference_timeout=None):
+                    inference_timeout=None, disabled=()):
     paths = sorted(Path(path) for path in paths)
     if not paths:
         raise ValueError("No scenario JSON files supplied")
@@ -16,7 +16,7 @@ async def run_suite(paths, output_dir, reasoner_factory=None, backend="offline-f
     records = []
     for index, path in enumerate(paths):
         trace = output / f"scenario-{index + 1:03d}.jsonl"
-        record = {"scenario_file": path.name, "backend": backend}
+        record = {"scenario_file": path.name, "backend": backend, "disabled_components": sorted(disabled)}
         try:
             # A factory, not a shared stateful reasoner, is required across sessions.
             reasoner = reasoner_factory() if reasoner_factory is not None else None
@@ -24,7 +24,7 @@ async def run_suite(paths, output_dir, reasoner_factory=None, backend="offline-f
                                   inference_timeout=inference_timeout,
                                   perception=perception_factory() if perception_factory else None,
                                   turn_policy=turn_policy_factory() if turn_policy_factory else None,
-                                  component_config=component_config)
+                                  component_config=component_config, disabled=disabled)
             record.update(result)
             record["metrics"] = metrics(trace)
             if result["completion_status"] != "completed":

@@ -44,7 +44,7 @@ def source_evidence(path):
 
 
 async def replay(path, output, reasoner=None, backend="offline-fake", *, perception=None, turn_policy=None,
-                 component_config=None, inference_timeout=None):
+                 component_config=None, inference_timeout=None, disabled=()):
     definition = load_scenario(path)
     scenario = definition.model_dump(mode="json")
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -96,6 +96,10 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                 yield observation
 
     agent_kwargs = {} if inference_timeout is None else {"inference_timeout": inference_timeout}
+    # Only forwarded when an ablation is requested, so a default run constructs the agent
+    # exactly as before and any Agent substitute stays valid.
+    if disabled:
+        agent_kwargs["disabled"] = tuple(disabled)
     agent = Agent(RecordedPerception(), turn_policy if turn_policy is not None else FinalFlagPolicy(), reasoner,
                   tools, MockOnlyAuthorization(), **agent_kwargs)
     runner = asyncio.create_task(agent.run(incoming, outgoing))
@@ -194,7 +198,7 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
         completion_status = "backend_failure"
     tool_profile = "manifest-mock" if definition.environment is not None else "fake"
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
-                "provenance": definition.provenance,
+                "provenance": definition.provenance, "disabled_components": sorted(disabled),
                 "tools": tool_profile, "perception": perception_profile, "commit": commit_revision(),
                 "perception_backends_observed": sorted(observed_backends),
                 "python": platform.python_version(), "platform": platform.platform(),
