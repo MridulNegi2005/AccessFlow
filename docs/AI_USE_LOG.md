@@ -654,3 +654,7 @@ audio speech bounds and frame observation timing now have focused regressions. V
 
 2026-09-15: Added multimodal vision quota recovery coverage and a strict conflicting-frame example with
 an additive controller proposal. Validation: 119 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Browser timestamp transport aligned with the event envelope and legacy payload fallback
+retained. Validation: 119 passed, 4 strict xfailed; no protected files changed.

@@ -73,10 +73,11 @@
     }
 
     function send(kind, payload) {
-      socket.send(JSON.stringify({
-        kind,
-        payload: { timestamp: performance.timeOrigin / 1000 + performance.now() / 1000, ...payload }
-      }));
+      const sourceTimestamp = payload.timestamp ?? (
+        performance.timeOrigin / 1000 + performance.now() / 1000
+      );
+      const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
+      socket.send(JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload }));
     }
 
     function transcript(final) {

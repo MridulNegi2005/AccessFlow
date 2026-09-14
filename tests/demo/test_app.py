@@ -88,7 +88,8 @@ def test_browser_frame_preserves_source_timestamp():
         "session-1",
         {
             "kind": "frame",
-            "payload": {"path": "screen.png", "frame_id": "frame-1", "timestamp": 17.25},
+            "timestamp": 17.25,
+            "payload": {"path": "screen.png", "frame_id": "frame-1"},
         },
     )
 
@@ -251,6 +252,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'AudioWorkletNode' in html
     assert 'recorder-worklet.js' in html
     assert 'performance.timeOrigin' in html
+    assert 'timestamp: sourceTimestamp' in html
 
 
 @pytest.mark.asyncio

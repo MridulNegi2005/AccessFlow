@@ -236,7 +236,7 @@ def event_from_message(
     payload = message.get("payload", {})
     if not isinstance(payload, dict):
         raise ValueError("browser event payload must be an object")
-    timestamp = payload.get("timestamp", 0)
+    timestamp = message.get("timestamp", payload.get("timestamp", 0))
     if kind == "transcript":
         return TranscriptEvent(
             session_id=session_id,
