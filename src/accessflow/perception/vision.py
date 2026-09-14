@@ -69,6 +69,18 @@ class OllamaVisionProvider:
         try:
             with self._opener(req, timeout=self.timeout_s) as response:
                 response_body = response.read()
+        except url_error.HTTPError as exc:
+            try:
+                response_body = exc.read()
+            except OSError:
+                response_body = b""
+            try:
+                error_payload = json.loads(response_body.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                error_payload = None
+            if isinstance(error_payload, dict) and error_payload.get("error"):
+                raise RuntimeError(f"Ollama vision error: {error_payload['error']}") from exc
+            raise RuntimeError(f"Ollama vision request failed: {self.endpoint}") from exc
         except (OSError, url_error.URLError, TimeoutError) as exc:
             raise RuntimeError(f"Ollama vision request failed: {self.endpoint}") from exc
         try:
