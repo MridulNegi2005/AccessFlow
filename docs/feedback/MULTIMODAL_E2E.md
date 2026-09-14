@@ -213,3 +213,15 @@ the existing WebSocket recovery path.
 
 **Status:** Full suite 121 passed, 4 strict expected failures; demo suite 53 passed, 4 strict expected
 failures; perception suite 52 passed; Ruff, compilation and git diff --check clean.
+
+
+
+## 2026-09-15 - Codex Atishay truthful vision labeling
+
+**Task:** Keep injected vision backend labels truthful when model metadata is absent.
+
+**Changes:** Added a local/unknown-vision fallback for identity-free vision adapters, matching the
+existing unknown-audio behavior and preventing configuration-time crashes.
+
+**Status:** Full suite 122 passed, 4 strict expected failures; demo suite 54 passed, 4 strict expected
+failures; perception suite 52 passed; Ruff, compilation and git diff --check clean.

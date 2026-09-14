@@ -53,6 +53,8 @@ Updated 15 September 2026.
 - Failed WAV uploads now remove their post-header validation materialization, and local injected
   audio backends identify themselves separately from the installed Faster Whisper path in the demo label.
   An injected backend without an identity is reported as local/unknown-audio rather than overclaimed.
+  Injected vision backends without an identity now use local/unknown-vision rather than crashing or
+  implying an Ollama model.
 - A configured vision-backend failure is also covered: it emits backend_failure without a
   misleading final response.
 - The Ollama vision provider normalizes syntactically valid non-object JSON roots into a classified
@@ -93,7 +95,7 @@ Updated 15 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 121 tests passed with 4 strict expected failures, including 53 passing demo
+- Final verification is 122 tests passed with 4 strict expected failures, including 54 passing demo
   tests and 52 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational

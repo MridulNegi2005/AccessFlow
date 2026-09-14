@@ -660,3 +660,7 @@ files changed.
 
 2026-09-15: Invalid PNG materialization cleanup now has direct regression evidence. Full validation:
 121 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Identity-free injected vision adapters now receive local/unknown-vision labeling instead
+of crashing or implying a model. Full validation: 122 passed, 4 strict xfailed; no protected files changed.

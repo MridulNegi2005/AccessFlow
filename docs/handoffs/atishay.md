@@ -131,3 +131,8 @@ demo 52 passed plus 4 strict xfailed; perception 52 passed. No protected files c
 2026-09-15: Added direct invalid-PNG materialization cleanup coverage; rejected bytes leave no session
 file. Full validation: 121 passed, 4 strict xfailed; demo 53 passed plus 4 strict xfailed; perception
 52 passed. No protected files changed.
+
+
+2026-09-15: Added truthful unknown-vision labeling for identity-free injected adapters. Full
+validation: 122 passed, 4 strict xfailed; demo 54 passed plus 4 strict xfailed; perception 52
+passed. No protected files changed.
