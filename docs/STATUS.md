@@ -93,9 +93,10 @@ Updated 15 September 2026.
 - Final verification is 119 tests passed with 4 strict expected failures, including 51 passing demo
   tests and 52 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
-- The three expected failures record current controller integration gaps: image-only informational
-  response and direct or WebSocket replacement of a prior active frame. Proposals and corresponding integrated-branch
-  behavior are available for the engine owner; no engine or contract file was changed here.
+- The four expected failures record current controller integration gaps: image-only informational
+  response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame
+  evidence before a write. Proposals and corresponding integrated-branch behavior are available for
+  the engine owner; no engine or contract file was changed here.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
   open. Pixel inspection is also unverified because the local image helper could not open the
   captures.
