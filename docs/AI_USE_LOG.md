@@ -477,3 +477,16 @@ labeled demo/input error, then submits text successfully through the same sessio
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay image-only write safety
+
+**Task:** Verify that image evidence alone cannot authorize a state-changing write.
+
+**Changes:** Added an owned Agent regression with a vision result that resembles a booking request,
+an explicit write manifest and a write proposal. With no spoken request, correction_pending remains
+true and the executor records no call or effect.
+
+**Status:** Demo suite 31 passed, 2 strict xfailed; full suite 90 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

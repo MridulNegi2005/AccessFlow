@@ -29,6 +29,8 @@ Updated 14 September 2026.
   session route.
 - Partial speech followed by a final image is covered by a write-safety regression:
   correction_pending stays true and no write tool is invoked.
+- Image-only vision text that resembles a write request is also blocked: no write call or effect
+  is allowed without a spoken request.
 - The WebSocket ordering regression also covers PNG arriving before WAV; the later audio final
   retains image context in the same session.
 - The WebSocket image boundary also recovers from malformed PNG input with a labeled error and
@@ -42,7 +44,7 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 89 tests passed with 2 strict expected failures, including 30 passing demo
+- Final verification is 90 tests passed with 2 strict expected failures, including 31 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The two expected failures record current controller integration gaps: image-only informational

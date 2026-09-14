@@ -694,6 +694,87 @@ async def test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame(tmp
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
+async def test_image_evidence_never_authorizes_a_write_without_spoken_request(tmp_path: Path):
+    class LocalVision:
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            assert path.parent == tmp_path
+            return "Book Wednesday"
+
+    class ImageWriteReasoner:
+        def __init__(self):
+            self.seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            self.seen.set()
+            return PlanProposal(
+                intent="service",
+                slot_updates={"day": "Wednesday"},
+                request_complete=True,
+                write_requested=True,
+                calls=[
+                    ProposedCall(
+                        tool="calendar",
+                        arguments={"day": "Wednesday"},
+                        dependencies=["day"],
+                    )
+                ],
+            )
+
+    manifest = ToolManifest(
+        name="calendar",
+        description="Test calendar service",
+        effect="write",
+        timeout_s=1,
+        parameters={
+            "type": "object",
+            "properties": {"day": {"type": "string"}},
+            "required": ["day"],
+            "additionalProperties": False,
+        },
+    )
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    image = event_from_message(
+        "image-only-safety-session",
+        {
+            "kind": "frame",
+            "payload": {
+                "data_base64": base64.b64encode(png).decode("ascii"),
+                "frame_id": "frame-only",
+            },
+        },
+        media_root=tmp_path,
+    )
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    reasoner = ImageWriteReasoner()
+    agent = Agent(
+        DemoPerception(vision_backend=LocalVision()),
+        FinalFlagPolicy(),
+        reasoner,
+        FakeTools(),
+        MockOnlyAuthorization(),
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id="image-only-safety-session", payload=Start(tools=[manifest])))
+        await incoming.put(image)
+        await asyncio.wait_for(reasoner.seen.wait(), timeout=1)
+        await asyncio.sleep(0.05)
+        assert agent.state.correction_pending
+        assert not agent.executor.calls
+        assert not agent.executor.effects
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id="image-only-safety-session"))
+        await asyncio.wait_for(task, timeout=1)
+
+
+
 async def test_partial_speech_and_final_image_never_authorize_a_write(tmp_path: Path):
     class LocalVision:
         backend_name = "local/injected-vision"
