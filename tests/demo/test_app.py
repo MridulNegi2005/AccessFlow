@@ -361,6 +361,122 @@ async def test_multimodal_audio_and_image_reach_one_agent_context(
 
 
 @pytest.mark.asyncio
+async def test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame(tmp_path: Path):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+
+    class LocalVision:
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            return "screen shows the approval prompt"
+
+    class RevisionReasoner:
+        def __init__(self):
+            self.views = []
+            self.first_audio_seen = asyncio.Event()
+            self.revision_one_seen = asyncio.Event()
+            self.both_seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            snapshot = view.model_copy(deep=True)
+            self.views.append(snapshot)
+            audio = [item for item in snapshot.observations if item.modality == "audio"]
+            if audio and audio[-1].revision == 0:
+                self.first_audio_seen.set()
+            if audio and audio[-1].revision == 1:
+                self.revision_one_seen.set()
+            if {"audio", "image"} <= {item.modality for item in snapshot.observations}:
+                self.both_seen.set()
+                return PlanProposal(
+                    response="The corrected speech and screen evidence are available together.",
+                    request_complete=True,
+                )
+            return PlanProposal()
+
+    transcripts = iter(["Book Tuesday", "Actually Wednesday"])
+
+    def transcribe(path: Path) -> str:
+        return next(transcripts)
+
+    perception = DemoPerception(
+        audio_backend=demo_app.LocalPerception(transcriber=transcribe),
+        vision_backend=LocalVision(),
+    )
+    reasoner = RevisionReasoner()
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    agent = Agent(
+        perception,
+        FinalFlagPolicy(),
+        reasoner,
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    session_id = "multimodal-revision-session"
+    first_audio = event_from_message(
+        session_id,
+        {
+            "kind": "audio",
+            "payload": {
+                "data_base64": encoded_audio,
+                "utterance_id": "utterance-1",
+                "revision": 0,
+            },
+        },
+        media_root=tmp_path,
+    )
+    revised_audio = event_from_message(
+        session_id,
+        {
+            "kind": "audio",
+            "payload": {
+                "data_base64": encoded_audio,
+                "utterance_id": "utterance-1",
+                "revision": 1,
+            },
+        },
+        media_root=tmp_path,
+    )
+    image = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+    try:
+        await incoming.put(first_audio)
+        await asyncio.wait_for(reasoner.first_audio_seen.wait(), timeout=1)
+        await incoming.put(revised_audio)
+        await asyncio.wait_for(reasoner.revision_one_seen.wait(), timeout=1)
+        await incoming.put(image)
+        await asyncio.wait_for(reasoner.both_seen.wait(), timeout=1)
+
+        outputs = []
+        while not any(item.kind == "final" for item in outputs):
+            outputs.append(await asyncio.wait_for(outgoing.get(), timeout=1))
+
+        multimodal_view = next(
+            view
+            for view in reasoner.views
+            if {item.modality for item in view.observations} == {"audio", "image"}
+        )
+        observations = {item.source_id: item for item in multimodal_view.observations}
+        assert observations["utterance-1"].revision == 1
+        assert observations["utterance-1"].text == "Actually Wednesday"
+        assert observations["frame-1"].text == "screen shows the approval prompt"
+        assert next(item for item in outputs if item.kind == "final").payload["basis"] == "informational"
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+
+@pytest.mark.asyncio
 @pytest.mark.xfail(
     strict=True,
     reason="The current Agent only emits informational responses after completed speech.",

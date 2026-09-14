@@ -40,8 +40,9 @@ The Agent reasoner received both observations in one view and emitted:
 - The final response remains informational; no state-changing tool was proposed or authorized.
 
 The deterministic regression coverage remains in
-tests/demo/test_app.py::test_multimodal_audio_and_image_reach_one_agent_context. The image-only
-controller limitation remains captured by the strict expected failure in
+tests/demo/test_app.py::test_multimodal_audio_and_image_reach_one_agent_context and
+tests/demo/test_app.py::test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame. The
+image-only controller limitation remains captured by the strict expected failure in
 tests/demo/test_app.py::test_image_only_informational_response_needs_additive_controller_support.
 
 ## Limits

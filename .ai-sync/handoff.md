@@ -60,3 +60,11 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
   43 passed; Ruff and git diff --check clean.
 - **Limits:** The image-only controller gap remains the intentional strict xfail pending the additive
   engine proposal.
+
+## 2026-09-14 - Codex Atishay multimodal revision and frame retention
+
+- **Task:** Cover revised speech hypotheses while retaining image evidence.
+- **Changes:** Added one demo Agent test for audio revision 0 followed by revision 1 and a frame.
+- **Status:** Full suite 83 passed, 1 strict xfailed; demo 24 passed, 1 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only controller gap remains the intentional strict xfail.

@@ -373,3 +373,17 @@ Both orderings preserve the two observations and produce the informational multi
 
 **Notes:** The image-only strict xfail and additive proposal remain unchanged. No engine, contract,
 lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay multimodal revision and frame retention
+
+**Task:** Cover revised speech hypotheses while retaining image evidence in one multimodal context.
+
+**Changes:** Added a demo Agent test that sends two audio revisions for one utterance and a PNG.
+The newer revision replaces the old speech observation while the frame and corrected text remain
+available to the reasoner.
+
+**Status:** Full suite 83 passed, 1 strict xfailed; demo 24 passed, 1 strict xfailed; perception
+43 passed; Ruff and git diff --check clean.
+
+**Notes:** The image-only strict xfail remains the engine integration boundary. No engine, contract,
+lockfile or dependency manifest changes were made.
