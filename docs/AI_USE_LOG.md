@@ -675,3 +675,8 @@ injected adapters. Validation: 122 passed, 4 strict xfailed; no protected files 
 2026-09-15: Preserved structured HTTP quota details from OllamaVisionProvider, including a 429 JSON
 error body, and verified the classified provider failure boundary. Validation: 123 passed, 4 strict
 xfailed; no protected files changed.
+
+
+2026-09-15: Added WebSocket-level HTTP 429 vision quota recovery evidence. The provider error body
+becomes backend_failure and the same session accepts a later transcript. Validation: 124 passed,
+4 strict xfailed; no protected files changed.
