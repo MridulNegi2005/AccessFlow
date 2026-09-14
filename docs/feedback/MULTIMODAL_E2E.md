@@ -73,10 +73,13 @@ tests/demo/test_app.py::test_websocket_combined_media_context_is_visible now sen
 base64 WAV, a validated base64 PNG and a follow-up transcript through one TestClient WebSocket.
 It asserts both media status source IDs and verifies that the final response contains audio and
 image context. This protects the browser-observed behavior at the demo route level.
+The companion tests/demo/test_app.py::test_websocket_multimodal_revision_keeps_latest_text_and_frame
+sends two transcript revisions for one utterance between a WAV and PNG and verifies that the
+latest speech hypothesis and image context survive the browser transport.
 
 ## Limits
 
 This is not a live multimodal model benchmark: the vision result was injected, Ollama was not
 running, and the reasoner was a test double. The audio fixture is generated speech rather than
-participant audio. Physical microphone capture, live vision quality, non-mock reasoning and pixel
-inspection remain unverified.
+participant audio. Live vision quality, non-mock reasoning and pixel
+inspection remains unverified.

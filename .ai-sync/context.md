@@ -452,3 +452,16 @@ uploaded a WAV over the session WebSocket and observed media_received=audio plus
 live vision quality, human speech accuracy and non-mock reasoning remain open.
 
 **Notes:** Temporary profile and CDP harness only; no source, contract or dependency manifest changed.
+
+## 2026-09-14 - Codex Atishay WebSocket multimodal revision retention
+
+**Task:** Verify latest speech revision retention alongside a frame through the browser route.
+
+**Changes:** Added a WebSocket test that sends a WAV, two transcript revisions for one utterance,
+a PNG and follow-up text; the final retains the revised speech and image context without the old
+hypothesis.
+
+**Status:** Demo suite 27 passed, 2 strict xfailed; full suite 86 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.
