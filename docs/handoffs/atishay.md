@@ -121,3 +121,8 @@ xfailed; perception 52 passed. No protected files changed.
 2026-09-15: Aligned browser capture timing with the event envelope while retaining payload timestamp
 compatibility. Existing provenance regressions pass. Full validation: 119 passed, 4 strict xfailed;
 no protected files changed.
+
+
+2026-09-15: Added passing in-flight cross-modal retention coverage: delayed audio survives frame
+arrival and both observations reach one reasoner view. Full validation: 120 passed, 4 strict xfailed;
+demo 52 passed plus 4 strict xfailed; perception 52 passed. No protected files changed.

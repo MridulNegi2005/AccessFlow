@@ -188,3 +188,16 @@ speech-bound regressions cover the preserved timing.
 
 **Status:** Full suite 119 passed, 4 strict expected failures; no engine, contract, dependency or
 lockfile change.
+
+
+
+## 2026-09-15 - Codex Atishay in-flight cross-modal retention
+
+**Task:** Verify that frame arrival does not discard an already-running audio observation.
+
+**Changes:** Added a passing regression that holds audio perception in flight, delivers a frame, then
+releases audio and verifies both observations reach the same reasoner context. This confirms current
+source acceptance preserves independent cross-modal results.
+
+**Status:** Full suite 120 passed, 4 strict expected failures; demo suite 52 passed, 4 strict expected
+failures; perception suite 52 passed; Ruff, compilation and git diff --check clean.

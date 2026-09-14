@@ -1306,6 +1306,96 @@ async def test_multimodal_audio_and_image_reach_one_agent_context(
 
 
 @pytest.mark.asyncio
+async def test_inflight_audio_is_retained_when_frame_arrives(tmp_path: Path):
+    class SlowMultimodalPerception:
+        def __init__(self):
+            self.audio_started = asyncio.Event()
+            self.release_audio = asyncio.Event()
+            self.audio_finished = asyncio.Event()
+
+        async def observe(self, event):
+            if isinstance(event, AudioEvent):
+                self.audio_started.set()
+                await self.release_audio.wait()
+                self.audio_finished.set()
+                yield Observation(
+                    event_id=event.event_id,
+                    source_id=event.payload.utterance_id,
+                    revision=event.payload.revision,
+                    modality="audio",
+                    text="Please inspect the attached screen",
+                    final=True,
+                    backend="local/injected-asr",
+                )
+                return
+            yield Observation(
+                event_id=event.event_id,
+                source_id=event.payload.frame_id,
+                revision=0,
+                modality="image",
+                text="screen shows the approval prompt",
+                final=True,
+                speech_start=event.timestamp,
+                speech_end=event.timestamp,
+                backend="local/injected-vision",
+            )
+
+    class MultimodalReasoner:
+        def __init__(self):
+            self.image_seen = asyncio.Event()
+            self.both_seen = asyncio.Event()
+
+        async def plan(self, view, manifests):
+            modalities = {item.modality for item in view.observations}
+            if "image" in modalities:
+                self.image_seen.set()
+            if {"audio", "image"} <= modalities:
+                self.both_seen.set()
+            return PlanProposal()
+
+    session_id = "inflight-audio-frame-session"
+    audio = event_from_message(
+        session_id,
+        {
+            "kind": "audio",
+            "payload": {"path": "speech.wav", "utterance_id": "audio-1"},
+        },
+        media_root=tmp_path,
+    )
+    frame = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"path": "screen.png", "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+    perception = SlowMultimodalPerception()
+    reasoner = MultimodalReasoner()
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    agent = Agent(
+        perception,
+        FinalFlagPolicy(),
+        reasoner,
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+        await incoming.put(audio)
+        await asyncio.wait_for(perception.audio_started.wait(), timeout=1)
+        await incoming.put(frame)
+        await asyncio.wait_for(reasoner.image_seen.wait(), timeout=1)
+        perception.release_audio.set()
+        await asyncio.wait_for(perception.audio_finished.wait(), timeout=1)
+        await asyncio.wait_for(reasoner.both_seen.wait(), timeout=1)
+    finally:
+        perception.release_audio.set()
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+
+@pytest.mark.asyncio
 async def test_inflight_old_frame_cannot_enter_multimodal_context(tmp_path: Path):
     class SlowPerception:
         def __init__(self):

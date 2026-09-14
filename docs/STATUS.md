@@ -78,6 +78,8 @@ Updated 15 September 2026.
 - A strict conflicting-frame reproducer shows that contradictory visual evidence currently has no
   structured resolution state before a write; an additive provenance/conflict proposal is recorded
   for the engine owner without changing shared contracts here.
+- Cross-modal in-flight coverage now proves a delayed audio observation remains usable when a newer
+  frame arrives; source acceptance preserves both independent modalities in one reasoner view.
 - A fresh local WebSocket run used the installed Faster Whisper base.en CPU INT8 snapshot and the
   configured OllamaVisionProvider against a loopback protocol service; in 1.326 seconds it retained the
   recognized speech and returned image evidence in the same session. Vision quality and reasoning remain unverified.
@@ -90,7 +92,7 @@ Updated 15 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 119 tests passed with 4 strict expected failures, including 51 passing demo
+- Final verification is 120 tests passed with 4 strict expected failures, including 52 passing demo
   tests and 52 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational

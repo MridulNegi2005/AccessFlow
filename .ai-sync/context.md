@@ -651,3 +651,8 @@ provenance/conflict proposal. Full validation: 119 passed, 4 strict xfailed; no 
 2026-09-15: Browser capture timestamps now use envelope-level transport with payload compatibility.
 Existing timing provenance coverage remains green. Full validation: 119 passed, 4 strict xfailed; no
 protected files changed.
+
+
+2026-09-15: Cross-modal in-flight race coverage passes: a delayed audio observation survives frame
+arrival and reaches the same reasoner view. Full validation: 120 passed, 4 strict xfailed; no protected
+files changed.
