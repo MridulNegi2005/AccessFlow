@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AccessFlow mock demo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <style>
     :root { color-scheme: dark; font: 16px system-ui, sans-serif; }
     body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #10131a; color: #eef1f7; }
@@ -142,24 +143,32 @@
         show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: 'This browser does not expose microphone capture.' } });
         return;
       }
+      let stream;
+      let context;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const context = new AudioContext();
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        context = new AudioContext();
+        if (!context.audioWorklet) {
+          throw new Error('This browser does not support AudioWorklet microphone capture.');
+        }
+        await context.audioWorklet.addModule('/recorder-worklet.js');
         const source = context.createMediaStreamSource(stream);
-        const processor = context.createScriptProcessor(4096, 1, 1);
+        const recorder = new AudioWorkletNode(context, 'accessflow-recorder');
         const silentGain = context.createGain();
         silentGain.gain.value = 0;
         const chunks = [];
-        processor.onaudioprocess = (event) => {
-          chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+        recorder.port.onmessage = (event) => {
+          chunks.push(new Float32Array(event.data));
         };
-        source.connect(processor);
-        processor.connect(silentGain);
+        source.connect(recorder);
+        recorder.connect(silentGain);
         silentGain.connect(context.destination);
-        microphone = { stream, context, source, processor, silentGain, chunks, sampleRate: context.sampleRate };
+        microphone = { stream, context, source, recorder, silentGain, chunks, sampleRate: context.sampleRate };
         setMicrophoneButtons(true);
         show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: true } });
       } catch (error) {
+        stream?.getTracks().forEach((track) => track.stop());
+        await context?.close();
         show({ kind: 'demo_error', payload: { backend: 'browser/microphone-capture', message: error.message } });
       }
     }
@@ -168,7 +177,8 @@
       if (!microphone) return;
       const current = microphone;
       microphone = null;
-      current.processor.disconnect();
+      current.recorder.port.close();
+      current.recorder.disconnect();
       current.source.disconnect();
       current.silentGain.disconnect();
       current.stream.getTracks().forEach((track) => track.stop());
