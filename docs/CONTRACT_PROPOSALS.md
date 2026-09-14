@@ -13,3 +13,19 @@ These are not permission to silently change v0.1. Preserve existing fields and f
 - Proposed addition: Add an additive timing event or optional observation metadata carrying activity windows, source utterance ID, source revision, frame start/end timestamps and a pause threshold result. The signal must remain separate from TurnDecision.complete.
 - Compatibility plan: Keep v0.1 transcript/audio events and TurnPolicy unchanged. A translating adapter can drop timing metadata for older consumers; the current owned timing summary remains offline until the proposal is accepted.
 - Decision: Pending review by Mridul; no shared contract files changed.
+
+## Additive image-only informational response
+
+- Observed example: tests/demo/test_app.py::test_image_only_informational_response_needs_additive_controller_support
+  is a strict expected failure on atishay/perception. A frame reaches DemoPerception and the
+  reasoner returns an informational response, but the current controller does not emit its final
+  because latest_complete is derived from speech completion.
+- Proposed additive change: Add an optional informational-response basis to the planning
+  proposal, for example informational_evidence: Literal["speech", "image", "multimodal"] | None.
+  The controller may emit an informational response for image or multimodal evidence when the
+  proposal opts in, while retaining the existing completed-speech and authorization gates for every
+  state-changing call.
+- Compatibility: The field defaults to None, does not alter existing writes or turn-policy
+  decisions, and keeps frame-only responses explicitly informational. The engine owner should
+  implement and review this on mridul/engine; this branch intentionally contains only the
+  failing example and proposal.

@@ -31,3 +31,13 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
   passed synthetic microphone, text, WAV, PNG plus paired transcript, clean console and layout checks.
 - **Limits:** Physical microphone, pixel inspection, live ASR/vision quality and non-mock reasoning
   remain unverified. No engine or contract files were changed.
+
+## 2026-09-14 - Codex Atishay image-only controller gap
+
+- **Task:** Make the remaining image-only multimodal gap explicit.
+- **Changes:** Added a strict expected-failure demo example and an additive proposal for an
+  informational evidence basis; no engine or contract files changed.
+- **Status:** Full suite 81 passed, 1 strict xfailed; demo 22 passed, 1 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The expected failure remains until the engine owner implements and reviews the
+  additive proposal. Live ASR/vision, physical capture and pixel inspection remain unverified.

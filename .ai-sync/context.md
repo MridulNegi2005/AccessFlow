@@ -331,3 +331,19 @@ pixel inspection, live ASR/vision quality and non-mock reasoning are unverified.
 **Notes:** Branch remains atishay/perception. origin/mridul/engine was fetched at ad04bca for review;
 no engine-owned files, shared contracts, lockfiles or dependency manifests were changed. The local
 only websockets 17.1 runtime requirement remains a shared dependency proposal.
+
+## 2026-09-14 - Codex Atishay image-only controller gap
+
+**Task:** Extend the multimodal evidence to the image-only informational case without editing
+engine-owned files.
+
+**Changes:** Added a strict expected-failure demo example showing that a frame reaches the current
+Agent and an opted-in reasoner response, but the controller does not emit an informational final
+until completed speech exists. Added an additive proposal for an informational evidence basis that
+keeps state-changing calls behind the existing speech and authorization gates.
+
+**Status:** Full suite 81 passed, 1 strict xfailed; demo 22 passed, 1 strict xfailed; perception
+43 passed; Ruff and git diff --check clean.
+
+**Notes:** The expected failure is intentional integration evidence. Branch remains
+atishay/perception; no engine, contract, lockfile or dependency manifest changes were made.
