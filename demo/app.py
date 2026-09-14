@@ -83,7 +83,7 @@ class DemoPerception:
             elif audio_backend_name:
                 labels.append(f"{audio_backend_name} audio")
             else:
-                labels.append("local/Faster Whisper CPU INT8 audio")
+                labels.append("local/unknown-audio")
         labels.append(
             f"local/Ollama {self._vision_backend.model} image"
             if self._vision_backend is not None

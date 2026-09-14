@@ -622,3 +622,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Added the owned multimodal policy boundary: image captions cannot drive speech correction or backchannel decisions; focused and full validation passed at 105 tests with 3 strict xfails.
 
 2026-09-14: Added recoverable structural validation for demo WebSocket messages and payloads; malformed multimodal input no longer terminates the session. Full validation: 107 passed, 3 strict xfails.
+
+2026-09-14: Corrected truthful demo audio labeling: unknown injected backends now report local/unknown-audio, while Faster Whisper fixtures declare their identity. Full validation: 108 passed, 3 strict xfails.
