@@ -294,3 +294,14 @@ regressions pass through the updated boundary.
 
 **Status:** Full suite 126 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
 failures; perception suite 55 passed. No engine, contract, dependency or lockfile change.
+
+
+## 2026-09-15 - Codex Atishay malformed provider output guards
+
+**Task:** Prevent blank or non-string ASR and vision responses from becoming empty multimodal observations.
+
+**Changes:** LocalPerception now normalizes provider text and raises a classified runtime failure for
+empty or non-string audio and image output. Focused regressions cover both modalities.
+
+**Status:** Full suite 128 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
+failures; perception suite 57 passed. No engine, contract, dependency or lockfile change.

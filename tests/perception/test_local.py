@@ -110,6 +110,18 @@ async def test_audio_validates_wav_and_uses_injected_transcriber(tmp_path: Path)
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
+async def test_audio_rejects_empty_transcriber_output(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="empty-audio"),
+    )
+
+    with pytest.raises(RuntimeError, match="audio perception returned empty text"):
+        await _one(LocalPerception(transcriber=lambda _: "  \t"), event)
+
 async def test_slow_audio_transcriber_does_not_block_event_loop(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)
@@ -201,6 +213,20 @@ async def test_image_input_preserves_frame_identity_with_injected_provider(tmp_p
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
+async def test_image_rejects_non_text_provider_output(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "device.png"
+    _write_png(image_path)
+    event = FrameEvent(
+        session_id="s1",
+        payload=Frame(path=str(image_path), frame_id="empty-frame"),
+    )
+
+    with pytest.raises(RuntimeError, match="image perception returned empty text"):
+        await _one(LocalPerception(vision_provider=lambda _: None), event)
+
 async def test_slow_image_provider_does_not_block_event_loop(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 

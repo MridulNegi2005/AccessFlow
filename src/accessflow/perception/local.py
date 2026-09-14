@@ -143,6 +143,11 @@ def _transcribe_with_whisper(model: Any, path: Path) -> str:
     return " ".join(segment.text.strip() for segment in segments).strip()
 
 
+def _normalize_provider_text(value: Any, modality: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeError(f"{modality} perception returned empty text")
+    return value.strip()
+
 class LocalPerception:
     """Convert input events into observations without mutating session state.
 
@@ -196,6 +201,7 @@ class LocalPerception:
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_wav, path)
             text, backend = await self._transcribe(path)
+            text = _normalize_provider_text(text, "audio")
             yield Observation(
                 event_id=event.event_id,
                 source_id=event.payload.utterance_id,
@@ -215,6 +221,7 @@ class LocalPerception:
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_png, path)
             text = await asyncio.to_thread(self._vision_provider, path)
+            text = _normalize_provider_text(text, "image")
             yield Observation(
                 event_id=event.event_id,
                 source_id=event.payload.frame_id,

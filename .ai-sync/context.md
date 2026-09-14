@@ -693,3 +693,7 @@ protected files changed.
 2026-09-15: Browser media event translation now runs through asyncio.to_thread, keeping base64 decoding
 and WAV/PNG validation off the WebSocket receive loop. Full validation: 126 passed, 4 strict xfailed;
 no protected files changed.
+
+
+2026-09-15: LocalPerception now rejects blank or non-string audio and image provider output before
+creating observations. Full validation: 128 passed, 4 strict xfailed; no protected files changed.

@@ -699,3 +699,7 @@ changed.
 2026-09-15: Moved browser base64 media decoding and WAV/PNG validation to a worker-backed receive path.
 Focused media/recovery coverage and full validation: 126 passed, 4 strict xfailed; no protected files
 changed.
+
+
+2026-09-15: Added malformed provider-output guards for blank or non-string ASR and vision results.
+Validation: 128 passed, 4 strict xfailed; no protected files changed.
