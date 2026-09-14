@@ -136,3 +136,17 @@ suite 46 passed; Ruff and git diff --check clean.
 
 **Notes:** Validation is structural and does not decode pixels or claim image understanding. No engine,
 contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay configured vision WebSocket wiring
+
+**Task:** Exercise the configured Ollama vision path through the actual demo WebSocket route.
+
+**Changes:** Added an owned route regression that sets the vision environment configuration, runs a
+loopback HTTP protocol service, uploads a real PNG, waits for the image observation, and submits a
+follow-up transcript. The final contains both the service result and the spoken question.
+
+**Status:** Full suite 99 passed, 3 strict xfailed; demo suite 37 passed, 3 strict xfailed; perception
+suite 46 passed; Ruff, compilation and git diff --check clean.
+
+**Notes:** The loopback service is a deterministic protocol stub and does not provide live vision quality
+evidence. No engine, contract, lockfile or dependency manifest changes were made.

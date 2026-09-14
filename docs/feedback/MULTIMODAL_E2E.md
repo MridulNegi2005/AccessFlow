@@ -85,6 +85,10 @@ The loopback companion, tests/demo/test_app.py::test_multimodal_context_uses_loo
 exercises the actual OllamaVisionProvider HTTP request with local ASR in one Agent context. It verifies
 the model, prompt, base64 image and informational result against a local protocol stub; it is not live
 vision quality evidence.
+The configured environment companion, tests/demo/test_app.py::test_websocket_environment_vision_provider_reaches_multimodal_context,
+exercises the same provider through DemoPerception.from_environment and the WebSocket route. It waits
+for the image observation, then sends the spoken question and verifies both pieces of context in the final;
+the loopback service remains a protocol stub rather than live vision quality evidence.
 The in-flight companion, tests/demo/test_app.py::test_inflight_old_frame_cannot_enter_multimodal_context,
 delays frame 1, delivers frame 2, and verifies that the stale result never reaches a frame-bearing
 reasoner view.

@@ -447,6 +447,73 @@ def test_websocket_image_before_audio_context_is_visible():
 
 
 
+def test_websocket_environment_vision_provider_reaches_multimodal_context(monkeypatch):
+    class VisionHandler(BaseHTTPRequestHandler):
+        requests = []
+        request_received = threading.Event()
+
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            VisionHandler.requests.append(json.loads(self.rfile.read(length).decode("utf-8")))
+            VisionHandler.request_received.set()
+            response = json.dumps({"response": "screen shows the approval prompt"}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+        def log_message(self, format, *args):
+            return
+
+    class ObservingReasoner(demo_app.DemoReasoner):
+        image_seen = threading.Event()
+
+        async def plan(self, view, manifests):
+            if any(item.modality == "image" for item in view.observations):
+                ObservingReasoner.image_seen.set()
+            return await super().plan(view, manifests)
+
+    monkeypatch.setattr(demo_app, "DemoReasoner", ObservingReasoner)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), VisionHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "gemma3:4b")
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_OLLAMA_ENDPOINT",
+        f"http://127.0.0.1:{server.server_port}/api/generate",
+    )
+    try:
+        encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                status = socket.receive_json()
+                socket.send_json(
+                    {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "env-frame"}}
+                )
+                media_status = socket.receive_json()
+                assert ObservingReasoner.image_seen.wait(timeout=1)
+                assert VisionHandler.request_received.wait(timeout=1)
+                socket.send_json(
+                    {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
+                )
+                outputs = _receive_controller_outputs(socket)
+
+        final = next(item for item in outputs if item["kind"] == "final")
+        assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
+        assert media_status["payload"] == {"media_received": "frame", "source_id": "env-frame"}
+        assert "screen shows the approval prompt" in final["payload"]["text"]
+        assert "What is on this screen?" in final["payload"]["text"]
+        assert final["payload"]["basis"] == "informational"
+        request = VisionHandler.requests[-1]
+        assert request["model"] == "gemma3:4b"
+        assert request["images"] == [base64.b64encode(_png_bytes()).decode("ascii")]
+    finally:
+        server.shutdown()
+        server.server_close()
+        server_thread.join(timeout=1)
+
+
 def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     class FailingVision:
         model = "failing-vision"
