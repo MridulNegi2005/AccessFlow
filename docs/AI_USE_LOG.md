@@ -641,3 +641,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Added OllamaVisionProvider timeout coverage; transport TimeoutError normalizes to the stable RuntimeError boundary used by multimodal recovery. Validation: 112 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Added WebSocket session-reset isolation coverage: a fresh connection cannot inherit the prior session's audio or image context. Validation: 113 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-15: Added a pre-decode base64 length guard for the demo's 8 MiB raw-media budget; oversized multimodal uploads are rejected without materialization. Validation: 114 passed, 3 strict xfailed; no protected files changed.

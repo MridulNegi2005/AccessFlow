@@ -1836,6 +1836,19 @@ def test_browser_png_upload_is_materialized_and_validated(tmp_path: Path):
     assert event.payload.frame_id == "upload-frame"
 
 
+def test_browser_media_upload_rejects_oversized_encoded_payload(tmp_path: Path):
+    oversized = "A" * (demo_app.MAX_BASE64_CHARS + 1)
+
+    with pytest.raises(ValueError, match="8 MiB limit"):
+        event_from_message(
+            "session-1",
+            {"kind": "frame", "payload": {"data_base64": oversized}},
+            media_root=tmp_path,
+        )
+
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_browser_media_upload_rejects_wrong_file_type(tmp_path: Path):
     encoded = base64.b64encode(b"not media").decode("ascii")
 
