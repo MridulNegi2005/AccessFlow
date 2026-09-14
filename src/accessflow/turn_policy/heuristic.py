@@ -19,6 +19,8 @@ class HeuristicTurnPolicy:
 
         if observation.revision < self._latest_revision(view, observation.source_id):
             return TurnDecision(kind="continue", uncertainty=1.0)
+        if observation.modality == "image":
+            return TurnDecision(kind="continue", uncertainty=1.0)
         if normalized in _BACKCHANNELS and observation.final:
             return TurnDecision(kind="backchannel", uncertainty=0.05)
         if _CORRECTION.search(text):

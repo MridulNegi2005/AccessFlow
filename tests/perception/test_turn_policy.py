@@ -4,12 +4,18 @@ from accessflow.contracts import Observation, SessionView, Snapshot
 from accessflow.turn_policy import HeuristicTurnPolicy
 
 
-def observation(text: str, *, final: bool, revision: int = 0) -> Observation:
+def observation(
+    text: str,
+    *,
+    final: bool,
+    revision: int = 0,
+    modality: str = "text",
+) -> Observation:
     return Observation(
         event_id=f"event-{revision}",
         source_id="utterance-1",
         revision=revision,
-        modality="text",
+        modality=modality,
         text=text,
         final=final,
         backend="test",
@@ -66,6 +72,18 @@ def test_backchannel_is_not_planned_as_a_new_request():
     decision = HeuristicTurnPolicy().update(item, view())
 
     assert decision.kind == "backchannel"
+
+
+def test_image_captions_cannot_drive_speech_turn_policy():
+    policy = HeuristicTurnPolicy()
+
+    for caption in ("Wait, actually use this screen", "okay"):
+        item = observation(caption, final=True, modality="image")
+
+        decision = policy.update(item, view())
+
+        assert decision.kind == "continue"
+        assert decision.uncertainty == 1.0
 
 
 def test_stale_revision_cannot_complete_a_turn():
