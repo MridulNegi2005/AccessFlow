@@ -33,6 +33,7 @@ from accessflow.perception import LocalPerception, OllamaVisionProvider, validat
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 app = FastAPI(title="AccessFlow mock demo")
 
 
@@ -187,6 +188,10 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
         return str(media_root / fallback)
     if media_root is None:
         raise ValueError("media upload requires a session directory")
+    if not isinstance(data, str):
+        raise ValueError("media upload must be base64 text")
+    if len(data) > MAX_BASE64_CHARS:
+        raise ValueError("media upload exceeds the 8 MiB limit or is empty")
     try:
         raw = base64.b64decode(data, validate=True)
     except (binascii.Error, ValueError) as error:
