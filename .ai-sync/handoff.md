@@ -166,3 +166,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Demo input parser now rejects non-object messages and payloads with ValueError handled as demo/input errors; WebSocket recovery regression passes. Full suite: 107 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Backend label fallback now reports local/unknown-audio for unidentified injected audio instead of Faster Whisper; focused and full validation passed. Full suite: 108 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Vision provider now rejects non-object JSON roots with RuntimeError invalid JSON shape; focused and full validation passed. Full suite: 110 passed, 3 strict xfailed; no protected files changed.

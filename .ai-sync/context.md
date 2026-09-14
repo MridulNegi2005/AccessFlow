@@ -624,3 +624,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Added recoverable structural validation for demo WebSocket messages and payloads; malformed multimodal input no longer terminates the session. Full validation: 107 passed, 3 strict xfails.
 
 2026-09-14: Corrected truthful demo audio labeling: unknown injected backends now report local/unknown-audio, while Faster Whisper fixtures declare their identity. Full validation: 108 passed, 3 strict xfails.
+
+2026-09-14: Ollama vision response shape hardening added on atishay/perception; list and null JSON roots are classified cleanly. Full validation: 110 passed, 3 strict xfails.

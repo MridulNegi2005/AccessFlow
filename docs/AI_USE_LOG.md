@@ -633,3 +633,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Hardened the owned demo WebSocket parser against non-object browser messages and payloads; malformed multimodal input now returns a recoverable demo/input error. Validation: 107 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Corrected the demo backend label fallback so unidentified injected audio is reported as local/unknown-audio rather than Faster Whisper; known Faster Whisper identity remains explicit. Validation: 108 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Hardened OllamaVisionProvider against syntactically valid non-object JSON roots; list and null responses now produce a classified invalid JSON shape error. Validation: 110 passed, 3 strict xfailed; no protected files changed.

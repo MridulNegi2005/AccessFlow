@@ -75,6 +75,8 @@ class OllamaVisionProvider:
             payload = json.loads(response_body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise RuntimeError("Ollama vision returned invalid JSON") from exc
+        if not isinstance(payload, dict):
+            raise RuntimeError("Ollama vision returned invalid JSON shape")
         if payload.get("error"):
             raise RuntimeError(f"Ollama vision error: {payload['error']}")
         result = payload.get("response")
