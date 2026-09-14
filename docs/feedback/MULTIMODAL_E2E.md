@@ -249,3 +249,14 @@ emits backend_failure without a misleading final and the same session accepts a 
 
 **Status:** Full suite 124 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
 failures; perception suite 53 passed. No engine, contract, dependency or lockfile change.
+
+
+## 2026-09-15 - Codex Atishay perception worker responsiveness
+
+**Task:** Verify that slow image inference does not block the multimodal event loop.
+
+**Changes:** Added a regression with a deliberately slow injected vision provider. The provider runs in
+a worker while an async heartbeat completes, and the final image observation retains its source identity.
+
+**Status:** Full suite 125 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
+failures; perception suite 54 passed. No engine, contract, dependency or lockfile change.

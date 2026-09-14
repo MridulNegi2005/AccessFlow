@@ -69,6 +69,8 @@ Updated 15 September 2026.
   provider's classified quota failure instead of an opaque transport error.
 - The WebSocket regression now exercises an HTTP 429 quota response through the configured vision provider,
   emits backend_failure, and confirms the same multimodal session accepts a later transcript.
+- Slow image inference is covered at the perception boundary: the replaceable vision provider runs in a worker
+  while an async heartbeat remains responsive.
 - An audio backend failure is also covered through the WebSocket route: backend_failure is emitted,
   then a later PNG and spoken request complete in the same multimodal session with image context retained.
 - A protocol-level loopback regression now runs the actual OllamaVisionProvider HTTP path with local
@@ -99,8 +101,8 @@ Updated 15 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 124 tests passed with 4 strict expected failures, including 55 passing demo
-  tests and 53 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 125 tests passed with 4 strict expected failures, including 55 passing demo
+  tests and 54 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational
   response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame

@@ -680,3 +680,7 @@ xfailed; no protected files changed.
 2026-09-15: Added WebSocket-level HTTP 429 vision quota recovery evidence. The provider error body
 becomes backend_failure and the same session accepts a later transcript. Validation: 124 passed,
 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Added a slow-image worker responsiveness regression. The event loop remains usable while a
+vision provider is blocked. Validation: 125 passed, 4 strict xfailed; no protected files changed.
