@@ -637,3 +637,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Hardened OllamaVisionProvider against syntactically valid non-object JSON roots; list and null responses now produce a classified invalid JSON shape error. Validation: 110 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Added configured WebSocket coverage for malformed Ollama JSON: a list response becomes backend_failure and a later transcript remains usable. Validation: 111 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Added OllamaVisionProvider timeout coverage; transport TimeoutError normalizes to the stable RuntimeError boundary used by multimodal recovery. Validation: 112 passed, 3 strict xfailed; no protected files changed.
