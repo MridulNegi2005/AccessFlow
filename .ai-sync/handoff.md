@@ -15,9 +15,12 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
 
 - **Backends.** Groq and NVIDIA NIM added behind a shared OpenAI-compatible branch keyed by
   env prefix. Ollama and Gemini unchanged. Selection stays explicit with no automatic fallback.
-- **Model question answered.** `qwen/qwen3.8-27b` scores 4/4 at 0.91 s mean and is the
-  recommended primary. `openai/gpt-oss-120b` is a verified 4/4 fallback on a separate
-  per-model budget. See `docs/results/MODEL_SWEEP_2026-09-14.md`.
+- **Model question answered.** `qwen/qwen3.8-27b` is the primary: 6/6 across every
+  `live_dev` fixture on 15 September at 0.83 s to 0.99 s per request, with no HTTP error.
+  It requires `ACCESSFLOW_MAX_OUTPUT_TOKENS=950`; without it Groq refuses every request at
+  admission because the adapter sends no `max_tokens`. `openai/gpt-oss-120b` is the fallback
+  and needs no cap. Read `docs/results/MODEL_COMPARISON.md` for any model question and
+  regenerate it with `scripts/model_scoreboard.py`. Never quote model scores from memory.
 - **Write-continuation constraint.** While a requested write is outstanding the planner sends
   a `complete_requested_write` step and types `response` as null, so prose is not a valid
   answer. `qwen3:4b` went from never passing `support-read-then-service` to 4/4 overall.

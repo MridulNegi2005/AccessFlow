@@ -72,7 +72,7 @@ Pin `ACCESSFLOW_OLLAMA_NUM_GPU=37` for `qwen3:4b` only. See `INFERENCE_TUNING_20
 output cap, so the score is not a quality measurement. Retest before you discard the model.
 
 <!-- generated -->
-Generated from 202 recorded runs in `artifacts/`.
+Generated from 207 recorded runs in `artifacts/`.
 Regenerate with `python scripts/model_scoreboard.py --write docs/results/MODEL_COMPARISON.md`.
 
 ## Totals by model
@@ -81,7 +81,7 @@ Regenerate with `python scripts/model_scoreboard.py --write docs/results/MODEL_C
 |---|---|---|---|---|---|---|---|---|
 | `offline-fake` | 50 | 45/50 | 43/44 | - | - | 9 | none | 2026-09-15 |
 | `ollama/qwen3:4b` | 42 | 24/42 | 24/42 | 19.84 s | 42.76 s | 6 | none | 2026-09-15 |
-| `groq/qwen/qwen3.8-27b` | 20 | 16/20 | 16/20 | 0.93 s | 1.53 s | 5 | 429 | 2026-09-15 |
+| `groq/qwen/qwen3.8-27b` | 25 | 21/25 | 21/25 | 0.94 s | 1.53 s | 6 | 429 | 2026-09-15 |
 | `ollama/qwen2.5:3b` | 20 | 8/20 | 7/20 | 8.59 s | 21.49 s | 4 | none | 2026-09-13 |
 | `groq/openai/gpt-oss-120b` | 14 | 11/14 | 11/14 | 1.95 s | 3.24 s | 6 | 429 | 2026-09-15 |
 | `nvidia/google/gemma-4-31b-it` | 12 | 6/12 | 6/12 | 24.90 s | 60.69 s | 4 | 403 | 2026-09-14 |
@@ -96,12 +96,12 @@ Regenerate with `python scripts/model_scoreboard.py --write docs/results/MODEL_C
 |---|---|---|---|---|---|---|---|---|---|---|
 | development-text-correction-01 | - | - | - | - | - | 10/11 | 0/2 | - | - | - |
 | device-correction-during-pending-write | - | - | - | - | - | 10/10 | - | - | - | - |
-| live-dev-development-text-correction-01 | 1/2 | 1/1 | 1/1 | 3/4 | 1/3 | 1/1 | 0/2 | 1/5 | 2/2 | 7/8 |
+| live-dev-development-text-correction-01 | 1/2 | 1/1 | 1/1 | 4/5 | 1/3 | 1/1 | 0/2 | 1/5 | 2/2 | 7/8 |
 | live-dev-device-correction-before-plan | 1/1 | 1/1 | 0/2 | 5/5 | 2/3 | 1/1 | 0/1 | 2/5 | 1/2 | 7/8 |
-| live-dev-lost-response-status-reconciliation | 1/1 | 1/1 | 0/2 | 4/4 | 2/3 | 1/1 | 0/1 | 3/5 | 0/2 | 4/8 |
-| live-dev-stale-read-after-correction | 3/3 | - | - | - | - | - | - | - | - | 0/3 |
-| live-dev-stale-read-after-device-correction | 4/4 | 3/3 | - | 1/2 | - | - | - | - | 0/1 | 0/3 |
-| live-dev-support-read-then-service | 1/3 | 0/1 | 0/2 | 3/5 | 1/3 | 1/1 | 0/1 | 1/5 | 0/2 | 6/12 |
+| live-dev-lost-response-status-reconciliation | 1/1 | 1/1 | 0/2 | 5/5 | 2/3 | 1/1 | 0/1 | 3/5 | 0/2 | 4/8 |
+| live-dev-stale-read-after-correction | 3/3 | - | - | 1/1 | - | - | - | - | - | 0/3 |
+| live-dev-stale-read-after-device-correction | 4/4 | 3/3 | - | 2/3 | - | - | - | - | 0/1 | 0/3 |
+| live-dev-support-read-then-service | 1/3 | 0/1 | 0/2 | 4/6 | 1/3 | 1/1 | 0/1 | 1/5 | 0/2 | 6/12 |
 | lost-response-status-reconciliation | - | - | - | - | - | 9/10 | - | - | - | - |
 | support-read-then-service | - | - | - | - | - | 10/10 | - | - | - | - |
 | unknown | - | - | - | - | - | 0/5 | - | - | - | - |
