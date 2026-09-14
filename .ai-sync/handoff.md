@@ -172,3 +172,5 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-14: Configured Ollama route regression now covers malformed list JSON and same-session transcript recovery. Full suite: 111 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-14: Ollama vision timeout regression added on atishay/perception; timeout now has explicit stable failure evidence. Full suite: 112 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: WebSocket session reset regression added: new connection does not inherit multimodal observations from the prior connection. Full suite: 113 passed, 3 strict xfailed; no protected files changed.
