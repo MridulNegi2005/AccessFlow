@@ -83,6 +83,9 @@ The loopback companion, tests/demo/test_app.py::test_multimodal_context_uses_loo
 exercises the actual OllamaVisionProvider HTTP request with local ASR in one Agent context. It verifies
 the model, prompt, base64 image and informational result against a local protocol stub; it is not live
 vision quality evidence.
+The in-flight companion, tests/demo/test_app.py::test_inflight_old_frame_cannot_enter_multimodal_context,
+delays frame 1, delivers frame 2, and verifies that the stale result never reaches a frame-bearing
+reasoner view.
 The safety companion test, tests/demo/test_app.py::test_partial_speech_and_final_image_never_authorize_a_write,
 keeps correction_pending true and confirms that image evidence cannot authorize a write while speech
 is unfinished.

@@ -42,6 +42,8 @@ Updated 14 September 2026.
 - A protocol-level loopback regression now runs the actual OllamaVisionProvider HTTP path with local
   ASR in one Agent context; it verifies model, prompt, image bytes and informational output without
   claiming live model quality.
+- In-flight frame race coverage verifies that a delayed frame 1 result cannot enter the multimodal
+  context after frame 2 arrives; only the current frame is presented to the reasoner.
 - The changed-frame WebSocket reproducer is a strict expected failure until the controller
   removes the prior frame from the active context.
 - A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
@@ -53,7 +55,7 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 93 tests passed with 3 strict expected failures, including 34 passing demo
+- Final verification is 94 tests passed with 3 strict expected failures, including 35 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational

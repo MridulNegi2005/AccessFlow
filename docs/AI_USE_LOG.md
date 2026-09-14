@@ -544,3 +544,17 @@ xfailed; demo suite 34 passed, 3 strict xfailed; perception suite 43 passed.
 **Notes:** The loopback service is a deterministic protocol stub, so this is transport and payload
 evidence rather than live vision quality. No engine, contract, lockfile or dependency manifest changes
 were made.
+
+## 2026-09-14 - Codex Atishay in-flight frame stale-result coverage
+
+**Task:** Cover a changed-device-frame race while the first vision result is still in flight.
+
+**Changes:** Added an owned async Agent regression with a delayed frame 1 perception result. Frame 2
+arrives and reaches the reasoner first; after frame 1 is released, its stale result is rejected and
+never appears in a frame-bearing reasoner view.
+
+**Status:** Focused regression passed. Expected suite counts after this change are 94 passed, 3 strict
+xfailed; demo suite 35 passed, 3 strict xfailed; perception suite 43 passed.
+
+**Notes:** This covers stale-result handling with a perception seam and makes no live vision quality
+claim. No engine, contract, lockfile or dependency manifest changes were made.
