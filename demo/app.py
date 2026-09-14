@@ -74,11 +74,16 @@ class DemoPerception:
         if self._audio_backend is None and self._vision_backend is None:
             return "demo/mock"
         labels = []
-        labels.append(
-            "local/Faster Whisper CPU INT8 audio"
-            if self._audio_backend is not None
-            else "demo/mock audio"
-        )
+        if self._audio_backend is None:
+            labels.append("demo/mock audio")
+        else:
+            audio_backend_name = getattr(self._audio_backend, "audio_backend_name", None)
+            if audio_backend_name == "faster-whisper/cpu-int8":
+                labels.append("local/Faster Whisper CPU INT8 audio")
+            elif audio_backend_name:
+                labels.append(f"{audio_backend_name} audio")
+            else:
+                labels.append("local/Faster Whisper CPU INT8 audio")
         labels.append(
             f"local/Ollama {self._vision_backend.model} image"
             if self._vision_backend is not None
@@ -194,7 +199,11 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
             raise ValueError("audio upload must be a RIFF WAV file")
         path = media_root / f"audio-{uuid.uuid4().hex}.wav"
         path.write_bytes(raw)
-        validate_wav(path)
+        try:
+            validate_wav(path)
+        except ValueError as error:
+            path.unlink(missing_ok=True)
+            raise ValueError("audio upload must be a valid PCM WAV file") from error
         return str(path)
 
     if kind == "frame":

@@ -89,6 +89,13 @@ async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
     assert observations[0].backend == "faster-whisper/cpu-int8"
     assert "local/Faster Whisper CPU INT8" in perception.backend_label
 
+def test_demo_perception_labels_injected_audio_backend_truthfully():
+    perception = DemoPerception(
+        audio_backend=demo_app.LocalPerception(transcriber=lambda _: "text")
+    )
+
+    assert perception.backend_label == "local/injected-asr audio + demo/mock text/image"
+
 
 @pytest.mark.asyncio
 async def test_demo_perception_can_delegate_image_to_injected_local_backend(tmp_path: Path):
@@ -141,6 +148,9 @@ def test_demo_perception_environment_can_enable_local_audio(monkeypatch, tmp_pat
     perception = DemoPerception.from_environment()
 
     assert "local/Faster Whisper CPU INT8" in perception.backend_label
+
+
+
 
 
 def test_demo_perception_environment_can_enable_local_vision(monkeypatch):
@@ -300,6 +310,19 @@ def test_websocket_reports_recoverable_media_input_error():
     final = next(item for item in received if item["kind"] == "final")
     assert "Still connected" in final["payload"]["text"]
 
+
+def test_invalid_wav_materialization_is_removed(tmp_path: Path):
+    with pytest.raises(ValueError, match="valid PCM WAV"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "audio",
+                "payload": {"data_base64": base64.b64encode(b"RIFF\x04\x00\x00\x00WAVE").decode()},
+            },
+            media_root=tmp_path,
+        )
+
+    assert list(tmp_path.iterdir()) == []
 
 def test_websocket_reports_recoverable_image_input_error():
     encoded = base64.b64encode(b"not a png").decode("ascii")

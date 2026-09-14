@@ -158,6 +158,15 @@ class LocalPerception:
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
 
+    @property
+    def audio_backend_name(self) -> str:
+        """Return the truthful label for the configured local audio path."""
+        if self._transcriber is not None:
+            return "local/injected-asr"
+        if self._model_path is not None:
+            return "faster-whisper/cpu-int8"
+        return "local/unconfigured-asr"
+
     async def observe(self, event: InputEvent) -> AsyncIterator[Observation]:
         if isinstance(event, TranscriptEvent):
             yield Observation(
