@@ -79,6 +79,8 @@ latest speech hypothesis and image context survive the browser transport.
 The image boundary regression, tests/demo/test_app.py::test_websocket_reports_recoverable_image_input_error,
 returns a labeled demo/input error for malformed PNG data and confirms the WebSocket session remains
 usable for a later text request.
+The image upload boundary now validates complete PNG chunk structure, CRCs, legal IHDR metadata, IDAT
+and terminal IEND before materializing a frame; focused tests cover truncated and CRC-invalid payloads.
 The loopback companion, tests/demo/test_app.py::test_multimodal_context_uses_loopback_ollama_transport,
 exercises the actual OllamaVisionProvider HTTP request with local ASR in one Agent context. It verifies
 the model, prompt, base64 image and informational result against a local protocol stub; it is not live

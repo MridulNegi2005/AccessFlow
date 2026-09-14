@@ -1,16 +1,31 @@
 import struct
+import zlib
 import wave
 from pathlib import Path
 
 import pytest
 
 from accessflow.contracts import Audio, AudioEvent, Transcript, TranscriptEvent
-from accessflow.perception import LocalPerception, WavFormat, validate_wav
+from accessflow.perception import LocalPerception, PngFormat, WavFormat, validate_png, validate_wav
 
 def _write_png(path: Path, *, width: int = 1, height: int = 1) -> None:
-    header = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR"
-    path.write_bytes(header + struct.pack(">II", width, height))
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data))
+            + kind
+            + data
+            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+        )
 
+    row = b"\x00" + b"\x00\x40\x80\xff" * width
+    pixels = row * height
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(pixels))
+        + chunk(b"IEND", b"")
+    )
 
 def _write_wav(path: Path, *, frames: int = 160) -> None:
     with wave.open(str(path), "wb") as handle:
@@ -155,6 +170,30 @@ async def test_image_input_preserves_frame_identity_with_injected_provider(tmp_p
     assert observation.backend == "local/injected-vision"
 
 
+def test_png_validation_returns_structural_metadata(tmp_path: Path):
+    image_path = tmp_path / "valid.png"
+    _write_png(image_path, width=320, height=240)
+
+    assert validate_png(image_path) == PngFormat(width=320, height=240, bit_depth=8, color_type=6)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("corruption", ["truncated", "bad-crc"])
+async def test_image_input_rejects_structurally_invalid_png(tmp_path: Path, corruption: str):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "broken.png"
+    _write_png(image_path)
+    data = bytearray(image_path.read_bytes())
+    if corruption == "truncated":
+        data = data[:-4]
+    else:
+        data[-1] ^= 1
+    image_path.write_bytes(data)
+    event = FrameEvent(session_id="s1", payload=Frame(path=str(image_path), frame_id="frame-9"))
+
+    with pytest.raises(ValueError, match="Invalid PNG"):
+        await _one(LocalPerception(vision_provider=lambda _: "never"), event)
 @pytest.mark.asyncio
 async def test_image_input_rejects_malformed_png(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent

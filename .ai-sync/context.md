@@ -579,3 +579,18 @@ xfailed; demo suite 35 passed, 3 strict xfailed; perception suite 43 passed.
 
 **Notes:** This covers stale-result handling with a perception seam and makes no live vision quality
 claim. No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay structural PNG validation
+
+**Task:** Ensure malformed image payloads cannot reach the multimodal vision backend.
+
+**Changes:** Hardened the owned PNG validator to check chunk boundaries, CRCs, legal IHDR metadata,
+IDAT presence and terminal IEND structure. The demo now uses the same validator and removes rejected
+materializations. Migrated image tests to real small PNG fixtures and added valid metadata, truncated,
+bad-CRC and WebSocket recovery coverage.
+
+**Status:** Full suite 98 passed, 3 strict xfailed; demo suite 36 passed, 3 strict xfailed; perception
+suite 46 passed; Ruff and git diff --check clean.
+
+**Notes:** Validation is structural and does not decode pixels or claim image understanding. No engine,
+contract, lockfile or dependency manifest changes were made.

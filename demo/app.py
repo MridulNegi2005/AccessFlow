@@ -6,7 +6,6 @@ import asyncio
 import base64
 import os
 import binascii
-import struct
 import tempfile
 import uuid
 from pathlib import Path
@@ -30,7 +29,7 @@ from accessflow.contracts import (
 )
 from accessflow.engine import Agent
 from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
-from accessflow.perception import LocalPerception, OllamaVisionProvider, validate_wav
+from accessflow.perception import LocalPerception, OllamaVisionProvider, validate_png, validate_wav
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
@@ -199,15 +198,14 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
         return str(path)
 
     if kind == "frame":
-        if len(raw) < 24 or raw[:8] != b"\x89PNG\r\n\x1a\n" or raw[12:16] != b"IHDR":
-            raise ValueError("image upload must be a PNG file")
-        width, height = struct.unpack(">II", raw[16:24])
-        if width < 1 or height < 1:
-            raise ValueError("image upload has invalid dimensions")
         path = media_root / f"frame-{uuid.uuid4().hex}.png"
         path.write_bytes(raw)
+        try:
+            validate_png(path)
+        except ValueError as error:
+            path.unlink(missing_ok=True)
+            raise ValueError("image upload must be a valid PNG file") from error
         return str(path)
-
     raise ValueError(f"Unsupported upload kind: {kind}")
 
 
