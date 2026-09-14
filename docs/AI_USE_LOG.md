@@ -490,3 +490,16 @@ true and the executor records no call or effect.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay changed-frame WebSocket reproducer
+
+**Task:** Pin stale image evidence at the browser transport boundary.
+
+**Changes:** Added a strict expected-failure regression that sends two PNG frames through one WebSocket
+session, then sends text and asserts the final context contains only the active frame.
+
+**Status:** Full suite 90 passed, 3 strict xfailed; demo suite 31 passed, 3 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** The failure is intentional until the engine integration removes the prior active frame.
+No engine, contract, lockfile or dependency manifest changes were made.

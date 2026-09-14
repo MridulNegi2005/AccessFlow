@@ -35,6 +35,8 @@ Updated 14 September 2026.
   retains image context in the same session.
 - The WebSocket image boundary also recovers from malformed PNG input with a labeled error and
   keeps the session available for a subsequent text request.
+- The changed-frame WebSocket reproducer is a strict expected failure until the controller
+  removes the prior frame from the active context.
 - A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
@@ -44,11 +46,11 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 90 tests passed with 2 strict expected failures, including 31 passing demo
+- Final verification is 90 tests passed with 3 strict expected failures, including 31 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
-- The two expected failures record current controller integration gaps: image-only informational
-  response and replacement of a prior active frame. Proposals and corresponding integrated-branch
+- The three expected failures record current controller integration gaps: image-only informational
+  response and direct or WebSocket replacement of a prior active frame. Proposals and corresponding integrated-branch
   behavior are available for the engine owner; no engine or contract file was changed here.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
   open. Pixel inspection is also unverified because the local image helper could not open the

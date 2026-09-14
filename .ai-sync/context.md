@@ -513,3 +513,15 @@ correction pending and creates no executor call or effect.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay changed-frame WebSocket reproducer
+
+**Task:** Pin stale frame retention through the browser route.
+
+**Changes:** Added a strict expected-failure test that sends two frames and a follow-up transcript;
+the final currently exposes both frame observations.
+
+**Status:** Full suite 90 passed, 3 strict xfailed; demo suite 31 passed, 3 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

@@ -87,6 +87,9 @@ confirms that vision text resembling a write request cannot create an executor c
 a spoken request.
 The image-first companion test, tests/demo/test_app.py::test_websocket_image_before_audio_context_is_visible,
 sends the PNG before the WAV and verifies that the later audio final still includes image context.
+The changed-frame route reproducer, tests/demo/test_app.py::test_websocket_new_frame_replaces_previous_frame,
+is a strict expected failure on this branch: two frames arrive through the WebSocket, and the final
+currently retains both until the integrated controller removes the prior active frame.
 
 ## Limits
 
