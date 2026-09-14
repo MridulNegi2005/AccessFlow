@@ -439,3 +439,16 @@ hypothesis is absent while the revised text and image context remain visible.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay multimodal write safety
+
+**Task:** Verify that final image evidence cannot authorize a write while speech remains partial.
+
+**Changes:** Added a demo Agent regression with an explicit write manifest and proposal. A partial
+spoken request followed by a final injected image leaves correction_pending true and invokes no
+write tool.
+
+**Status:** Demo suite 28 passed, 2 strict xfailed; full suite 87 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.

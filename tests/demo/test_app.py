@@ -13,14 +13,16 @@ from accessflow.contracts import (
     FrameEvent,
     Observation,
     PlanProposal,
+    ProposedCall,
     SessionView,
     Snapshot,
     Start,
     StartEvent,
     TranscriptEvent,
+    ToolManifest,
 )
 from accessflow.engine import Agent
-from accessflow.fakes import FinalFlagPolicy
+from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
 
 
 demo_path = Path(__file__).parents[2] / "demo" / "app.py"
@@ -624,6 +626,106 @@ async def test_multimodal_audio_revision_replaces_old_speech_and_keeps_frame(tmp
         assert observations["utterance-1"].text == "Actually Wednesday"
         assert observations["frame-1"].text == "screen shows the approval prompt"
         assert next(item for item in outputs if item.kind == "final").payload["basis"] == "informational"
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+
+@pytest.mark.asyncio
+async def test_partial_speech_and_final_image_never_authorize_a_write(tmp_path: Path):
+    class LocalVision:
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            assert path.parent == tmp_path
+            return "Wednesday appointment"
+
+    class SafetyReasoner:
+        def __init__(self):
+            self.plans = [
+                PlanProposal(),
+                PlanProposal(
+                    intent="service",
+                    slot_updates={"day": "Wednesday"},
+                    request_complete=True,
+                    write_requested=True,
+                    calls=[
+                        ProposedCall(
+                            tool="calendar",
+                            arguments={"day": "Wednesday"},
+                            dependencies=["day"],
+                        )
+                    ],
+                ),
+            ]
+            self.views = []
+
+        async def plan(self, view, manifests):
+            self.views.append(view.model_copy(deep=True))
+            return self.plans.pop(0)
+
+    manifest = ToolManifest(
+        name="calendar",
+        description="Test calendar service",
+        effect="write",
+        timeout_s=1,
+        parameters={
+            "type": "object",
+            "properties": {"day": {"type": "string"}},
+            "required": ["day"],
+            "additionalProperties": False,
+        },
+    )
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+    session_id = "partial-image-safety-session"
+    partial = event_from_message(
+        session_id,
+        {
+            "kind": "transcript",
+            "payload": {
+                "utterance_id": "utterance-1",
+                "text": "Book the date shown in this image",
+                "final": False,
+            },
+        },
+    )
+    image = event_from_message(
+        session_id,
+        {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "frame-1"}},
+        media_root=tmp_path,
+    )
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    reasoner = SafetyReasoner()
+    applied = asyncio.Event()
+
+    class ObservedAgent(Agent):
+        async def _apply(self, proposal, *args, **kwargs):
+            await super()._apply(proposal, *args, **kwargs)
+            applied.set()
+
+    agent = ObservedAgent(
+        DemoPerception(vision_backend=LocalVision()),
+        FinalFlagPolicy(),
+        reasoner,
+        FakeTools(),
+        MockOnlyAuthorization(),
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id=session_id, payload=Start(tools=[manifest])))
+        await incoming.put(partial)
+        await asyncio.wait_for(applied.wait(), timeout=1)
+        applied.clear()
+        await incoming.put(image)
+        await asyncio.wait_for(applied.wait(), timeout=1)
+        assert agent.state.correction_pending
+        assert not agent.executor.calls
+        assert not agent.executor.effects
     finally:
         if agent.running:
             await incoming.put(EndEvent(session_id=session_id))
