@@ -22,8 +22,9 @@ Updated 14 September 2026.
 - Multimodal end to end evidence now covers one session carrying a validated WAV and PNG through
   event_from_message, injected local ASR and vision providers, DemoPerception, and one Agent
   context. Source IDs and backend labels are preserved; the final response is informational.
-- The multimodal regression also covers both arrival orders and a revised audio hypothesis:
-  revision 1 replaces revision 0 while the frame remains in the same context.
+- The multimodal regression also covers both arrival orders, a revised audio hypothesis and
+  the WebSocket path: revision 1 replaces revision 0 while the frame remains in the same context,
+  and the combined WAV, PNG and text response exposes both retained modalities.
 - A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
@@ -31,7 +32,7 @@ Updated 14 September 2026.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and synthetic
   microphone capture through the served AudioWorklet. The fresh CDP run also shows the mock final
   carrying prior audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 84 tests passed with 2 strict expected failures, including 25 passing demo
+- Final verification is 85 tests passed with 2 strict expected failures, including 26 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The two expected failures record current controller integration gaps: image-only informational

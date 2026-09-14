@@ -427,3 +427,15 @@ WAV, PNG and text sequence showed the final response containing both prior audio
 
 **Notes:** The response remains an explicitly labeled mock informational result. No engine, contract,
 lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay combined WebSocket context regression
+
+**Task:** Protect the visible combined multimodal response with an automated route test.
+
+**Changes:** Added a WebSocket regression that uploads validated WAV and PNG payloads, submits a
+follow-up transcript, and asserts media source IDs plus audio and image context in the final.
+
+**Status:** Full suite 85 passed, 2 strict xfailed; demo 26 passed, 2 strict xfailed; perception
+43 passed; Ruff and git diff --check clean.
+
+**Notes:** A clean rerun passed after one transient Starlette test-client teardown failure.

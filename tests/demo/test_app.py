@@ -304,6 +304,51 @@ def test_websocket_png_upload_reaches_mock_controller():
     assert final["payload"]["backend"] == "reasoner"
 
 
+def test_websocket_combined_media_context_is_visible():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "payload": {"data_base64": encoded_audio, "utterance_id": "ws-audio"},
+                }
+            )
+            audio_status = socket.receive_json()
+            audio_outputs = _receive_controller_outputs(socket)
+
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "ws-frame"},
+                }
+            )
+            frame_status = socket.receive_json()
+            frame_outputs = _receive_controller_outputs(socket)
+
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
+            )
+            text_outputs = _receive_controller_outputs(socket)
+
+    audio_final = next(item for item in audio_outputs if item["kind"] == "final")
+    frame_final = next(item for item in frame_outputs if item["kind"] == "final")
+    text_final = next(item for item in text_outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "demo/mock"
+    assert audio_status["payload"] == {"media_received": "audio", "source_id": "ws-audio"}
+    assert frame_status["payload"] == {"media_received": "frame", "source_id": "ws-frame"}
+    assert "Mock agent received audio input" in audio_final["payload"]["text"]
+    assert "multimodal context: audio:" in frame_final["payload"]["text"]
+    assert "multimodal context: audio:" in text_final["payload"]["text"]
+    assert "image:" in text_final["payload"]["text"]
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("event_order", [("audio", "image"), ("image", "audio")])
 async def test_multimodal_audio_and_image_reach_one_agent_context(

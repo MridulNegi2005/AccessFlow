@@ -97,3 +97,13 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
   43 passed; Ruff and git diff --check clean.
 - **Limits:** The response remains mock and informational; live vision and non-mock reasoning remain
   unverified.
+
+## 2026-09-14 - Codex Atishay combined WebSocket context regression
+
+- **Task:** Protect the browser-observed multimodal final with an automated route test.
+- **Changes:** Added WAV, PNG and follow-up transcript coverage through one TestClient WebSocket,
+  including source IDs and retained modality assertions.
+- **Status:** Full suite 85 passed, 2 strict xfailed; demo 26 passed, 2 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only response and changed-frame behavior remain intentional xfails pending
+  engine integration.

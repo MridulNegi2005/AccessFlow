@@ -67,6 +67,13 @@ failures in
 tests/demo/test_app.py::test_image_only_informational_response_needs_additive_controller_support and
 tests/demo/test_app.py::test_new_frame_replaces_previous_frame_in_reasoner_context.
 
+## Automated WebSocket regression
+
+tests/demo/test_app.py::test_websocket_combined_media_context_is_visible now sends a validated
+base64 WAV, a validated base64 PNG and a follow-up transcript through one TestClient WebSocket.
+It asserts both media status source IDs and verifies that the final response contains audio and
+image context. This protects the browser-observed behavior at the demo route level.
+
 ## Limits
 
 This is not a live multimodal model benchmark: the vision result was injected, Ollama was not

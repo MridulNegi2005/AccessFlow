@@ -396,3 +396,16 @@ perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** The response remains a labeled mock informational result; no engine, contract, lockfile
 or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay combined WebSocket context regression
+
+**Task:** Protect the browser-observed combined multimodal response with automated coverage.
+
+**Changes:** Added a WebSocket test for validated WAV, PNG and follow-up transcript in one session.
+It asserts received source IDs and audio/image context in the final response.
+
+**Status:** Full suite 85 passed, 2 strict xfailed; demo suite 26 passed, 2 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** One transient Starlette teardown cancellation occurred during a full run; a clean rerun
+passed. No engine, contract, lockfile or dependency manifest changes were made.
