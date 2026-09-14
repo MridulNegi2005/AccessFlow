@@ -31,6 +31,9 @@ Updated 14 September 2026.
   correction_pending stays true and no write tool is invoked.
 - Image-only vision text that resembles a write request is also blocked: no write call or effect
   is allowed without a spoken request.
+- The turn policy now treats image observations as context-only for speech cues, so captions containing
+  correction or backchannel words cannot pause, complete or stop a spoken turn; a direct regression
+  covers this boundary while existing text behavior remains covered.
 - The WebSocket ordering regression also covers PNG arriving before WAV; the later audio final
   retains image context in the same session.
 - The WebSocket image boundary also recovers from malformed PNG input with a labeled error and
@@ -69,7 +72,7 @@ Updated 14 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
-- Final verification is 104 tests passed with 3 strict expected failures, including 41 passing demo
+- Final verification is 105 tests passed with 3 strict expected failures, including 42 passing demo
   tests and 47 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The three expected failures record current controller integration gaps: image-only informational

@@ -628,3 +628,4 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 **Changes:** Added concatenated IDAT zlib stream validation with complete-stream and trailing-data checks, plus a focused malformed-IDAT regression. Pixel data is still not decoded or interpreted.
 
 **Status:** Full suite 104 passed, 3 strict xfailed; owned demo and perception suites 88 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
+2026-09-14: Multimodal policy boundary added on atishay/perception: image observations now remain context-only for speech correction and backchannel matching, with a focused regression. Validation: 105 passed, 3 strict xfailed; no protected files changed.
