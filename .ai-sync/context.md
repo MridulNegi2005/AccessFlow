@@ -550,3 +550,18 @@ xfailed; demo suite 33 passed, 3 strict xfailed; perception suite 43 passed.
 
 **Notes:** This records failure propagation and session recovery only; it makes no live vision quality
 claim. No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay loopback Ollama multimodal transport
+
+**Task:** Cover the configured Ollama vision HTTP path inside a multimodal Agent composition.
+
+**Changes:** Added an owned async regression with a local loopback HTTP protocol stub. The actual
+OllamaVisionProvider sends the PNG request beside local injected ASR, and the Agent retains both
+observations with the Ollama backend label and informational result.
+
+**Status:** Focused regression passed. Expected suite counts after this change are 93 passed, 3 strict
+xfailed; demo suite 34 passed, 3 strict xfailed; perception suite 43 passed.
+
+**Notes:** The loopback service is a deterministic protocol stub, so this is transport and payload
+evidence rather than live vision quality. No engine, contract, lockfile or dependency manifest changes
+were made.

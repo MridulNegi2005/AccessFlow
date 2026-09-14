@@ -1,7 +1,10 @@
 import asyncio
 import base64
 import importlib.util
+import json
 import struct
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
@@ -706,6 +709,111 @@ async def test_multimodal_audio_and_image_reach_one_agent_context(
     assert observations["frame-1"].text == "screen shows the approval prompt"
     assert observations["frame-1"].backend == "local/injected-vision"
     assert next(item for item in outputs if item.kind == "final").payload["basis"] == "informational"
+
+
+@pytest.mark.asyncio
+async def test_multimodal_context_uses_loopback_ollama_transport(tmp_path: Path):
+    class VisionHandler(BaseHTTPRequestHandler):
+        requests = []
+
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            VisionHandler.requests.append(json.loads(self.rfile.read(length).decode("utf-8")))
+            response = json.dumps({"response": "screen shows the approval prompt"}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+        def log_message(self, format, *args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), VisionHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    try:
+        fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+        encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+        png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+        encoded_image = base64.b64encode(png).decode("ascii")
+
+        def transcribe(path: Path) -> str:
+            assert path.parent == tmp_path
+            return "Please inspect the attached screen"
+
+        class MultimodalReasoner:
+            def __init__(self):
+                self.view = None
+                self.both_seen = asyncio.Event()
+
+            async def plan(self, view, manifests):
+                self.view = view.model_copy(deep=True)
+                if {item.modality for item in view.observations} >= {"audio", "image"}:
+                    self.both_seen.set()
+                    return PlanProposal(
+                        response="Audio context and screen evidence are available together.",
+                        request_complete=True,
+                    )
+                return PlanProposal()
+
+        perception = DemoPerception(
+            audio_backend=demo_app.LocalPerception(transcriber=transcribe),
+            vision_backend=demo_app.OllamaVisionProvider(
+                model="gemma3:4b",
+                endpoint=f"http://127.0.0.1:{server.server_port}/api/generate",
+                prompt="Describe the screen.",
+            ),
+        )
+        reasoner = MultimodalReasoner()
+        incoming = asyncio.Queue()
+        outgoing = asyncio.Queue()
+        agent = Agent(
+            perception,
+            FinalFlagPolicy(),
+            reasoner,
+            scenario_timeout=2,
+            inference_timeout=1,
+        )
+        session_id = "loopback-ollama-multimodal-session"
+        audio_event = event_from_message(
+            session_id,
+            {"kind": "audio", "payload": {"data_base64": encoded_audio, "utterance_id": "audio-1"}},
+            media_root=tmp_path,
+        )
+        image_event = event_from_message(
+            session_id,
+            {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "frame-1"}},
+            media_root=tmp_path,
+        )
+
+        task = asyncio.create_task(agent.run(incoming, outgoing))
+        await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+        await incoming.put(audio_event)
+        await incoming.put(image_event)
+        await asyncio.wait_for(reasoner.both_seen.wait(), timeout=1)
+
+        outputs = []
+        while not any(item.kind == "final" for item in outputs):
+            outputs.append(await asyncio.wait_for(outgoing.get(), timeout=1))
+        await incoming.put(EndEvent(session_id=session_id))
+        await asyncio.wait_for(task, timeout=1)
+
+        assert reasoner.view is not None
+        observations = {item.source_id: item for item in reasoner.view.observations}
+        assert observations["audio-1"].backend == "local/injected-asr"
+        assert observations["frame-1"].text == "screen shows the approval prompt"
+        assert observations["frame-1"].backend == "ollama/gemma3:4b"
+        request = VisionHandler.requests[-1]
+        assert request["model"] == "gemma3:4b"
+        assert request["prompt"] == "Describe the screen."
+        assert request["stream"] is False
+        assert request["images"] == [base64.b64encode(png).decode("ascii")]
+        assert next(item for item in outputs if item.kind == "final").payload["basis"] == "informational"
+    finally:
+        server.shutdown()
+        server.server_close()
+        server_thread.join(timeout=1)
 
 
 @pytest.mark.asyncio
