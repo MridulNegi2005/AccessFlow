@@ -238,3 +238,14 @@ The regression verifies the quota detail survives the provider boundary.
 **Status:** Full suite 123 passed, 4 strict expected failures; demo suite 54 passed, 4 strict expected
 failures; perception suite 53 passed; Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change.
+
+
+## 2026-09-15 - Codex Atishay HTTP quota WebSocket recovery
+
+**Task:** Exercise structured HTTP quota failures through the configured multimodal WebSocket path.
+
+**Changes:** Added a route regression using an HTTP 429 JSON error from OllamaVisionProvider. The route
+emits backend_failure without a misleading final and the same session accepts a later transcript.
+
+**Status:** Full suite 124 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
+failures; perception suite 53 passed. No engine, contract, dependency or lockfile change.

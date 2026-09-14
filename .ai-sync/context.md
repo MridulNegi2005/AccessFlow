@@ -669,3 +669,8 @@ of crashing or implying a model. Full validation: 122 passed, 4 strict xfailed; 
 2026-09-15: OllamaVisionProvider now preserves structured HTTP quota details, including a 429 JSON
 error body, through the classified failure boundary. Full validation: 123 passed, 4 strict xfailed;
 no protected files changed.
+
+
+2026-09-15: Added WebSocket-level HTTP 429 vision quota recovery evidence. The provider error body
+becomes backend_failure and the same session accepts a later transcript. Full validation: 124 passed,
+4 strict xfailed; no protected files changed.
