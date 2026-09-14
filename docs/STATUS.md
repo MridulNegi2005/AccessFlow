@@ -26,7 +26,8 @@ Updated 14 September 2026.
   revision 1 replaces revision 0 while the frame remains in the same context.
 - A second composition run used the installed Faster Whisper base.en CPU INT8 snapshot for real
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
-  The result is mixed evidence, not a live multimodal model benchmark.
+  A fresh Chrome run also routed the speech fixture through that local backend before accepting a
+  PNG in the same session. The result is mixed evidence, not a live multimodal model benchmark.
 - The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and synthetic
   microphone capture through the served AudioWorklet. The fresh CDP run had no console or page
   errors and no horizontal overflow.

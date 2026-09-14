@@ -387,3 +387,17 @@ available to the reasoner.
 
 **Notes:** The image-only strict xfail remains the engine integration boundary. No engine, contract,
 lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay browser local-ASR multimodal run
+
+**Task:** Connect the local ASR evidence to the real browser transport.
+
+**Changes:** Started the demo with the cached Faster Whisper base.en CPU INT8 snapshot, uploaded
+synthetic_speech.wav through Chrome, observed the faster-whisper/cpu-int8 acknowledgment and
+transcript-bearing final, then uploaded a PNG and submitted follow-up text in the same session.
+The browser event stream was clean and layout had no overflow.
+
+**Status:** Mixed browser evidence recorded: real local audio inference plus demo/mock image/text.
+Physical capture, live vision quality and non-mock reasoning remain unverified.
+
+**Notes:** No source, engine, contract, lockfile or dependency manifest changes were made.

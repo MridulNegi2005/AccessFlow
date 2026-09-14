@@ -31,6 +31,7 @@ device capture were not exercised.
 | WAV file control | Chrome selected the checked-in synthetic tone and observed media_received=audio and a mock audio final | PASS |
 | Microphone control | Fresh Chrome fake device entered recording state, stopped, uploaded a WAV and observed media_received=audio plus a mock final | PASS |
 | PNG file control | Chrome selected a session PNG and observed media_received=frame; paired transcript produced its final | PASS |
+| Browser local-ASR mode | Fresh Chrome used the cached Faster Whisper snapshot; the audio acknowledgment reported faster-whisper/cpu-int8 and included the recognized speech | PASS |
 | Combined media session | Fresh Chrome sent a WAV, then a PNG and paired transcript in one browser session; both media statuses and finals were observed | PASS |
 | Layout overflow | body scroll width 741 was below inner viewport width 756 | PASS |
 | Physical microphone permission and capture | No physical device was used in headless Chrome | UNVERIFIED |

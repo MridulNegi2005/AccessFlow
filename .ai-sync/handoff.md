@@ -68,3 +68,13 @@ AGENTS.md, docs/CONTRACT.md, docs/IMPLEMENTATION_PLAN.md, docs/STATUS.md and sta
 - **Status:** Full suite 83 passed, 1 strict xfailed; demo 24 passed, 1 strict xfailed; perception
   43 passed; Ruff and git diff --check clean.
 - **Limits:** The image-only controller gap remains the intentional strict xfail.
+
+## 2026-09-14 - Codex Atishay browser local-ASR multimodal run
+
+- **Task:** Connect local ASR evidence to the real browser transport.
+- **Changes:** Chrome uploaded synthetic_speech.wav with the cached Faster Whisper backend, then
+  uploaded a PNG and follow-up text in the same WebSocket session.
+- **Status:** Local audio acknowledgment and transcript-bearing final passed; both media statuses,
+  clean console and no overflow were observed.
+- **Limits:** Image/text remained demo/mock; live vision quality, physical capture and non-mock
+  reasoning remain unverified.

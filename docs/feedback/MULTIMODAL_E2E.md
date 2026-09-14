@@ -32,6 +32,25 @@ The Agent reasoner received both observations in one view and emitted:
 
 > Local speech and screen evidence are available together.
 
+## Browser mixed run
+
+A fresh Chrome CDP run started the demo with the cached local Faster Whisper snapshot enabled.
+The browser uploaded tests/fixtures/audio/synthetic_speech.wav and then a validated PNG in the
+same WebSocket session.
+
+- Backend label: local/Faster Whisper CPU INT8 audio + demo/mock text/image
+- Audio media status: media_received=audio
+- Audio acknowledgment backend: faster-whisper/cpu-int8
+- Audio final: Mock agent received audio input: My screen keeps flickering after the update. Book Wednesday at 5.
+- Image media status: media_received=frame
+- Image and follow-up text finals: observed
+- Browser layout: scroll width 741, viewport width 756
+- Browser event stream: no Runtime exceptions, console errors, deprecation warnings or page errors
+
+The image remains demo/mock in this browser run because Ollama is unavailable. This proves browser
+transport into the local audio backend plus continued multimodal session handling; it does not
+prove live vision quality or non-mock reasoning.
+
 ## What this proves
 
 - A real local ASR result can enter the same multimodal session context as image evidence.
