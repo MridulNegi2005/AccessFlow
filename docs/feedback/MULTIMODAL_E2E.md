@@ -225,3 +225,16 @@ existing unknown-audio behavior and preventing configuration-time crashes.
 
 **Status:** Full suite 122 passed, 4 strict expected failures; demo suite 54 passed, 4 strict expected
 failures; perception suite 52 passed; Ruff, compilation and git diff --check clean.
+
+
+## 2026-09-15 - Codex Atishay HTTP quota error normalization
+
+**Task:** Preserve provider quota details when the configured vision service rejects an HTTP request.
+
+**Changes:** OllamaVisionProvider now reads a structured JSON error body from HTTP failures such as
+429 and raises the same classified runtime error used by the WebSocket backend_failure recovery path.
+The regression verifies the quota detail survives the provider boundary.
+
+**Status:** Full suite 123 passed, 4 strict expected failures; demo suite 54 passed, 4 strict expected
+failures; perception suite 53 passed; Ruff, compilation and git diff --check clean. No engine, contract,
+dependency or lockfile change.

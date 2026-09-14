@@ -1,6 +1,8 @@
 import base64
+import io
 import json
 from pathlib import Path
+from urllib.error import HTTPError
 
 import pytest
 
@@ -90,6 +92,23 @@ def test_ollama_provider_surfaces_quota_exhaustion(tmp_path: Path):
         OllamaVisionProvider(
             opener=lambda request, timeout: FakeResponse({"error": "quota exhausted"})
         )(image)
+
+
+def test_ollama_provider_surfaces_http_quota_exhaustion(tmp_path: Path):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    def opener(request, *, timeout):
+        raise HTTPError(
+            request.full_url,
+            429,
+            "Too Many Requests",
+            {},
+            io.BytesIO(json.dumps({"error": "quota exhausted"}).encode("utf-8")),
+        )
+
+    with pytest.raises(RuntimeError, match="Ollama vision error: quota exhausted"):
+        OllamaVisionProvider(opener=opener)(image)
 
 
 @pytest.mark.parametrize(

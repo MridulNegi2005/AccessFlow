@@ -670,3 +670,8 @@ xfailed; no protected files changed.
 
 2026-09-15: Added truthful unknown-vision labeling and regression coverage for identity-free
 injected adapters. Validation: 122 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Preserved structured HTTP quota details from OllamaVisionProvider, including a 429 JSON
+error body, and verified the classified provider failure boundary. Validation: 123 passed, 4 strict
+xfailed; no protected files changed.
