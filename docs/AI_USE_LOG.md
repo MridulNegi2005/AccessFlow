@@ -356,3 +356,16 @@ revision 0 while frame provenance remains available to the reasoner.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay browser local-ASR multimodal run
+
+**Task:** Connect local ASR evidence to the real browser transport.
+
+**Changes:** Ran Chrome against the demo with the cached Faster Whisper base.en CPU INT8 snapshot,
+uploaded synthetic_speech.wav, verified the faster-whisper/cpu-int8 acknowledgment and recognized
+transcript, then uploaded a PNG and follow-up text in the same session.
+
+**Status:** Browser mixed evidence passed with no console/page errors or horizontal overflow. Image
+and text remained demo/mock; live vision and non-mock reasoning remain unverified.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.
