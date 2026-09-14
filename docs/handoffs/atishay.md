@@ -3,9 +3,9 @@
 Date and branch: 2026-09-15 / atishay/perception
 Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, opt-in local audio demo path, opt-in local Ollama vision path, session path isolation, local model configuration guard, synthetic audio provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, feedback-session template, demo recording script, template-neutral presentation outline and multimodal end-to-end evidence implemented in owned paths; shared fakes/interfaces remain unchanged.
 Contract version used: 0.1
-Tests run and results: repository virtualenv pytest -q — 128 passed, 4 strict xfailed;
+Tests run and results: repository virtualenv pytest -q — 129 passed, 4 strict xfailed;
 Configured vision environment wiring is covered through a loopback HTTP provider at the WebSocket route; the final retains image evidence with the later spoken question.
-perception run — 57 passed; demo run — 55 passed, 4 strict xfailed; held-out fixture check included;
+perception run — 57 passed; demo run — 56 passed, 4 strict xfailed; held-out fixture check included;
 Ruff and git diff --check clean for owned paths.
 Live-model/backend results: Local Faster Whisper base.en CPU INT8 measured on the development and three generated held-out cases; a real local ASR plus injected-vision Agent composition completed in 3.222 seconds with both observations in one view; fresh Chrome also routed the speech fixture through faster-whisper/cpu-int8 before accepting a PNG in the same session, and the WebSocket route retains the latest transcript revision alongside the frame; the mock final exposed both prior modalities; the opt-in WebSocket demo route completed a checked-in WAV with the cached model and emitted a local-backend acknowledgment; an isolated Chrome run without a fake audio-device flag used the present Microphone Array and completed getUserMedia, AudioWorklet capture, WAV upload and the mock final; no human speech accuracy, live vision quality or endpoint-quality claim.
 Configured vision failure is covered at the WebSocket boundary: backend_failure is emitted and a later text request completes in the same session.
@@ -175,3 +175,8 @@ full validation remain green at 126 passed, 4 strict xfailed; no protected files
 provider results now raise a classified runtime failure before an empty observation is emitted. Full
 validation: 128 passed, 4 strict xfailed; demo 55 passed plus 4 strict xfailed; perception 57 passed.
 No protected files changed.
+
+2026-09-15 verification: DemoReasoner now bounds prior multimodal context to 16,384 characters,
+retains the newest evidence when truncation is required, and has regressions for recency, exact
+capacity and request completeness. Full suite: 129 passed, 4 strict xfailed; perception 57 passed;
+demo 56 passed, 4 strict xfailed.

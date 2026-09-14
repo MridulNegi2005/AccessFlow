@@ -703,3 +703,8 @@ changed.
 
 2026-09-15: Added malformed provider-output guards for blank or non-string ASR and vision results.
 Validation: 128 passed, 4 strict xfailed; no protected files changed.
+
+2026-09-15: Used a read-only subagent review to audit the bounded multimodal context diff. Addressed
+its findings by truncating the item that reaches the remaining capacity, preserving newest evidence,
+and adding exact-bound, oversized-item and request-completeness assertions. Validation: 129 passed,
+4 strict xfailed; no protected files changed.

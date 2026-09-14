@@ -305,3 +305,15 @@ empty or non-string audio and image output. Focused regressions cover both modal
 
 **Status:** Full suite 128 passed, 4 strict expected failures; demo suite 55 passed, 4 strict expected
 failures; perception suite 57 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay bounded multimodal context
+
+**Task:** Keep the mock demo's prior multimodal context bounded as sessions accumulate observations.
+
+**Changes:** DemoReasoner now caps the prior context suffix at 16,384 characters, walks backward from
+the newest observation, and truncates the item that reaches the remaining capacity so the newest
+evidence is retained. The regression covers recent evidence, oldest-history omission, the exact
+capacity for an oversized item, and request completeness.
+
+**Status:** Full suite 129 passed, 4 strict expected failures; demo suite 56 passed, 4 strict expected
+failures; perception suite 57 passed. No engine, contract, dependency or lockfile change.

@@ -697,3 +697,7 @@ no protected files changed.
 
 2026-09-15: LocalPerception now rejects blank or non-string audio and image provider output before
 creating observations. Full validation: 128 passed, 4 strict xfailed; no protected files changed.
+
+2026-09-15: Bounded the demo reasoner's prior multimodal context to 16,384 characters while retaining
+the newest evidence under truncation. Full validation: 129 passed, 4 strict xfailed; demo 56 passed
+plus 4 strict xfailed; perception 57 passed. No protected files changed.
