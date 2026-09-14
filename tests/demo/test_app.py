@@ -412,6 +412,55 @@ def test_websocket_image_before_audio_context_is_visible():
 
 
 
+@pytest.mark.asyncio
+async def test_configured_vision_failure_emits_backend_error_without_final(tmp_path: Path):
+    class FailingVision:
+        backend_name = "local/failing-vision"
+
+        def __call__(self, path: Path) -> str:
+            assert path.parent == tmp_path
+            raise RuntimeError("vision service unavailable")
+
+    png = b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 2, 3)
+    image = event_from_message(
+        "vision-failure-session",
+        {
+            "kind": "frame",
+            "payload": {
+                "data_base64": base64.b64encode(png).decode("ascii"),
+                "frame_id": "frame-failure",
+            },
+        },
+        media_root=tmp_path,
+    )
+    incoming = asyncio.Queue()
+    outgoing = asyncio.Queue()
+    agent = Agent(
+        DemoPerception(vision_backend=FailingVision()),
+        FinalFlagPolicy(),
+        demo_app.DemoReasoner(),
+        scenario_timeout=2,
+        inference_timeout=1,
+    )
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id="vision-failure-session", payload=Start()))
+        await incoming.put(image)
+        error = None
+        while error is None:
+            event = await asyncio.wait_for(outgoing.get(), timeout=1)
+            if event.kind == "error":
+                error = event
+        assert error.payload["code"] == "backend_failure"
+        assert error.payload["detail"] == "RuntimeError"
+        assert outgoing.empty()
+    finally:
+        if agent.running:
+            await incoming.put(EndEvent(session_id="vision-failure-session"))
+        await asyncio.wait_for(task, timeout=1)
+
+
+
 @pytest.mark.xfail(
     strict=True,
     reason="The current Agent retains prior frame observations when the active frame changes.",

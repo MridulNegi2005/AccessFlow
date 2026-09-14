@@ -503,3 +503,16 @@ perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** The failure is intentional until the engine integration removes the prior active frame.
 No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay vision backend failure
+
+**Task:** Verify configured vision failures are surfaced without a false informational response.
+
+**Changes:** Added an owned Agent regression with a failing injected vision backend. The image event
+produces a backend_failure error with no final response.
+
+**Status:** Full suite 91 passed, 3 strict xfailed; demo suite 32 passed, 3 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** This verifies failure propagation only and makes no live vision quality claim. No engine,
+contract, lockfile or dependency manifest changes were made.
