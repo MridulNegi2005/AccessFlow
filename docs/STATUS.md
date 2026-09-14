@@ -29,18 +29,20 @@ Updated 14 September 2026.
   audio inference and an injected vision provider; the paired context completed in 3.222 seconds.
   A fresh Chrome run also routed the speech fixture through that local backend before accepting a
   PNG in the same session. The result is mixed evidence, not a live multimodal model benchmark.
-- The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and synthetic
-  microphone capture through the served AudioWorklet. The fresh CDP run also shows the mock final
-  carrying prior audio and image context, with no console or page errors or horizontal overflow.
+- The real Chrome smoke now passes text, checked in WAV, PNG plus paired transcript, and
+  microphone capture through the served AudioWorklet. A separate isolated Chrome run used the
+  present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
+  WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
+  audio and image context, with no console or page errors or horizontal overflow.
 - Final verification is 85 tests passed with 2 strict expected failures, including 26 passing demo
   tests and 43 passing perception tests; Ruff and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The two expected failures record current controller integration gaps: image-only informational
   response and replacement of a prior active frame. Proposals and corresponding integrated-branch
   behavior are available for the engine owner; no engine or contract file was changed here.
-- Evidence is mixed and still bounded: physical microphone capture, live vision quality, and
-  non mock reasoning are still open. Pixel inspection is also unverified
-  because the local image helper could not open the captures.
+- Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
+  open. Pixel inspection is also unverified because the local image helper could not open the
+  captures.
 - origin/mridul/engine was fetched at ad04bca for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
 

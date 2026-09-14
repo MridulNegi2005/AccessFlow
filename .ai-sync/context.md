@@ -439,3 +439,16 @@ follow-up transcript, and asserts media source IDs plus audio and image context 
 43 passed; Ruff and git diff --check clean.
 
 **Notes:** A clean rerun passed after one transient Starlette test-client teardown failure.
+
+## 2026-09-14 - Codex Atishay physical microphone browser smoke
+
+**Task:** Verify the served microphone path with the machine's real audio input.
+
+**Changes:** No repository source or dependency changes. Isolated Chrome without a fake audio-device
+flag entered getUserMedia recording from the present Microphone Array, loaded the AudioWorklet,
+uploaded a WAV over the session WebSocket and observed media_received=audio plus the mock final.
+
+**Status:** Physical-device permission and capture passed. Pixel inspection remains unverified;
+live vision quality, human speech accuracy and non-mock reasoning remain open.
+
+**Notes:** Temporary profile and CDP harness only; no source, contract or dependency manifest changed.
