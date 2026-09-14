@@ -537,6 +537,141 @@ def test_websocket_environment_vision_provider_reaches_multimodal_context(monkey
         server_thread.join(timeout=1)
 
 
+
+def test_websocket_configured_audio_and_vision_share_context(monkeypatch, tmp_path: Path):
+    class VisionHandler(BaseHTTPRequestHandler):
+        requests = []
+
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            VisionHandler.requests.append(json.loads(self.rfile.read(length).decode("utf-8")))
+            response = json.dumps({"response": "screen shows the approval prompt"}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+        def log_message(self, format, *args):
+            return
+
+    class MultimodalReasoner:
+        latest_view = None
+
+        async def plan(self, view, manifests):
+            modalities = {item.modality for item in view.observations}
+            if {"audio", "image"} <= modalities:
+                MultimodalReasoner.latest_view = view.model_copy(deep=True)
+                return PlanProposal(
+                    response="Audio context and screen evidence are available together.",
+                    request_complete=True,
+                )
+            return PlanProposal()
+
+    class ConfiguredLocalPerception:
+        audio_backend_name = "local/injected-asr"
+
+        def __init__(self, *, model_path=None, vision_provider=None):
+            self.model_path = model_path
+            self.vision_provider = vision_provider
+
+        async def observe(self, event):
+            if isinstance(event, AudioEvent):
+                yield Observation(
+                    event_id=event.event_id,
+                    source_id=event.payload.utterance_id,
+                    revision=event.payload.revision,
+                    modality="audio",
+                    text="Please inspect the attached screen",
+                    final=True,
+                    backend="local/injected-asr",
+                )
+                return
+            if isinstance(event, FrameEvent):
+                yield Observation(
+                    event_id=event.event_id,
+                    source_id=event.payload.frame_id,
+                    revision=0,
+                    modality="image",
+                    text=self.vision_provider(Path(event.payload.path)),
+                    final=True,
+                    backend=getattr(self.vision_provider, "backend_name", "local/injected-vision"),
+                )
+                return
+            raise AssertionError(f"unexpected event: {event.kind}")
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), VisionHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+
+    model_dir = tmp_path / "whisper-model"
+    model_dir.mkdir()
+    monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(model_dir))
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "gemma3:4b")
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_OLLAMA_ENDPOINT",
+        f"http://127.0.0.1:{server.server_port}/api/generate",
+    )
+    monkeypatch.setattr(demo_app, "LocalPerception", ConfiguredLocalPerception)
+
+    monkeypatch.setattr(demo_app, "DemoReasoner", MultimodalReasoner)
+
+    def receive_media_status(socket, media_kind):
+        while True:
+            message = socket.receive_json()
+            if (
+                message.get("kind") == "demo_status"
+                and message.get("payload", {}).get("media_received") == media_kind
+            ):
+                return message
+
+    try:
+        fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+        encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+        png = _png_bytes(width=2, height=3)
+        encoded_image = base64.b64encode(png).decode("ascii")
+
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                status = socket.receive_json()
+                socket.send_json(
+                    {"kind": "audio", "payload": {"data_base64": encoded_audio, "utterance_id": "configured-audio"}}
+                )
+                audio_status = receive_media_status(socket, "audio")
+                socket.send_json(
+                    {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "configured-frame"}}
+                )
+                frame_status = receive_media_status(socket, "frame")
+                outputs = _receive_controller_outputs(socket)
+
+        final = next(item for item in outputs if item["kind"] == "final")
+        assert status["payload"]["perception_backend"] == (
+            "local/injected-asr audio + local/Ollama gemma3:4b image"
+        )
+        assert audio_status["payload"] == {
+            "media_received": "audio",
+            "source_id": "configured-audio",
+        }
+        assert frame_status["payload"] == {
+            "media_received": "frame",
+            "source_id": "configured-frame",
+        }
+        assert final["payload"]["text"] == "Audio context and screen evidence are available together."
+        assert final["payload"]["basis"] == "informational"
+        assert MultimodalReasoner.latest_view is not None
+        observations = {item.source_id: item for item in MultimodalReasoner.latest_view.observations}
+        assert observations["configured-audio"].backend == "local/injected-asr"
+        assert observations["configured-frame"].backend == "ollama/gemma3:4b"
+        assert observations["configured-frame"].text == "screen shows the approval prompt"
+        request = VisionHandler.requests[-1]
+        assert request["model"] == "gemma3:4b"
+        assert request["prompt"] == "Describe only the visible device evidence and state uncertainty."
+        assert request["images"] == [base64.b64encode(png).decode("ascii")]
+    finally:
+        server.shutdown()
+        server.server_close()
+        server_thread.join(timeout=1)
+
 def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     class FailingVision:
         model = "failing-vision"

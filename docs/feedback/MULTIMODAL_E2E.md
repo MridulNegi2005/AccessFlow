@@ -121,4 +121,4 @@ inspection remains unverified.
 
 The demo now removes a WAV materialization when post-header PCM validation fails. LocalPerception also exposes its configured audio backend identity, so injected ASR is labeled as local/injected-asr while the installed Faster Whisper path keeps its Faster Whisper label.
 
-Automated coverage: tests/demo/test_app.py::test_demo_perception_labels_injected_audio_backend_truthfully and tests/demo/test_app.py::test_invalid_wav_materialization_is_removed. The full suite is 101 passed with 3 strict expected failures; demo and perception coverage is 39 passed plus 3 strict xfailed and 46 passed.
+Automated coverage: tests/demo/test_app.py::test_websocket_configured_audio_and_vision_share_context calls DemoPerception.from_environment with both modality settings, substitutes only the ASR implementation for deterministic text, and verifies both configured backends through one WebSocket session. The focused boundary tests also cover truthful labeling and failed WAV cleanup. The full suite is 102 passed with 3 strict expected failures; demo and perception coverage is 40 passed plus 3 strict xfailed and 46 passed.

@@ -596,3 +596,11 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 **Changes:** Added an audio backend identity on LocalPerception so injected ASR is not presented as Faster Whisper, and removed temporary WAV files when post-header PCM validation rejects the upload. Added focused tests for truthful labeling and cleanup.
 
 **Status:** Full suite 101 passed, 3 strict xfailed; owned demo and perception suites 85 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
+
+## 2026-09-14 - Codex Atishay combined configured multimodal route
+
+**Task:** Add route-level evidence that configured local audio and vision providers can contribute to one multimodal session.
+
+**Changes:** Strengthened the WebSocket regression to call DemoPerception.from_environment with both modality settings, substituting only the ASR implementation for deterministic text. It verifies validated WAV and PNG transport, backend labels, source IDs, both observations in one reasoner view and informational output.
+
+**Status:** Full suite 102 passed, 3 strict xfailed; owned demo and perception suites 86 passed, 3 strict xfailed; Ruff, compilation and git diff --check clean. No engine, contract, dependency or lockfile change.
