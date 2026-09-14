@@ -90,6 +90,8 @@ sends the PNG before the WAV and verifies that the later audio final still inclu
 The changed-frame route reproducer, tests/demo/test_app.py::test_websocket_new_frame_replaces_previous_frame,
 is a strict expected failure on this branch: two frames arrive through the WebSocket, and the final
 currently retains both until the integrated controller removes the prior active frame.
+The configured vision failure companion, tests/demo/test_app.py::test_configured_vision_failure_emits_backend_error_without_final,
+confirms that a vision backend exception becomes a backend_failure event without a misleading final.
 
 ## Limits
 

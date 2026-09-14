@@ -525,3 +525,15 @@ the final currently exposes both frame observations.
 perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay vision backend failure
+
+**Task:** Verify vision backend failures propagate as typed errors.
+
+**Changes:** Added an owned regression for a failing injected vision provider; the agent emits
+backend_failure and no final response.
+
+**Status:** Full suite 91 passed, 3 strict xfailed; demo suite 32 passed, 3 strict xfailed;
+perception suite 43 passed; Ruff and git diff --check clean.
+
+**Notes:** No engine, contract, lockfile or dependency manifest changes were made.
