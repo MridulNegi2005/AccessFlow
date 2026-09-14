@@ -658,3 +658,7 @@ an additive controller proposal. Validation: 119 passed, 4 strict xfailed; no pr
 
 2026-09-15: Browser timestamp transport aligned with the event envelope and legacy payload fallback
 retained. Validation: 119 passed, 4 strict xfailed; no protected files changed.
+
+
+2026-09-15: Verified delayed audio remains in multimodal context when a newer frame arrives; added a
+passing cross-modal race regression. Validation: 120 passed, 4 strict xfailed; no protected files changed.
