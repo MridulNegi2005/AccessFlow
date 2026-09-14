@@ -79,6 +79,8 @@ latest speech hypothesis and image context survive the browser transport.
 The safety companion test, tests/demo/test_app.py::test_partial_speech_and_final_image_never_authorize_a_write,
 keeps correction_pending true and confirms that image evidence cannot authorize a write while speech
 is unfinished.
+The image-first companion test, tests/demo/test_app.py::test_websocket_image_before_audio_context_is_visible,
+sends the PNG before the WAV and verifies that the later audio final still includes image context.
 
 ## Limits
 
