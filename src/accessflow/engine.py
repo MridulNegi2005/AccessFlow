@@ -77,6 +77,8 @@ class Agent:
         self.output_sequence = 0
         self.latest_complete = False
         self.planner = None
+        self.repeated_completed_call = False
+        self.repeat_recoveries = {}
         self.active_frame = None
         self.active_speech = None
         self.speech_ready = False
@@ -262,7 +264,8 @@ class Agent:
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
-                           write_pending=self.speech_write_requested)
+                           write_pending=self.speech_write_requested,
+                           repeated_completed_call=self.repeated_completed_call)
 
     async def _emit(self, kind, **payload):
         if self.current_event_id is not None:
@@ -348,6 +351,8 @@ class Agent:
         self.planner = self._spawn(plan())
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        self.repeated_completed_call = False
+        repeated, dispatched_any = [], False
         speech = self.observations.get(("speech", self.active_speech))
         speech_origin = source == ("speech", self.active_speech)
         final_correction = bool(speech_origin and speech and speech.final and
@@ -424,6 +429,8 @@ class Agent:
             signature = json.dumps([self.request_id, proposed.tool, args, dependencies], sort_keys=True)
             previous = self.ledger.get(self.dispatched.get(signature))
             if previous and (previous.status != "failed" or self.attempt_counts[signature] >= 2):
+                if previous.status == "success":
+                    repeated.append(previous.call_id)
                 continue
             operation_id = previous.operation_id if previous else str(uuid4())
             if manifest.idempotency_parameter:
@@ -443,11 +450,27 @@ class Agent:
             self.ledger[call.call_id] = call
             self.call_causes[call.call_id] = self.current_event_id
             self.state.status = "working"
+            dispatched_any = True
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
+        said_something = bool(proposal.clarification)
         if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
             if not any(c.effect == "write" for c in self.ledger.values()):
+                said_something = True
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
+        if (repeated and not dispatched_any and not said_something
+                and not self.state.pending_call_ids and not self.last_request_finished):
+            # The planner re-proposed only calls that already succeeded. Dropping those
+            # silently ends the turn with no output and nothing left to wake the loop,
+            # so the session stalls until the scenario deadline. Say so, and give the
+            # planner one bounded retry that states the results are already in evidence.
+            await self._emit("error", code="repeated_completed_call", call_ids=sorted(set(repeated)),
+                             message="Every proposed call has already completed; its result is in evidence.")
+            attempts = self.repeat_recoveries.get(self.request_id, 0)
+            if attempts < 1 and self.state.status not in {"stopped", "ended"}:
+                self.repeat_recoveries[self.request_id] = attempts + 1
+                self.repeated_completed_call = True
+                self._start_plan()
 
     def _argument_dependency_error(self, proposed, manifest):
         """Ground dynamic arguments in tracked state before read or write dispatch.

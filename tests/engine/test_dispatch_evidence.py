@@ -1,6 +1,7 @@
 import asyncio
 
-from accessflow.contracts import Interrupt, InterruptEvent, PlanProposal, Start, StartEvent
+from accessflow.contracts import (Interrupt, InterruptEvent, PlanProposal, ProposedCall, Start,
+                                  StartEvent)
 from accessflow.engine import Agent
 from accessflow.evaluation.mock_environment import MockEnvironment, WriteConfig
 from accessflow.fakes import FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization, ScriptedReasoner
@@ -52,5 +53,34 @@ async def test_correction_expires_accepted_read_evidence_and_refetches():
         assert agent.ledger[original_call].status == "stale"
         assert all(result.call_id != original_call for result in agent.results)
         assert agent.state.slots["day"].value == "Wednesday"
+    finally:
+        await end(iq, task)
+
+
+async def test_repeating_a_completed_read_reports_the_stall_and_replans_once():
+    class Looping:
+        def __init__(self):
+            self.views = []
+
+        async def plan(self, view, manifests):
+            self.views.append(view)
+            # Always re-propose the same read, which the controller drops as already done.
+            return PlanProposal(intent="service", slot_updates={"day": "Wednesday"},
+                                calls=[ProposedCall(tool="arbitrary_service",
+                                                    arguments={"day": "Wednesday"},
+                                                    dependencies=["day"])])
+
+    planner = Looping()
+    agent, iq, oq, task = await start([], reasoner=planner, manifests=[manifest(effect="read")],
+                                      tools=FakeTools())
+    try:
+        await iq.put(transcript("Check Wednesday"))
+        await wait_for(oq, lambda e: e.payload.get("code") == "repeated_completed_call")
+        # The retry is bounded, so the loop stops instead of replanning forever.
+        assert agent.repeat_recoveries[agent.request_id] == 1
+        async with asyncio.timeout(2):
+            while not any(view.repeated_completed_call for view in planner.views):
+                await asyncio.sleep(0.01)
+        assert len(agent.executor.calls) == 1
     finally:
         await end(iq, task)
