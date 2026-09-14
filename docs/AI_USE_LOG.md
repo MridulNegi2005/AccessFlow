@@ -409,3 +409,19 @@ perception suite 43 passed; Ruff and git diff --check clean.
 
 **Notes:** One transient Starlette teardown cancellation occurred during a full run; a clean rerun
 passed. No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay physical microphone browser smoke
+
+**Task:** Verify the browser microphone path against the machine's present audio input after the
+fake-device smoke.
+
+**Changes:** No repository source or dependency changes. An isolated headless Chrome run omitted
+the fake audio-device flag, entered getUserMedia recording from the present Microphone Array,
+loaded the served AudioWorklet, stopped cleanly, uploaded a WAV through the session WebSocket and
+observed media_received=audio plus the mock informational final.
+
+**Status:** Physical microphone permission and capture passed. Pixel inspection remains unverified;
+live vision quality, human speech accuracy and non-mock reasoning remain open.
+
+**Notes:** The run used an isolated Chrome profile and temporary CDP harness; no fake audio-device
+flag was used and no person or recording was stored in the repository.
