@@ -214,3 +214,30 @@ async def test_status_tool_confirms_unknown_when_planner_also_lists_the_status_p
         assert sum(c.effect == "write" for c in executor.calls) == 1
     finally:
         await end(iq, task)
+
+
+def test_alias_cannot_borrow_a_ledger_dependency_to_skip_grounding():
+    """An alias target is a slot name. A ledger dependency is a parameter name.
+
+    Comparing the two let any other parameter alias onto the ledger name and skip
+    grounding, so a value the user never supplied could reach the status tool.
+    """
+    write = manifest()
+    write.status_tool = "check_receipt"
+    status = ToolManifest(name="check_receipt", description="Check receipt", effect="read",
+                          parameters={"type": "object",
+                                      "properties": {"receipt": {"type": "string"},
+                                                     "account": {"type": "string"}},
+                                      "required": ["receipt"]})
+    unresolved = ToolCall(call_id="w1", operation_id="op-live", tool=write.name, arguments={},
+                          dependencies={}, effect="write", status="unknown")
+    agent = _agent_with_ledger([write, status], [unresolved])
+
+    grounded = ProposedCall(tool=status.name, arguments={"receipt": "op-live"},
+                            dependencies=["receipt"])
+    assert agent._argument_dependency_error(grounded, status) is None
+
+    smuggled = ProposedCall(tool=status.name,
+                            arguments={"receipt": "op-live", "account": "victim-42"},
+                            dependencies=["receipt"], argument_slots={"account": "receipt"})
+    assert agent._argument_dependency_error(smuggled, status) == "missing_dependency"
