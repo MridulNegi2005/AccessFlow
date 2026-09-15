@@ -13,9 +13,9 @@ independent examples. The distinct-tool-set count is the closer measure.
 
 Exposure labels state whether the engine has been tuned against a fixture. A fixture used
 during development is no longer unseen, whatever its directory is called. The four planner
-probes are the only unrun set; their labels have never been opened. Running them once and
-then tuning against them converts them to development data, so run them only after the
-request contract and the primary profile stop changing.
+probes were the only unseen set. They ran once on 16 September 2026, after the request
+contract and the primary profile stopped changing. They are spent: tuning against them now
+converts them to development data, so treat their one recorded result as the measurement.
 
 Faults name the environment bindings that inject a failure, such as a lost response or a
 commit that reports an unknown outcome.
@@ -37,7 +37,10 @@ commit that reports an unknown outcome.
 - No scenario exceeds two user turns. Longer interruption chains are untested.
 - The only fault injected is an unresolved write outcome. Perception failures, tool timeouts
   and authorization refusals have unit coverage but no end-to-end scenario.
-- Held-out coverage is four planner probes, all text. The plan calls for twenty held out.
+- Held-out coverage is spent. The four planner probes ran once on 16 September 2026 and
+  passed 4 of 4 on `groq/qwen/qwen3.8-27b`. All four are text. The plan calls for twenty
+  held out, so 16 remain unwritten and there is no unseen multimodal case at all. Four text
+  cases are a real generalization signal, not evidence of broad correctness.
 
 <!-- generated -->
 Generated from 17 scenario files.
@@ -70,10 +73,10 @@ Distinct tool sets: **10** across 17 files. Longest scenario: **2** user turns.
 | live_dev | `live-dev-stale-read-after-device-correction` | 2 | transcript | - | development |
 | live_dev | `live-dev-support-read-then-service` | 1 | transcript | - | development |
 | live_dev | `live-dev-development-text-correction-01` | 2 | transcript | - | development |
-| planner_probes | `planner-probe-corrected-24h` | 2 | transcript | - | held out, never run |
-| planner_probes | `planner-probe-fluent-noon` | 1 | transcript | - | held out, never run |
-| planner_probes | `planner-probe-incomplete-clarification` | 1 | transcript | - | held out, never run |
-| planner_probes | `planner-probe-new-utterance-preserves-time` | 2 | transcript | - | held out, never run |
+| planner_probes | `planner-probe-corrected-24h` | 2 | transcript | - | spent, run once 16 Sep 2026 |
+| planner_probes | `planner-probe-fluent-noon` | 1 | transcript | - | spent, run once 16 Sep 2026 |
+| planner_probes | `planner-probe-incomplete-clarification` | 1 | transcript | - | spent, run once 16 Sep 2026 |
+| planner_probes | `planner-probe-new-utterance-preserves-time` | 2 | transcript | - | spent, run once 16 Sep 2026 |
 
 ## Workflows measured more than once
 

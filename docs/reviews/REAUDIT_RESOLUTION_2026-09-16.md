@@ -56,9 +56,12 @@ from offline execution.
 3. **Matched-timing baseline.** The audio path receives a whole file and a final transcript.
    It cannot measure whether the controller reduces premature responses. This needs end-of-
    speech latency beside wrong-action rate, under matched timing. That is a design change.
-4. **Held-out probes.** Four probes exist and have never run. Their labels have never been
-   opened. Running them converts them to development data, so the run needs an explicit
-   decision and must happen once, after the contract stops changing.
+4. **Held-out probes.** Run once on 16 September 2026, after the contract stopped changing.
+   All four passed on `groq/qwen/qwen3.8-27b`; the clarification probe committed zero
+   effects. This is the first unseen-data evidence in the project. It is also the last from
+   this set: the probes are now development data. Four text cases are a narrow sample and
+   there is no unseen audio or visual case. Traces are in the ignored `artifacts/heldout/`
+   directory and a clean clone does not carry them.
 5. **Docker execution.** Unmeasured here. `docker` is not installed on this machine, so the
    container gate cannot be exercised at all. This is not a pass and not a failure.
 6. **Official kit adapter.** Blocked on the organizer. Compatibility must not be claimed from

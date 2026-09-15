@@ -20,7 +20,12 @@ not as current status.
   1 frame. Sets: `dev` 4, `live_dev` 9, `planner_probes` 4. See
   [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is generated from the files and is
   current.
-- **Held-out planner probes:** 4. They have never run. Their labels have never been opened.
+- **Held-out planner probes:** 4. They ran once on 16 September 2026 on
+  `groq/qwen/qwen3.8-27b` and passed 4 of 4, all completed, no backend failure. The
+  clarification probe committed zero effects, which is the required safe behaviour. Traces
+  are in the ignored `artifacts/heldout/` directory, so a clean clone does not carry them.
+  The probes are now spent: they are development data and cannot measure generalization
+  again.
 - **Evidence bundle:** 57 attempted runs. The quality denominator is **43 of 46**; only 429
   admission refusals are excluded. Earlier documents stated 43 of 45 and 43 of 57. Both of
   those figures were wrong; do not cite them.
@@ -126,7 +131,8 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Independently authored held-out cases, and the full 60-scenario set. The corpus currently
   has 17 scenario files: 4 in `scenarios/dev`, 9 in `scenarios/live_dev` and 4 planner probes.
   See [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md) for the distinct-tool-set count and for
-  which files are repeats of the same underlying workflow. The probes have never been run and
+  which files are repeats of the same underlying workflow. The probes ran once on 16
+  September 2026 and
   their labels are unread.
 - Baseline comparison. The dependency-rejection ablation is complete and returned a negative
   result; see `results/ABLATION_2026-09-15.md`. No baseline arm exists yet.
