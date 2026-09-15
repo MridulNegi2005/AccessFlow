@@ -60,6 +60,7 @@
     let revision = 0;
     let utterance = 0;
     let activeUtteranceId = null;
+    let mediaSequence = 0;
     let microphone = null;
     const pendingMessages = [];
     const maxPendingMessages = 16;
@@ -78,17 +79,22 @@
       events.prepend(card);
     }
 
-    function send(kind, payload) {
+    function messageFor(kind, payload) {
       const sourceTimestamp = payload.timestamp ?? (
         performance.timeOrigin / 1000 + performance.now() / 1000
       );
       const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
-      const message = JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload });
+      return JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload });
+    }
+
+    function send(kind, payloadOrFactory) {
       if (socket.readyState === WebSocket.CONNECTING) {
         if (pendingMessages.length >= maxPendingMessages) {
           show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The connection queue is full.' } });
           return false;
         }
+        const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
+        const message = messageFor(kind, payload);
         pendingMessages.push(message);
         show({ kind: 'demo_status', payload: { backend: 'browser/transport', queued: true } });
         return true;
@@ -97,6 +103,8 @@
         show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session is closed.' } });
         return false;
       }
+      const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
+      const message = messageFor(kind, payload);
       socket.send(message);
       return true;
     }
@@ -120,6 +128,11 @@
         revision = 0;
       }
       return result;
+    }
+
+    function nextMediaId(prefix) {
+      mediaSequence += 1;
+      return prefix + '-' + mediaSequence;
     }
 
     function bytesToBase64(bytes) {
@@ -220,12 +233,12 @@
       await current.context.close();
       setMicrophoneButtons(false);
       const wav = encodeWav(current.chunks, current.sampleRate);
-      send('audio', {
+      const uploaded = send('audio', () => ({
         data_base64: bytesToBase64(wav),
         filename: 'browser-microphone.wav',
-        utterance_id: 'mic-' + Date.now()
-      });
-      show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: false, uploaded: true } });
+        utterance_id: nextMediaId('mic-audio')
+      }));
+      show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: false, uploaded } });
     }
 
     async function sendFile(kind, selector, fallback) {
@@ -235,12 +248,13 @@
         return;
       }
       try {
-        send(kind, {
-          data_base64: await fileToBase64(file),
+        const dataBase64 = await fileToBase64(file);
+        send(kind, () => ({
+          data_base64: dataBase64,
           filename: file.name,
-          utterance_id: kind === 'audio' ? 'upload-' + Date.now() : undefined,
-          frame_id: kind === 'frame' ? 'upload-' + Date.now() : undefined
-        });
+          utterance_id: kind === 'audio' ? nextMediaId('upload-audio') : undefined,
+          frame_id: kind === 'frame' ? nextMediaId('upload-frame') : undefined
+        }));
       } catch (error) {
         show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
       }
@@ -259,9 +273,9 @@
 
     document.querySelector('#text-form').onsubmit = (event) => {
       event.preventDefault();
-      send('transcript', transcript(true));
+      send('transcript', () => transcript(true));
     };
-    document.querySelector('#partial').onclick = () => send('transcript', transcript(false));
+    document.querySelector('#partial').onclick = () => send('transcript', () => transcript(false));
     document.querySelector('#send-audio').onclick = () => void sendFile('audio', '#audio', 'browser-mock.wav');
     micButton.onclick = () => void startMicrophone();
     stopMicButton.onclick = () => void stopMicrophone();

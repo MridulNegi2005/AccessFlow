@@ -280,6 +280,15 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "The session is closed." in html
     assert 'activeUtteranceId' in html
     assert 'revision += 1' in html
+    assert 'typeof payloadOrFactory === \'function\'' in html
+    assert "send('transcript', () => transcript(true))" in html
+    assert "send('transcript', () => transcript(false))" in html
+    assert 'function nextMediaId(prefix)' in html
+    assert 'mediaSequence += 1' in html
+    assert "nextMediaId('mic-audio')" in html
+    assert "nextMediaId('upload-audio')" in html
+    assert "nextMediaId('upload-frame')" in html
+    assert 'Date.now()' not in html
     assert 'card.innerHTML' not in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
