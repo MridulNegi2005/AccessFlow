@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from .audio import ActivityFrame
@@ -57,7 +58,12 @@ def summarize_activity(
     """Summarize fixed-window activity without deciding that a turn is complete."""
     if not frames:
         raise ValueError("at least one activity frame is required")
-    if pause_after_s < 0:
+    if (
+        isinstance(pause_after_s, bool)
+        or not isinstance(pause_after_s, (int, float))
+        or not math.isfinite(pause_after_s)
+        or pause_after_s < 0
+    ):
         raise ValueError("pause_after_s cannot be negative")
 
     windows = _active_windows(frames)
@@ -98,7 +104,12 @@ def pause_candidates(
     """
     if not frames:
         raise ValueError("at least one activity frame is required")
-    if min_pause_s < 0:
+    if (
+        isinstance(min_pause_s, bool)
+        or not isinstance(min_pause_s, (int, float))
+        or not math.isfinite(min_pause_s)
+        or min_pause_s < 0
+    ):
         raise ValueError("min_pause_s cannot be negative")
 
     summary = summarize_activity(frames, pause_after_s=min_pause_s)
