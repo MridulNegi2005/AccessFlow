@@ -10,12 +10,12 @@ These are not permission to silently change v0.1. Preserve existing fields and f
 
 - Author: Atishay Workstream B
 - Failing example: tests/perception/test_turn_policy.py::test_turn_policy_accepts_activity_timing_without_using_pause_as_completion
-  is a strict expected failure because HeuristicTurnPolicy.update currently has no timing argument. A partial
-  transcript with a long acoustic gap therefore carries only the transcript final flag, so the engine cannot
-  distinguish “user is pausing” from “utterance ended” without overloading turn completion.
-- Proposed addition: Add an additive timing event or optional observation metadata carrying activity windows, source utterance ID, source revision, frame start/end timestamps and a pause threshold result. The signal must remain separate from TurnDecision.complete; an owned policy seam may accept that metadata as an optional timing argument.
+  originally recorded the missing timing channel. It now passes for the owned policy seam: HeuristicTurnPolicy.update
+  accepts optional ActivitySummary and keeps a detected pause separate from TurnDecision.complete. Shared
+  engine/controller wiring still cannot supply this metadata and remains the pending contract gap.
+- Proposed addition: Add an additive timing event or optional observation metadata carrying activity windows, source utterance ID, source revision, frame start/end timestamps and a pause threshold result. The signal must remain separate from TurnDecision.complete. The optional owned policy seam is implemented; shared timing-event and controller integration remain pending.
 - Compatibility plan: Keep v0.1 transcript/audio events and TurnPolicy unchanged. A translating adapter can drop timing metadata for older consumers; the current owned timing summary remains offline until the proposal is accepted.
-- Decision: Pending review by Mridul; no shared contract files changed.
+- Decision: Owned policy seam implemented on 2026-09-16; shared contract/controller integration pending review by Mridul; no shared contract files changed.
 
 ## Additive image-only informational response
 

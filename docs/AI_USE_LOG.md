@@ -781,3 +781,7 @@ Focused validation passed; no protected files changed.
 while revision 0 fails, revision 1 recovers for the same utterance, and only the corrected audio reaches the
 final context. Full validation: 164 passed, 5 strict xfailed; demo 70 passed plus 4 strict xfailed;
 perception 78 passed. No protected files changed.
+2026-09-16 verification: Promoted the timing-policy example from strict expected failure and added a final-transcript
+guard proving an acoustic pause cannot override completion. HeuristicTurnPolicy now accepts optional ActivitySummary
+metadata; shared engine/controller wiring remains pending. Full validation: 166 passed, 4 strict xfailed; demo 70
+passed plus 4 strict xfailed; perception 80 passed. No protected files changed.

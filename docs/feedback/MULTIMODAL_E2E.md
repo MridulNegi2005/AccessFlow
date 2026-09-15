@@ -457,3 +457,9 @@ The configured recovery companion, tests/demo/test_app.py::test_websocket_audio_
 proves one classified failure followed by same-utterance audio recovery while the PNG evidence remains
 available to the final context. The configured composition companion also verifies distinct generated event
 IDs for the retained text, audio and image observations.
+The owned turn-policy seam now accepts optional ActivitySummary metadata. Focused coverage keeps partial speech open
+when a pause is detected and preserves completion for final transcripts; shared engine/controller timing wiring remains
+pending.
+
+Final verification after this promotion: 166 tests passed with 4 strict expected failures; demo 70 passed plus 4
+strict expected failures; perception 80 passed. No protected files changed.

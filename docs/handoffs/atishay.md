@@ -273,3 +273,7 @@ by a corrected revision for the same utterance while a PNG remains in context. F
 5 strict expected failures; demo 70 passed plus 4 strict expected failures; perception 78 passed.
 2026-09-16 verification: Configured multimodal evidence now verifies distinct generated event IDs for the
 retained text, corrected audio and image observations. No protected files changed.
+2026-09-16 verification: Promoted the owned turn-policy timing seam to accept optional ActivitySummary metadata and
+added focused coverage proving pause timing keeps partial speech open and never overrides final-transcript completion.
+Shared engine/controller wiring remains the pending additive proposal. Full suite: 166 passed, 4 strict expected
+failures; demo 70 passed plus 4 strict expected failures; perception 80 passed. No protected files changed.

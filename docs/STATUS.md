@@ -118,14 +118,14 @@ Updated 16 September 2026.
 - LocalPerception now closes admission before validation can register new work, suppresses observers that finish validation after shutdown, and marks each bounded worker closed. Audio, image and transcript shutdown races plus post-close DemoPerception admission are covered; closed peers also terminate the demo sender cleanly.
 - A route-level cleanup regression confirms valid uploaded WAV and PNG files exist inside the live session directory and that the directory is removed after WebSocket disconnect.
 
-- Final verification is 164 tests passed with 5 strict expected failures, including 70 passing demo
-  tests and 78 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 166 tests passed with 4 strict expected failures, including 70 passing demo
+  tests and 80 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
-- The five expected failures record four current controller integration gaps: image-only informational
-  response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame
-  evidence before a write; the fifth records the pending timing-policy integration proposal. Proposals and
-  corresponding integrated-branch behavior are available for the engine owner; no engine or contract file
-  was changed here.
+- The four expected failures record current controller integration gaps: image-only informational response,
+  direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before
+  a write. The owned timing-policy seam now accepts optional activity metadata while shared engine/controller
+  wiring remains a pending additive proposal. Proposals and corresponding integrated-branch behavior are
+  available for the engine owner; no engine or contract file was changed here.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
   open. Pixel inspection is also unverified because the local image helper could not open the
   captures.
