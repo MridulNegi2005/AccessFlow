@@ -458,6 +458,43 @@ def test_websocket_serializes_controller_and_input_messages(monkeypatch):
     assert error["payload"]["backend"] == "demo/input"
 
 
+@pytest.mark.asyncio
+async def test_cancelled_receiver_does_not_abandon_threaded_media_materialization(monkeypatch, tmp_path: Path):
+    started = threading.Event()
+    release = threading.Event()
+    original = demo_app.event_from_message
+
+    def blocked_event(*args, **kwargs):
+        started.set()
+        assert release.wait(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(demo_app, "event_from_message", blocked_event)
+    active_tasks = set()
+    media_root = tmp_path / "media"
+    media_root.mkdir()
+    image = base64.b64encode(_png_bytes()).decode("ascii")
+    task = asyncio.create_task(
+        demo_app._materialize_event(
+            "session-1",
+            {"kind": "frame", "payload": {"data_base64": image, "frame_id": "frame-1"}},
+            media_root,
+            active_tasks,
+        )
+    )
+    assert await asyncio.to_thread(started.wait, 1)
+
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert active_tasks
+
+    release.set()
+    materialized = await asyncio.gather(*tuple(active_tasks))
+    assert materialized[0].payload.frame_id == "frame-1"
+    assert len(list(media_root.iterdir())) == 1
+
+
 def _receive_controller_outputs(socket):
     received = []
     while not any(item["kind"] in {"final", "error"} for item in received):

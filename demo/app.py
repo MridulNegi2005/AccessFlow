@@ -310,6 +310,24 @@ def event_from_message(
     raise ValueError(f"Unsupported browser event: {kind}")
 
 
+async def _materialize_event(
+    session_id: str,
+    message: dict[str, Any],
+    media_root: Path,
+    active_tasks: set[asyncio.Task[Any]],
+):
+    """Keep threaded upload materialization alive if the receiver is cancelled."""
+    task = asyncio.create_task(
+        asyncio.to_thread(event_from_message, session_id, message, media_root=media_root)
+    )
+    active_tasks.add(task)
+    try:
+        return await asyncio.shield(task)
+    finally:
+        if task.done():
+            active_tasks.discard(task)
+
+
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -356,16 +374,17 @@ async def websocket(websocket: WebSocket) -> None:
 
     with tempfile.TemporaryDirectory(prefix="accessflow-demo-") as media_dir:
         media_root = Path(media_dir)
+        materialization_tasks: set[asyncio.Task[Any]] = set()
 
         async def receive_inputs():
             while True:
                 message = await websocket.receive_json()
                 try:
-                    event = await asyncio.to_thread(
-                        event_from_message,
+                    event = await _materialize_event(
                         session_id,
                         message,
-                        media_root=media_root,
+                        media_root,
+                        materialization_tasks,
                     )
                 except (TypeError, ValueError) as error:
                     await outgoing.put(
@@ -406,6 +425,9 @@ async def websocket(websocket: WebSocket) -> None:
                 if not task.done():
                     task.cancel()
             await asyncio.gather(receiver, return_exceptions=True)
+            if materialization_tasks:
+                await asyncio.gather(*materialization_tasks, return_exceptions=True)
+                materialization_tasks.clear()
 
             if agent.running and not agent_task.done():
                 await incoming.put(EndEvent(session_id=session_id))
