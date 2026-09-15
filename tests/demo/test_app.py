@@ -1234,6 +1234,7 @@ def test_websocket_cleans_valid_session_media_after_disconnect(monkeypatch):
     monkeypatch.setattr(demo_app.tempfile, "TemporaryDirectory", tracked_temporary_directory)
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    encoded_image = base64.b64encode(_png_bytes(width=2, height=3)).decode("ascii")
 
     with TestClient(demo_app.app) as client:
         with client.websocket_connect("/ws") as socket:
@@ -1252,8 +1253,22 @@ def test_websocket_cleans_valid_session_media_after_disconnect(monkeypatch):
                 ):
                     break
 
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "cleanup-frame"},
+                }
+            )
+            while True:
+                message = socket.receive_json()
+                if (
+                    message.get("kind") == "demo_status"
+                    and message.get("payload", {}).get("media_received") == "frame"
+                ):
+                    break
+
             assert created_paths and created_paths[0].is_dir()
-            assert list(created_paths[0].iterdir())
+            assert len(list(created_paths[0].iterdir())) == 2
 
     assert not created_paths[0].exists()
 

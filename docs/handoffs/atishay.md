@@ -259,8 +259,8 @@ expected failure with its additive proposal recorded.
 failures; perception suite 78 passed. Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change.
 
-2026-09-16 verification: Added route-level cleanup coverage for a valid uploaded WAV. The file is present
-inside the live session directory and the temporary directory is removed after disconnect. Full suite:
+2026-09-16 verification: Added route-level cleanup coverage for valid uploaded WAV and PNG files. Both are
+present inside the live session directory and the temporary directory is removed after disconnect. Full suite:
 163 passed, 5 strict expected failures; demo 69 passed plus 4 strict expected failures; perception 78
 passed. No protected files changed.
 2026-09-16 verification: The configured composition regression now sends two revisions for one WAV

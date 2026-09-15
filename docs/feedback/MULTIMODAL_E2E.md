@@ -451,7 +451,7 @@ DemoPerception shutdown. The sender boundary also now absorbs closed-peer transp
 cleanup. The configured composition companion carries text, a real WAV fixture and a real PNG through one
 session while asserting source identity, timestamps, revisions and backend labels.
 The route cleanup companion, tests/demo/test_app.py::test_websocket_cleans_valid_session_media_after_disconnect,
-confirms that valid uploaded media exists during the session and that the temporary session directory is
+confirms that valid uploaded WAV and PNG files exist during the session and that the temporary session directory is
 removed after disconnect.
 The configured recovery companion, tests/demo/test_app.py::test_websocket_audio_revision_recovers_after_failure_with_image,
 proves one classified failure followed by same-utterance audio recovery while the PNG evidence remains
