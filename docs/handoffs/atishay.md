@@ -298,3 +298,5 @@ current-HEAD full-page visual inspection remains open. No protected files change
 revision from starving an unrelated queued utterance. Full suite: 175 passed, 4 strict expected failures.
 2026-09-16 verification: A real local Uvicorn/WebSocket session accepted WAV, PNG and transcript inputs in one
 session; the final transcript retained both audio and image evidence. No protected files changed.
+2026-09-16 verification: Browser sends now queue in order while the WebSocket connects, with a bounded queue and
+clear closed/full transport errors. Full suite: 175 passed, 4 strict expected failures. No protected files changed.

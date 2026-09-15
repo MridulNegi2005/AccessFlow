@@ -796,6 +796,9 @@ a labeled connecting error instead of throwing. Extended the existing page regre
 2026-09-16 verification: Fixed cross-utterance audio starvation by replacing pending work per utterance key while
 keeping a bounded pending-key limit. Added the requested race regression; full suite: 175 passed, 4 strict xfailed.
 No protected files changed.
+2026-09-16 verification: Replaced the browser connecting-time send error with a bounded ordered queue that flushes
+on WebSocket open and reports closed/full transport states. Extended the existing page regression; full suite:
+175 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Fresh shallow public clone checked out atishay/perception from the shared GitHub
 repository and included ATISHAY_START_HERE.md at commit 4892c185. The disposable clone was removed afterward;
 no source or protected files changed.
