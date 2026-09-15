@@ -3,6 +3,7 @@ import asyncio
 import json
 import math
 import os
+import re
 import time
 from collections import deque
 from collections.abc import Mapping
@@ -61,6 +62,43 @@ OPENAI_COMPATIBLE = {
 }
 BACKENDS = frozenset(DEFAULT_MODELS)
 
+# Provider error `type`/`code` values that are stable, provider-defined enums rather than
+# free text. Safe to export verbatim; anything not in this map is never copied into evidence.
+_ERROR_TYPE_CATEGORIES = {
+    "rate_limit_exceeded": "rate_limit",
+    "rate_limit_error": "rate_limit",
+    "requests_rate_limit_exceeded": "rate_limit",
+    "tokens_rate_limit_exceeded": "rate_limit",
+    "invalid_api_key": "authentication",
+    "authentication_error": "authentication",
+    "permission_error": "authentication",
+    "insufficient_quota": "authentication",
+    "context_length_exceeded": "output_limit",
+    "string_too_long": "output_limit",
+    "json_validate_failed": "invalid_json",
+    "invalid_json": "invalid_json",
+    "invalid_request_error": "client_error",
+    "timeout": "timeout",
+}
+# Fallback classification from HTTP status alone, when the provider gave no usable type/code.
+_STATUS_CATEGORIES = {
+    400: "client_error", 401: "authentication", 403: "authentication", 404: "client_error",
+    408: "timeout", 413: "output_limit", 422: "invalid_json", 429: "rate_limit",
+    500: "server_error", 502: "server_error", 503: "server_error", 504: "timeout",
+}
+_OUTPUT_LIMIT_RE = re.compile(r"output tokens?\s*(?:per|/)\s*minute|\botpm\b", re.IGNORECASE)
+# Matches the shape "(OTPM): Limit 1000, Requested 1990" -- numeric quota values are useful
+# and safe to keep even though the surrounding free text (which may echo request/output
+# content) is not.
+# An accumulated rate limit reports "Limit 8000, Used 6667, Requested 2325", so the optional
+# used group is required; a bare \D+ stops at those digits and the whole quota is lost.
+_QUOTA_RE = re.compile(r"\(([A-Za-z]{2,10})\)\s*:?\s*limit\s+(\d+)"
+                       r"(?:\D+used\s+(\d+))?\D+requested\s+(\d+)", re.IGNORECASE)
+# finish_reason/done_reason are small closed provider enums, safe to export; they explain a
+# truncated/malformed JSON body instead of it reading as an unexplained reasoning failure.
+_ALLOWED_OPENAI_FINISH_REASONS = {"stop", "length", "content_filter", "tool_calls", "function_call"}
+_ALLOWED_OLLAMA_DONE_REASONS = {"stop", "length", "load", "unload"}
+
 
 class JsonBackend:
     def __init__(self, backend="ollama", client=None, timeout=20, warmup_timeout=290,
@@ -87,6 +125,10 @@ class JsonBackend:
         self.num_gpu = num_gpu
         self.lock = asyncio.Lock()
         self._request_history = deque(maxlen=history_limit)
+        # Local-only, bounded raw provider error bodies. evidence() never returns this: it
+        # exists purely for a developer reading logs on this machine. Do not add it to any
+        # exported/published telemetry path.
+        self._local_raw_errors = deque(maxlen=history_limit)
         self._request_count = 0
         self._omitted_count = 0
         self._outcome_counts = {"success": 0, "failure": 0, "cancelled": 0}
@@ -128,8 +170,9 @@ class JsonBackend:
             response = getattr(exception, "response", None)
             if response is not None:
                 record["status_code"] = response.status_code
-                # Provider error text explains 4xx rejections; bound it and keep it out of plan data.
-                record["error_detail"] = response.text[:400]
+                record.update(self._sanitize_error(response))
+                # Raw body kept local-only, bounded, and outside the evidence() path.
+                self._local_raw_errors.append(response.text[:400])
         if metrics:
             record.update(metrics)
         if len(self._request_history) == self.history_limit:
@@ -137,6 +180,71 @@ class JsonBackend:
         self._request_history.append(record)
         self._request_count += 1
         self._outcome_counts[outcome] += 1
+
+    def local_only_raw_errors(self):
+        """Bounded raw provider error bodies, for local debugging only.
+
+        evidence() never includes this. A raw provider error body can echo request
+        content, generated text, or identifiers, so it must never be copied into
+        exportable/published telemetry (see docs/reviews/CLAUDE_REVIEW_2026-09-15.md R5).
+        """
+        return list(self._local_raw_errors)
+
+    @staticmethod
+    def _classify_error(status_code, error_type, text):
+        if text and _OUTPUT_LIMIT_RE.search(text):
+            return "output_limit"
+        if error_type in _ERROR_TYPE_CATEGORIES:
+            return _ERROR_TYPE_CATEGORIES[error_type]
+        return _STATUS_CATEGORIES.get(status_code, "unknown")
+
+    @staticmethod
+    def _extract_quota(text):
+        if not text:
+            return None
+        match = _QUOTA_RE.search(text)
+        if not match:
+            return None
+        unit, limit, used, requested = match.groups()
+        quota = {"unit": unit.upper(), "limit": int(limit), "requested": int(requested)}
+        if used is not None:
+            quota["used"] = int(used)
+        return quota
+
+    @staticmethod
+    def _sanitize_error(response):
+        """Bound AND sanitize a provider error response for exportable evidence.
+
+        Only a stable provider-defined type/code, a normalized category, and numeric
+        quota values parsed out of the message survive. The raw body -- which can echo
+        request content, generated text, or identifiers -- is never copied here.
+        """
+        try:
+            body = response.json()
+        except ValueError:
+            body = None
+        error_type = None
+        message = None
+        if isinstance(body, Mapping):
+            error = body.get("error")
+            if isinstance(error, Mapping):
+                candidate = error.get("type") or error.get("code")
+                if isinstance(candidate, str):
+                    error_type = candidate
+                candidate_message = error.get("message")
+                if isinstance(candidate_message, str):
+                    message = candidate_message
+            elif isinstance(body.get("message"), str):
+                message = body["message"]
+        text_for_analysis = message if message is not None else response.text
+        sanitized = {"category": JsonBackend._classify_error(
+            response.status_code, error_type, text_for_analysis)}
+        if error_type in _ERROR_TYPE_CATEGORIES:
+            sanitized["error_type"] = error_type
+        quota = JsonBackend._extract_quota(text_for_analysis)
+        if quota is not None:
+            sanitized["quota"] = quota
+        return sanitized
 
     async def generate(self, system, data, schema, *, timeout=None, _validator=None):
         started = time.monotonic()
@@ -242,16 +350,20 @@ class JsonBackend:
     def _openai_metrics(payload):
         if not isinstance(payload, Mapping):
             return None
-        usage = payload.get("usage")
-        if not isinstance(usage, Mapping):
-            return None
         metrics = {}
-        for key in ("queue_time", "prompt_tokens", "prompt_time", "completion_tokens",
-                    "completion_time", "total_tokens", "total_time"):
-            value = usage.get(key)
-            if (isinstance(value, (int, float)) and not isinstance(value, bool)
-                    and value >= 0 and math.isfinite(value)):
-                metrics[key] = value
+        choices = payload.get("choices")
+        if isinstance(choices, list) and choices and isinstance(choices[0], Mapping):
+            finish_reason = choices[0].get("finish_reason")
+            if finish_reason in _ALLOWED_OPENAI_FINISH_REASONS:
+                metrics["finish_reason"] = finish_reason
+        usage = payload.get("usage")
+        if isinstance(usage, Mapping):
+            for key in ("queue_time", "prompt_tokens", "prompt_time", "completion_tokens",
+                        "completion_time", "total_tokens", "total_time"):
+                value = usage.get(key)
+                if (isinstance(value, (int, float)) and not isinstance(value, bool)
+                        and value >= 0 and math.isfinite(value)):
+                    metrics[key] = value
         return metrics or None
 
     @staticmethod
@@ -259,6 +371,9 @@ class JsonBackend:
         if not isinstance(payload, Mapping):
             return None
         metrics = {}
+        done_reason = payload.get("done_reason")
+        if done_reason in _ALLOWED_OLLAMA_DONE_REASONS:
+            metrics["done_reason"] = done_reason
         for key in ("total_duration", "load_duration", "prompt_eval_cached_count",
                     "prompt_eval_count", "prompt_eval_duration", "eval_count", "eval_duration"):
             value = payload.get(key)
