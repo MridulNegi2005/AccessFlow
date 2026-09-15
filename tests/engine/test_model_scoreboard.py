@@ -1,9 +1,13 @@
 import datetime as dt
+import hashlib
 import json
 import os
 from pathlib import Path
 
 from accessflow.evaluation.replay import replay
+from scripts.evidence_bundle import (INFRA_ADMISSION_FAILURE, SCORED_FAIL_GENERATED_OUTPUT,
+                                     SCORED_PASS, TIMEOUT_UNDETERMINED_CAUSE, UNDETERMINED_FAILURE,
+                                     classify_eligibility)
 from scripts.model_scoreboard import collect_records, main, matrix, per_model, table, summarize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -278,3 +282,152 @@ async def test_two_replays_of_same_scenario_get_distinct_run_ids(tmp_path):
     meta_a = json.loads(trace_a.read_text(encoding="utf-8").splitlines()[0])
     meta_b = json.loads(trace_b.read_text(encoding="utf-8").splitlines()[0])
     assert meta_a["run_id"] != meta_b["run_id"]
+
+
+# --- Eligibility classification (A4): reliability vs. quality denominators ---
+
+def _write_failed_run(path, *, model="test/model", scenario="scenario-a", status="backend_failure",
+                      run_id=None, requests=()):
+    metadata = {
+        "type": "run_metadata",
+        "backend": model,
+        "scenario": scenario,
+        "completion_status": status,
+        "task_oracle": {"passed": False},
+        "disabled_components": [],
+        "reasoner_evidence": {"requests": list(requests)},
+    }
+    if run_id is not None:
+        metadata["run_id"] = run_id
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(metadata) + "\n", encoding="utf-8")
+
+
+def test_classify_eligibility_labels_completed_pass_as_scored_pass():
+    row = {"completion_status": "completed", "task_oracle": {"passed": True}}
+    label, basis = classify_eligibility(row)
+    assert label == SCORED_PASS
+    assert "passed" in basis
+
+
+def test_classify_eligibility_needs_positive_429_evidence_for_infra_exclusion():
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [{"outcome": "failure", "status_code": 429,
+                                                "error_detail": "rate_limit_exceeded"}]}}
+    label, _ = classify_eligibility(row)
+    assert label == INFRA_ADMISSION_FAILURE
+
+
+def test_classify_eligibility_detects_generated_output_rejection_by_body_not_just_code():
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [{"outcome": "failure", "status_code": 400,
+                                                "error_detail": '{"failed_generation": ""}'}]}}
+    label, _ = classify_eligibility(row)
+    assert label == SCORED_FAIL_GENERATED_OUTPUT
+
+
+def test_classify_eligibility_marks_unexplained_failure_undetermined_not_infra():
+    # No status code, no body: this must NOT be classified as infrastructure. Doing so
+    # would excuse the model on evidence that only proves ignorance of the cause.
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [{"outcome": "failure", "exception_type": "HTTPStatusError",
+                                                "elapsed_seconds": 0.17}]}}
+    label, basis = classify_eligibility(row)
+    assert label == UNDETERMINED_FAILURE
+    assert "not established" in basis
+
+
+def test_classify_eligibility_timeout_is_undetermined_cause():
+    row = {"completion_status": "timeout", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [{"outcome": "success", "elapsed_seconds": 1.0}]}}
+    label, _ = classify_eligibility(row)
+    assert label == TIMEOUT_UNDETERMINED_CAUSE
+
+
+def test_infra_admission_failure_counts_in_reliability_but_not_quality(tmp_path):
+    write_trace(tmp_path / "pass.jsonl", oracle=True, run_id="r1")
+    _write_failed_run(tmp_path / "blocked.jsonl", run_id="r2",
+                      requests=[{"outcome": "failure", "status_code": 429,
+                                 "error_detail": "rate_limit_exceeded"}])
+
+    records, exclusions = collect_records(tmp_path)
+    assert exclusions == []
+    by_model = summarize(records)
+    bucket = by_model["test/model"]
+    assert bucket["runs"] == 2  # reliability: both attempted runs counted
+    assert bucket["infra_excluded"] == 1
+    assert bucket["scored"] == 1  # quality: only the pass counts
+    assert bucket["passed"] == 1
+
+    table_text = table(by_model)
+    assert "1/1" in table_text  # quality fraction excludes the blocked run
+    assert "2" in table_text  # reliability run count still visible
+
+
+def test_undetermined_failure_counts_against_the_model_in_quality(tmp_path):
+    write_trace(tmp_path / "pass.jsonl", oracle=True, run_id="r1")
+    _write_failed_run(tmp_path / "mystery.jsonl", run_id="r2",
+                      requests=[{"outcome": "failure", "exception_type": "HTTPStatusError",
+                                 "elapsed_seconds": 0.17}])
+
+    records, _ = collect_records(tmp_path)
+    by_model = summarize(records)
+    bucket = by_model["test/model"]
+    assert bucket["scored"] == 2  # both count toward quality: no evidence clears the model
+    assert bucket["passed"] == 1
+    assert bucket["infra_excluded"] == 0
+
+
+def test_matrix_distinguishes_unscored_from_infra_excluded(tmp_path):
+    write_trace(tmp_path / "unscored.jsonl", oracle=None, run_id="r1")
+    _write_failed_run(tmp_path / "blocked.jsonl", run_id="r2",
+                      requests=[{"outcome": "failure", "status_code": 429, "error_detail": "x"}])
+
+    records, _ = collect_records(tmp_path)
+    text = matrix(records, minimum=1)
+    assert "unscored (1)" in text
+    assert "excluded (1)" in text
+
+
+def test_per_model_verdict_reads_excluded_not_fail_for_infra_block(tmp_path):
+    _write_failed_run(tmp_path / "blocked.jsonl", run_id="r1",
+                      requests=[{"outcome": "failure", "status_code": 429, "error_detail": "x"}])
+
+    records, _ = collect_records(tmp_path)
+    section = per_model(records)
+    assert "excluded (infra admission failure)" in section
+    assert "| fail |" not in section
+
+
+def test_manifest_frozen_time_is_used_and_survives_a_changed_mtime(tmp_path):
+    bundle = tmp_path / "bundle"
+    traces = bundle / "traces"
+    trace = traces / "legacy.jsonl"
+    write_trace(trace, oracle=True, run_id=None)  # no run_id/run_ended_at: forces fallback
+    content_hash = hashlib.sha256(trace.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+    frozen_when = "2020-01-01T00:00:00+00:00"
+    manifest = {"runs": [{"trace_sha256_in_bundle": content_hash, "selected_time_utc": frozen_when}]}
+    (bundle / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    set_mtime(trace, dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc))
+    records_before, _ = collect_records(traces)
+
+    set_mtime(trace, dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc))  # simulate a checkout
+    records_after, _ = collect_records(traces)
+
+    assert records_before[0]["time_source"] == "manifest_frozen_mtime"
+    assert records_before[0]["when"] == records_after[0]["when"]
+    assert records_before[0]["time_epoch"] == records_after[0]["time_epoch"]
+    assert "2020-01-01" in records_before[0]["when"]
+
+
+def test_no_manifest_falls_back_to_live_mtime_unchanged(tmp_path):
+    # Behaviour for a plain artifacts/ directory with no sibling manifest.json must be
+    # unaffected by the frozen-time lookup.
+    trace = tmp_path / "run.jsonl"
+    write_trace(trace, oracle=True, run_id=None)
+    set_mtime(trace, dt.datetime(2021, 3, 1, tzinfo=dt.timezone.utc))
+
+    records, _ = collect_records(tmp_path)
+    assert records[0]["time_source"] == "mtime_inferred"
+    assert "2021-03-01" in records[0]["when"]
