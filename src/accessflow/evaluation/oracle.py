@@ -68,13 +68,16 @@ def evaluate_task(expectation, rows, effects, manifests=(), completion_status="c
                 arguments.pop(ignored, None)
             actual_effects.append({"tool": effect["tool"], "arguments": arguments})
         expected_effects = [effect.model_dump() for effect in expected.effects]
-        unmatched = actual_effects.copy()
+        # Full multiset equality: every expected effect must consume one distinct
+        # actual effect, and no actual effect may be left over (catches duplicates).
+        remaining_actual = actual_effects.copy()
+        unmatched_expected = []
         for effect in expected_effects:
-            if effect in unmatched:
-                unmatched.remove(effect)
+            if effect in remaining_actual:
+                remaining_actual.remove(effect)
             else:
-                break
-        matched = len(actual_effects) == len(expected_effects) and not unmatched
+                unmatched_expected.append(effect)
+        matched = not unmatched_expected and not remaining_actual
         check("committed_effects", matched, expected_effects, actual_effects)
     errors = [event.get("payload", {}).get("code") for event in outputs if event["kind"] == "error"]
     for code in expected.required_error_codes:
