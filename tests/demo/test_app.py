@@ -738,6 +738,8 @@ def test_websocket_session_reset_does_not_inherit_multimodal_context():
 
 
 def test_websocket_concurrent_sessions_do_not_share_multimodal_context():
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
     encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
 
     with TestClient(demo_app.app) as client:
@@ -753,6 +755,13 @@ def test_websocket_concurrent_sessions_do_not_share_multimodal_context():
                     }
                 )
                 first_frame_status = first_socket.receive_json()
+                first_socket.send_json(
+                    {
+                        "kind": "audio",
+                        "payload": {"data_base64": encoded_audio, "utterance_id": "first-audio"},
+                    }
+                )
+                first_audio_status = first_socket.receive_json()
 
                 second_socket.send_json(
                     {"kind": "transcript", "payload": {"text": "Fresh session"}}
@@ -770,7 +779,12 @@ def test_websocket_concurrent_sessions_do_not_share_multimodal_context():
         "media_received": "frame",
         "source_id": "first-frame",
     }
+    assert first_audio_status["payload"] == {
+        "media_received": "audio",
+        "source_id": "first-audio",
+    }
     assert "image:" in first_final["payload"]["text"]
+    assert "Mock agent received audio input" in first_final["payload"]["text"]
     assert "Fresh session" in second_final["payload"]["text"]
     assert "image:" not in second_final["payload"]["text"]
 

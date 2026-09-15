@@ -440,8 +440,8 @@ The factory and loopback service make this reproducible protocol evidence; it is
 quality evidence.
 
 The concurrent-session companion, tests/demo/test_app.py::test_websocket_concurrent_sessions_do_not_share_multimodal_context,
-keeps two WebSocket connections open at once, sends image evidence to only the first, and verifies the
-second session's transcript final contains no inherited image context.
+keeps two WebSocket connections open at once, sends image and audio evidence to only the first, and verifies
+the second session's transcript final contains neither inherited modality.
 
 The shutdown admission companion, tests/perception/test_local.py::test_aclose_blocks_work_still_in_validation,
 parameterizes audio and image validation, closes LocalPerception while validation is blocked, and confirms

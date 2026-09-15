@@ -266,3 +266,5 @@ passed. No protected files changed.
 2026-09-16 verification: The configured composition regression now sends two revisions for one WAV
 utterance and verifies that the latest transcript and timing remain beside the text and PNG evidence.
 No protected files changed.
+2026-09-16 verification: The concurrent WebSocket isolation regression now carries image and audio in the
+first open session and confirms the second session's fresh text has neither inherited modality.

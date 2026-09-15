@@ -754,3 +754,6 @@ xfailed; demo 69 passed plus 4 strict xfailed; perception 78 passed. No protecte
 2026-09-16: Extended configured WebSocket evidence to send two revisions for one WAV utterance and retain
 only the corrected audio alongside text and PNG. The focused route regression and full suite passed; no
 protected files changed.
+2026-09-16: Extended concurrent WebSocket isolation to carry image and audio in one open session while a
+second session completes fresh text. The second context remains free of both modalities; no protected files
+changed.
