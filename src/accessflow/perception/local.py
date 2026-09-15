@@ -285,8 +285,16 @@ class LocalPerception:
         self._timeout_s = timeout_s
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
-        self._audio_worker = _LatestWorker()
-        self._vision_worker = _LatestWorker()
+        self._audio_workers: dict[str, _LatestWorker] = {}
+        self._vision_workers: dict[str, _LatestWorker] = {}
+
+    @staticmethod
+    def _worker_for(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
+        worker = workers.get(session_id)
+        if worker is None:
+            worker = _LatestWorker()
+            workers[session_id] = worker
+        return worker
 
     @property
     def audio_backend_name(self) -> str:
@@ -315,8 +323,8 @@ class LocalPerception:
         if isinstance(event, AudioEvent):
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_wav, path)
-            result = await self._audio_worker.submit(
-                ("audio", event.session_id, event.payload.utterance_id),
+            result = await self._worker_for(self._audio_workers, event.session_id).submit(
+                ("audio", event.payload.utterance_id),
                 lambda: self._run_with_timeout(self._transcribe(path), "audio"),
                 revision=event.payload.revision,
             )
@@ -342,8 +350,8 @@ class LocalPerception:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_png, path)
-            text = await self._vision_worker.submit(
-                ("frame", event.session_id),
+            text = await self._worker_for(self._vision_workers, event.session_id).submit(
+                ("frame",),
                 lambda: self._run_with_timeout(
                     asyncio.to_thread(self._vision_provider, path), "image"
                 ),
@@ -367,7 +375,10 @@ class LocalPerception:
 
     async def aclose(self) -> None:
         """Stop queued local work when its owning session is shutting down."""
-        await asyncio.gather(self._audio_worker.aclose(), self._vision_worker.aclose())
+        workers = [*self._audio_workers.values(), *self._vision_workers.values()]
+        self._audio_workers.clear()
+        self._vision_workers.clear()
+        await asyncio.gather(*(worker.aclose() for worker in workers))
 
     async def _run_with_timeout(self, awaitable, modality: str):
         if self._timeout_s is None:
