@@ -1,5 +1,6 @@
 """Explicit backend selection, one async worker, bounded requests, no automatic fallback."""
 import asyncio
+import copy
 import json
 import math
 import os
@@ -7,6 +8,7 @@ import re
 import time
 from collections import deque
 from collections.abc import Mapping
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 from jsonschema import Draft202012Validator
@@ -112,6 +114,12 @@ class JsonBackend:
         self.backend = backend
         variable, default = DEFAULT_MODELS[backend]
         self.model = os.getenv(variable, default)
+        # Resolved once, here, from the environment this process actually started with.
+        # A request method must reuse self._request_url, never os.getenv again, so a
+        # mutable env var changed mid-run cannot make exported evidence disagree with
+        # what a request actually sent (see docs/PROFILES.md verification contract).
+        self._request_url, self.endpoint = self._resolve_endpoint(backend, self.model)
+        self.max_output_tokens = os.getenv("ACCESSFLOW_MAX_OUTPUT_TOKENS")
         self.client = client
         self.timeout = timeout
         self.warmup_timeout = warmup_timeout
@@ -143,6 +151,7 @@ class JsonBackend:
             "backend": self.backend,
             "model": self.model,
             "config": {
+                "endpoint": self.endpoint,
                 "request_timeout_seconds": self.timeout,
                 "warmup_timeout_seconds": self.warmup_timeout,
                 "history_limit": self.history_limit,
@@ -151,7 +160,7 @@ class JsonBackend:
                 "response_format": (self._openai_response_format({"stub": True}, OPENAI_COMPATIBLE[self.backend][0])["type"]
                                     if self.backend in OPENAI_COMPATIBLE else None),
                 "temperature": 0,
-                "max_output_tokens": os.getenv("ACCESSFLOW_MAX_OUTPUT_TOKENS"),
+                "max_output_tokens": self.max_output_tokens,
                 "ollama_duration_unit": "nanoseconds",
             },
             "request_count": self._request_count,
@@ -210,6 +219,52 @@ class JsonBackend:
         if used is not None:
             quota["used"] = int(used)
         return quota
+
+    @staticmethod
+    def _resolve_endpoint(backend, model):
+        """Resolve the exact request URL for `backend` from the environment, once.
+
+        Returns (request_url, sanitized_endpoint). request_url is what the request
+        method sends to; it may carry a configured base URL's own query string (some
+        proxies route on it). sanitized_endpoint is the exportable form -- credentials
+        and query-string secrets removed -- and is never used to make a request.
+        """
+        if backend == "ollama":
+            base = os.getenv("ACCESSFLOW_OLLAMA_URL", "http://localhost:11434")
+            full = JsonBackend._join_path(base, "/api/chat")
+        elif backend in OPENAI_COMPATIBLE:
+            prefix, default_url = OPENAI_COMPATIBLE[backend]
+            base = os.getenv(f"{prefix}_URL", default_url)
+            full = JsonBackend._join_path(base, "/chat/completions")
+        else:
+            full = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        return full, JsonBackend._sanitize_endpoint(full)
+
+    @staticmethod
+    def _join_path(base, suffix):
+        """Append `suffix` to base's path, ahead of any existing query/fragment.
+
+        Plain string concatenation breaks when a configured base URL already carries a
+        query string (`?api-version=...`): the suffix would land inside the query value
+        instead of the path. Parsing and rebuilding keeps that query intact and the path
+        correct either way.
+        """
+        parsed = urlsplit(base)
+        path = parsed.path.rstrip("/") + suffix
+        return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
+
+    @staticmethod
+    def _sanitize_endpoint(url):
+        """Strip credentials and query-string secrets before a URL is exported.
+
+        Keeps scheme, host, port and path only -- the same redaction stance as
+        _sanitize_error: never export anything that could carry a secret.
+        """
+        parsed = urlsplit(url)
+        netloc = parsed.hostname or ""
+        if parsed.port:
+            netloc += f":{parsed.port}"
+        return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
 
     @staticmethod
     def _sanitize_error(response):
@@ -289,14 +344,13 @@ class JsonBackend:
             request_kwargs = {"json": body}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
-            response = await client.post(os.getenv("ACCESSFLOW_OLLAMA_URL", "http://localhost:11434") + "/api/chat",
-                                         **request_kwargs)
+            response = await client.post(self._request_url, **request_kwargs)
             response.raise_for_status()
             payload = response.json()
             text = payload["message"]["content"]
             metrics = self._ollama_metrics(payload)
         elif self.backend in OPENAI_COMPATIBLE:
-            prefix, default_url = OPENAI_COMPATIBLE[self.backend]
+            prefix = OPENAI_COMPATIBLE[self.backend][0]
             key = os.getenv(f"{prefix}_API_KEY")
             if not key:
                 raise ValueError(f"{prefix}_API_KEY is required for explicit hosted mode")
@@ -307,14 +361,14 @@ class JsonBackend:
             # Some free tiers reject a request whose default output ceiling exceeds their
             # per-minute output budget, before any usage accrues. An explicit cap is the
             # only way to reach those models. Unset by default so nothing else changes.
-            cap = os.getenv("ACCESSFLOW_MAX_OUTPUT_TOKENS")
-            if cap:
-                body["max_tokens"] = int(cap)
+            # Resolved once at construction (self.max_output_tokens), not re-read here, so
+            # the value a request sends can never drift from what evidence() exports.
+            if self.max_output_tokens:
+                body["max_tokens"] = int(self.max_output_tokens)
             request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": body}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
-            response = await client.post(
-                os.getenv(f"{prefix}_URL", default_url) + "/chat/completions", **request_kwargs)
+            response = await client.post(self._request_url, **request_kwargs)
             response.raise_for_status()
             payload = response.json()
             text = payload["choices"][0]["message"]["content"]
@@ -329,9 +383,7 @@ class JsonBackend:
                     "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
-            response = await client.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
-                **request_kwargs)
+            response = await client.post(self._request_url, **request_kwargs)
             response.raise_for_status()
             parts = response.json()["candidates"][0]["content"]["parts"]
             text = "".join(part.get("text", "") for part in parts)
@@ -395,6 +447,93 @@ class JsonBackend:
     def _validate_warmup(result):
         if not isinstance(result, Mapping) or result.get("ready") is not True:
             raise ValueError("Warmup response did not confirm ready=true")
+
+
+# Verification contract for JsonBackend.evidence() / ModelReasoner.evidence(). Whoever runs a
+# scored profile (see docs/PROFILES.md) must be able to prove the backend, model, output cap
+# and endpoint promised by the profile actually reached this process. Checking that by eye
+# ("print the dict, look for the key") is exactly how a missing field goes unnoticed; this
+# schema is the explicit, enforced version of that check.
+REASONER_EVIDENCE_SCHEMA = {
+    "type": "object",
+    "required": ["backend", "model", "config"],
+    "properties": {
+        "backend": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "config": {
+            "type": "object",
+            "required": ["endpoint", "max_output_tokens", "request_timeout_seconds",
+                        "warmup_timeout_seconds"],
+            "properties": {
+                # Sanitized scheme+host+port+path; never carries credentials or a query string.
+                "endpoint": {"type": "string", "minLength": 1},
+                # Raw env value: the string a provider's admission control actually saw, or
+                # null when the profile does not require a cap.
+                "max_output_tokens": {"type": ["string", "null"]},
+                # The HTTP client deadline for one model request. Deliberately independent of
+                # the controller's inference deadline (Agent.inference_timeout, exported
+                # separately in run_metadata.config.inference_timeout_s) -- a controller
+                # deadline shorter than this is a correct, intentional configuration, not an
+                # inconsistency this schema should flag.
+                "request_timeout_seconds": {"type": "number"},
+                "warmup_timeout_seconds": {"type": "number"},
+            },
+        },
+    },
+}
+
+
+PROMISED_CONFIG_FIELDS = ("endpoint", "max_output_tokens", "request_timeout_seconds",
+                          "warmup_timeout_seconds")
+
+
+def missing_promised_config(evidence):
+    """Return the promised config values this evidence block does not carry.
+
+    docs/PROFILES.md promises an endpoint, an output cap and both deadlines. Traces
+    recorded before a field was exported simply lack it. An absent field is UNVERIFIED
+    for that run: it is not evidence that any particular value was used, so a caller
+    must report it as unverified and never substitute a default.
+    """
+    config = (evidence or {}).get("config") or {}
+    return [name for name in PROMISED_CONFIG_FIELDS if name not in config]
+
+
+def validate_reasoner_evidence(evidence, strict=True):
+    """Verify reasoner_evidence against REASONER_EVIDENCE_SCHEMA; return it unchanged.
+
+    Raises ValueError with a specific, actionable message when the profile did not reach
+    the process: a null evidence block (no model backend was constructed -- e.g. an
+    offline-fake run) or a config missing one of the values docs/PROFILES.md promises to
+    check (model id, output cap, endpoint, HTTP request deadline).
+
+    strict=True is the contract for a new run and is what a profile check must use.
+    strict=False verifies only that a real backend recorded a config, for reading an
+    older trace whose export predates some of those fields; pair it with
+    missing_promised_config() and report every named field as unverified.
+    """
+    if evidence is None:
+        raise ValueError(
+            "reasoner_evidence is null: this run used a reasoner with no backend evidence "
+            "(for example offline-fake or a hand-built test double), so no profile settings "
+            "reached a real model backend.")
+    schema = REASONER_EVIDENCE_SCHEMA
+    if not strict:
+        schema = copy.deepcopy(schema)
+        schema["properties"]["config"]["required"] = []
+    errors = sorted(Draft202012Validator(schema).iter_errors(evidence), key=str)
+    if errors:
+        first = errors[0]
+        location = "reasoner_evidence" + "".join(f"[{part!r}]" for part in first.path)
+        absent = missing_promised_config(evidence)
+        if strict and list(first.path) == ["config"] and absent:
+            raise ValueError(
+                f"reasoner_evidence['config'] does not carry {', '.join(absent)}: this trace "
+                f"predates that export. Re-run to verify those values, or call with "
+                f"strict=False and report each of them as unverified. Absence is not "
+                f"evidence of any particular value.")
+        raise ValueError(f"reasoner_evidence failed verification: {location}: {first.message}")
+    return evidence
 
 
 class ModelReasoner:
