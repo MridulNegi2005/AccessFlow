@@ -75,6 +75,11 @@ def test_energy_activity_rejects_invalid_buffer_metadata():
         energy_activity(AudioBuffer(b"\x00\x00", 16_000, True))
 
 
+def test_energy_activity_rejects_partial_sample():
+    with pytest.raises(ValueError, match="partial sample"):
+        energy_activity(AudioBuffer(b"\x00", 16_000, 2))
+
+
 def test_audio_buffer_metadata_is_explicit():
     assert WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=8_000)
 
