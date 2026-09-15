@@ -113,11 +113,12 @@ Updated 16 September 2026.
 - LocalPerception now gives each session one provider call plus one pending item per modality, coalesces obsolete same-session frames and same-utterance audio revisions, suppresses stale results and keeps audio/image workers independent. DemoPerception retains the vision worker for the session and closes active and queued work during WebSocket shutdown; synchronous worker threads remain non-force-cancellable.
 - The demo WebSocket now serializes controller events, media statuses and recoverable input errors through one outbound sender, preventing concurrent writes from interleaving. A route regression holds a controller send open while an invalid frame is received and confirms no overlapping WebSocket sends.
 - A configured WebSocket regression now exercises the real LocalPerception Faster Whisper model branch with a deterministic factory and the real OllamaVisionProvider HTTP path together. It sends text, two revised WAV hypotheses and PNG in one session, then verifies that the latest audio revision, timestamps, source IDs, backend labels and one informational multimodal final are retained.
+- A configured recovery regression sends a valid PNG, a failing audio revision and a corrected revision for the same utterance. It verifies one classified backend failure, no stale audio observation, and a later final retaining the corrected audio beside the frame.
 - A concurrent WebSocket regression keeps two browser sessions open together, carries image and audio in the first session, and verifies that neither modality can appear in a fresh transcript final from the other.
 - LocalPerception now closes admission before validation can register new work, suppresses observers that finish validation after shutdown, and marks each bounded worker closed. Audio, image and transcript shutdown races plus post-close DemoPerception admission are covered; closed peers also terminate the demo sender cleanly.
 - A route-level cleanup regression confirms a valid uploaded WAV exists inside the live session directory and that the directory is removed after WebSocket disconnect.
 
-- Final verification is 163 tests passed with 5 strict expected failures, including 69 passing demo
+- Final verification is 164 tests passed with 5 strict expected failures, including 70 passing demo
   tests and 78 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The five expected failures record four current controller integration gaps: image-only informational

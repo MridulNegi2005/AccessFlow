@@ -268,3 +268,6 @@ utterance and verifies that the latest transcript and timing remain beside the t
 No protected files changed.
 2026-09-16 verification: The concurrent WebSocket isolation regression now carries image and audio in the
 first open session and confirms the second session's fresh text has neither inherited modality.
+2026-09-16 verification: Added configured WebSocket recovery coverage for a failing audio revision followed
+by a corrected revision for the same utterance while a PNG remains in context. Full suite: 164 passed,
+5 strict expected failures; demo 70 passed plus 4 strict expected failures; perception 78 passed.

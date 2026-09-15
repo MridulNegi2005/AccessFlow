@@ -757,3 +757,6 @@ protected files changed.
 2026-09-16: Extended concurrent WebSocket isolation to carry image and audio in one open session while a
 second session completes fresh text. The second context remains free of both modalities; no protected files
 changed.
+2026-09-16: Added configured WebSocket audio failure/recovery evidence with a retained PNG: revision 0
+fails, revision 1 recovers for the same utterance, and the final contains only corrected audio plus the frame.
+Validation: 164 passed, 5 strict xfailed; demo 70 passed plus 4 strict xfailed; perception 78 passed.

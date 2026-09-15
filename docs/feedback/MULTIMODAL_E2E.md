@@ -453,3 +453,6 @@ session while asserting source identity, timestamps, revisions and backend label
 The route cleanup companion, tests/demo/test_app.py::test_websocket_cleans_valid_session_media_after_disconnect,
 confirms that valid uploaded media exists during the session and that the temporary session directory is
 removed after disconnect.
+The configured recovery companion, tests/demo/test_app.py::test_websocket_audio_revision_recovers_after_failure_with_image,
+proves one classified failure followed by same-utterance audio recovery while the PNG evidence remains
+available to the final context.

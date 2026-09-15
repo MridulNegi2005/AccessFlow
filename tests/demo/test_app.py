@@ -1330,6 +1330,142 @@ def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeyp
     assert "screen shows the approval prompt" in final["payload"]["text"]
     assert final["payload"]["basis"] == "informational"
 
+
+def test_websocket_audio_revision_recovers_after_failure_with_image(monkeypatch):
+    audio_calls = []
+
+    def transcribe(path: Path) -> str:
+        audio_calls.append(path)
+        if len(audio_calls) == 1:
+            raise RuntimeError("audio service unavailable")
+        return "Corrected speech for the attached screen"
+
+    class LocalVision:
+        backend_name = "local/injected-vision"
+
+        def __call__(self, path: Path) -> str:
+            return "screen shows the approval prompt"
+
+    class RecoveryReasoner(demo_app.DemoReasoner):
+        image_seen = threading.Event()
+        latest_view = None
+
+        async def plan(self, view, manifests):
+            RecoveryReasoner.latest_view = view.model_copy(deep=True)
+            modalities = {item.modality for item in view.observations}
+            if "image" in modalities:
+                RecoveryReasoner.image_seen.set()
+            audio = [item for item in view.observations if item.modality == "audio"]
+            if "image" in modalities and audio and audio[-1].revision == 1:
+                return PlanProposal(
+                    response="Recovered audio and screen evidence are available together.",
+                    request_complete=True,
+                )
+            return PlanProposal()
+
+    def configured_perception(cls):
+        return DemoPerception(
+            audio_backend=demo_app.LocalPerception(transcriber=transcribe),
+            vision_backend=LocalVision(),
+        )
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    monkeypatch.setattr(demo_app, "DemoReasoner", RecoveryReasoner)
+
+    def receive_media_status(socket, media_kind):
+        while True:
+            message = socket.receive_json()
+            if (
+                message.get("kind") == "demo_status"
+                and message.get("payload", {}).get("media_received") == media_kind
+            ):
+                return message
+
+    png = _png_bytes(width=2, height=3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "timestamp": 4.0,
+                    "payload": {"data_base64": encoded_image, "frame_id": "recovery-frame"},
+                }
+            )
+            frame_status = receive_media_status(socket, "frame")
+            assert RecoveryReasoner.image_seen.wait(timeout=1)
+
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "timestamp": 8.0,
+                    "payload": {
+                        "data_base64": encoded_audio,
+                        "utterance_id": "recovery-audio",
+                        "revision": 0,
+                        "speech_start": 5.0,
+                        "speech_end": 7.0,
+                    },
+                }
+            )
+            failed_audio_status = receive_media_status(socket, "audio")
+            failed_outputs = _receive_controller_outputs(socket)
+
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "timestamp": 12.0,
+                    "payload": {
+                        "data_base64": encoded_audio,
+                        "utterance_id": "recovery-audio",
+                        "revision": 1,
+                        "speech_start": 9.0,
+                        "speech_end": 11.0,
+                    },
+                }
+            )
+            recovered_audio_status = receive_media_status(socket, "audio")
+            recovered_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in recovered_outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == (
+        "local/injected-asr audio + local/injected-vision image"
+    )
+    assert frame_status["payload"] == {"media_received": "frame", "source_id": "recovery-frame"}
+    assert failed_audio_status["payload"] == {
+        "media_received": "audio",
+        "source_id": "recovery-audio",
+    }
+    assert recovered_audio_status["payload"] == {
+        "media_received": "audio",
+        "source_id": "recovery-audio",
+    }
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert final["payload"] == {
+        "text": "Recovered audio and screen evidence are available together.",
+        "basis": "informational",
+        "backend": "reasoner",
+    }
+    assert len(audio_calls) == 2
+    assert RecoveryReasoner.latest_view is not None
+    observations = {item.source_id: item for item in RecoveryReasoner.latest_view.observations}
+    assert observations["recovery-audio"].revision == 1
+    assert observations["recovery-audio"].speech_start == 9.0
+    assert observations["recovery-audio"].speech_end == 11.0
+    assert observations["recovery-audio"].text == "Corrected speech for the attached screen"
+    assert observations["recovery-audio"].backend == "local/injected-asr"
+    assert observations["recovery-frame"].text == "screen shows the approval prompt"
+    assert observations["recovery-frame"].backend == "local/injected-vision"
+
 def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     class FailingVision:
         model = "failing-vision"

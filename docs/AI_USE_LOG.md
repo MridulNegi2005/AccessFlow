@@ -774,3 +774,7 @@ remain in the same final context. Focused and full validation remained green; no
 2026-09-16 verification: Extended concurrent WebSocket session isolation to carry image and audio in one
 session while a second open session completes fresh text. The second session receives neither modality;
 focused validation passed and no protected files changed.
+2026-09-16 verification: Added configured WebSocket audio recovery coverage: a valid PNG remains in context
+while revision 0 fails, revision 1 recovers for the same utterance, and only the corrected audio reaches the
+final context. Full validation: 164 passed, 5 strict xfailed; demo 70 passed plus 4 strict xfailed;
+perception 78 passed. No protected files changed.
