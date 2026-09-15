@@ -710,3 +710,8 @@ files changed.
 2026-09-15: Tightened vision provenance labeling: model-only injected backends now remain
 local/unknown-vision without an explicit ollama/ identity. Full validation: 132 passed, 4 strict
 xfailed; demo 58 passed plus 4 strict xfailed; perception 58 passed. No protected files changed.
+
+2026-09-15: Added opt-in finite LocalPerception deadlines for audio and image provider calls, with
+modality-specific timeout errors and WebSocket audio recovery evidence. Full validation: 141 passed,
+4 strict xfailed; demo 59 passed plus 4 strict xfailed; perception 66 passed. Synchronous work already
+running in to_thread remains non-forcibly-cancellable. No protected files changed.

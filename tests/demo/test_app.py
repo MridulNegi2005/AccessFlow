@@ -5,6 +5,7 @@ import importlib.util
 import json
 import struct
 import threading
+import time
 import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -421,6 +422,61 @@ def test_websocket_audio_upload_reaches_mock_controller():
     final = next(item for item in received if item["kind"] == "final")
     assert "Mock agent received audio input" in final["payload"]["text"]
     assert final["payload"]["backend"] == "reasoner"
+
+
+def test_websocket_local_perception_timeout_is_recoverable(monkeypatch):
+    started = threading.Event()
+    finished = threading.Event()
+
+    def transcriber(path: Path) -> str:
+        started.set()
+        try:
+            time.sleep(0.2)
+            return "late transcript"
+        finally:
+            finished.set()
+
+    def configured_perception(cls):
+        return DemoPerception(
+            audio_backend=demo_app.LocalPerception(
+                transcriber=transcriber,
+                timeout_s=0.05,
+            )
+        )
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "payload": {
+                        "data_base64": encoded_audio,
+                        "utterance_id": "timed-out-upload",
+                    },
+                }
+            )
+            media_status = socket.receive_json()
+            failed_outputs = _receive_controller_outputs(socket)
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            continued_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in continued_outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "local/injected-asr audio + demo/mock text/image"
+    assert media_status["payload"] == {"media_received": "audio", "source_id": "timed-out-upload"}
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert "Still connected" in final["payload"]["text"]
+    assert started.wait(timeout=1)
+    assert finished.wait(timeout=1)
 
 
 def test_browser_message_rejects_non_object_payload():

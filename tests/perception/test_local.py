@@ -1,4 +1,5 @@
 import asyncio
+import math
 import struct
 import threading
 import time
@@ -42,6 +43,12 @@ async def _one(adapter: LocalPerception, event):
     observations = [observation async for observation in adapter.observe(event)]
     assert len(observations) == 1
     return observations[0]
+
+
+@pytest.mark.parametrize("timeout_s", [0, -1, math.nan, math.inf, -math.inf, "fast"])
+def test_local_perception_rejects_invalid_timeout(timeout_s):
+    with pytest.raises(ValueError, match="timeout_s"):
+        LocalPerception(timeout_s=timeout_s)
 
 
 @pytest.mark.asyncio
@@ -121,6 +128,42 @@ async def test_audio_rejects_empty_transcriber_output(tmp_path: Path):
 
     with pytest.raises(RuntimeError, match="audio perception returned empty text"):
         await _one(LocalPerception(transcriber=lambda _: "  \t"), event)
+
+async def test_audio_transcriber_timeout_is_classified(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    started = threading.Event()
+    finished = threading.Event()
+
+    def transcriber(path: Path) -> str:
+        started.set()
+        try:
+            time.sleep(0.2)
+            return "late transcript"
+        finally:
+            finished.set()
+
+    event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="timed-out-audio"),
+    )
+
+    observation_task = asyncio.create_task(
+        _one(LocalPerception(transcriber=transcriber, timeout_s=0.05), event)
+    )
+    for _ in range(100):
+        if started.is_set():
+            break
+        await asyncio.sleep(0.01)
+    assert started.is_set()
+    with pytest.raises(RuntimeError, match=r"audio perception timed out after 0.05s"):
+        await observation_task
+    for _ in range(100):
+        if finished.is_set():
+            break
+        await asyncio.sleep(0.01)
+    assert finished.is_set()
+
 
 async def test_slow_audio_transcriber_does_not_block_event_loop(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
@@ -226,6 +269,44 @@ async def test_image_rejects_non_text_provider_output(tmp_path: Path):
 
     with pytest.raises(RuntimeError, match="image perception returned empty text"):
         await _one(LocalPerception(vision_provider=lambda _: None), event)
+
+async def test_image_provider_timeout_is_classified(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "screen.png"
+    _write_png(image_path)
+    started = threading.Event()
+    finished = threading.Event()
+
+    def provider(path: Path) -> str:
+        started.set()
+        try:
+            time.sleep(0.2)
+            return "late evidence"
+        finally:
+            finished.set()
+
+    event = FrameEvent(
+        session_id="s1",
+        payload=Frame(path=str(image_path), frame_id="timed-out-frame"),
+    )
+
+    observation_task = asyncio.create_task(
+        _one(LocalPerception(vision_provider=provider, timeout_s=0.05), event)
+    )
+    for _ in range(100):
+        if started.is_set():
+            break
+        await asyncio.sleep(0.01)
+    assert started.is_set()
+    with pytest.raises(RuntimeError, match=r"image perception timed out after 0.05s"):
+        await observation_task
+    for _ in range(100):
+        if finished.is_set():
+            break
+        await asyncio.sleep(0.01)
+    assert finished.is_set()
+
 
 async def test_slow_image_provider_does_not_block_event_loop(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent

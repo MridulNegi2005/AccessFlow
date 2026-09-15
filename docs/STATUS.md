@@ -72,6 +72,7 @@ Updated 15 September 2026.
   emits backend_failure, and confirms the same multimodal session accepts a later transcript.
 - Audio and image adapters reject blank or non-string provider output as a classified runtime failure, so malformed
   perception cannot become a misleading empty observation.
+- LocalPerception now accepts an opt-in finite timeout_s for audio and image providers. Deadline expiry is classified by modality and tested directly; the default remains unlimited for compatibility, and synchronous work already running in a worker cannot be forcibly stopped.
 - Slow audio and image inference are covered at the perception boundary: replaceable providers run in workers
   while an async heartbeat remains responsive.
 - An audio backend failure is also covered through the WebSocket route: backend_failure is emitted,
@@ -110,8 +111,8 @@ Updated 15 September 2026.
   audio and image context, with no console or page errors or horizontal overflow.
 - The demo reasoner now bounds prior multimodal context to 16,384 characters while retaining the newest evidence by truncating only the item that reaches the remaining capacity. Regressions cover recent evidence, oldest-history omission, the exact bound for an oversized prior item, and request completeness.
 
-- Final verification is 132 tests passed with 4 strict expected failures, including 58 passing demo
-  tests and 58 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 141 tests passed with 4 strict expected failures, including 59 passing demo
+  tests and 66 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational
   response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame

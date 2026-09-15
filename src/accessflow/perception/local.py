@@ -7,6 +7,7 @@ passing it to an optional local transcriber. Model work runs off the event loop.
 from __future__ import annotations
 
 import asyncio
+import math
 import struct
 import threading
 import wave
@@ -163,13 +164,25 @@ class LocalPerception:
         model_path: str | Path | None = None,
         vision_provider: Callable[[Path], str] | None = None,
         whisper_factory: Callable[..., Any] | None = None,
+        timeout_s: float | None = None,
     ) -> None:
         if transcriber is not None and model_path is not None:
             raise ValueError("Pass transcriber or model_path, not both")
+        if (
+            timeout_s is not None
+            and (
+                isinstance(timeout_s, bool)
+                or not isinstance(timeout_s, (int, float))
+                or not math.isfinite(timeout_s)
+                or timeout_s <= 0
+            )
+        ):
+            raise ValueError("timeout_s must be a finite positive number")
         self._transcriber = transcriber
         self._model_path = Path(model_path) if model_path is not None else None
         self._vision_provider = vision_provider
         self._whisper_factory = whisper_factory
+        self._timeout_s = timeout_s
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
 
@@ -200,7 +213,7 @@ class LocalPerception:
         if isinstance(event, AudioEvent):
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_wav, path)
-            text, backend = await self._transcribe(path)
+            text, backend = await self._run_with_timeout(self._transcribe(path), "audio")
             text = _normalize_provider_text(text, "audio")
             yield Observation(
                 event_id=event.event_id,
@@ -220,7 +233,7 @@ class LocalPerception:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_png, path)
-            text = await asyncio.to_thread(self._vision_provider, path)
+            text = await self._run_with_timeout(asyncio.to_thread(self._vision_provider, path), "image")
             text = _normalize_provider_text(text, "image")
             yield Observation(
                 event_id=event.event_id,
@@ -235,6 +248,23 @@ class LocalPerception:
             )
             return
         raise ValueError(f"Unsupported perception event: {event.kind}")
+
+    async def _run_with_timeout(self, awaitable, modality: str):
+        if self._timeout_s is None:
+            return await awaitable
+        work = asyncio.create_task(awaitable)
+        await asyncio.sleep(0)
+        try:
+            done, _ = await asyncio.wait({work}, timeout=self._timeout_s)
+            if work in done:
+                return work.result()
+            work.cancel()
+            await asyncio.gather(work, return_exceptions=True)
+            raise RuntimeError(f"{modality} perception timed out after {self._timeout_s:g}s")
+        finally:
+            if not work.done():
+                work.cancel()
+            await asyncio.gather(work, return_exceptions=True)
 
     async def _transcribe(self, path: Path) -> tuple[str, str]:
         if self._transcriber is not None:

@@ -341,3 +341,16 @@ regression covering the overclaim boundary.
 
 **Status:** Full suite 132 passed, 4 strict expected failures; demo suite 58 passed, 4 strict expected
 failures; perception suite 58 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay bounded local perception deadlines
+
+**Task:** Bound local audio and image provider wait time while preserving the replaceable provider seam.
+
+**Changes:** LocalPerception now accepts an opt-in finite timeout for provider results and reports
+modality-specific timeout failures. Direct tests cover invalid configuration, audio and image deadline
+classification, and eventual completion of already-started worker calls; a WebSocket regression covers
+audio timeout recovery and source identity. The deadline bounds caller latency, while Python cannot
+forcibly stop an arbitrary synchronous function already running in a worker thread.
+
+**Status:** Full suite 141 passed, 4 strict expected failures; demo suite 59 passed, 4 strict expected
+failures; perception suite 66 passed. No engine, contract, dependency or lockfile change.
