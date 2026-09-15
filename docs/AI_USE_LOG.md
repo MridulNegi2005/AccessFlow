@@ -771,3 +771,6 @@ inside the live session directory and removed after WebSocket disconnect. Full v
 2026-09-16 verification: Extended the configured WebSocket composition regression with two WAV hypotheses
 for one utterance. It now proves the later revision and timing replace the earlier audio while text and PNG
 remain in the same final context. Focused and full validation remained green; no protected files changed.
+2026-09-16 verification: Extended concurrent WebSocket session isolation to carry image and audio in one
+session while a second open session completes fresh text. The second session receives neither modality;
+focused validation passed and no protected files changed.
