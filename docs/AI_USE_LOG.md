@@ -753,3 +753,7 @@ non-overlap regression. Added a WebSocket composition regression using the real 
 branch with a deterministic factory and the real OllamaVisionProvider HTTP request. Full validation: 155
 passed, 4 strict xfailed; demo 64 passed plus 4 strict xfailed; perception 75 passed. No protected files
 changed.
+2026-09-15 verification: Added a concurrent WebSocket session-isolation regression. Two live sessions
+remain open together while one receives an image and the other completes a transcript; the second final
+contains no inherited image context. Full validation: 156 passed, 4 strict xfailed; demo 65 passed plus
+4 strict xfailed; perception 75 passed. No protected files changed.

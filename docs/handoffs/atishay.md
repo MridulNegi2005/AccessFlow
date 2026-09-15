@@ -233,3 +233,13 @@ backend labels and an informational final.
 failures; perception suite 75 passed. Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change. The deterministic ASR factory and loopback HTTP service are protocol
 evidence; live model quality and non-mock reasoning remain unverified.
+
+## 2026-09-15 - Codex Atishay concurrent WebSocket session isolation
+
+**Task:** Verify session-scoped multimodal memory while browser connections overlap.
+
+**Changes:** Added a route regression that keeps two WebSockets open together, sends an image only to
+one session, and confirms the other session's fresh transcript final contains no inherited image context.
+
+**Status:** Full suite 156 passed, 4 strict expected failures; demo suite 65 passed, 4 strict expected
+failures; perception suite 75 passed. No engine, contract, dependency or lockfile change.

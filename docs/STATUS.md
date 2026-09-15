@@ -113,8 +113,9 @@ Updated 15 September 2026.
 - LocalPerception now gives each session one provider call plus one pending item per modality, coalesces obsolete same-session frames and same-utterance audio revisions, suppresses stale results and keeps audio/image workers independent. DemoPerception retains the vision worker for the session and closes active and queued work during WebSocket shutdown; synchronous worker threads remain non-force-cancellable.
 - The demo WebSocket now serializes controller events, media statuses and recoverable input errors through one outbound sender, preventing concurrent writes from interleaving. A route regression holds a controller send open while an invalid frame is received and confirms no overlapping WebSocket sends.
 - A configured WebSocket regression now exercises the real LocalPerception Faster Whisper model branch with a deterministic factory and the real OllamaVisionProvider HTTP path together. It verifies WAV/PNG transport, source IDs, timestamps, revisions, backend labels and one informational multimodal final.
+- A concurrent WebSocket regression keeps two browser sessions open together and verifies that image context in one session cannot appear in a fresh transcript final from the other.
 
-- Final verification is 155 tests passed with 4 strict expected failures, including 64 passing demo
+- Final verification is 156 tests passed with 4 strict expected failures, including 65 passing demo
   tests and 75 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational

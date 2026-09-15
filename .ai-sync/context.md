@@ -740,3 +740,6 @@ xfailed; no protected files changed.
 errors, with a forced concurrent-send regression. Added a configured route regression covering the real
 LocalPerception model-path branch and OllamaVisionProvider HTTP request together. Validation: 155 passed,
 4 strict xfailed; demo 64 passed plus 4 strict xfailed; perception 75 passed. No protected files changed.
+2026-09-15: Added concurrent WebSocket session isolation evidence: two open sessions keep image context
+separate while one completes a fresh transcript. Validation: 156 passed, 4 strict xfailed; demo 65
+passed plus 4 strict xfailed; perception 75 passed. No protected files changed.

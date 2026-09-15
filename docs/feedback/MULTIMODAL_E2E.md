@@ -424,3 +424,7 @@ OllamaVisionProvider HTTP request through one WebSocket session. It verifies WAV
 audio revision and speech bounds, frame timestamp bounds, backend labels and one informational final.
 The factory and loopback service make this reproducible protocol evidence; it is not live ASR or vision
 quality evidence.
+
+The concurrent-session companion, tests/demo/test_app.py::test_websocket_concurrent_sessions_do_not_share_multimodal_context,
+keeps two WebSocket connections open at once, sends image evidence to only the first, and verifies the
+second session's transcript final contains no inherited image context.
