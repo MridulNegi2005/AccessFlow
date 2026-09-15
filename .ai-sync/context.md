@@ -751,3 +751,6 @@ xfailed; demo 68 passed plus 4 strict xfailed; perception 78 passed. No protecte
 2026-09-16: Added route-level valid-media cleanup evidence: a real WAV is present during the WebSocket
 session and its temporary directory is removed after disconnect. Validation: 163 passed, 5 strict
 xfailed; demo 69 passed plus 4 strict xfailed; perception 78 passed. No protected files changed.
+2026-09-16: Extended configured WebSocket evidence to send two revisions for one WAV utterance and retain
+only the corrected audio alongside text and PNG. The focused route regression and full suite passed; no
+protected files changed.

@@ -263,3 +263,6 @@ dependency or lockfile change.
 inside the live session directory and the temporary directory is removed after disconnect. Full suite:
 163 passed, 5 strict expected failures; demo 69 passed plus 4 strict expected failures; perception 78
 passed. No protected files changed.
+2026-09-16 verification: The configured composition regression now sends two revisions for one WAV
+utterance and verifies that the latest transcript and timing remain beside the text and PNG evidence.
+No protected files changed.

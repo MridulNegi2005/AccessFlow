@@ -421,8 +421,8 @@ failures; perception suite 75 passed. No engine, contract, dependency or lockfil
 the remaining timing-policy seam explicitly.
 
 **Changes:** The real LocalPerception and loopback OllamaVisionProvider composition regression now sends
-all three event modalities together and asserts transcript timing, source identity, audio revision,
-frame timing and truthful backend labels. A strict expected-failure example records that the current
+all three event modalities together, including two revisions of one WAV utterance, and asserts transcript
+timing, source identity, audio revision, frame timing and truthful backend labels. A strict expected-failure example records that the current
 turn policy has no additive activity-timing channel; the proposal remains in `docs/CONTRACT_PROPOSALS.md`.
 
 **Status:** Full suite 163 passed, 5 strict expected failures; demo suite 69 passed, 4 strict expected
