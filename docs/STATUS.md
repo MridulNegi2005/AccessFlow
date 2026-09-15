@@ -126,11 +126,12 @@ Updated 16 September 2026.
 - Browser sends now queue up to 16 text, WAV or PNG actions while the WebSocket is connecting, flush them in order on open, and report labeled transport errors when the queue is full or the session is closed.
 - Browser transcript submissions now keep one utterance ID across partial and final hypotheses, incrementing revisions in order and closing the active utterance only after its final hypothesis.
 - Browser payload factories now defer transcript revisions and audio/frame identity allocation until a send is accepted or queued. Media IDs use a page-scoped monotonic sequence, preventing rapid uploads from reusing a source identity; rejected microphone uploads are reported as rejected.
+- Threaded browser upload materialization is now shielded from receiver cancellation and drained before the session directory is cleaned up, so a disconnect cannot race an in-flight WAV or PNG write. A focused cancellation regression covers this boundary.
 - The bounded audio worker now keeps pending work per utterance key, so a newer revision for one utterance cannot discard an unrelated queued utterance; same-utterance replacement and the single active provider-call limit remain intact.
 - A real local Uvicorn/WebSocket run on the current demo served a WAV, PNG and transcript sequentially in one session; it emitted media statuses and finals whose last context retained both audio and image evidence.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 175 tests passed with 4 strict expected failures, including 70 passing demo
+- Final verification is 176 tests passed with 4 strict expected failures, including 71 passing demo
   tests and 89 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,

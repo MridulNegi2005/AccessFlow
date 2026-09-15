@@ -831,3 +831,4 @@ retained both modalities. This remains mock reasoning and protocol/backend evide
 hypotheses, increment revisions for each follow-up submission, and close the active utterance after the final
 hypothesis. Focused demo tests and JavaScript syntax validation passed; no protected files changed.
 2026-09-16 verification: Browser media IDs now come from a page-scoped monotonic allocator, preventing rapid WAV, microphone and PNG submissions from reusing source identities. Lazy send payloads also prevent rejected connecting-queue actions from consuming transcript revisions or media IDs; the direct browser queue/revision harness passed. No protected files changed.
+2026-09-16 verification: Shielded threaded browser media materialization from receiver cancellation and drained active materialization tasks before temporary-session cleanup. Added a focused disconnect/cancellation regression; full suite: 176 passed, 4 strict xfailed. No protected files changed.
