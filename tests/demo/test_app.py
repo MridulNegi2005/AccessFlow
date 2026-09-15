@@ -144,6 +144,42 @@ def test_browser_message_rejects_coerced_or_inconsistent_timing_values(field, va
         event_from_message("session-1", browser_message)
 
 
+def test_rejected_audio_metadata_does_not_materialize_upload(tmp_path: Path):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    with pytest.raises(ValueError, match="browser revision"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "audio",
+                "payload": {
+                    "data_base64": base64.b64encode(fixture.read_bytes()).decode("ascii"),
+                    "utterance_id": "audio-1",
+                    "revision": "1",
+                },
+            },
+            media_root=tmp_path,
+        )
+
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_rejected_frame_identity_does_not_materialize_upload(tmp_path: Path):
+    with pytest.raises(ValueError, match="browser frame_id"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "frame",
+                "payload": {
+                    "data_base64": base64.b64encode(_png_bytes()).decode("ascii"),
+                    "frame_id": "",
+                },
+            },
+            media_root=tmp_path,
+        )
+
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.asyncio
 async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
     class LocalAudio:
