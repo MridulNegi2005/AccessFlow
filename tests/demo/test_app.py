@@ -31,6 +31,7 @@ from accessflow.contracts import (
 )
 from accessflow.engine import Agent
 from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
+from accessflow.perception import modality_coverage
 
 
 demo_path = Path(__file__).parents[2] / "demo" / "app.py"
@@ -2334,6 +2335,7 @@ async def test_multimodal_audio_and_image_reach_one_agent_context(
                 self.audio_seen.set()
             if {"audio", "image"} <= modalities:
                 self.both_seen.set()
+                assert modality_coverage(snapshot.observations).complete
                 return PlanProposal(
                     response="Audio context and screen evidence are available together.",
                     request_complete=True,

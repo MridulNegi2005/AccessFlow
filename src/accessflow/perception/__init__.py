@@ -5,6 +5,16 @@ from .audio import ActivityFrame, AudioBuffer, energy_activity, load_pcm
 from .vad import webrtc_activity
 from .local import LocalPerception, PngFormat, WavFormat, validate_png, validate_wav
 from .vision import OllamaVisionProvider
+from .metrics import (
+    EditCounts,
+    ModalityCoverage,
+    interval_iou,
+    modality_coverage,
+    normalize_words,
+    realtime_factor,
+    word_error_counts,
+    word_error_rate,
+)
 
 __all__ = [
     "ActivitySummary",
@@ -23,4 +33,12 @@ __all__ = [
     "validate_png",
     "validate_wav",
     "webrtc_activity",
+    "EditCounts",
+    "ModalityCoverage",
+    "interval_iou",
+    "modality_coverage",
+    "normalize_words",
+    "realtime_factor",
+    "word_error_counts",
+    "word_error_rate",
 ]
