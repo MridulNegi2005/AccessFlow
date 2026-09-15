@@ -795,3 +795,6 @@ the controller gap is observable. No source, contract or protected files changed
 owned demo/perception paths. Targeted active-frame replacement and image-only informational tests pass upstream;
 the conflict case is blocked before planning because the prior frame is removed. Recorded the required
 pre-replacement comparison/provenance seam; no protected files changed.
+2026-09-16 verification: Opened the existing browser media, console and microphone captures directly. The shown
+viewport has no visible clipping, overlap or broken text. The captures are dated 13–14 September, so fresh
+current-HEAD full-page visual inspection remains open. No source or protected files changed.
