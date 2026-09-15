@@ -6,7 +6,11 @@
 > at commit `fd53aca`: 384 tests passed, 0 xfailed, two unrelated deprecation warnings, Ruff
 > clean, offline dev suite 4/4. See `docs/STATUS.md` "Current status" for the full, sourced
 > fact list; do not quote the numbers in this header past that section.
-> Security review over the whole range has not run yet. Do not push before it passes.
+> Pushed to `origin/mridul/engine` at `2f91d6a` on 16 September 2026 without a security
+> review. Mridul waived the review for that push. The range adds a file access boundary
+> in `src/accessflow/corpus.py`: an allowlist, a document name check and a resolved-path
+> containment check. That code is on the remote unreviewed. Review it before the
+> submission tag.
 
 > Before starting: read `docs/STATUS.md` "Still required" and update it before you finish.
 
