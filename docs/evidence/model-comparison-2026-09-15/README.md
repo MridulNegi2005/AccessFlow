@@ -6,7 +6,10 @@ repository can inspect the cited evidence and regenerate the published table.
 The raw originals stay in ignored `artifacts/`. This bundle contains copies.
 
 See `manifest.json` for the full machine-readable record. This file explains
-the rules in plain language.
+the rules in plain language. `scripts/evidence_bundle.py` is the code that
+derives each run's eligibility label from its trace; the manifest's
+`eligibility`/`eligibility_basis` fields are that code's output, not a
+separate hand-typed judgment.
 
 ## What is in the bundle
 
@@ -49,25 +52,40 @@ Groq-hosted models. It does not attempt to package the full 240-run corpus.
 
 ## Eligibility classification
 
-Every run gets one label. The label decides whether a `backend_failure` counts
-as a quality result or as an infrastructure result. The rule in the review was
-"classify by specific evidence, not blanket exclusion," so each label below is
-backed by a specific field in that run's trace, not by its scenario name.
+Every run gets exactly one label. `scripts/evidence_bundle.py` derives it from
+that run's own trace content: `classify_eligibility()` reads
+`completion_status`, `task_oracle`, and `reasoner_evidence.requests`, and
+returns a label plus a one-line basis quoting the evidence. Nothing here is
+hand-typed. Re-running the function against the trace on disk reproduces the
+same label; `tests/engine/test_evidence_bundle.py` checks that it does.
 
-| Label | Meaning | Count |
-|---|---|---|
-| `scored_pass` | Run completed; task oracle passed. | 43 |
-| `infra_admission_failure` | HTTP 429 from Groq (rate limit or request-too-large) before any model output existed. | 11 |
-| `scored_fail_generated_output` | HTTP 400, "Failed to validate JSON": the provider rejected the model's own output. A genuine failure, not infrastructure. | 1 |
-| `infra_failure_unspecified` | `HTTPStatusError` with no captured status code or body, failing in 0.17 s with zero tokens recorded anywhere. Consistent with a connection failure before generation started. | 1 |
-| `timeout_undetermined_cause` | Scenario-level timeout after one successful, fast model request and no further activity. The cause is not established by this trace alone, so it is reported as unresolved. | 1 |
+Two denominators matter and must not collapse into one:
 
-`infra_admission_failure` and `infra_failure_unspecified` runs count toward
-attempted-run reliability. They do not count toward oracle pass rates for
-model quality, because the request never reached the model. The two other
-failure labels (`scored_fail_generated_output`, `timeout_undetermined_cause`)
-stay in the quality record, because the evidence does not clear the model of
-responsibility for them.
+- **Attempted-run reliability**: every one of the 57 runs, whatever the
+  outcome. This is what `Runs` and `Completed` count in the scoreboard.
+- **Model-output quality**: only runs where the evidence does not show the
+  request was blocked before the model had a chance to respond. This is what
+  `Oracle passed (quality)` counts.
+
+A run leaves the quality denominator only on positive evidence it never
+reached the model. Absence of evidence is not evidence of absence: a failure
+with no captured status code or body does not prove the model was never
+invoked, so it stays inside the quality denominator, counted as a failure,
+rather than being excused from it.
+
+| Label | Meaning | Count | In quality denominator |
+|---|---|---|---|
+| `scored_pass` | Run completed; task oracle passed. | 43 | yes |
+| `scored_fail_generated_output` | HTTP 4xx (not 429) carrying a `failed_generation` body: the provider rejected the model's own generated output. A genuine failure, not infrastructure. | 1 | yes |
+| `timeout_undetermined_cause` | Scenario-level timeout after one successful, fast model request and no further activity. The cause is not established by this trace alone, so it is reported as unresolved, and counted as a failure rather than excused. | 1 | yes |
+| `undetermined_failure` | `HTTPStatusError` with no captured status code or body, failing in 0.17 s with zero tokens recorded anywhere. This is consistent with a connection failure before generation started, but it does not prove one: zero recorded tokens can also mean missing telemetry. Earlier drafts of this bundle called this label `infra_failure_unspecified` and excluded it from quality; that overstated the evidence, so it now counts as a quality failure like the other two undetermined-cause rows. | 1 | yes |
+| `infra_admission_failure` | HTTP 429 from Groq (rate limit or request-too-large) before any model output existed. This is the only label with positive evidence the request never reached the model. | 11 | no |
+
+Quality pass rate: **43/46** (`scored_pass` over every label except
+`infra_admission_failure`). This bundle has no `unscored` runs (a completed
+run with no oracle verdict); if one exists elsewhere, it is excluded from the
+quality denominator too, for the different reason that no verdict was ever
+recorded to count.
 
 ## Sanitisation
 
@@ -117,6 +135,25 @@ The full table in `MODEL_COMPARISON.md` also carries the local-model rows
 including those rows, but only on a machine that still has that local
 evidence.
 
+The scoreboard reads `manifest.json` automatically (it looks one directory up
+from whatever `--artifacts` path it is given) to recover each run's
+`selected_time_utc`, frozen at bundle-build time. A committed trace file's own
+mtime is reset to checkout time by `git clone`/`git checkout`, so the live
+filesystem mtime cannot order these 53 runs correctly after a checkout; the
+frozen value in the manifest survives it and is used instead, joined by the
+trace file's content hash rather than its filename or path.
+
+## Regenerating just the classification
+
+```
+python -c "from scripts.evidence_bundle import recompute_bundle_report; import json; print(json.dumps(recompute_bundle_report('docs/evidence/model-comparison-2026-09-15'), indent=2))"
+```
+
+This recomputes `eligibility`/`eligibility_basis` for all 57 traces straight
+from their content, independent of `manifest.json`. `manifest.json`'s
+per-run `eligibility` and `eligibility_basis` fields are this function's
+output, copied in; they are not a separate, hand-maintained judgment call.
+
 ## What this does and does not prove
 
 - **Reproducible**: the scoreboard table's numbers for these 57 runs, from
@@ -132,14 +169,22 @@ evidence.
   instead of assuming the digest alone is sufficient.
 - **Ordering**: 53 of these 57 runs predate `run_id`/`run_started_at`/
   `run_ended_at` (those fields were added partway through this cohort's
-  collection). Their ordering falls back to file modification time, copied
-  from the original `artifacts/` file onto its sanitised copy so the copy
-  does not invent a false "just now" timestamp. This is still an unverified,
-  best-effort ordering signal, not a recorded chronology, and the scoreboard
-  output says so on every affected row. The remaining 4 runs
-  (`r1-live/qwen-device.jsonl`, `r1-live/qwen-support.jsonl`,
-  `r2-live/qwen-reconcile.jsonl`, `r3-live/device.jsonl`) do carry a recorded
-  `run_id` and UTC start/end time and are ordered by that instead.
+  collection). Their ordering falls back to a timestamp, never to a bare file
+  modification time read at scoreboard-run time: a committed file's mtime is
+  reset to checkout time by `git clone`/`git checkout`, so it cannot carry
+  chronology across a checkout at all, copied onto the sanitised file or not.
+  Instead, `manifest.json` freezes each run's `selected_time_utc` (the mtime
+  observed once, at bundle-build time) and the scoreboard reads that frozen
+  value, joined to the trace file by content hash. This survives a checkout,
+  but it is still the original developer's machine clock, not a verified run
+  timestamp -- the scoreboard labels it `(bundle-frozen mtime, order
+  unverified)` on every affected row and tags any `Latest` verdict built from
+  one `[order unverified]`, rather than asserting a chronology the evidence
+  does not support. Ties are broken by trace file path, deterministically.
+  The remaining 4 runs (`r1-live/qwen-device.jsonl`,
+  `r1-live/qwen-support.jsonl`, `r2-live/qwen-reconcile.jsonl`,
+  `r3-live/device.jsonl`) do carry a recorded `run_id` and UTC start/end time,
+  which always outranks both the frozen and the live mtime fallback.
 - **Declared hardware**: for these Groq-hosted runs, `declared_hardware` in
   the manifest describes the requesting client machine, not Groq's serving
   hardware, which the provider does not disclose.

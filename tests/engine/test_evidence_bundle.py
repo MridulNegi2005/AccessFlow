@@ -10,6 +10,8 @@ import json
 import re
 from pathlib import Path
 
+from scripts.evidence_bundle import (QUALITY_EXCLUDED_LABELS, classify_eligibility, content_sha256,
+                                     recompute_bundle_report)
 from scripts.model_scoreboard import collect_records
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -80,3 +82,82 @@ def test_bundle_is_self_contained_no_artifacts_reference_required():
     # bundle itself.
     for path in TRACES.rglob("*.jsonl"):
         assert "artifacts" not in path.relative_to(TRACES).parts
+
+
+# --- A4: manifest eligibility must be reproducible from trace content, not hand-typed ---
+
+def test_manifest_eligibility_is_reproducible_from_each_traces_own_content():
+    """This is the test that must fail if someone hand-edits a label in manifest.json
+    without the trace changing, or if a trace changes without the manifest being
+    regenerated. Recomputes classify_eligibility() straight from each trace file on
+    disk and compares against what the manifest claims for that same file.
+    """
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    checked = 0
+    for run in manifest["runs"]:
+        path = BUNDLE / run["bundle_path"]
+        text = path.read_text(encoding="utf-8")
+        row = None
+        for line in text.splitlines():
+            if not line.strip():
+                continue
+            candidate = json.loads(line)
+            if isinstance(candidate, dict) and candidate.get("type") == "run_metadata":
+                row = candidate
+                break
+        assert row is not None, f"no run_metadata row in {run['bundle_path']}"
+        label, basis = classify_eligibility(row)
+        assert label == run["eligibility"], (
+            f"{run['bundle_path']}: manifest says {run['eligibility']!r}, "
+            f"recomputed from the trace says {label!r} ({basis})")
+        assert basis == run["eligibility_basis"]
+        checked += 1
+    assert checked == manifest["run_count"]
+
+
+def test_manifest_trace_hash_matches_recomputed_content_hash():
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    for run in manifest["runs"]:
+        path = BUNDLE / run["bundle_path"]
+        assert content_sha256(path) == run["trace_sha256_in_bundle"], run["bundle_path"]
+
+
+def test_recompute_bundle_report_matches_manifest_run_count_and_counts():
+    report = recompute_bundle_report(BUNDLE)
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    assert report["run_count"] == manifest["run_count"]
+    assert report["eligibility_counts"] == manifest["eligibility_counts"]
+
+
+def test_legacy_infra_failure_unspecified_label_is_gone():
+    # The review found this label overstated the evidence (no captured status/body
+    # does not prove the request never reached the model). It must not reappear.
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    labels = {run["eligibility"] for run in manifest["runs"]}
+    assert "infra_failure_unspecified" not in labels
+    assert "undetermined_failure" in labels
+
+
+def test_eligibility_counts_sum_to_run_count_and_every_label_is_placed_in_exactly_one_denominator():
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    counts = manifest["eligibility_counts"]
+    assert sum(counts.values()) == manifest["run_count"]
+    quality_total = sum(n for label, n in counts.items() if label not in QUALITY_EXCLUDED_LABELS)
+    quality_pass = counts.get("scored_pass", 0)
+    assert quality_total == 46
+    assert quality_pass == 43
+    # generated-output failures and unresolved timeouts must stay counted, not dropped
+    assert counts.get("scored_fail_generated_output", 0) == 1
+    assert counts.get("timeout_undetermined_cause", 0) == 1
+    assert counts.get("undetermined_failure", 0) == 1
+
+
+def test_scoreboard_quality_pass_rate_over_the_bundle_is_43_of_46_not_43_of_57():
+    records, exclusions = collect_records(TRACES)
+    assert exclusions == []
+    non_ablated = [r for r in records if not r["ablated"]]
+    assert len(non_ablated) == 57
+    quality_scored = [r for r in non_ablated
+                      if r["oracle"] is not None and r["eligibility"] not in QUALITY_EXCLUDED_LABELS]
+    assert len(quality_scored) == 46
+    assert sum(1 for r in quality_scored if r["oracle"]) == 43

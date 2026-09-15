@@ -3,11 +3,11 @@
   "cohort_selection_rule": "All non-ablated runs in artifacts/ whose backend is one of groq/qwen/qwen3.8-27b, groq/openai/gpt-oss-120b, groq/openai/gpt-oss-20b, groq/qwen/qwen3.6-27b (the four Groq-hosted models named in the 'Current recommendation' and 'Known provider limits' sections of MODEL_COMPARISON.md), on one of the six live-dev-* text fixtures that back the per-scenario matrix: development-text-correction-01, device-correction-before-plan, lost-response-status-reconciliation, support-read-then-service, stale-read-after-correction, stale-read-after-device-correction. Audio and vision live-dev fixtures (live-dev-audio-correction-01, live-dev-frame-device-panel-01) are excluded: that evidence belongs to the separate audio/vision E2E slice this task must not touch. Local (Ollama/NVIDIA) models are excluded: they are documented separately in LOCAL_MODEL_2026-09-13.md and INFERENCE_TUNING_2026-09-14.md and run on different hardware.",
   "run_count": 57,
   "eligibility_counts": {
-    "scored_pass": 43,
     "infra_admission_failure": 11,
-    "timeout_undetermined_cause": 1,
     "scored_fail_generated_output": 1,
-    "infra_failure_unspecified": 1
+    "scored_pass": 43,
+    "timeout_undetermined_cause": 1,
+    "undetermined_failure": 1
   },
   "sanitization": {
     "issue": "16 traces were reported by the orchestrator to contain the Groq organization id in reasoner_evidence.requests[].error_detail (raw provider error bodies from the pre-R5 diagnostics path). An independent repo-wide grep for the pattern org_[0-9a-zA-Z]{10,}, excluding .git and .venv, found the identifier in 13 files under artifacts/ (11 *.jsonl run traces and 2 report.json summaries), all sharing the same single organization id value (not reproduced here). No API keys or bearer tokens were found in any file considered for this bundle.",
@@ -132,7 +132,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7560, Requested 1817. ...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "50ba6dda0a73f93cefd3324c76f8e6d62ff3d076975acc965a07f5de229c6fc8"
     },
@@ -761,7 +761,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6542, Requested 1930. ...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "1b16a56352c2b2fa723f779067647d83ee0099a76e6c7466351d00b8d7a72faf"
     },
@@ -820,7 +820,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7618, Requested 2319. ...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "8d52e88505c154259fd10ab53c360cac643e85d5e8981b898ddedbe3133d0344"
     },
@@ -1219,7 +1219,7 @@
         "cancelled": 0
       },
       "eligibility": "timeout_undetermined_cause",
-      "eligibility_basis": "Scenario-level timeout at the 100s wait budget after exactly one successful, fast (1.45s) model request. No error was recorded. Cause is not established by this trace alone (could be a wait-state never resolved, or a plan that needed a follow-up turn that never arrived) -- reported as unresolved rather than guessed.",
+      "eligibility_basis": "Scenario-level timeout. The trace does not establish whether the model or its environment stalled.",
       "sanitized": false,
       "trace_sha256_in_bundle": "da9adad002d177bee9df31409c91939b65767a207699fe4562dc77c868f0f1d3"
     },
@@ -1335,7 +1335,7 @@
         "cancelled": 1
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1121. The req...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "dbd7db6ff954f49b46c11feaa33e8850c070d4245dac9ed8eae44e7f18adb5a9"
     },
@@ -1394,7 +1394,7 @@
         "cancelled": 1
       },
       "eligibility": "scored_fail_generated_output",
-      "eligibility_basis": "HTTP 400 'Failed to validate JSON' from Groq: the provider rejected the model's own generated output, not an admission/infra rejection. Scored as a genuine failure.",
+      "eligibility_basis": "HTTP 400, provider rejected generated output: {\"error\":{\"message\":\"Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"json_validate_failed\",\"failed_generation\":\"\"}...(truncated)",
       "sanitized": false,
       "trace_sha256_in_bundle": "82d0d840c7ff0d7d0746647b3e44f9552c5b22e666e113e16f8912d11ab376a8"
     },
@@ -1453,7 +1453,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1271. The req...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "924e2f436a920b581c2526dd8947c26a61c6ce8ba60fd71b72441fbee709e850"
     },
@@ -1512,7 +1512,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Used 998, Requested 66...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "fbecafe04a64b6d48bd7a527b019a618edbe93cebd6a11fa5d206ed2e11b02af"
     },
@@ -1571,7 +1571,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1021. The req...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "3aabe817481702859377e67f3be0a4338cbbffd850f35f6785a9999d8d72a579"
     },
@@ -1630,7 +1630,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1296. The req...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "b5c3a343b9b89d7d80dff240051e8d0900c026ff4e956678a84f6d42334af1db"
     },
@@ -1803,7 +1803,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 6688, Requested 12...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "057c32d20a08b03ba391756c87ac474f631f1443bed2c2163fae6b4461d812f4"
     },
@@ -2665,7 +2665,7 @@
         "cancelled": 1
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.8-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1990. The req...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "b9ab221c37ad529d01ba1e517a19bfd4a7b59137f3f33bd6639eb3d4e3969b29"
     },
@@ -3127,7 +3127,7 @@
         "cancelled": 0
       },
       "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 6757, Requested 16...(truncated)",
       "sanitized": true,
       "trace_sha256_in_bundle": "d76bfe9a709f353b1c0d55eaaea9bfaadf9805e41fbc6e3a85bb77876ddcec98"
     },
@@ -3183,8 +3183,8 @@
         "failure": 1,
         "cancelled": 0
       },
-      "eligibility": "infra_failure_unspecified",
-      "eligibility_basis": "HTTPStatusError with no captured status code or body, failing in 0.17s with zero prompt/completion tokens recorded anywhere in the request. Consistent with a connection-level failure prior to any generation; classified as infrastructure by exception type and absence of generated content, not by assumption.",
+      "eligibility": "undetermined_failure",
+      "eligibility_basis": "HTTPStatusError with no captured status/body, failing in 0.17200000000593718s; cause not established by this trace alone.",
       "sanitized": false,
       "trace_sha256_in_bundle": "c867be37036d92b6a63e5526cc0926b22e4b7441cdea8b1c3d74e564808b4173"
     },
