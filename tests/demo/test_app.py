@@ -3,6 +3,7 @@ import asyncio
 import base64
 import importlib.util
 import json
+import re
 import struct
 import threading
 import time
@@ -118,6 +119,29 @@ def test_browser_message_generates_source_identity_when_omitted():
 
     assert transcript.payload.utterance_id
     assert frame.payload.frame_id
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("timestamp", float("inf"), "browser timestamp must be a finite non-negative number"),
+        ("timestamp", True, "browser timestamp must be a finite non-negative number"),
+        ("revision", "1", "browser revision must be a non-negative integer"),
+        ("final", "yes", "browser final must be a boolean"),
+        ("text", 7, "browser text must be a string"),
+        ("speech_start", 4.0, "browser speech_end must be at least speech_start"),
+    ],
+)
+def test_browser_message_rejects_coerced_or_inconsistent_timing_values(field, value, message):
+    payload = {"path": "input", "text": "spoken", "speech_end": 0}
+    if field in {"timestamp"}:
+        browser_message = {"kind": "transcript", "timestamp": value, "payload": payload}
+    else:
+        payload[field] = value
+        browser_message = {"kind": "transcript", "payload": payload}
+
+    with pytest.raises(ValueError, match=re.escape(message)):
+        event_from_message("session-1", browser_message)
 
 
 @pytest.mark.asyncio
