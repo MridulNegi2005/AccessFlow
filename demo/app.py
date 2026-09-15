@@ -91,7 +91,7 @@ class DemoPerception:
         else:
             vision_model = getattr(self._vision_backend, "model", None)
             vision_backend_name = getattr(self._vision_backend, "backend_name", None)
-            if vision_model:
+            if vision_backend_name and vision_backend_name.startswith("ollama/") and vision_model:
                 labels.append(f"local/Ollama {vision_model} image")
             elif vision_backend_name:
                 labels.append(f"{vision_backend_name} image")

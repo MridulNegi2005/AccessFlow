@@ -712,3 +712,7 @@ and adding exact-bound, oversized-item and request-completeness assertions. Vali
 2026-09-15: Used a read-only subagent audit to identify the missing syntactically invalid vision JSON
 scenario. Added direct provider coverage and WebSocket recovery coverage while preserving the existing
 classified failure boundary. Validation: 131 passed, 4 strict xfailed; no protected files changed.
+
+2026-09-15: Added a truthful backend-label regression after auditing injected vision provenance. The
+demo now requires an explicit ollama/ backend identity before exposing an Ollama model label.
+Validation: 132 passed, 4 strict xfailed; no protected files changed.
