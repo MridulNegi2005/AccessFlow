@@ -258,3 +258,8 @@ expected failure with its additive proposal recorded.
 **Status:** Full suite 162 passed, 5 strict expected failures; demo suite 68 passed, 4 strict expected
 failures; perception suite 78 passed. Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change.
+
+2026-09-16 verification: Added route-level cleanup coverage for a valid uploaded WAV. The file is present
+inside the live session directory and the temporary directory is removed after disconnect. Full suite:
+163 passed, 5 strict expected failures; demo 69 passed plus 4 strict expected failures; perception 78
+passed. No protected files changed.

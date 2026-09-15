@@ -425,7 +425,7 @@ all three event modalities together and asserts transcript timing, source identi
 frame timing and truthful backend labels. A strict expected-failure example records that the current
 turn policy has no additive activity-timing channel; the proposal remains in `docs/CONTRACT_PROPOSALS.md`.
 
-**Status:** Full suite 162 passed, 5 strict expected failures; demo suite 68 passed, 4 strict expected
+**Status:** Full suite 163 passed, 5 strict expected failures; demo suite 69 passed, 4 strict expected
 failures; perception suite 78 passed plus 1 strict expected failure. No engine, contract, dependency or
 lockfile change.
 
@@ -450,3 +450,6 @@ tests/demo/test_app.py::test_demo_perception_does_not_admit_work_after_close, co
 DemoPerception shutdown. The sender boundary also now absorbs closed-peer transport failures during route
 cleanup. The configured composition companion carries text, a real WAV fixture and a real PNG through one
 session while asserting source identity, timestamps, revisions and backend labels.
+The route cleanup companion, tests/demo/test_app.py::test_websocket_cleans_valid_session_media_after_disconnect,
+confirms that valid uploaded media exists during the session and that the temporary session directory is
+removed after disconnect.
