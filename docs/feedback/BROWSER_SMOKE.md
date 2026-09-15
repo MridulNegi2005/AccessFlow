@@ -2,7 +2,7 @@
 
 Date and branch: 2026-09-14 / atishay/perception
 
-Status: FUNCTIONAL EVIDENCE COMPLETE; PIXEL INSPECTION OPEN
+Status: FUNCTIONAL EVIDENCE COMPLETE; PIXEL INSPECTION PARTIAL
 
 The functional browser smoke passed in a temporary isolated Chrome session, including the
 served AudioWorklet microphone path. A second isolated run used the machine's real microphone
@@ -39,9 +39,16 @@ the captured PNG.
 | Browser local-ASR mode | Fresh Chrome used the cached Faster Whisper snapshot; the audio acknowledgment reported faster-whisper/cpu-int8 and included the recognized speech | PASS |
 | Combined media session | Fresh Chrome sent a WAV, then a PNG and paired transcript in one browser session; both media statuses and finals were observed | PASS |
 | Layout overflow | body scroll width 741 was below inner viewport width 756 | PASS |
-| Visual pixel inspection | Captures were produced, but the local image helper could not open them | UNVERIFIED |
+| Visual pixel inspection | Direct inspection of the existing 13–14 September captures found no visible clipping, overlap or broken text in the shown viewport; fresh current-HEAD full-page inspection remains open | PARTIAL |
 | Console and hydration errors | Fresh CDP run returned no Runtime exceptions, console errors, deprecation warnings or page errors | PASS |
 
 Captured files during the run: browser-smoke-initial.png, browser-smoke-media-final.png,
 browser-smoke-microphone-final.png and browser-smoke-console-final.png
 in the local checkout. They contain only mock/demo data and are local evidence artifacts.
+
+## 2026-09-16 - Direct capture inspection
+
+The existing media, console and microphone captures were opened directly and their shown
+viewport has no visible clipping, overlap or broken text. This reduces the earlier image-helper
+uncertainty for those files. They remain captures from 13–14 September, so a fresh current-HEAD
+full-page visual inspection is still open.

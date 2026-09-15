@@ -776,3 +776,6 @@ and image observations, alongside existing source identity checks. No protected 
 transcript guard proving pause timing cannot override completion. Shared engine/controller wiring remains pending.
 Validation: 166 passed, 4 strict xfailed; demo 70 passed plus 4 strict xfailed; perception 80 passed. No protected
 files changed.
+2026-09-16: Opened the existing browser media, console and microphone captures directly. The shown viewport has no
+visible clipping, overlap or broken text. The captures are dated 13–14 September, so fresh current-HEAD full-page
+visual inspection remains open. No source or protected files changed.

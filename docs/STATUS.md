@@ -129,8 +129,9 @@ Updated 16 September 2026.
   wiring remains a pending additive proposal. Proposals and corresponding integrated-branch behavior are
   available for the engine owner; no engine or contract file was changed here.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
-  open. Pixel inspection is also unverified because the local image helper could not open the
-  captures.
+  open. Direct inspection of the existing 13–14 September captures shows no visible clipping,
+  overlap or broken text in the shown viewport; a fresh current-HEAD full-page visual inspection
+  remains open.
 - origin/mridul/engine was fetched at 919ed27 for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
 
