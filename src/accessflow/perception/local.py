@@ -69,15 +69,20 @@ class PngFormat:
     color_type: int
 
 
+MAX_PNG_FILE_BYTES = 8 * 1024 * 1024
 MAX_PNG_DECODED_BYTES = 64 * 1024 * 1024
 
 
 def validate_png(path: Path) -> PngFormat:
     """Validate PNG chunks, CRCs, compressed data and termination without decoding pixels."""
     try:
+        if path.stat().st_size > MAX_PNG_FILE_BYTES:
+            raise ValueError(f"PNG file is too large: {path}")
         data = path.read_bytes()
     except OSError as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
+    if len(data) > MAX_PNG_FILE_BYTES:
+        raise ValueError(f"PNG file is too large: {path}")
 
     signature = b"\x89PNG\r\n\x1a\n"
     if len(data) < len(signature) or data[:8] != signature:
