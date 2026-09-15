@@ -205,11 +205,14 @@ class _PendingWork:
 
 
 class _LatestWorker:
-    """Run one provider call at a time while replacing obsolete pending work."""
+    """Run one provider call at a time while bounding pending work per source."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, max_pending_keys: int = 8) -> None:
+        if max_pending_keys < 1:
+            raise ValueError("max_pending_keys must be positive")
         self._lock = asyncio.Lock()
-        self._pending: _PendingWork | None = None
+        self._pending: dict[Hashable, _PendingWork] = {}
+        self._max_pending_keys = max_pending_keys
         self._latest_tokens: dict[Hashable, int] = {}
         self._latest_revisions: dict[Hashable, int] = {}
         self._next_token = 0
@@ -236,29 +239,34 @@ class _LatestWorker:
             self._latest_tokens[key] = token
             if revision is not None:
                 self._latest_revisions[key] = revision
-            previous = self._pending
+            previous = self._pending.get(key)
             if previous is not None and not previous.result.done():
                 previous.result.set_result(_SUPERSEDED)
-            self._pending = _PendingWork(key, token, operation, result)
+            if previous is None and len(self._pending) >= self._max_pending_keys:
+                oldest_key = next(iter(self._pending))
+                oldest = self._pending.pop(oldest_key)
+                if not oldest.result.done():
+                    oldest.result.set_result(_SUPERSEDED)
+            self._pending[key] = _PendingWork(key, token, operation, result)
             if self._task is None or self._task.done():
                 self._task = asyncio.create_task(self._run())
         try:
             return await result
         except asyncio.CancelledError:
             async with self._lock:
-                pending = self._pending
+                pending = self._pending.get(key)
                 if pending is not None and pending.result is result:
-                    self._pending = None
+                    del self._pending[key]
             raise
 
     async def _run(self) -> None:
         while True:
             async with self._lock:
-                if self._pending is None:
+                if not self._pending:
                     self._task = None
                     return
-                work = self._pending
-                self._pending = None
+                key = next(iter(self._pending))
+                work = self._pending.pop(key)
                 self._active = work
             try:
                 value = await work.operation()
@@ -283,12 +291,13 @@ class _LatestWorker:
         async with self._lock:
             self._closed = True
             work = self._active
-            pending = self._pending
-            self._pending = None
+            pending = list(self._pending.values())
+            self._pending.clear()
             task = self._task
             self._task = None
-            if pending is not None and not pending.result.done():
-                pending.result.set_result(_SUPERSEDED)
+            for item in pending:
+                if not item.result.done():
+                    item.result.set_result(_SUPERSEDED)
             if work is not None and not work.result.done():
                 work.result.set_result(_SUPERSEDED)
         if task is not None and not task.done():

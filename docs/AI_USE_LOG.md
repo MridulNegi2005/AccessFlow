@@ -812,6 +812,12 @@ No protected files changed.
 2026-09-16 verification: Added a browser WebSocket ready-state guard so early text, WAV or PNG actions produce
 a labeled connecting error instead of throwing. Extended the existing page regression; demo suite: 70 passed,
 4 strict xfailed. No protected files changed.
+2026-09-16 verification: Fixed cross-utterance audio starvation by replacing pending work per utterance key while
+keeping a bounded pending-key limit. Added the requested race regression; full suite: 175 passed, 4 strict xfailed.
+No protected files changed.
 2026-09-16 verification: Fresh shallow public clone checked out atishay/perception from the shared GitHub
 repository and included ATISHAY_START_HERE.md at commit 4892c185. The disposable clone was removed afterward;
 no source or protected files changed.
+2026-09-16 verification: Ran the served demo through a real local Uvicorn/WebSocket session with WAV, PNG and
+transcript inputs. The sequential finals completed and the last context retained both audio and image evidence.
+No protected files changed.
