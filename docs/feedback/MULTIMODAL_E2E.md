@@ -354,3 +354,15 @@ forcibly stop an arbitrary synchronous function already running in a worker thre
 
 **Status:** Full suite 141 passed, 4 strict expected failures; demo suite 59 passed, 4 strict expected
 failures; perception suite 66 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay cancellation cleanup guard
+
+**Task:** Ensure cancellation of a bounded local perception observer releases its async task cleanly.
+
+**Changes:** Moved the initial scheduling yield inside LocalPerception's timeout cleanup guard and added a
+regression that cancels an already-running audio observation, verifies prompt observer cancellation,
+and waits for the synchronous worker to finish. This records the non-force-cancellable worker limit
+honestly.
+
+**Status:** Full suite 142 passed, 4 strict expected failures; demo suite 59 passed, 4 strict expected
+failures; perception suite 67 passed. No engine, contract, dependency or lockfile change.
