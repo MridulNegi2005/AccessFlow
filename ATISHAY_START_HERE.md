@@ -23,9 +23,9 @@ comparison or provenance signal. Do not edit the controller or shared contracts 
 resolve these gaps; keep the failing example and proposal additive.
 
 The branch is clean and the remote is synchronized. Direct inspection of the existing
-browser captures found no visible clipping, overlap or broken text in the shown
-viewport; fresh current-HEAD full-page visual inspection, live model quality, human
-speech quality, feedback and final packaging remain open.
+browser captures and a current-head 1280x1600 headless Chrome capture found no visible
+clipping, overlap or broken text in the inspected viewports; live interactive device behavior,
+live model quality, human speech quality, feedback and final packaging remain open.
 A fresh shallow public-clone check on 16 September 2026 checked out
 `atishay/perception`, resolved `origin` to the shared GitHub repository and included
 this guide at commit `4892c185`.

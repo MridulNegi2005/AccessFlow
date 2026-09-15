@@ -109,6 +109,8 @@ Updated 16 September 2026.
   present Microphone Array without a fake audio-device flag and completed the real getUserMedia,
   WAV upload and mock final path. The fresh CDP run also shows the mock final carrying prior
   audio and image context, with no console or page errors or horizontal overflow.
+- A current-head local headless Chrome capture at 1280x1600 shows the full demo page with no visible
+  clipping, overlap or broken text; live model quality and interactive device behavior remain separate evidence gaps.
 - The demo reasoner now bounds prior multimodal context to 16,384 characters while retaining the newest evidence by truncating only the item that reaches the remaining capacity. Regressions cover recent evidence, oldest-history omission, the exact bound for an oversized prior item, and request completeness.
 - LocalPerception now gives each session one provider call plus one pending item per modality, coalesces obsolete same-session frames and same-utterance audio revisions, suppresses stale results and keeps audio/image workers independent. DemoPerception retains the vision worker for the session and closes active and queued work during WebSocket shutdown; synchronous worker threads remain non-force-cancellable.
 - The demo WebSocket now serializes controller events, media statuses and recoverable input errors through one outbound sender, preventing concurrent writes from interleaving. A route regression holds a controller send open while an invalid frame is received and confirms no overlapping WebSocket sends.
@@ -145,9 +147,9 @@ Updated 16 September 2026.
   wiring remains a pending additive proposal. Proposals and corresponding integrated-branch behavior are
   available for the engine owner; no engine or contract file was changed here.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
-  open. Direct inspection of the existing 13–14 September captures shows no visible clipping,
-  overlap or broken text in the shown viewport; a fresh current-HEAD full-page visual inspection
-  remains open.
+  open. Direct inspection of the existing 13–14 September captures and a current-head 1280x1600
+  headless Chrome capture show no visible clipping, overlap or broken text in the inspected viewports;
+  live interactive device behavior remains open.
 - origin/mridul/engine was fetched at 919ed27 for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
 
