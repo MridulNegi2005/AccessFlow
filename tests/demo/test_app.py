@@ -278,6 +278,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "pendingMessages.push(message)" in html
     assert "The connection queue is full." in html
     assert "The session is closed." in html
+    assert 'activeUtteranceId' in html
+    assert 'revision += 1' in html
     assert 'card.innerHTML' not in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
