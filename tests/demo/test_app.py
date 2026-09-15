@@ -901,14 +901,20 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
             return
 
     class Segment:
-        text = "Please inspect the attached screen"
+        def __init__(self, text):
+            self.text = text
 
     class WhisperModel:
         calls = []
 
         def transcribe(self, path, *, beam_size):
             WhisperModel.calls.append((path, beam_size))
-            return [Segment()], {}
+            text = (
+                "Please inspect the initial screen"
+                if len(WhisperModel.calls) == 1
+                else "Please inspect the corrected screen"
+            )
+            return [Segment(text)], {}
 
     model_dir = tmp_path / "whisper-model"
     model_dir.mkdir()
@@ -931,9 +937,12 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
 
     class CapturingReasoner(demo_app.DemoReasoner):
         latest_view = None
+        first_audio_seen = threading.Event()
 
         async def plan(self, view, manifests):
             CapturingReasoner.latest_view = view.model_copy(deep=True)
+            if any(item.modality == "audio" and item.revision == 2 for item in view.observations):
+                CapturingReasoner.first_audio_seen.set()
             if {item.modality for item in view.observations} >= {"audio", "image", "text"}:
                 return PlanProposal(
                     response="Text, audio context and screen evidence are available together.",
@@ -973,20 +982,26 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
         with TestClient(demo_app.app) as client:
             with client.websocket_connect("/ws") as socket:
                 status = socket.receive_json()
-                socket.send_json(
-                    {
-                        "kind": "audio",
-                        "timestamp": 12.5,
-                        "payload": {
-                            "data_base64": encoded_audio,
-                            "utterance_id": "real-audio",
-                            "revision": 2,
-                            "speech_start": 8.25,
-                            "speech_end": 11.75,
-                        },
-                    }
-                )
-                audio_status, audio_messages = receive_media_status(socket, "audio")
+                for revision, speech_start, speech_end in ((2, 8.25, 11.75), (3, 12.0, 15.5)):
+                    socket.send_json(
+                        {
+                            "kind": "audio",
+                            "timestamp": speech_end + 0.75,
+                            "payload": {
+                                "data_base64": encoded_audio,
+                                "utterance_id": "real-audio",
+                                "revision": revision,
+                                "speech_start": speech_start,
+                                "speech_end": speech_end,
+                            },
+                        }
+                    )
+                    audio_status, audio_messages = receive_media_status(socket, "audio")
+                    if revision == 2:
+                        first_audio_status, first_audio_messages = audio_status, audio_messages
+                        assert CapturingReasoner.first_audio_seen.wait(timeout=1)
+                    else:
+                        revised_audio_status, revised_audio_messages = audio_status, audio_messages
                 socket.send_json(
                     {
                         "kind": "transcript",
@@ -1009,13 +1024,19 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
                     }
                 )
                 frame_status, frame_messages = receive_media_status(socket, "frame")
-                outputs = audio_messages + frame_messages + _receive_controller_outputs(socket)
+                outputs = (
+                    first_audio_messages
+                    + revised_audio_messages
+                    + frame_messages
+                    + _receive_controller_outputs(socket)
+                )
 
         final = next(item for item in outputs if item["kind"] == "final")
         assert status["payload"]["perception_backend"] == (
             "local/Faster Whisper CPU INT8 audio + local/Ollama gemma3:4b image"
         )
-        assert audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
+        assert first_audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
+        assert revised_audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
         assert frame_status["payload"] == {"media_received": "frame", "source_id": "real-frame"}
         assert final["payload"] == {
             "text": "Text, audio context and screen evidence are available together.",
@@ -1028,16 +1049,17 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
         assert observations["spoken-question"].speech_start == 12.0
         assert observations["spoken-question"].speech_end == 13.5
         assert observations["spoken-question"].backend == "demo/mock-text"
-        assert observations["real-audio"].revision == 2
-        assert observations["real-audio"].speech_start == 8.25
-        assert observations["real-audio"].speech_end == 11.75
+        assert observations["real-audio"].revision == 3
+        assert observations["real-audio"].speech_start == 12.0
+        assert observations["real-audio"].speech_end == 15.5
+        assert observations["real-audio"].text == "Please inspect the corrected screen"
         assert observations["real-audio"].backend == "faster-whisper/cpu-int8"
         assert observations["real-frame"].speech_start == 17.25
         assert observations["real-frame"].speech_end == 17.25
         assert observations["real-frame"].backend == "ollama/gemma3:4b"
         assert observations["real-frame"].text == "screen shows the approval prompt"
-        assert len(WhisperModel.calls) == 1
-        assert WhisperModel.calls[0][1] == 5
+        assert len(WhisperModel.calls) == 2
+        assert [call[1] for call in WhisperModel.calls] == [5, 5]
         request = VisionHandler.requests[-1]
         assert request["model"] == "gemma3:4b"
         assert request["images"] == [base64.b64encode(png).decode("ascii")]

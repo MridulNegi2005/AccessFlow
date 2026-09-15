@@ -768,3 +768,6 @@ strict xfailed; perception 78 passed. No protected files changed.
 2026-09-16 verification: Added a route-level cleanup regression proving a valid uploaded WAV is present
 inside the live session directory and removed after WebSocket disconnect. Full validation: 163 passed,
 5 strict xfailed; demo 69 passed plus 4 strict xfailed; perception 78 passed. No protected files changed.
+2026-09-16 verification: Extended the configured WebSocket composition regression with two WAV hypotheses
+for one utterance. It now proves the later revision and timing replace the earlier audio while text and PNG
+remain in the same final context. Focused and full validation remained green; no protected files changed.
