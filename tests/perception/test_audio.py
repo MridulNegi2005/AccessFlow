@@ -91,6 +91,20 @@ def test_checked_in_speech_fixture_has_declared_format():
     )
 
 
+def test_wav_validation_rejects_truncated_pcm_payload(tmp_path: Path):
+    wav_path = tmp_path / "truncated.wav"
+    with wave.open(str(wav_path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(16_000)
+        handle.writeframes(b"\x00\x00" * 8)
+
+    wav_path.write_bytes(wav_path.read_bytes()[:-2])
+
+    with pytest.raises(ValueError, match="truncated"):
+        validate_wav(wav_path)
+
+
 def test_activity_summary_reports_windows_and_trailing_pause_without_completion():
     frames = (
         ActivityFrame(0.0, 0.02, 0, False),

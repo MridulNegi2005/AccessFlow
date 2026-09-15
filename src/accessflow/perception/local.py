@@ -41,6 +41,14 @@ def validate_wav(path: Path) -> WavFormat:
                 sample_rate=handle.getframerate(),
                 frames=handle.getnframes(),
             )
+            frame_width = metadata.channels * metadata.sample_width
+            remaining = metadata.frames
+            while remaining:
+                chunk_frames = min(remaining, 8192)
+                chunk = handle.readframes(chunk_frames)
+                if len(chunk) != chunk_frames * frame_width:
+                    raise ValueError(f"WAV PCM payload is truncated: {path}")
+                remaining -= chunk_frames
     except (OSError, EOFError, wave.Error) as error:
         raise ValueError(f"Invalid WAV file: {path}") from error
 
