@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import math
 from pathlib import Path
 from urllib.error import HTTPError
 
@@ -126,6 +127,11 @@ def test_ollama_provider_surfaces_http_quota_exhaustion(tmp_path: Path):
         ({"endpoint": " "}, "endpoint cannot be empty"),
         ({"endpoint": "https://example.com/api/generate"}, "endpoint must use a loopback host"),
         ({"timeout_s": 0}, "timeout_s must be positive"),
+        ({"timeout_s": math.nan}, "timeout_s must be positive"),
+        ({"timeout_s": math.inf}, "timeout_s must be positive"),
+        ({"timeout_s": True}, "timeout_s must be positive"),
+        ({"model": None}, "model cannot be empty"),
+        ({"endpoint": None}, "endpoint cannot be empty"),
     ],
 )
 def test_ollama_provider_rejects_invalid_configuration(kwargs, message):

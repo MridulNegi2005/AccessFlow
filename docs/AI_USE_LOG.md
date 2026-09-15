@@ -806,6 +806,9 @@ including Adam7 row sizing, before vision inference. Added incomplete-scanline c
 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Added a valid Adam7 PNG regression and corrected empty-pass sizing; full suite: 169
 passed, 4 strict xfailed. No protected files changed.
+2026-09-16 verification: Normalized Ollama vision configuration validation for non-string model/endpoints and
+non-finite, boolean or non-positive timeouts. Added focused cases; full suite: 174 passed, 4 strict xfailed.
+No protected files changed.
 2026-09-16 verification: Fresh shallow public clone checked out atishay/perception from the shared GitHub
 repository and included ATISHAY_START_HERE.md at commit 4892c185. The disposable clone was removed afterward;
 no source or protected files changed.

@@ -122,9 +122,10 @@ Updated 16 September 2026.
 - A fresh shallow public-clone check on 16 September 2026 checked out `atishay/perception`, resolved `origin` to the shared GitHub repository and included `ATISHAY_START_HERE.md` at commit `4892c185`.
 - WAV validation now reads the declared PCM frames in bounded chunks and rejects a truncated payload before audio inference; the new regression passes in the full multimodal suite.
 - PNG validation now checks decompressed scanline sizing and filter bytes, including Adam7 row sizing, before an image reaches a vision provider; incomplete scanline coverage passes in the full suite.
+- Ollama vision configuration now rejects non-string model/endpoints and non-finite, boolean or non-positive timeouts with stable ValueErrors before a request is attempted.
 
-- Final verification is 169 tests passed with 4 strict expected failures, including 70 passing demo
-  tests and 83 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 174 tests passed with 4 strict expected failures, including 70 passing demo
+  tests and 88 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before
