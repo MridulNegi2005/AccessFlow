@@ -721,3 +721,8 @@ Validation: 132 passed, 4 strict xfailed; no protected files changed.
 non-forcible thread-cancellation limitation. Implemented modality-specific timeout classification,
 direct audio/image tests, configuration validation, and WebSocket recovery. Validation: 141 passed,
 4 strict xfailed; no protected files changed.
+
+2026-09-15: Applied the subagent-reviewed cancellation cleanup fix by moving LocalPerception's
+scheduling yield inside its child-task cleanup guard. Added a regression for observer cancellation
+while a synchronous worker continues to completion. Validation: 142 passed, 4 strict xfailed; no
+protected files changed.

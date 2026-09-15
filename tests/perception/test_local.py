@@ -165,6 +165,43 @@ async def test_audio_transcriber_timeout_is_classified(tmp_path: Path):
     assert finished.is_set()
 
 
+async def test_cancelled_audio_provider_releases_observer(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    started = threading.Event()
+    finished = threading.Event()
+
+    def transcriber(path: Path) -> str:
+        started.set()
+        try:
+            time.sleep(0.2)
+            return "late transcript"
+        finally:
+            finished.set()
+
+    event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="cancelled-audio"),
+    )
+    observation_task = asyncio.create_task(
+        _one(LocalPerception(transcriber=transcriber, timeout_s=1), event)
+    )
+    for _ in range(100):
+        if started.is_set():
+            break
+        await asyncio.sleep(0.01)
+    assert started.is_set()
+
+    observation_task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await observation_task
+    for _ in range(100):
+        if finished.is_set():
+            break
+        await asyncio.sleep(0.01)
+    assert finished.is_set()
+
+
 async def test_slow_audio_transcriber_does_not_block_event_loop(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)

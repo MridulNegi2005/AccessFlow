@@ -253,8 +253,8 @@ class LocalPerception:
         if self._timeout_s is None:
             return await awaitable
         work = asyncio.create_task(awaitable)
-        await asyncio.sleep(0)
         try:
+            await asyncio.sleep(0)
             done, _ = await asyncio.wait({work}, timeout=self._timeout_s)
             if work in done:
                 return work.result()
