@@ -59,6 +59,7 @@
     const stopMicButton = document.querySelector('#stop-mic');
     let revision = 0;
     let utterance = 0;
+    let activeUtteranceId = null;
     let microphone = null;
     const pendingMessages = [];
     const maxPendingMessages = 16;
@@ -101,14 +102,24 @@
     }
 
     function transcript(final) {
-      utterance += 1;
-      revision = 0;
-      return {
-        utterance_id: 'browser-' + utterance,
+      if (activeUtteranceId === null) {
+        utterance += 1;
+        activeUtteranceId = 'browser-' + utterance;
+        revision = 0;
+      } else {
+        revision += 1;
+      }
+      const result = {
+        utterance_id: activeUtteranceId,
         revision,
         text: document.querySelector('#text').value,
         final
       };
+      if (final) {
+        activeUtteranceId = null;
+        revision = 0;
+      }
+      return result;
     }
 
     function bytesToBase64(bytes) {

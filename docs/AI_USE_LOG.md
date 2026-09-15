@@ -827,3 +827,6 @@ No protected files changed.
 2026-09-16 verification: Ran the current head with the cached Faster Whisper base.en CPU INT8 model and a loopback
 Ollama vision endpoint. The speech fixture was transcribed, PNG evidence was returned, and the final transcript
 retained both modalities. This remains mock reasoning and protocol/backend evidence, not a quality benchmark.
+2026-09-16 verification: Browser transcript controls now preserve one utterance ID across partial and final
+hypotheses, increment revisions for each follow-up submission, and close the active utterance after the final
+hypothesis. Focused demo tests and JavaScript syntax validation passed; no protected files changed.

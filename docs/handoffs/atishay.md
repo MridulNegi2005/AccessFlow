@@ -303,3 +303,6 @@ clear closed/full transport errors. Full suite: 175 passed, 4 strict expected fa
 2026-09-16 verification: Current-head served run used cached Faster Whisper base.en CPU INT8 plus a loopback Ollama
 vision endpoint. The speech fixture was transcribed and the final transcript retained both audio and image evidence;
 reasoning remained mock and no live quality benchmark is claimed.
+2026-09-16 verification: Browser transcript controls now preserve one utterance ID across partial and final
+hypotheses, increment revisions for each follow-up submission, and close the active utterance after the final
+hypothesis. Focused demo tests and JavaScript syntax validation passed; no protected files changed.
