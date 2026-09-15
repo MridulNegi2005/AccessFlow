@@ -1,5 +1,6 @@
 """Internal development fixtures; labels and scripted reasoning are never live-model input."""
 from copy import deepcopy
+import math
 from pathlib import Path
 import json
 from typing import Any, Literal
@@ -72,9 +73,14 @@ class Scenario(Model):
         if self.event_gaps_s is not None:
             if len(self.event_gaps_s) != len(self.events) - 1:
                 raise ValueError("event_gaps_s must supply one gap between each pair of events")
+            if any(not math.isfinite(gap) for gap in self.event_gaps_s):
+                raise ValueError("Each event gap must be a finite number")
             if any(gap < 0 or gap > 60 for gap in self.event_gaps_s):
                 raise ValueError("Each event gap must be between 0 and 60 seconds")
-        if sum(self.gaps()) + self.completion_timeout_s > 114:
+        total_gap = sum(self.gaps())
+        # NaN/inf compare False against `>`, which would silently pass the budget
+        # check below; isfinite closes that off explicitly.
+        if not math.isfinite(total_gap) or total_gap + self.completion_timeout_s > 114:
             raise ValueError("Scheduled scenario exceeds the internal 114-second replay budget")
         return self
 
@@ -84,8 +90,15 @@ class Scenario(Model):
         return [self.event_spacing_s] * (len(self.events) - 1)
 
 
+def _reject_non_finite_literal(literal):
+    raise ValueError(f"Scenario JSON must not contain non-finite literal: {literal}")
+
+
 def load_scenario(path):
-    return Scenario.model_validate(json.loads(Path(path).read_text(encoding="utf-8")))
+    # Python's json accepts the nonstandard NaN/Infinity/-Infinity tokens by
+    # default; scenarios must stay valid JSON, so reject them here.
+    raw = json.loads(Path(path).read_text(encoding="utf-8"), parse_constant=_reject_non_finite_literal)
+    return Scenario.model_validate(raw)
 
 
 class StepReasoner:
