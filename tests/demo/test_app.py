@@ -697,6 +697,33 @@ def test_websocket_reports_recoverable_structural_input_error():
     assert "Still connected" in final["payload"]["text"]
 
 
+def test_websocket_reports_recoverable_event_metadata_error():
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "transcript",
+                    "timestamp": "not-a-timestamp",
+                    "payload": {"text": "discarded"},
+                }
+            )
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    assert status["kind"] == "demo_status"
+    assert error == {
+        "kind": "demo_error",
+        "payload": {
+            "backend": "demo/input",
+            "message": "browser timestamp must be a finite non-negative number",
+        },
+    }
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Still connected" in final["payload"]["text"]
+
+
 def test_websocket_reports_recoverable_media_input_error():
     encoded = base64.b64encode(b"not a wav").decode("ascii")
 
