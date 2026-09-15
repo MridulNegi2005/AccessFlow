@@ -391,3 +391,15 @@ session isolation, demo reuse and active-worker shutdown cleanup.
 
 **Status:** Full suite 149 passed, 4 strict expected failures; demo suite 61 passed, 4 strict expected
 failures; perception suite 72 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay bounded-worker failure matrix
+
+**Task:** Verify that obsolete local vision failures and timeouts cannot surface after a newer frame
+has superseded them.
+
+**Changes:** Added direct regressions for stale provider exceptions and stale timeout results, plus a
+WebSocket regression that sends a delayed failing frame followed by a current frame and recovered WAV.
+The current image and audio evidence complete together without a false backend_failure.
+
+**Status:** Full suite 152 passed, 4 strict expected failures; demo suite 62 passed, 4 strict expected
+failures; perception suite 74 passed. No engine, contract, dependency or lockfile change.

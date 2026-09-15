@@ -728,3 +728,7 @@ Validation: 143 passed, 4 strict xfailed; no protected files changed.
 and same-utterance revision coalescing, stale-result suppression and shutdown cleanup. DemoPerception
 retains the vision worker per session. Validation: 149 passed, 4 strict xfailed; no protected files
 changed.
+
+2026-09-15: Completed the bounded-worker failure matrix: stale vision exceptions and timeouts are
+discarded after newer frames, while a recovered frame and WAV still reach one multimodal session.
+Validation: 152 passed, 4 strict xfailed; no protected files changed.

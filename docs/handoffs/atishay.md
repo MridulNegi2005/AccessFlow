@@ -208,3 +208,8 @@ xfailed; demo 60 passed plus 4 strict xfailed; perception 67 passed. No protecte
 same-session frame and same-utterance revision coalescing, stale-result suppression, session-scoped
 keys, and idempotent DemoPerception shutdown cleanup. Full validation: 149 passed, 4 strict xfailed;
 demo 61 passed plus 4 strict xfailed; perception 72 passed. No protected files changed.
+
+2026-09-15 verification: Completed the bounded-worker failure matrix. Stale vision exceptions and
+timeouts are suppressed after a newer frame, while the current frame and later WAV remain usable in
+one WebSocket session. Full validation: 152 passed, 4 strict xfailed; demo 62 passed plus 4 strict
+xfailed; perception 74 passed. No protected files changed.

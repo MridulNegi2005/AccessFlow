@@ -594,6 +594,102 @@ async def test_aclose_releases_active_observer_without_waiting_for_thread(tmp_pa
     assert await asyncio.to_thread(provider_finished.wait, 1)
     await adapter.aclose()
 
+
+@pytest.mark.asyncio
+async def test_stale_frame_failure_is_suppressed_when_newer_frame_succeeds(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / "first.png", tmp_path / "second.png"]
+    for path in paths:
+        _write_png(path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            release_first.wait(1)
+            raise RuntimeError("stale vision failure")
+        return "current visual evidence"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    first_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[0]), frame_id="frame-1")),
+        )
+    )
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    second_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
+        )
+    )
+    await asyncio.sleep(0.05)
+    release_first.set()
+
+    first, second = await asyncio.gather(first_task, second_task)
+
+    assert first == []
+    assert [item.source_id for item in second] == ["frame-2"]
+    assert second[0].text == "current visual evidence"
+    assert calls == paths
+
+
+@pytest.mark.asyncio
+async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / "first.png", tmp_path / "second.png"]
+    for path in paths:
+        _write_png(path)
+    provider_started = threading.Event()
+    first_finished = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            try:
+                time.sleep(0.2)
+            finally:
+                first_finished.set()
+            return "stale visual evidence"
+        return "current visual evidence"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider, timeout_s=0.05)
+    first_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[0]), frame_id="frame-1")),
+        )
+    )
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    second_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
+        )
+    )
+    await asyncio.sleep(0.05)
+
+    first, second = await asyncio.gather(first_task, second_task)
+    assert first == []
+    assert [item.source_id for item in second] == ["frame-2"]
+    assert second[0].text == "current visual evidence"
+    assert calls == paths
+    assert await asyncio.to_thread(first_finished.wait, 1)
+
 def test_png_validation_returns_structural_metadata(tmp_path: Path):
     image_path = tmp_path / "valid.png"
     _write_png(image_path, width=320, height=240)

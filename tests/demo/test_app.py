@@ -1191,6 +1191,110 @@ async def test_demo_perception_coalesces_rapid_frames_per_session(tmp_path: Path
     assert calls == [first_path, second_path]
 
 
+def test_websocket_stale_vision_failure_does_not_break_recovered_multimodal_session(monkeypatch):
+    class RecoveringVision:
+        backend_name = "local/recovering-vision"
+
+        def __init__(self):
+            self.calls = 0
+            self.first_started = threading.Event()
+            self.release_first = threading.Event()
+
+        def __call__(self, path: Path) -> str:
+            self.calls += 1
+            if self.calls == 1:
+                self.first_started.set()
+                self.release_first.wait(1)
+                raise RuntimeError("stale vision failure")
+            return "screen shows the approval prompt"
+
+    class ObservingReasoner(demo_app.DemoReasoner):
+        image_seen = threading.Event()
+
+        async def plan(self, view, manifests):
+            if any(item.modality == "image" for item in view.observations):
+                ObservingReasoner.image_seen.set()
+            return await super().plan(view, manifests)
+
+    vision = RecoveringVision()
+
+    def transcribe(path: Path) -> str:
+        return "Please inspect the attached screen"
+
+    def configured_perception(cls):
+        return DemoPerception(
+            audio_backend=demo_app.LocalPerception(transcriber=transcribe),
+            vision_backend=vision,
+        )
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    monkeypatch.setattr(demo_app, "DemoReasoner", ObservingReasoner)
+    encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    def receive_media_status(socket, media_kind):
+        messages = []
+        while True:
+            message = socket.receive_json()
+            if (
+                message.get("kind") == "demo_status"
+                and message.get("payload", {}).get("media_received") == media_kind
+            ):
+                return message, messages
+            messages.append(message)
+
+    try:
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                status = socket.receive_json()
+                socket.send_json(
+                    {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "stale-frame"}}
+                )
+                first_status, first_messages = receive_media_status(socket, "frame")
+                assert vision.first_started.wait(timeout=1)
+
+                socket.send_json(
+                    {"kind": "frame", "payload": {"data_base64": encoded_image, "frame_id": "current-frame"}}
+                )
+                second_status, second_messages = receive_media_status(socket, "frame")
+                vision.release_first.set()
+                assert ObservingReasoner.image_seen.wait(timeout=1)
+
+                socket.send_json(
+                    {
+                        "kind": "audio",
+                        "payload": {
+                            "data_base64": encoded_audio,
+                            "utterance_id": "recovered-audio",
+                        },
+                    }
+                )
+                audio_status, audio_messages = receive_media_status(socket, "audio")
+                outputs = []
+                while not any(item.get("kind") == "final" for item in outputs):
+                    outputs.append(socket.receive_json())
+    finally:
+        vision.release_first.set()
+
+    all_messages = first_messages + second_messages + audio_messages + outputs
+    assert status["payload"]["perception_backend"] == (
+        "local/injected-asr audio + local/recovering-vision image"
+    )
+    assert first_status["payload"] == {"media_received": "frame", "source_id": "stale-frame"}
+    assert second_status["payload"] == {"media_received": "frame", "source_id": "current-frame"}
+    assert audio_status["payload"] == {"media_received": "audio", "source_id": "recovered-audio"}
+    assert not any(item.get("kind") == "error" for item in all_messages)
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert "Please inspect the attached screen" in final["payload"]["text"]
+    assert "screen shows the approval prompt" in final["payload"]["text"]
+    assert vision.calls == 2
+
+
 @pytest.mark.parametrize("vision_response", [b"[]", b"{not-json"])
 def test_websocket_malformed_vision_json_is_recoverable(monkeypatch, vision_response):
     class MalformedVisionHandler(BaseHTTPRequestHandler):
