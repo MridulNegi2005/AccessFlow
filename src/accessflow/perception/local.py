@@ -12,7 +12,7 @@ import struct
 import threading
 import wave
 import zlib
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Hashable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -149,6 +149,106 @@ def _normalize_provider_text(value: Any, modality: str) -> str:
         raise RuntimeError(f"{modality} perception returned empty text")
     return value.strip()
 
+
+_SUPERSEDED = object()
+
+
+@dataclass
+class _PendingWork:
+    key: Hashable
+    token: int
+    operation: Callable[[], Awaitable[Any]]
+    result: asyncio.Future
+
+
+class _LatestWorker:
+    """Run one provider call at a time while replacing obsolete pending work."""
+
+    def __init__(self) -> None:
+        self._lock = asyncio.Lock()
+        self._pending: _PendingWork | None = None
+        self._latest_tokens: dict[Hashable, int] = {}
+        self._latest_revisions: dict[Hashable, int] = {}
+        self._next_token = 0
+        self._active: _PendingWork | None = None
+        self._task: asyncio.Task | None = None
+
+    async def submit(
+        self,
+        key: Hashable,
+        operation: Callable[[], Awaitable[Any]],
+        *,
+        revision: int | None = None,
+    ) -> Any:
+        loop = asyncio.get_running_loop()
+        result = loop.create_future()
+        async with self._lock:
+            if revision is not None and revision <= self._latest_revisions.get(key, -1):
+                return _SUPERSEDED
+            self._next_token += 1
+            token = self._next_token
+            self._latest_tokens[key] = token
+            if revision is not None:
+                self._latest_revisions[key] = revision
+            previous = self._pending
+            if previous is not None and not previous.result.done():
+                previous.result.set_result(_SUPERSEDED)
+            self._pending = _PendingWork(key, token, operation, result)
+            if self._task is None or self._task.done():
+                self._task = asyncio.create_task(self._run())
+        try:
+            return await result
+        except asyncio.CancelledError:
+            async with self._lock:
+                pending = self._pending
+                if pending is not None and pending.result is result:
+                    self._pending = None
+            raise
+
+    async def _run(self) -> None:
+        while True:
+            async with self._lock:
+                if self._pending is None:
+                    self._task = None
+                    return
+                work = self._pending
+                self._pending = None
+                self._active = work
+            try:
+                value = await work.operation()
+            except Exception as error:
+                async with self._lock:
+                    current = self._latest_tokens.get(work.key) == work.token
+                if current and not work.result.done():
+                    work.result.set_exception(error)
+                elif not work.result.done():
+                    work.result.set_result(_SUPERSEDED)
+            else:
+                async with self._lock:
+                    current = self._latest_tokens.get(work.key) == work.token
+                if not work.result.done():
+                    work.result.set_result(value if current else _SUPERSEDED)
+            finally:
+                async with self._lock:
+                    if self._active is work:
+                        self._active = None
+
+    async def aclose(self) -> None:
+        async with self._lock:
+            work = self._active
+            pending = self._pending
+            self._pending = None
+            task = self._task
+            self._task = None
+            if pending is not None and not pending.result.done():
+                pending.result.set_result(_SUPERSEDED)
+            if work is not None and not work.result.done():
+                work.result.set_result(_SUPERSEDED)
+        if task is not None and not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+
 class LocalPerception:
     """Convert input events into observations without mutating session state.
 
@@ -185,6 +285,8 @@ class LocalPerception:
         self._timeout_s = timeout_s
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
+        self._audio_worker = _LatestWorker()
+        self._vision_worker = _LatestWorker()
 
     @property
     def audio_backend_name(self) -> str:
@@ -213,7 +315,14 @@ class LocalPerception:
         if isinstance(event, AudioEvent):
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_wav, path)
-            text, backend = await self._run_with_timeout(self._transcribe(path), "audio")
+            result = await self._audio_worker.submit(
+                ("audio", event.session_id, event.payload.utterance_id),
+                lambda: self._run_with_timeout(self._transcribe(path), "audio"),
+                revision=event.payload.revision,
+            )
+            if result is _SUPERSEDED:
+                return
+            text, backend = result
             text = _normalize_provider_text(text, "audio")
             yield Observation(
                 event_id=event.event_id,
@@ -233,7 +342,14 @@ class LocalPerception:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_png, path)
-            text = await self._run_with_timeout(asyncio.to_thread(self._vision_provider, path), "image")
+            text = await self._vision_worker.submit(
+                ("frame", event.session_id),
+                lambda: self._run_with_timeout(
+                    asyncio.to_thread(self._vision_provider, path), "image"
+                ),
+            )
+            if text is _SUPERSEDED:
+                return
             text = _normalize_provider_text(text, "image")
             yield Observation(
                 event_id=event.event_id,
@@ -248,6 +364,10 @@ class LocalPerception:
             )
             return
         raise ValueError(f"Unsupported perception event: {event.kind}")
+
+    async def aclose(self) -> None:
+        """Stop queued local work when its owning session is shutting down."""
+        await asyncio.gather(self._audio_worker.aclose(), self._vision_worker.aclose())
 
     async def _run_with_timeout(self, awaitable, modality: str):
         if self._timeout_s is None:

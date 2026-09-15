@@ -1144,6 +1144,53 @@ def test_websocket_vision_failure_recovers_to_multimodal_session(monkeypatch):
     assert vision.calls == 2
     assert final["payload"]["basis"] == "informational"
 
+
+@pytest.mark.asyncio
+async def test_demo_perception_coalesces_rapid_frames_per_session(tmp_path: Path):
+    first_path = tmp_path / "first.png"
+    second_path = tmp_path / "second.png"
+    first_path.write_bytes(_png_bytes())
+    second_path.write_bytes(_png_bytes())
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"evidence from {path.stem}"
+
+    async def collect(perception, event):
+        return [observation async for observation in perception.observe(event)]
+
+    perception = DemoPerception(vision_backend=provider)
+    first_event = FrameEvent(
+        session_id="demo-session",
+        payload=demo_app.Frame(path=str(first_path), frame_id="frame-1"),
+    )
+    second_event = FrameEvent(
+        session_id="demo-session",
+        payload=demo_app.Frame(path=str(second_path), frame_id="frame-2"),
+    )
+    first_task = asyncio.create_task(collect(perception, first_event))
+    try:
+        assert await asyncio.to_thread(provider_started.wait, 1)
+        second_task = asyncio.create_task(collect(perception, second_event))
+        await asyncio.sleep(0.05)
+        release_first.set()
+        first, second = await asyncio.gather(first_task, second_task)
+    finally:
+        release_first.set()
+        await perception.aclose()
+        await perception.aclose()
+
+    assert first == []
+    assert [item.source_id for item in second] == ["frame-2"]
+    assert calls == [first_path, second_path]
+
+
 @pytest.mark.parametrize("vision_response", [b"[]", b"{not-json"])
 def test_websocket_malformed_vision_json_is_recoverable(monkeypatch, vision_response):
     class MalformedVisionHandler(BaseHTTPRequestHandler):

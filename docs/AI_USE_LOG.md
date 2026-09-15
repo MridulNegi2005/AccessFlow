@@ -731,3 +731,9 @@ protected files changed.
 image plus audio session. Both modalities and their source identities remain in the final context.
 Full validation: 143 passed, 4 strict xfailed; demo 60 passed plus 4 strict xfailed; perception 67
 passed. No protected files changed.
+
+2026-09-15 verification: Implemented the subagent-reviewed bounded multimodal admission slice:
+independent audio/image workers coalesce obsolete work, preserve session identity, suppress stale
+results, and close on demo shutdown. Added concurrency, revision, rapid-frame and session-isolation
+regressions. Full validation: 149 passed, 4 strict xfailed; demo 61 passed plus 4 strict xfailed;
+perception 72 passed. No protected files changed.
