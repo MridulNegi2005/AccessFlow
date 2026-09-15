@@ -86,6 +86,7 @@ def validate_png(path: Path) -> PngFormat:
     offset = len(signature)
     ihdr: tuple[int, int, int, int] | None = None
     interlace: int | None = None
+    palette_entries: int | None = None
     saw_idat = False
     idat_data = bytearray()
     saw_iend = False
@@ -128,7 +129,22 @@ def validate_png(path: Path) -> PngFormat:
         elif chunk_type == b"IHDR":
             raise ValueError(f"Invalid PNG file: {path}")
 
+        if chunk_type == b"PLTE":
+            if (
+                ihdr is None
+                or saw_idat
+                or palette_entries is not None
+                or length < 3
+                or length > 768
+                or length % 3
+            ):
+                raise ValueError(f"Invalid PNG palette: {path}")
+            palette_entries = length // 3
+            if ihdr[3] == 3 and palette_entries > (1 << ihdr[2]):
+                raise ValueError(f"Invalid PNG palette: {path}")
         if chunk_type == b"IDAT":
+            if ihdr is not None and ihdr[3] == 3 and palette_entries is None:
+                raise ValueError(f"Invalid PNG palette: {path}")
             saw_idat = True
             idat_data.extend(chunk_data)
         if chunk_type == b"IEND":
@@ -140,6 +156,8 @@ def validate_png(path: Path) -> PngFormat:
 
     if ihdr is None or not saw_idat or not saw_iend:
         raise ValueError(f"Invalid PNG file: {path}")
+    if ihdr[3] == 3 and palette_entries is None:
+        raise ValueError(f"Invalid PNG palette: {path}")
     if interlace is None:
         raise ValueError(f"Invalid PNG file: {path}")
     channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ihdr[3]]

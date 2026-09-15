@@ -960,6 +960,28 @@ def test_png_validation_rejects_oversized_decoded_payload(tmp_path: Path):
         validate_png(image_path)
 
 
+def test_png_validation_rejects_indexed_image_without_palette(tmp_path: Path):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "indexed-without-palette.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 3, 0, 0, 0)
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(b"\x00\x00"))
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG palette"):
+        validate_png(image_path)
+
+
 def test_png_validation_accepts_adam7_scanline_payload(tmp_path: Path):
     def chunk(kind: bytes, payload: bytes) -> bytes:
         return (
