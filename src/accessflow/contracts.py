@@ -196,6 +196,10 @@ class SessionView(Model):
     write_pending: bool = False
     # Set when the previous proposal only repeated calls that already completed.
     repeated_completed_call: bool = False
+    # Set when the previous accepted plan dispatched no call, gave no clarification or
+    # answer, and was not legitimately waiting on already-pending work -- any no-progress
+    # outcome other than the specific repeated_completed_call case above.
+    no_progress: bool = False
     # The request `calls` entries should be matched against for continuation checks
     # such as ModelReasoner.write_outstanding. Empty string is a valid id (used by
     # callers, including most tests, that never populate ToolCall.request_id either)

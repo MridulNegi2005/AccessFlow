@@ -310,6 +310,17 @@ class ModelReasoner:
                                "Their results are in the session evidence. Do not propose them again. "
                                "Read the evidence and take the next step: call a different tool, call the "
                                "same tool with different arguments, or answer the user."}
+        no_progress = getattr(view, "no_progress", False) and not unresolved
+        if no_progress:
+            # The controller's own observation that the last accepted plan advanced
+            # nothing at all: no dispatched call, no clarification, no answer, and
+            # nothing already pending to explain the silence.
+            request["required_next_step"] = {
+                "kind": "make_progress",
+                "instruction": "Your last proposal made no progress: it dispatched no call, gave no "
+                               "clarification, and gave no answer, and no previous call is still pending. "
+                               "Do not repeat that empty result. Call an appropriate tool with corrected, "
+                               "grounded arguments, ask a specific clarifying question, or answer the user now."}
         if unresolved:
             request["required_next_step"] = {
                 "kind": "reconcile_unknown_effects",
@@ -321,7 +332,8 @@ class ModelReasoner:
         # deliberately a read-only planning turn; the controller remains the final
         # authority even when a backend does not enforce this JSON schema.
         schema = self.output_schema(manifests, allow_write_calls=not bool(unresolved),
-                                    allow_final_response=not outstanding)
+                                    allow_final_response=not outstanding,
+                                    require_progress=outstanding or repeating or no_progress)
 
         def _validate(result):
             # Static shape first: cheap, and keeps the existing pydantic-error contract
@@ -365,7 +377,8 @@ class ModelReasoner:
                 for call in view.calls if call.effect == "write" and call.status in {"unknown", "cancelled"}]
 
     @staticmethod
-    def output_schema(manifests=None, *, allow_write_calls=True, allow_final_response=True):
+    def output_schema(manifests=None, *, allow_write_calls=True, allow_final_response=True,
+                      require_progress=False):
         # Internal proposals retain defaults for fixtures and backwards compatibility.
         # Model generation must make each safety/action decision explicitly rather than
         # satisfying an all-optional schema with only extracted slots (or an empty object).
@@ -401,6 +414,18 @@ class ModelReasoner:
             schema["properties"]["response"] = {
                 "type": "null",
                 "description": "Must be null while a requested state-changing effect is outstanding."}
+        if require_progress:
+            # A fully expanded PlanProposal() -- empty calls, null clarification, null
+            # response -- otherwise validates cleanly even here: nothing in the plain
+            # per-field schema forbids returning nothing at all. Spell out the valid
+            # alternatives explicitly instead of only forbidding one field: this turn
+            # must produce at least one call, an explicit clarification, or (when still
+            # permitted) an explicit answer.
+            alternatives = [{"properties": {"calls": {"minItems": 1}}, "required": ["calls"]},
+                           {"properties": {"clarification": {"type": "string"}}, "required": ["clarification"]}]
+            if allow_final_response:
+                alternatives.append({"properties": {"response": {"type": "string"}}, "required": ["response"]})
+            schema["anyOf"] = alternatives
         if manifests is not None:
             calls = schema["properties"]["calls"]
             available = [manifest for manifest in manifests
