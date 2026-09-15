@@ -32,18 +32,18 @@ commit that reports an unknown outcome.
 - Held-out coverage is four planner probes, all text. The plan calls for twenty held out.
 
 <!-- generated -->
-Generated from 15 scenario files.
+Generated from 16 scenario files.
 Regenerate with `python scripts/scenario_inventory.py --write docs/SCENARIO_INVENTORY.md`.
 
 ## Coverage against the plan
 
 | Modality | Planned | Present |
 |---|---|---|
-| text (`transcript`) | 30 | 14 |
+| text (`transcript`) | 30 | 15 |
 | audio (`audio`) | 18 | 1 |
-| visual (`frame`) | 12 | 0 |
+| visual (`frame`) | 12 | 1 |
 
-Distinct tool sets: **9** across 15 files. Longest scenario: **2** user turns.
+Distinct tool sets: **10** across 16 files. Longest scenario: **2** user turns.
 
 ## Every scenario
 
@@ -55,6 +55,7 @@ Distinct tool sets: **9** across 15 files. Longest scenario: **2** user turns.
 | dev | `development-text-correction-01` | 2 | transcript | - | development |
 | live_dev | `live-dev-audio-correction-01` | 1 | audio | - | development |
 | live_dev | `live-dev-device-correction-before-plan` | 2 | transcript | - | development |
+| live_dev | `live-dev-frame-device-panel-01` | 2 | frame, transcript | - | development |
 | live_dev | `live-dev-lost-response-status-reconciliation` | 1 | transcript | submit_ticket_v3 | development |
 | live_dev | `live-dev-stale-read-after-correction` | 2 | transcript | - | development |
 | live_dev | `live-dev-stale-read-after-device-correction` | 2 | transcript | - | development |
@@ -76,6 +77,7 @@ Each group drives the same tool set. A group of more than one is one workflow me
 | query_receipt_v3, submit_ticket_v3 | 2: `lost-response-status-reconciliation`, `live-dev-lost-response-status-reconciliation` |
 | file_visit_request, inspect_support_notes | 2: `support-read-then-service`, `live-dev-support-read-then-service` |
 | file_visit_request, inspect_support_notes, order_replacement_part | 2: `live-dev-stale-read-after-correction`, `live-dev-stale-read-after-device-correction` |
+| file_visit_request | 1: `live-dev-frame-device-panel-01` |
 | enqueue_calibration_visit | 1: `planner-probe-corrected-24h` |
 | queue_technician_visit | 1: `planner-probe-fluent-noon` |
 | open_service_case | 1: `planner-probe-incomplete-clarification` |

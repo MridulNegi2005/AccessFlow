@@ -1,0 +1,3308 @@
+{
+  "generated_at_utc": "2026-09-15T14:21:44+00:00",
+  "cohort_selection_rule": "All non-ablated runs in artifacts/ whose backend is one of groq/qwen/qwen3.8-27b, groq/openai/gpt-oss-120b, groq/openai/gpt-oss-20b, groq/qwen/qwen3.6-27b (the four Groq-hosted models named in the 'Current recommendation' and 'Known provider limits' sections of MODEL_COMPARISON.md), on one of the six live-dev-* text fixtures that back the per-scenario matrix: development-text-correction-01, device-correction-before-plan, lost-response-status-reconciliation, support-read-then-service, stale-read-after-correction, stale-read-after-device-correction. Audio and vision live-dev fixtures (live-dev-audio-correction-01, live-dev-frame-device-panel-01) are excluded: that evidence belongs to the separate audio/vision E2E slice this task must not touch. Local (Ollama/NVIDIA) models are excluded: they are documented separately in LOCAL_MODEL_2026-09-13.md and INFERENCE_TUNING_2026-09-14.md and run on different hardware.",
+  "run_count": 57,
+  "eligibility_counts": {
+    "scored_pass": 43,
+    "infra_admission_failure": 11,
+    "timeout_undetermined_cause": 1,
+    "scored_fail_generated_output": 1,
+    "infra_failure_unspecified": 1
+  },
+  "sanitization": {
+    "issue": "16 traces were reported by the orchestrator to contain the Groq organization id in reasoner_evidence.requests[].error_detail (raw provider error bodies from the pre-R5 diagnostics path). An independent repo-wide grep for the pattern org_[0-9a-zA-Z]{10,}, excluding .git and .venv, found the identifier in 13 files under artifacts/ (11 *.jsonl run traces and 2 report.json summaries), all sharing the same single organization id value (not reproduced here). No API keys or bearer tokens were found in any file considered for this bundle.",
+    "action": "Sanitised, not excluded. Every copied trace passes through a regex substitution (org_[0-9a-zA-Z]{10,} -> [REDACTED_ORG_ID]) applied to every JSON line, not only the known-contaminated ones, as defence in depth. All 11 contaminated *.jsonl runs fall inside this cohort and are included, sanitised, because they are genuine 429 admission-control failures relevant to attempted-run reliability (see eligibility 'infra_admission_failure'). The 2 contaminated report.json files are hand-written summaries, not run_metadata traces the scoreboard reads; they were not copied into this bundle and were not modified in artifacts/.",
+    "files_sanitized_in_bundle": 11
+  },
+  "known_gaps": [
+    "source_sha256 (and thus 'commit and source hash' in this manifest) covers only *.py files under src/accessflow/. It does not cover scripts/, the dependency lockfile/pyproject.toml, scenario JSON content beyond scenario_sha256, or environment/.env settings. A clean-clone run reproduces the *scoreboard table* from these traces; it does not re-prove the original model behaviour, since these are hosted-API calls that cannot be replayed offline.",
+    "53 of these 57 runs predate run_id/run_started_at/run_ended_at (those fields were added partway through this cohort's collection) and fall back to file mtime for ordering, marked accordingly wherever shown; mtime is not a verified chronology. The remaining 4 (r1-live/qwen-device.jsonl, r1-live/qwen-support.jsonl, r2-live/qwen-reconcile.jsonl, r3-live/device.jsonl) do carry a recorded run_id and UTC start/end time. The bundle build step copies each source file's original mtime onto its sanitised copy (os.utime) specifically so the mtime-fallback signal is not further destroyed by the copy itself; it is still only the original developer's machine clock, not a verified run timestamp, for the 53 runs that rely on it.",
+    "declared_hardware for Groq-hosted runs describes the requesting client machine, not Groq's serving hardware, which is not disclosed by the provider."
+  ],
+  "runs": [
+    {
+      "bundle_path": "traces/groq-gptoss120b/redo_text_correction.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/redo_text_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:18:48+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "36ff0afa99c94a26ac2c3400d854ed6c1d0eb00abc462797d7b1a152ccb8ac40"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss120b/scenario-004.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/scenario-004.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:17:25+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "50ba6dda0a73f93cefd3324c76f8e6d62ff3d076975acc965a07f5de229c6fc8"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss120b/scenario-001.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/scenario-001.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:17:18+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": false,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "c81a0edfe5d6dfbd56216db911b48905f45bfd354aee0fed7600f962324110c5"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss120b/scenario-002.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/scenario-002.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:17:22+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "0d7ee06c17e8b62e0d4940603843ed3cf3c6100e0da19a8e46034712316e4934"
+    },
+    {
+      "bundle_path": "traces/ablation/groq-control-1.jsonl",
+      "source_path": "artifacts/ablation/groq-control-1.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T18:32:11+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "ad04bca43954005d9baaf062da7b0c2398a32a6d",
+      "source_sha256": "6c5fedb0e02c4b637554e268bed5ef5b384b90f1e37bbaaa0252bb4e72d516b5",
+      "scenario_sha256": "7ffa3df90ca9c0c8df53d658a65507040d1af5d0137b0aca24fe8254dbdf4d97",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. Fictional Panel-A support notes and mock effects only. Not held out, not real Samsung documentation.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "bdffcafe285bfbaf5f056e80ec0a7d613901e19a615f6223e2ca28fb64d14d08"
+    },
+    {
+      "bundle_path": "traces/ablation/groq-control-2.jsonl",
+      "source_path": "artifacts/ablation/groq-control-2.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T18:37:14+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "ad04bca43954005d9baaf062da7b0c2398a32a6d",
+      "source_sha256": "6c5fedb0e02c4b637554e268bed5ef5b384b90f1e37bbaaa0252bb4e72d516b5",
+      "scenario_sha256": "7ffa3df90ca9c0c8df53d658a65507040d1af5d0137b0aca24fe8254dbdf4d97",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. Fictional Panel-A support notes and mock effects only. Not held out, not real Samsung documentation.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "c21062c9ec87b76454a1fd5bb869ffa003cac088fda7dad6c97fe2532ebba93a"
+    },
+    {
+      "bundle_path": "traces/ablation/groq-control-3.jsonl",
+      "source_path": "artifacts/ablation/groq-control-3.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T18:41:31+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "ad04bca43954005d9baaf062da7b0c2398a32a6d",
+      "source_sha256": "6c5fedb0e02c4b637554e268bed5ef5b384b90f1e37bbaaa0252bb4e72d516b5",
+      "scenario_sha256": "7ffa3df90ca9c0c8df53d658a65507040d1af5d0137b0aca24fe8254dbdf4d97",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. Fictional Panel-A support notes and mock effects only. Not held out, not real Samsung documentation.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "a8f1353719700dae3dd97ac0edafb1b94d4174d1d7ed1d0b4120ab61acd6544b"
+    },
+    {
+      "bundle_path": "traces/ablation/v2-groq-control-1.jsonl",
+      "source_path": "artifacts/ablation/v2-groq-control-1.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T18:45:55+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "ad04bca43954005d9baaf062da7b0c2398a32a6d",
+      "source_sha256": "6c5fedb0e02c4b637554e268bed5ef5b384b90f1e37bbaaa0252bb4e72d516b5",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "f6ca29ecab1c4439a68fdbb6bd22ffccb21db517d4177fbdb81534a9156d2caf"
+    },
+    {
+      "bundle_path": "traces/ablation/v2-groq-control-2.jsonl",
+      "source_path": "artifacts/ablation/v2-groq-control-2.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T18:50:13+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "ad04bca43954005d9baaf062da7b0c2398a32a6d",
+      "source_sha256": "6c5fedb0e02c4b637554e268bed5ef5b384b90f1e37bbaaa0252bb4e72d516b5",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "a9d6923121f0c56221d7fb56edafbd3f7b5eec0cadb020a06de9b8d99db435ec"
+    },
+    {
+      "bundle_path": "traces/ablation/v2-groq-control-3.jsonl",
+      "source_path": "artifacts/ablation/v2-groq-control-3.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T18:54:29+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "ad04bca43954005d9baaf062da7b0c2398a32a6d",
+      "source_sha256": "6c5fedb0e02c4b637554e268bed5ef5b384b90f1e37bbaaa0252bb4e72d516b5",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "3f6aa4855b6ff43f5033c2ed0c6e81ae48f6b0daf1225d9aa409f7f9d68587bb"
+    },
+    {
+      "bundle_path": "traces/ablation/v4-groq-control-1.jsonl",
+      "source_path": "artifacts/ablation/v4-groq-control-1.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:09:11+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "e0fd4e268407e118accf274be8a70bb94bbacc21",
+      "source_sha256": "154e87f57d0c2a9331a5a7a042de4a43b2959d3ef2f58d54fdd37eaa63ed0c68",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "fee231d1a5e0f3671670a3ccbbdbd5a4da1dfce409c50c8c0df1ba3908ec5da7"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss120b/redo2_support.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/redo2_support.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:21:41+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "fb5d5f2ae454e8a13b8e3d873d4fe8e71a5226a59d30031ef262fdbf8ca24c25"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss120b/redo_support_then_service.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/redo_support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:17:32+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "1b16a56352c2b2fa723f779067647d83ee0099a76e6c7466351d00b8d7a72faf"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss120b/scenario-003.jsonl",
+      "source_path": "artifacts/groq-gptoss120b/scenario-003.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:17:24+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/openai/gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "8d52e88505c154259fd10ab53c360cac643e85d5e8981b898ddedbe3133d0344"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss20b_text_correction.jsonl",
+      "source_path": "artifacts/groq-gptoss20b_text_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:26:30+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "ea8c1c65f4b36d4afc0392b975b90dd4ca2608e78e69385be52c544bd29b6983"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss20b_device_correction_before_plan.jsonl",
+      "source_path": "artifacts/groq-gptoss20b_device_correction_before_plan.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:21:52+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": false,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "0249f743a7fb905d2f8831344911887c73a4e7688b35ac7ac044fa95c15073cc"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss20b_lost_response_reconcile.jsonl",
+      "source_path": "artifacts/groq-gptoss20b_lost_response_reconcile.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:22:52+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "6abbc0849dc7c208e3487d24834a694d7dca3b8cfe58b47caa974e46e0546cc1"
+    },
+    {
+      "bundle_path": "traces/ablation/v6-groq20b-control-1.jsonl",
+      "source_path": "artifacts/ablation/v6-groq20b-control-1.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:26:13+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "f4fcc08a8351d6bb238d0b7568ca25762be7c048",
+      "source_sha256": "154e87f57d0c2a9331a5a7a042de4a43b2959d3ef2f58d54fdd37eaa63ed0c68",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": false,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "c56328889cc1b28318289dfdbaa05548344e91fbbb47d0efc62f98ab6e1386cd"
+    },
+    {
+      "bundle_path": "traces/ablation/v6-groq20b-control-2.jsonl",
+      "source_path": "artifacts/ablation/v6-groq20b-control-2.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:30:43+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "f4fcc08a8351d6bb238d0b7568ca25762be7c048",
+      "source_sha256": "154e87f57d0c2a9331a5a7a042de4a43b2959d3ef2f58d54fdd37eaa63ed0c68",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": false,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "9311d1ad5bb8b31748a0bcc9a9682389edeac054c7757d9746313a7f2542e91f"
+    },
+    {
+      "bundle_path": "traces/ablation/v6-groq20b-control-3.jsonl",
+      "source_path": "artifacts/ablation/v6-groq20b-control-3.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:34:56+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "f4fcc08a8351d6bb238d0b7568ca25762be7c048",
+      "source_sha256": "154e87f57d0c2a9331a5a7a042de4a43b2959d3ef2f58d54fdd37eaa63ed0c68",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": false,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "18b9e9925b7f1cc9873890630987812a097cdcbc4813d2603190f00045ab869a"
+    },
+    {
+      "bundle_path": "traces/groq-gptoss20b_support_then_service.jsonl",
+      "source_path": "artifacts/groq-gptoss20b_support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:25:30+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/openai/gpt-oss-20b",
+      "model": "openai/gpt-oss-20b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "timeout",
+      "oracle_passed": false,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "timeout_undetermined_cause",
+      "eligibility_basis": "Scenario-level timeout at the 100s wait budget after exactly one successful, fast (1.45s) model request. No error was recorded. Cause is not established by this trace alone (could be a wait-state never resolved, or a plan that needed a follow-up turn that never arrived) -- reported as unresolved rather than guessed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "da9adad002d177bee9df31409c91939b65767a207699fe4562dc77c868f0f1d3"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_text_correction.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_text_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:30:32+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "cde4b3a259771fbc4351d173fd97b280e3ee80fdf76cace5e9a3f88d5d1ed728"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_device_correction_before_plan.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_device_correction_before_plan.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:27:35+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": false,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 1
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "dbd7db6ff954f49b46c11feaa33e8850c070d4245dac9ed8eae44e7f18adb5a9"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_redo_device_correction_before_plan.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_redo_device_correction_before_plan.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:33:14+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": false,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        400
+      ],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 1
+      },
+      "eligibility": "scored_fail_generated_output",
+      "eligibility_basis": "HTTP 400 'Failed to validate JSON' from Groq: the provider rejected the model's own generated output, not an admission/infra rejection. Scored as a genuine failure.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "82d0d840c7ff0d7d0746647b3e44f9552c5b22e666e113e16f8912d11ab376a8"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_lost_response_reconcile.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_lost_response_reconcile.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:28:33+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "924e2f436a920b581c2526dd8947c26a61c6ce8ba60fd71b72441fbee709e850"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_redo_lost_response_reconcile.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_redo_lost_response_reconcile.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:34:56+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "fbecafe04a64b6d48bd7a527b019a618edbe93cebd6a11fa5d206ed2e11b02af"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_redo_support_then_service.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_redo_support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:36:34+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "3aabe817481702859377e67f3be0a4338cbbffd850f35f6785a9999d8d72a579"
+    },
+    {
+      "bundle_path": "traces/groq-qwen36-27b_support_then_service.jsonl",
+      "source_path": "artifacts/groq-qwen36-27b_support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T19:29:32+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "9e5c50f71c9351162d5d62912a828f0d6e198bc0",
+      "source_sha256": "9b917e7f11b4d1a70543c63100c02a8a66b586e9c8ff47bb5ea2be54e50acefc",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.6-27b",
+      "model": "qwen/qwen3.6-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "b5c3a343b9b89d7d80dff240051e8d0900c026ff4e956678a84f6d42334af1db"
+    },
+    {
+      "bundle_path": "traces/groq-continuation_text_correction.jsonl",
+      "source_path": "artifacts/groq-continuation_text_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T20:29:12+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "5abde1ee9d8ef104fc2f1973a87c0e17f7fbe88f",
+      "source_sha256": "029ada6e903d317902cafce73fbd826c487b3bee56aa2068b53ea71fff9e3427",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": true,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "8abdbeb3c53995593075ba296e9e98da6e5963bdad5594324d4a1e3645ed161d"
+    },
+    {
+      "bundle_path": "traces/groq-paced/text_correction.jsonl",
+      "source_path": "artifacts/groq-paced/text_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:33:14+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "4e213f84ee42aa8fb77d24ce619b686dd471bdfb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "f08c301a7d56828ccc9137fd10f8b51241d2750a16f456abf5f793f48d59bc1b"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b-run2/scenario-004.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b-run2/scenario-004.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:28:52+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": true,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "057c32d20a08b03ba391756c87ac474f631f1443bed2c2163fae6b4461d812f4"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b/scenario-004.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b/scenario-004.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:27:23+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "d51f09e52c10e4660303e042cc6ab6f127fe9f42e12d0542e7bc74ce9d3d5b89",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "b5c33dd7ea62f331c38eeeb15798f74d736fe9657ec546003e4086b2873f8a84"
+    },
+    {
+      "bundle_path": "traces/sweep27b/qwen-qwen3-8-27b--text_correction.jsonl",
+      "source_path": "artifacts/sweep27b/qwen-qwen3-8-27b--text_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:50:26+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "7ee57b4e5704c30f67aa7e7c17c656f0a769f724",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "730b43f0c0454d85475a130ea7782f38b957039a712c9916d20cfe23d0cbf9fd",
+      "worktree_dirty": false,
+      "scenario": "live-dev-development-text-correction-01",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of text_correction.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "873a3f0b43d5767ac291246851980ce4faca870f5b168d32e648f394ca2bc2ce"
+    },
+    {
+      "bundle_path": "traces/groq-continuation_device_correction_before_plan.jsonl",
+      "source_path": "artifacts/groq-continuation_device_correction_before_plan.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T20:26:27+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "5abde1ee9d8ef104fc2f1973a87c0e17f7fbe88f",
+      "source_sha256": "029ada6e903d317902cafce73fbd826c487b3bee56aa2068b53ea71fff9e3427",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": true,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "a6015994e1b93c033abdf80e030e3a84170be825aa1a81f8de3bc60ef2a7f8ee"
+    },
+    {
+      "bundle_path": "traces/groq-paced/device_correction_before_plan.jsonl",
+      "source_path": "artifacts/groq-paced/device_correction_before_plan.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:29:15+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "4e213f84ee42aa8fb77d24ce619b686dd471bdfb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": false,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "e5801e21234c288ccb8796b3596bc2bc3cc18b1b7dff51ffb759f7378448d4c6"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b-run2/scenario-001.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b-run2/scenario-001.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:28:49+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": true,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "198bdd90a2f5eeab6904fd2ed9740fa32c7eff66c3d588108b47c6cf427ee1f4"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b/scenario-001.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b/scenario-001.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:27:20+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "d51f09e52c10e4660303e042cc6ab6f127fe9f42e12d0542e7bc74ce9d3d5b89",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": false,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "bf107c352def2024041fe10e21af3e04181ea3ea56cd41eeec15c495f211e866"
+    },
+    {
+      "bundle_path": "traces/sweep27b/qwen-qwen3-8-27b--device_correction_before_plan.jsonl",
+      "source_path": "artifacts/sweep27b/qwen-qwen3-8-27b--device_correction_before_plan.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:43:21+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fd31c7fecc12836ba5232fce67358984115095aa",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "64814daf834172740a95a88e36573166ffca78f41df76586e6986cfecee2b098",
+      "worktree_dirty": true,
+      "scenario": "live-dev-device-correction-before-plan",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "6be879fee6dadc2465c290e5f73f8b760126165cfa172a7891c60b4db8e984bc"
+    },
+    {
+      "bundle_path": "traces/groq-continuation_lost_response_reconcile.jsonl",
+      "source_path": "artifacts/groq-continuation_lost_response_reconcile.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T20:27:22+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "5abde1ee9d8ef104fc2f1973a87c0e17f7fbe88f",
+      "source_sha256": "029ada6e903d317902cafce73fbd826c487b3bee56aa2068b53ea71fff9e3427",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": true,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "a8ecaf918d72ce1bc2a7a77cb0a70c3bed3e84bceaac22666393ced609ac24a0"
+    },
+    {
+      "bundle_path": "traces/groq-paced/lost_response_reconcile.jsonl",
+      "source_path": "artifacts/groq-paced/lost_response_reconcile.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:30:34+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "4e213f84ee42aa8fb77d24ce619b686dd471bdfb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "6ad9447a62cad4e5fb6950f6ec05b48cd3569ac5a5574b6260a13f980b2dd400"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b-run2/scenario-002.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b-run2/scenario-002.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:28:51+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": true,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "e3a50bba230402689422267dfeb56d5199b59605d2254cbdbf06e3e8a14a57fa"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b/scenario-002.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b/scenario-002.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:27:22+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "d51f09e52c10e4660303e042cc6ab6f127fe9f42e12d0542e7bc74ce9d3d5b89",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "96a15ae09fc637360fb1d967aeea390c3baf38c3567cb1cbdc6363c4d2c27935"
+    },
+    {
+      "bundle_path": "traces/r2-live/qwen-reconcile.jsonl",
+      "source_path": "artifacts/r2-live/qwen-reconcile.jsonl",
+      "run_id": "932b7261-42d9-4613-93fd-0944f2a6ff89",
+      "time_source": "recorded",
+      "selected_time_utc": "2026-09-15T10:18:19+00:00",
+      "run_started_at_raw": "2026-09-15T10:18:16.542738+00:00",
+      "run_ended_at_raw": "2026-09-15T10:18:19.372667+00:00",
+      "commit": "9d73fbe795fbeb2db4d3814eff532e3a9aacb4a2",
+      "source_sha256": "ffdef27f47c45fb158332e7ad2ade0e467e8b9ddc997cac81e776797f8fc9f9c",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": true,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "1fa893f6abf0b74ac36a311442612a29644e25475ef03559ec45632867b7ab3b"
+    },
+    {
+      "bundle_path": "traces/sweep27b/qwen-qwen3-8-27b--lost_response_reconcile.jsonl",
+      "source_path": "artifacts/sweep27b/qwen-qwen3-8-27b--lost_response_reconcile.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:44:35+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "7ee57b4e5704c30f67aa7e7c17c656f0a769f724",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "b7b45be66620a9c6ae2f5307b99cb582a6a831d4be8e6e47346e48e7169afa9d",
+      "worktree_dirty": false,
+      "scenario": "live-dev-lost-response-status-reconciliation",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of lost_response_reconcile.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 3,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 1
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "83f36cb43db6aca5fed88f9e6b6282d7a1a9370108a128da7ee86c64235ce881"
+    },
+    {
+      "bundle_path": "traces/sweep27b/qwen-qwen3-8-27b--stale_read_after_correction.jsonl",
+      "source_path": "artifacts/sweep27b/qwen-qwen3-8-27b--stale_read_after_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:46:16+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "7ee57b4e5704c30f67aa7e7c17c656f0a769f724",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "7ffa3df90ca9c0c8df53d658a65507040d1af5d0137b0aca24fe8254dbdf4d97",
+      "worktree_dirty": false,
+      "scenario": "live-dev-stale-read-after-correction",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. Fictional Panel-A support notes and mock effects only. Not held out, not real Samsung documentation.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "eea5d65d8b4d6fe3b02408d7e60ddecba52a43618a59599573223dd8fdee69cf"
+    },
+    {
+      "bundle_path": "traces/ablation/v7-qwen27b-control-1.jsonl",
+      "source_path": "artifacts/ablation/v7-qwen27b-control-1.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:40:26+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fd31c7fecc12836ba5232fce67358984115095aa",
+      "source_sha256": "154e87f57d0c2a9331a5a7a042de4a43b2959d3ef2f58d54fdd37eaa63ed0c68",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": false,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 1
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "b9ab221c37ad529d01ba1e517a19bfd4a7b59137f3f33bd6639eb3d4e3969b29"
+    },
+    {
+      "bundle_path": "traces/ablation/v7-qwen27b-control-2.jsonl",
+      "source_path": "artifacts/ablation/v7-qwen27b-control-2.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:41:19+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fd31c7fecc12836ba5232fce67358984115095aa",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "a5146e90aa47438f666fbbd4807147ccd70665bc211e65a99aeb5d237b8f73a9"
+    },
+    {
+      "bundle_path": "traces/r1-live/qwen-device.jsonl",
+      "source_path": "artifacts/r1-live/qwen-device.jsonl",
+      "run_id": "fdabb77a-6763-4740-baee-40bf0ce5d9b6",
+      "time_source": "recorded",
+      "selected_time_utc": "2026-09-15T09:46:53+00:00",
+      "run_started_at_raw": "2026-09-15T09:46:25.538604+00:00",
+      "run_ended_at_raw": "2026-09-15T09:46:53.653368+00:00",
+      "commit": "27e5346f94cdf5b5a566b7e7701b8dc3805c330b",
+      "source_sha256": "5400a4f69c758376d630f2fef5a1d2e487f4ccdfb9102ece13b44cddd4615bbe",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "bd8dc8a408a8b54a90d436706eb8ca974c567d8026040b27be14336a4519c2f1"
+    },
+    {
+      "bundle_path": "traces/r3-live/device.jsonl",
+      "source_path": "artifacts/r3-live/device.jsonl",
+      "run_id": "201cf730-2826-4b8e-b1a4-3367e8db3e5b",
+      "time_source": "recorded",
+      "selected_time_utc": "2026-09-15T13:31:56+00:00",
+      "run_started_at_raw": "2026-09-15T13:31:28.826218+00:00",
+      "run_ended_at_raw": "2026-09-15T13:31:56.776548+00:00",
+      "commit": "cb66d9399c830d2e2233772e29697cf24541bb86",
+      "source_sha256": "f348d0a333b6086d177e02cc8eedce8e5887a72be99699d941f68bf2ea813c08",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": true,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "f9471ff7bda01db4bcd33d803f168e1748bc4f66b995404d8e1fc3aefdf7c541"
+    },
+    {
+      "bundle_path": "traces/sweep27b/qwen-qwen3-8-27b--stale_read_after_device_correction.jsonl",
+      "source_path": "artifacts/sweep27b/qwen-qwen3-8-27b--stale_read_after_device_correction.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:47:57+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "7ee57b4e5704c30f67aa7e7c17c656f0a769f724",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "e9e5d25f415a05e827db43cba93834c761730a46ac339f45837e9c8fdf73f976",
+      "worktree_dirty": false,
+      "scenario": "live-dev-stale-read-after-device-correction",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 4,
+      "outcome_counts": {
+        "success": 4,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "44806eebc36982408c47b944c8bf09e239a6020971d9a9da5d73b163e4206bc9"
+    },
+    {
+      "bundle_path": "traces/groq-continuation_support_then_service.jsonl",
+      "source_path": "artifacts/groq-continuation_support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T20:28:18+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "5abde1ee9d8ef104fc2f1973a87c0e17f7fbe88f",
+      "source_sha256": "029ada6e903d317902cafce73fbd826c487b3bee56aa2068b53ea71fff9e3427",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": true,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "20c77e9af4fedf688e64a450f189932b14b93beff3708d3b096542be5eb12b4d"
+    },
+    {
+      "bundle_path": "traces/groq-diag-support.jsonl",
+      "source_path": "artifacts/groq-diag-support.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:28:36+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": true,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "6b9112c495734990af9eaa3fe6ff6a08ccf802ff27289ec5e0aaaecd7a3c8425"
+    },
+    {
+      "bundle_path": "traces/groq-paced/support_then_service.jsonl",
+      "source_path": "artifacts/groq-paced/support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:31:55+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "4e213f84ee42aa8fb77d24ce619b686dd471bdfb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "32dd1401dc2c5e9ff4c14c8f5704f60ab5d62f87be8016c89f71239b23e30a7b"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b-run2/scenario-003.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b-run2/scenario-003.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:28:52+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "de56974d2a656153509d23bd40fd0d8bae9712763d0cadcbf33a40c871796041",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": true,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [
+        429
+      ],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 1,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_admission_failure",
+      "eligibility_basis": "HTTP 429 from Groq (rate_limit_exceeded or request_too_large) before any model output was produced. Excluded from oracle/quality ranking; retained for attempted-run reliability accounting.",
+      "sanitized": true,
+      "trace_sha256_in_bundle": "d76bfe9a709f353b1c0d55eaaea9bfaadf9805e41fbc6e3a85bb77876ddcec98"
+    },
+    {
+      "bundle_path": "traces/groq-qwen3-8-27b/scenario-003.jsonl",
+      "source_path": "artifacts/groq-qwen3-8-27b/scenario-003.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-13T18:27:22+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "fe219697c91001c0c323fdd8ececb5dd65a5f5fb",
+      "source_sha256": "d51f09e52c10e4660303e042cc6ab6f127fe9f42e12d0542e7bc74ce9d3d5b89",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 90.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "backend_failure",
+      "oracle_passed": false,
+      "http_status_codes": [],
+      "request_count": 1,
+      "outcome_counts": {
+        "success": 0,
+        "failure": 1,
+        "cancelled": 0
+      },
+      "eligibility": "infra_failure_unspecified",
+      "eligibility_basis": "HTTPStatusError with no captured status code or body, failing in 0.17s with zero prompt/completion tokens recorded anywhere in the request. Consistent with a connection-level failure prior to any generation; classified as infrastructure by exception type and absence of generated content, not by assumption.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "c867be37036d92b6a63e5526cc0926b22e4b7441cdea8b1c3d74e564808b4173"
+    },
+    {
+      "bundle_path": "traces/r1-live/qwen-support.jsonl",
+      "source_path": "artifacts/r1-live/qwen-support.jsonl",
+      "run_id": "fa3f1db9-0117-4dba-841e-cc31fa4becb4",
+      "time_source": "recorded",
+      "selected_time_utc": "2026-09-15T09:45:09+00:00",
+      "run_started_at_raw": "2026-09-15T09:45:08.419563+00:00",
+      "run_ended_at_raw": "2026-09-15T09:45:09.874148+00:00",
+      "commit": "27e5346f94cdf5b5a566b7e7701b8dc3805c330b",
+      "source_sha256": "5400a4f69c758376d630f2fef5a1d2e487f4ccdfb9102ece13b44cddd4615bbe",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": true,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "561c35e872ca46038d40853cde0e9d21b656610909e3f53bcd40697061cb6e05"
+    },
+    {
+      "bundle_path": "traces/sweep27b/qwen-qwen3-8-27b--support_then_service.jsonl",
+      "source_path": "artifacts/sweep27b/qwen-qwen3-8-27b--support_then_service.jsonl",
+      "run_id": null,
+      "time_source": "mtime_inferred",
+      "selected_time_utc": "2026-09-14T19:49:12+00:00 (mtime, order unverified)",
+      "run_started_at_raw": null,
+      "run_ended_at_raw": null,
+      "commit": "7ee57b4e5704c30f67aa7e7c17c656f0a769f724",
+      "source_sha256": "8f5d31d859d4a6ad23108114014a173ea985ec8eba562823e9c14c85b00a5fd5",
+      "scenario_sha256": "6d1488a87c2d03fc0ba01595c43985844fb26f6dd5341e6cd16f5d2197b59b4e",
+      "worktree_dirty": false,
+      "scenario": "live-dev-support-read-then-service",
+      "backend": "groq/qwen/qwen3.8-27b",
+      "model": "qwen/qwen3.8-27b",
+      "resolved_config": {
+        "scenario_config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "component_config": {
+            "profile": "fake"
+          }
+        },
+        "reasoner_config": {
+          "request_timeout_seconds": 30.0,
+          "warmup_timeout_seconds": 290,
+          "history_limit": 128,
+          "num_ctx": null,
+          "num_gpu": null,
+          "response_format": "json_object",
+          "temperature": 0,
+          "max_output_tokens": "950",
+          "ollama_duration_unit": "nanoseconds"
+        }
+      },
+      "declared_hardware": {
+        "execution": "hosted (Groq Cloud); no client-side GPU/CPU used for inference",
+        "requesting_host_python": "3.11.15",
+        "requesting_host_platform": "Windows-10-10.0.26220-SP0"
+      },
+      "development_exposure": "development (live-dev fixture; developer-authored, not held out, mock tool effects)",
+      "provenance": "Codex-authored live-development variant of support_then_service.json; explicit tool formats and model-sized timeout. Not held out; mock effects only.",
+      "completion_status": "completed",
+      "oracle_passed": true,
+      "http_status_codes": [],
+      "request_count": 2,
+      "outcome_counts": {
+        "success": 2,
+        "failure": 0,
+        "cancelled": 0
+      },
+      "eligibility": "scored_pass",
+      "eligibility_basis": "Completed run; task oracle passed.",
+      "sanitized": false,
+      "trace_sha256_in_bundle": "17e9cb3efe53ac6c6a3348f0448451638f374a5c4344ceb9f18ce646f8dc111c"
+    }
+  ]
+}
