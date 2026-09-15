@@ -732,3 +732,7 @@ changed.
 2026-09-15: Completed the bounded-worker failure matrix: stale vision exceptions and timeouts are
 discarded after newer frames, while a recovered frame and WAV still reach one multimodal session.
 Validation: 152 passed, 4 strict xfailed; no protected files changed.
+
+2026-09-15: Scoped LocalPerception admission workers per session so concurrent session pending frames
+cannot supersede each other; same-session coalescing remains bounded. Validation: 153 passed, 4 strict
+xfailed; no protected files changed.

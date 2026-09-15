@@ -742,3 +742,8 @@ perception 72 passed. No protected files changed.
 coverage. Added direct exception and timeout suppression tests and a recovered multimodal WebSocket
 regression. Full validation: 152 passed, 4 strict xfailed; demo 62 passed plus 4 strict xfailed;
 perception 74 passed. No protected files changed.
+
+2026-09-15 verification: Applied the subagent audit finding for cross-session pending isolation. Local
+audio/image workers are now created per session, with a regression for competing active and pending
+frames across two sessions. Full validation: 153 passed, 4 strict xfailed; demo 62 passed plus 4 strict
+xfailed; perception 75 passed. No protected files changed.

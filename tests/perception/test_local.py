@@ -560,6 +560,78 @@ async def test_same_frame_id_from_different_sessions_is_not_coalesced(tmp_path: 
 
 
 @pytest.mark.asyncio
+async def test_pending_work_isolated_between_sessions(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / name for name in ("first-a.png", "latest-a.png", "first-b.png", "latest-b.png")]
+    for path in paths:
+        _write_png(path)
+    started_a = threading.Event()
+    started_b = threading.Event()
+    release_a = threading.Event()
+    release_b = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if path.name == "first-a.png":
+            started_a.set()
+            release_a.wait(1)
+        elif path.name == "first-b.png":
+            started_b.set()
+            release_b.wait(1)
+        return f"evidence from {path.stem}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    first_a = FrameEvent(
+        session_id="session-a",
+        payload=Frame(path=str(paths[0]), frame_id="first-a"),
+    )
+    latest_a = FrameEvent(
+        session_id="session-a",
+        payload=Frame(path=str(paths[1]), frame_id="latest-a"),
+    )
+    first_b = FrameEvent(
+        session_id="session-b",
+        payload=Frame(path=str(paths[2]), frame_id="first-b"),
+    )
+    latest_b = FrameEvent(
+        session_id="session-b",
+        payload=Frame(path=str(paths[3]), frame_id="latest-b"),
+    )
+    first_a_task = asyncio.create_task(collect(adapter, first_a))
+    first_b_task = asyncio.create_task(collect(adapter, first_b))
+    await asyncio.wait_for(
+        asyncio.gather(
+            asyncio.to_thread(started_a.wait, 1),
+            asyncio.to_thread(started_b.wait, 1),
+        ),
+        timeout=1,
+    )
+    latest_a_task = asyncio.create_task(collect(adapter, latest_a))
+    latest_b_task = asyncio.create_task(collect(adapter, latest_b))
+    await asyncio.sleep(0.05)
+    release_a.set()
+    release_b.set()
+
+    first_a_result, first_b_result, latest_a_result, latest_b_result = await asyncio.gather(
+        first_a_task,
+        first_b_task,
+        latest_a_task,
+        latest_b_task,
+    )
+
+    assert first_a_result == []
+    assert first_b_result == []
+    assert [item.source_id for item in latest_a_result] == ["latest-a"]
+    assert [item.source_id for item in latest_b_result] == ["latest-b"]
+    assert {path.name for path in calls} == {path.name for path in paths}
+
+
+@pytest.mark.asyncio
 async def test_aclose_releases_active_observer_without_waiting_for_thread(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 

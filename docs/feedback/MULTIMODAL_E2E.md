@@ -403,3 +403,14 @@ The current image and audio evidence complete together without a false backend_f
 
 **Status:** Full suite 152 passed, 4 strict expected failures; demo suite 62 passed, 4 strict expected
 failures; perception suite 74 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay session-isolated bounded admission
+
+**Task:** Ensure concurrent sessions cannot replace one another's pending multimodal perception work.
+
+**Changes:** LocalPerception now creates independent audio and image workers per session. A two-session
+regression holds an active and pending frame in each session, verifies same-session coalescing, preserves
+the newest source IDs, and confirms all provider calls remain isolated.
+
+**Status:** Full suite 153 passed, 4 strict expected failures; demo suite 62 passed, 4 strict expected
+failures; perception suite 75 passed. No engine, contract, dependency or lockfile change.

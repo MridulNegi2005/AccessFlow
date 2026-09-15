@@ -213,3 +213,8 @@ demo 61 passed plus 4 strict xfailed; perception 72 passed. No protected files c
 timeouts are suppressed after a newer frame, while the current frame and later WAV remain usable in
 one WebSocket session. Full validation: 152 passed, 4 strict xfailed; demo 62 passed plus 4 strict
 xfailed; perception 74 passed. No protected files changed.
+
+2026-09-15 verification: Isolated bounded perception admission per session so concurrent sessions cannot
+replace one another's pending frames. The two-session regression preserves each session's newest source
+ID while same-session obsolete work is coalesced. Full validation: 153 passed, 4 strict xfailed; demo
+62 passed plus 4 strict xfailed; perception 75 passed. No protected files changed.
