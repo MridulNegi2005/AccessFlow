@@ -83,9 +83,17 @@ class Agent:
         self.latest_complete = False
         self.planner = None
         self.repeated_completed_call = False
+        self.no_progress = False
         self.repeat_recoveries = {}
         self.write_stall_recoveries = {}
         self.schema_rejection_recoveries = {}
+        # Shared bounded-recovery budget for every no-progress mechanism above, keyed by
+        # (request_id, request_input_epoch) so a request cannot chain several single-shot
+        # mechanisms into unlimited retries, while a genuinely new utterance/frame for the
+        # same still-open request still gets its own fresh attempt. The per-mechanism dicts
+        # above are kept only for external introspection/back-compat; they no longer gate.
+        self.recovery_budget = {}
+        self.request_input_epoch = 0
         self.active_frame = None
         self.active_speech = None
         self.speech_ready = False
@@ -274,6 +282,7 @@ class Agent:
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
                            write_pending=self.speech_write_requested,
                            repeated_completed_call=self.repeated_completed_call,
+                           no_progress=self.no_progress,
                            active_request_id=self.request_id)
 
     async def _emit(self, kind, **payload):
@@ -342,10 +351,7 @@ class Agent:
             await self._apply(message.value, message.source)
         elif message.kind == "plan_rejected":
             await self._emit("error", code="plan_schema_rejected", detail=message.value)
-            attempts = self.schema_rejection_recoveries.get(self.request_id, 0)
-            if attempts < 1 and self.state.status not in {"stopped", "ended"}:
-                self.schema_rejection_recoveries[self.request_id] = attempts + 1
-                self._start_plan()
+            await self._offer_recovery(self.schema_rejection_recoveries)
 
     def _start_plan(self, source=None):
         self.generation += 1
@@ -357,6 +363,10 @@ class Agent:
         fresh_evidence = source is not None
         if source is not None:
             self.planning_source = source
+            # Genuinely new evidence about this still-open request earns its own
+            # bounded recovery budget instead of inheriting an exhausted one from
+            # an earlier, unrelated stall on the same request_id.
+            self.request_input_epoch += 1
         source = self.planning_source
         if self.planner and not self.planner.done():
             self.planner.cancel()
@@ -382,6 +392,36 @@ class Agent:
                 await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
         self.planner = self._spawn(plan())
 
+    async def _offer_recovery(self, compat_bucket):
+        """Grant one bounded re-plan for the active (request, input revision), or fail explicitly.
+
+        Every no-progress mechanism -- schema rejection, a stalled owed write, a repeated or
+        otherwise undispatchable call, an empty plan -- draws from this single shared budget
+        instead of each getting its own independent attempt, so a request cannot chain several
+        single-shot mechanisms into unbounded retries. `compat_bucket`, when given, is one of
+        the pre-existing per-mechanism dicts (repeat_recoveries, write_stall_recoveries,
+        schema_rejection_recoveries); it is still incremented for external introspection and
+        the tests that key off it, but it no longer independently gates the retry.
+        On exhaustion this ends the request with an explicit diagnostic instead of leaving it
+        to silently wait for the scenario deadline.
+        """
+        if self.state.status in {"stopped", "ended"}:
+            return
+        key = (self.request_id, self.request_input_epoch)
+        used = self.recovery_budget.get(key, 0)
+        if used < 1:
+            self.recovery_budget[key] = used + 1
+            if compat_bucket is not None:
+                compat_bucket[self.request_id] = compat_bucket.get(self.request_id, 0) + 1
+            self._start_plan()
+            return
+        if not self.last_request_finished:
+            self.last_request_finished = True
+            self.state.status = "no_progress"
+            await self._emit("error", code="no_progress_exhausted",
+                             message="No progress after one bounded automatic retry; this "
+                                     "request will not retry again on its own.")
+
     async def _apply(self, proposal: PlanProposal, source=None):
         fresh_evidence = self._fresh_evidence
         # Snapshot before this proposal can mutate speech_write_requested below. Mirrors
@@ -396,7 +436,8 @@ class Agent:
                                        for call in self.ledger.values()
                                        if call.request_id == self.request_id))
         self.repeated_completed_call = False
-        repeated, dispatched_any = [], False
+        self.no_progress = False
+        repeated, dispatched_any, blocked_calls = [], False, 0
         speech = self.observations.get(("speech", self.active_speech))
         speech_origin = source == ("speech", self.active_speech)
         final_correction = bool(speech_origin and speech and speech.final and
@@ -455,6 +496,7 @@ class Agent:
                 self.provisional_intent = None
             self.state.intent = proposal.intent
         await self._invalidate_dependencies(changed, "dependency_changed")
+        said_something = bool(proposal.clarification)
         if proposal.clarification and (self.latest_complete or final_correction):
             self.state.status = "clarifying"
             await self._emit("clarify", text=proposal.clarification)
@@ -462,21 +504,26 @@ class Agent:
             manifest = self.manifests.get(proposed.tool)
             if not manifest:
                 await self._emit("error", code="unknown_tool", tool=proposed.tool)
+                blocked_calls += 1
                 continue
             dependency_error = self._argument_dependency_error(proposed, manifest)
             if dependency_error:
                 await self._emit("error", code=dependency_error, tool=proposed.tool)
+                blocked_calls += 1
                 continue
             if manifest.effect == "write":
                 if not (self.latest_complete and self.speech_ready and self.speech_write_requested
                         and proposal.request_complete and proposal.write_requested
                         and not self.state.correction_pending and not proposal.clarification):
+                    blocked_calls += 1
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
+                    blocked_calls += 1
                     continue
                 # Unknown/cancelled writes may have committed: no new write until reconciled.
                 if any(c.effect == "write" and c.status in {"unknown", "cancelled"} for c in self.ledger.values()):
                     await self._emit("clarify", text="The earlier action has an unresolved outcome; check its status first.")
+                    said_something = True
                     continue
             # A dependency name may be ledger operation identity rather than a slot
             # (see _argument_dependency_error); those carry no slot revision to track.
@@ -492,6 +539,10 @@ class Agent:
             if previous and (previous.status != "failed" or self.attempt_counts[signature] >= 2):
                 if previous.status == "success":
                     repeated.append(previous.call_id)
+                elif previous.status == "failed":
+                    # A permanently failed call (its one bounded retry already used) proposed
+                    # again verbatim is not new work either; it just never got flagged before.
+                    blocked_calls += 1
                 continue
             operation_id = previous.operation_id if previous else str(uuid4())
             if manifest.idempotency_parameter:
@@ -500,12 +551,14 @@ class Agent:
                 validate(args, manifest.parameters)
             except Exception:
                 await self._emit("error", code="invalid_tool_arguments", tool=proposed.tool)
+                blocked_calls += 1
                 continue
             call = ToolCall(call_id=str(uuid4()), operation_id=operation_id, tool=proposed.tool,
                             arguments=args, dependencies=dependencies, effect=manifest.effect,
                             request_id=self.request_id)
             if call.effect == "write" and not self.authorization.allows(self._view(), call):
                 await self._emit("clarify", text="This environment has not authorized that state-changing tool.")
+                said_something = True
                 continue
             self.dispatched[signature] = call.call_id
             self.attempt_counts[signature] = self.attempt_counts.get(signature, 0) + 1
@@ -515,45 +568,73 @@ class Agent:
             dispatched_any = True
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
-        said_something = bool(proposal.clarification)
+        pending_now = any(c.status == "pending" for c in self.ledger.values())
+        history_has_write = any(c.effect == "write" for c in self.ledger.values())
+        # --- Outcome classification --------------------------------------------------
+        # Every accepted plan is exactly one of: dispatched work (dispatched_any),
+        # emitted an answer/clarification (said_something), legitimately waiting on
+        # existing pending work (pending_now), or made no progress at all. Only the
+        # last case needs a diagnostic and a bounded recovery attempt.
         write_owed_unmet = False
-        if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
-            if any(c.effect == "write" for c in self.ledger.values()):
+        if not proposal.calls and not pending_now and self.latest_complete:
+            if history_has_write:
                 pass  # A write call already exists in this session; unchanged prior behaviour.
-            elif prior_write_owed:
-                # The accepted request still owes a state-changing effect. A completed read
-                # or a change of mind in this proposal's flags is evidence, never a
-                # substitute for the effect: prose alone must not claim completion.
+            elif prior_write_owed and not proposal.clarification:
+                # The accepted request still owes a state-changing effect. A completed read,
+                # an omitted response, or a change of mind in this proposal's flags is
+                # evidence, never a substitute for the effect: neither a prose claim nor
+                # total silence may finish it.
                 write_owed_unmet = True
-            else:
+            elif proposal.response:
                 said_something = True
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
         if write_owed_unmet and not self.last_request_finished:
             # This proposal silently dropped the write intent a prior proposal established
-            # for the same spoken request (e.g. write_requested=False on a follow-up). That
-            # is not new user evidence of cancellation, so restore it and give the reasoner
-            # one bounded corrective turn -- the same shape as repeated_completed_call.
+            # for the same spoken request (e.g. write_requested=False on a follow-up, or an
+            # empty plan). That is not new user evidence of cancellation, so restore intent
+            # and give the reasoner one bounded corrective turn.
             self.speech_write_requested = True
             await self._emit("error", code="write_owed_not_progressed",
                              message="A requested state-changing effect is not complete; "
-                                     "a prose-only response cannot finish it.")
-            attempts = self.write_stall_recoveries.get(self.request_id, 0)
-            if attempts < 1 and self.state.status not in {"stopped", "ended"}:
-                self.write_stall_recoveries[self.request_id] = attempts + 1
-                self._start_plan()
-        if (repeated and not dispatched_any and not said_something
-                and not self.state.pending_call_ids and not self.last_request_finished):
-            # The planner re-proposed only calls that already succeeded. Dropping those
-            # silently ends the turn with no output and nothing left to wake the loop,
-            # so the session stalls until the scenario deadline. Say so, and give the
-            # planner one bounded retry that states the results are already in evidence.
-            await self._emit("error", code="repeated_completed_call", call_ids=sorted(set(repeated)),
-                             message="Every proposed call has already completed; its result is in evidence.")
-            attempts = self.repeat_recoveries.get(self.request_id, 0)
-            if attempts < 1 and self.state.status not in {"stopped", "ended"}:
-                self.repeat_recoveries[self.request_id] = attempts + 1
+                                     "an empty or prose-only response cannot finish it.")
+            await self._offer_recovery(self.write_stall_recoveries)
+        elif ((self.latest_complete or final_correction) and not dispatched_any and not said_something
+                and not pending_now and not self.last_request_finished
+                and (repeated or blocked_calls
+                     or (not proposal.calls and proposal.request_complete and not history_has_write))):
+            # An empty plan on a request the model itself does not yet consider complete
+            # (no calls, no clarification, request_complete=False) is legitimately still
+            # awaiting more input (e.g. a spoken write request waiting on a promised
+            # image) -- the same as partial speech, not a stall. Likewise, a write that
+            # already exists elsewhere in this session keeps the prior informational-
+            # answer restraint (see the pass branch above) rather than a new diagnostic.
+            # Dropping this silently ends the turn with no output and nothing left to wake
+            # the loop, so the session would otherwise stall until the scenario deadline.
+            if repeated and not blocked_calls:
+                await self._emit("error", code="repeated_completed_call", call_ids=sorted(set(repeated)),
+                                 message="Every proposed call has already completed; its result is in evidence.")
                 self.repeated_completed_call = True
-                self._start_plan()
+                await self._offer_recovery(self.repeat_recoveries)
+            elif repeated:
+                # A mixed proposal: some calls already completed, others could not be
+                # dispatched. "Every call is done" would misdescribe this turn.
+                await self._emit("error", code="repeated_completed_call", call_ids=sorted(set(repeated)),
+                                 message="Some proposed calls already completed and are in evidence; "
+                                         "the rest could not be dispatched as proposed. Not every call is done.")
+                self.repeated_completed_call = True
+                await self._offer_recovery(self.repeat_recoveries)
+            elif blocked_calls:
+                await self._emit("error", code="no_dispatchable_call",
+                                 message="None of the proposed calls could be dispatched as proposed; "
+                                         "see the preceding errors for each one.")
+                self.no_progress = True
+                await self._offer_recovery(None)
+            else:
+                await self._emit("error", code="no_progress",
+                                 message="The plan produced no tool call, clarification or answer; "
+                                         "nothing else will advance this request.")
+                self.no_progress = True
+                await self._offer_recovery(None)
 
     def _argument_dependency_error(self, proposed, manifest):
         """Ground dynamic arguments in tracked state before read or write dispatch.
