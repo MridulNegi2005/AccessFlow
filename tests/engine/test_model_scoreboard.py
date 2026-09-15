@@ -115,6 +115,117 @@ def test_malformed_json_is_excluded_and_reported_not_swallowed(tmp_path):
     assert any(item["path"].endswith("bad.jsonl") for item in exclusions)
 
 
+def test_non_object_json_lines_are_excluded_and_reported_not_crashed(tmp_path):
+    # A syntactically valid JSON value that is not an object (array, null, bare
+    # string) used to reach `candidate.get(...)` and raise AttributeError.
+    good = tmp_path / "good.jsonl"
+    write_trace(good, run_id="run-good")
+
+    non_objects = {
+        "array.jsonl": "[]\n",
+        "null.jsonl": "null\n",
+        "string.jsonl": '"just a string"\n',
+    }
+    for name, content in non_objects.items():
+        (tmp_path / name).write_text(content, encoding="utf-8")
+
+    records, exclusions = collect_records(tmp_path)
+
+    assert len(records) == 1
+    assert records[0]["run_id"] == "run-good"
+    for name in non_objects:
+        matches = [item for item in exclusions if item["path"].endswith(name)]
+        assert any("invalid_record_type" in item["reason"] for item in matches), matches
+
+    by_model = summarize(records)
+    assert by_model["test/model"]["runs"] == 1
+    assert by_model["test/model"]["passed"] == 1
+
+
+def _write_metadata(path, **overrides):
+    metadata = {
+        "type": "run_metadata",
+        "backend": "test/model",
+        "scenario": "scenario-a",
+        "completion_status": "completed",
+        "task_oracle": {"passed": True},
+        "disabled_components": [],
+        "reasoner_evidence": {"requests": [{"outcome": "success", "elapsed_seconds": 1.0,
+                                             "status_code": 200}]},
+    }
+    metadata.update(overrides)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(metadata) + "\n", encoding="utf-8")
+
+
+def test_wrong_type_timestamp_is_excluded_and_reported_not_crashed(tmp_path):
+    good = tmp_path / "good.jsonl"
+    write_trace(good, run_id="run-good")
+    bad = tmp_path / "bad_timestamp.jsonl"
+    _write_metadata(bad, run_id="run-bad-ts", run_ended_at=1234567890)
+
+    records, exclusions = collect_records(tmp_path)
+
+    assert len(records) == 1
+    assert records[0]["run_id"] == "run-good"
+    reasons = [item["reason"] for item in exclusions if item["path"].endswith("bad_timestamp.jsonl")]
+    assert any("invalid_record_shape" in r and "run_ended_at" in r for r in reasons), reasons
+
+
+def test_malformed_requests_list_is_excluded_and_reported_not_crashed(tmp_path):
+    good = tmp_path / "good.jsonl"
+    write_trace(good, run_id="run-good")
+    bad = tmp_path / "bad_requests.jsonl"
+    _write_metadata(bad, run_id="run-bad-requests", reasoner_evidence={"requests": "not-a-list"})
+
+    records, exclusions = collect_records(tmp_path)
+
+    assert len(records) == 1
+    assert records[0]["run_id"] == "run-good"
+    reasons = [item["reason"] for item in exclusions if item["path"].endswith("bad_requests.jsonl")]
+    assert any("requests must be a list" in r for r in reasons), reasons
+
+
+def test_malformed_request_entry_is_excluded_and_reported_not_crashed(tmp_path):
+    good = tmp_path / "good.jsonl"
+    write_trace(good, run_id="run-good")
+    bad = tmp_path / "bad_request_entry.jsonl"
+    _write_metadata(bad, run_id="run-bad-entry", reasoner_evidence={"requests": ["not-an-object"]})
+
+    records, exclusions = collect_records(tmp_path)
+
+    assert len(records) == 1
+    assert records[0]["run_id"] == "run-good"
+    reasons = [item["reason"] for item in exclusions if item["path"].endswith("bad_request_entry.jsonl")]
+    assert any("requests[0] must be an object" in r for r in reasons), reasons
+
+
+def test_reasoner_evidence_wrong_type_is_excluded_and_reported_not_crashed(tmp_path):
+    good = tmp_path / "good.jsonl"
+    write_trace(good, run_id="run-good")
+    bad = tmp_path / "bad_evidence.jsonl"
+    _write_metadata(bad, run_id="run-bad-evidence", reasoner_evidence="oops-a-string")
+
+    records, exclusions = collect_records(tmp_path)
+
+    assert len(records) == 1
+    assert records[0]["run_id"] == "run-good"
+    reasons = [item["reason"] for item in exclusions if item["path"].endswith("bad_evidence.jsonl")]
+    assert any("reasoner_evidence must be an object" in r for r in reasons), reasons
+
+
+def test_exclusion_diagnostics_are_bounded(tmp_path):
+    bad = tmp_path / "huge.jsonl"
+    huge_payload = json.dumps(list(range(10_000)))
+    bad.write_text(huge_payload + "\n", encoding="utf-8")
+
+    _, exclusions = collect_records(tmp_path)
+
+    assert len(exclusions) >= 1
+    for item in exclusions:
+        assert len(item["reason"]) < 1000
+
+
 def test_artifacts_outside_repo_root_does_not_crash(tmp_path):
     outside = tmp_path / "external_artifacts"
     write_trace(outside / "trace.jsonl", run_id="run-outside")
