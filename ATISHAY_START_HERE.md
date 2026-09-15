@@ -8,8 +8,8 @@ lockfile, release documentation and packaging. You do not need his API key or ma
 
 ## Current handoff — 16 September 2026
 
-The published `atishay/perception` branch is synchronized at commit `4fd3c3b`.
-The verified baseline at this snapshot is **166 passed, 4 strict expected failures**.
+The published `atishay/perception` branch carries this handoff. The verified
+baseline at this snapshot is **166 passed, 4 strict expected failures**.
 Read `docs/STATUS.md` before changing anything. The multimodal path now covers text,
 validated WAV, validated PNG, injected local ASR and vision providers, source IDs,
 event IDs, revisions, timestamps, session isolation, recovery, cleanup and bounded
