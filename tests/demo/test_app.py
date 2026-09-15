@@ -1059,6 +1059,10 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
         }
         assert CapturingReasoner.latest_view is not None
         observations = {item.source_id: item for item in CapturingReasoner.latest_view.observations}
+        event_ids = [item.event_id for item in observations.values()]
+        assert len(event_ids) == 3
+        assert len(set(event_ids)) == 3
+        assert all(event_ids)
         assert observations["spoken-question"].revision == 1
         assert observations["spoken-question"].speech_start == 12.0
         assert observations["spoken-question"].speech_end == 13.5
