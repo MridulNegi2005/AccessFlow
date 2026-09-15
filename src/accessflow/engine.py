@@ -689,7 +689,11 @@ class Agent:
                 if isinstance(value, str) and value in unresolved_operations:
                     continue
             slot_name = explicit_slot if explicit_slot is not None else parameter
-            if slot_name in ledger_dependencies:
+            # Match the parameter's own name, never an alias target. ledger_dependencies
+            # holds parameter names; slot_name holds a slot name for an aliased argument,
+            # so comparing the two lets any parameter alias onto a ledger name and skip
+            # grounding entirely.
+            if explicit_slot is None and parameter in ledger_dependencies:
                 continue
             slot = self.state.slots.get(slot_name)
             if slot is None or slot_name not in proposed.dependencies:
