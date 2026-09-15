@@ -94,14 +94,14 @@ def _reject_non_finite_literal(literal):
     raise ValueError(f"Scenario JSON must not contain non-finite literal: {literal}")
 
 
-def _resolve_audio_paths(raw, base_dir):
-    # A committed scenario's WAV path must resolve the same way regardless of the
+def _resolve_media_paths(raw, base_dir):
+    # A committed scenario's WAV/PNG path must resolve the same way regardless of the
     # invoking process's working directory. Relative paths are resolved against the
     # scenario file's own location, not cwd; absolute paths pass through unchanged.
     if not isinstance(raw, dict):
         return
     for event in raw.get("events", []) or []:
-        if not isinstance(event, dict) or event.get("kind") != "audio":
+        if not isinstance(event, dict) or event.get("kind") not in {"audio", "frame"}:
             continue
         payload = event.get("payload")
         path = payload.get("path") if isinstance(payload, dict) else None
@@ -113,7 +113,7 @@ def load_scenario(path):
     # Python's json accepts the nonstandard NaN/Infinity/-Infinity tokens by
     # default; scenarios must stay valid JSON, so reject them here.
     raw = json.loads(Path(path).read_text(encoding="utf-8"), parse_constant=_reject_non_finite_literal)
-    _resolve_audio_paths(raw, Path(path).resolve().parent)
+    _resolve_media_paths(raw, Path(path).resolve().parent)
     return Scenario.model_validate(raw)
 
 

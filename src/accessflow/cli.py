@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import json
 import math
+import os
 from pathlib import Path
 
 from .adapters.models import JsonBackend, ModelReasoner
@@ -31,6 +32,12 @@ def main():
                                       help="Use fakes or process-isolated local media plus HeuristicTurnPolicy")
         component_parser.add_argument("--asr-model-path", type=Path,
                                       help="Already-installed Faster Whisper directory; requires --components local")
+        component_parser.add_argument("--vision-provider", choices=["none", "ollama"], default="none",
+                                      help="Vision backend for frame events; requires --components local")
+        component_parser.add_argument("--vision-model", default=None,
+                                      help="Vision model name; defaults to the provider's own default")
+        component_parser.add_argument("--vision-url", default=None,
+                                      help="Vision backend URL; defaults to the provider's own default")
     for model_parser in (replay_parser, suite, warmup):
         model_parser.add_argument("--request-timeout", type=float, default=20.0,
                                   help="Seconds allowed per model request; record it with any result")
@@ -57,15 +64,30 @@ def main():
     if args.command in {"suite", "replay"}:
         if args.asr_model_path is not None and args.components != "local":
             parser.error("--asr-model-path requires --components local")
+        if args.vision_provider != "none" and args.components != "local":
+            parser.error("--vision-provider requires --components local")
         component_config = {"profile": args.components}
         if args.components == "local":
             from .adapters.process_perception import ProcessPerception
             from .turn_policy import HeuristicTurnPolicy
+            worker_args = []
+            if args.vision_provider != "none":
+                worker_args += ["--vision-provider", args.vision_provider]
+                if args.vision_model:
+                    worker_args += ["--vision-model", args.vision_model]
+                if args.vision_url:
+                    worker_args += ["--vision-url", args.vision_url]
             def perception_factory():
-                return ProcessPerception(model_path=args.asr_model_path)
+                return ProcessPerception(model_path=args.asr_model_path, worker_args=worker_args)
             policy_factory = HeuristicTurnPolicy
             component_config["asr_model_path"] = str(args.asr_model_path) if args.asr_model_path else None
-            component_config["vision_provider"] = "not_configured"
+            if args.vision_provider == "none":
+                component_config["vision_provider"] = "none"
+            else:
+                from .adapters.vision import DEFAULT_MODEL as vision_default_model
+                resolved_vision_model = args.vision_model or os.getenv(
+                    "ACCESSFLOW_VISION_OLLAMA_MODEL", vision_default_model)
+                component_config["vision_provider"] = f"{args.vision_provider}/{resolved_vision_model}"
             component_config["native_worker"] = "subprocess"
     if args.command == "metrics":
         result = metrics(args.trace)
