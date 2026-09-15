@@ -418,12 +418,13 @@ failures; perception suite 75 passed. No engine, contract, dependency or lockfil
 ## 2026-09-16 - Codex Atishay complete configured multimodal composition
 
 **Task:** Extend the configured WebSocket evidence to carry text, WAV and PNG in one session and record
-the remaining timing-policy seam explicitly.
+the timing-policy seam explicitly.
 
 **Changes:** The real LocalPerception and loopback OllamaVisionProvider composition regression now sends
 all three event modalities together, including two revisions of one WAV utterance, and asserts transcript
-timing, source identity, audio revision, frame timing and truthful backend labels. A strict expected-failure example records that the current
-turn policy has no additive activity-timing channel; the proposal remains in `docs/CONTRACT_PROPOSALS.md`.
+timing, source identity, audio revision, frame timing and truthful backend labels. At this checkpoint, a strict
+expected-failure example recorded the missing activity-timing channel. The owned policy seam has since been promoted
+to accept optional ActivitySummary metadata; shared engine/controller integration remains in `docs/CONTRACT_PROPOSALS.md`.
 
 **Status:** Full suite 163 passed, 5 strict expected failures; demo suite 69 passed, 4 strict expected
 failures; perception suite 78 passed plus 1 strict expected failure. No engine, contract, dependency or
