@@ -737,6 +737,44 @@ def test_websocket_session_reset_does_not_inherit_multimodal_context():
     assert "audio:" not in second_final["payload"]["text"]
 
 
+def test_websocket_concurrent_sessions_do_not_share_multimodal_context():
+    encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as first_socket:
+            with client.websocket_connect("/ws") as second_socket:
+                first_socket.receive_json()
+                second_socket.receive_json()
+
+                first_socket.send_json(
+                    {
+                        "kind": "frame",
+                        "payload": {"data_base64": encoded_image, "frame_id": "first-frame"},
+                    }
+                )
+                first_frame_status = first_socket.receive_json()
+
+                second_socket.send_json(
+                    {"kind": "transcript", "payload": {"text": "Fresh session"}}
+                )
+                second_outputs = _receive_controller_outputs(second_socket)
+
+                first_socket.send_json(
+                    {"kind": "transcript", "payload": {"text": "Describe this screen"}}
+                )
+                first_outputs = _receive_controller_outputs(first_socket)
+
+    first_final = next(item for item in first_outputs if item["kind"] == "final")
+    second_final = next(item for item in second_outputs if item["kind"] == "final")
+    assert first_frame_status["payload"] == {
+        "media_received": "frame",
+        "source_id": "first-frame",
+    }
+    assert "image:" in first_final["payload"]["text"]
+    assert "Fresh session" in second_final["payload"]["text"]
+    assert "image:" not in second_final["payload"]["text"]
+
+
 def test_websocket_image_before_audio_context_is_visible():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
