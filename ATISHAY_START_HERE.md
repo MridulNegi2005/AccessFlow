@@ -23,7 +23,7 @@ comparison or provenance signal. Do not edit the controller or shared contracts 
 resolve these gaps; keep the failing example and proposal additive.
 
 The branch is clean and the remote is synchronized. Direct inspection of the existing
-browser captures and a current-head 1280x1600 headless Chrome capture found no visible
+browser captures and a current-head 1280x1600 headless Chrome capture with labeled controls found no visible
 clipping, overlap or broken text in the inspected viewports; live interactive device behavior,
 live model quality, human speech quality, feedback and final packaging remain open.
 A fresh shallow public-clone check on 16 September 2026 checked out

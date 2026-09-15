@@ -263,6 +263,9 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     html = Path("demo/index.html").read_text(encoding="utf-8")
 
     assert 'id="text-form"' in html
+    assert '<label for="text">Transcript</label>' in html
+    assert '<label for="audio">WAV audio file</label>' in html
+    assert '<label for="image">PNG image file</label>' in html
     assert 'accept="audio/wav,.wav"' in html
     assert 'accept="image/png,.png"' in html
     assert 'id="mic"' in html

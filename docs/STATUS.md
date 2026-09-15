@@ -111,6 +111,7 @@ Updated 16 September 2026.
   audio and image context, with no console or page errors or horizontal overflow.
 - A current-head local headless Chrome capture at 1280x1600 shows the full demo page with no visible
   clipping, overlap or broken text; live model quality and interactive device behavior remain separate evidence gaps.
+- The current demo page now gives the transcript, WAV and PNG controls explicit labels tied to their inputs; the refreshed 1280x1600 capture keeps the layout legible.
 - The demo reasoner now bounds prior multimodal context to 16,384 characters while retaining the newest evidence by truncating only the item that reaches the remaining capacity. Regressions cover recent evidence, oldest-history omission, the exact bound for an oversized prior item, and request completeness.
 - LocalPerception now gives each session one provider call plus one pending item per modality, coalesces obsolete same-session frames and same-utterance audio revisions, suppresses stale results and keeps audio/image workers independent. DemoPerception retains the vision worker for the session and closes active and queued work during WebSocket shutdown; synchronous worker threads remain non-force-cancellable.
 - The demo WebSocket now serializes controller events, media statuses and recoverable input errors through one outbound sender, preventing concurrent writes from interleaving. A route regression holds a controller send open while an invalid frame is received and confirms no overlapping WebSocket sends.
