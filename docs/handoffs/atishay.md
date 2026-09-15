@@ -198,3 +198,8 @@ suite: 141 passed, 4 strict xfailed; perception 66 passed; demo 59 passed, 4 str
 2026-09-15 verification: Guarded LocalPerception observer cancellation so the child awaitable is
 cleaned up even during initial scheduling, with a regression for an already-running audio worker.
 Full suite: 142 passed, 4 strict xfailed; perception 67 passed; demo 59 passed, 4 strict xfailed.
+
+2026-09-15 verification: Added WebSocket recovery evidence for a vision failure followed by a valid
+frame and WAV in the same session. The final informational response retained both recovered
+modalities with source IDs and truthful backend labels. Full validation: 143 passed, 4 strict
+xfailed; demo 60 passed plus 4 strict xfailed; perception 67 passed. No protected files changed.

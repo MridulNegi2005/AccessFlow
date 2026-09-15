@@ -366,3 +366,14 @@ honestly.
 
 **Status:** Full suite 142 passed, 4 strict expected failures; demo suite 59 passed, 4 strict expected
 failures; perception suite 67 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay multimodal recovery after vision failure
+
+**Task:** Verify that a vision backend failure can recover into a later image plus audio session.
+
+**Changes:** Added a WebSocket regression that sends a failing frame, then a valid frame and WAV
+through the same session. The final informational response preserves the recovered image evidence,
+audio transcript, source IDs and backend labels.
+
+**Status:** Full suite 143 passed, 4 strict expected failures; demo suite 60 passed, 4 strict expected
+failures; perception suite 67 passed. No engine, contract, dependency or lockfile change.

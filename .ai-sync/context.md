@@ -719,3 +719,7 @@ running in to_thread remains non-forcibly-cancellable. No protected files change
 2026-09-15: Guarded LocalPerception timeout-helper cleanup during observer cancellation and covered an
 already-running audio worker. Full validation: 142 passed, 4 strict xfailed; demo 59 passed plus 4
 strict xfailed; perception 67 passed. No protected files changed.
+
+2026-09-15: Added multimodal WebSocket recovery coverage: after a vision backend failure, a later
+valid frame and WAV complete in the same session and the final context retains both observations.
+Validation: 143 passed, 4 strict xfailed; no protected files changed.
