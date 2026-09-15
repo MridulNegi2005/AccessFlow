@@ -459,6 +459,58 @@ async def test_newer_audio_revision_replaces_pending_work(tmp_path: Path):
 
 
 @pytest.mark.asyncio
+async def test_audio_revision_does_not_supersede_different_utterance(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def transcriber(path: Path) -> str:
+        call_number = len(calls)
+        calls.append(path)
+        if call_number == 0:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"transcript {call_number}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(transcriber=transcriber)
+    active = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="u-active", revision=0),
+    )
+    other = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="u-other", revision=0),
+    )
+    revised = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="u-active", revision=1),
+    )
+
+    active_task = asyncio.create_task(collect(adapter, active))
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    other_task = asyncio.create_task(collect(adapter, other))
+    await asyncio.sleep(0.05)
+    revised_task = asyncio.create_task(collect(adapter, revised))
+    await asyncio.sleep(0.05)
+    release_first.set()
+
+    active_result, other_result, revised_result = await asyncio.gather(
+        active_task, other_task, revised_task
+    )
+
+    assert active_result == []
+    assert [item.source_id for item in other_result] == ["u-other"]
+    assert [item.source_id for item in revised_result] == ["u-active"]
+    assert [item.revision for item in revised_result] == [1]
+    assert len(calls) == 3
+
+
+@pytest.mark.asyncio
 async def test_audio_and_image_workers_run_independently(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 

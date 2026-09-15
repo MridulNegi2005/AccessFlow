@@ -124,9 +124,11 @@ Updated 16 September 2026.
 - PNG validation now checks decompressed scanline sizing and filter bytes, including Adam7 row sizing, before an image reaches a vision provider; incomplete scanline coverage passes in the full suite.
 - Ollama vision configuration now rejects non-string model/endpoints and non-finite, boolean or non-positive timeouts with stable ValueErrors before a request is attempted.
 - Browser sends now guard the WebSocket ready state and show a labeled transport error while the session is still connecting, preventing the first text, WAV or PNG action from throwing and being lost.
+- The bounded audio worker now keeps pending work per utterance key, so a newer revision for one utterance cannot discard an unrelated queued utterance; same-utterance replacement and the single active provider-call limit remain intact.
+- A real local Uvicorn/WebSocket run on the current demo served a WAV, PNG and transcript sequentially in one session; it emitted media statuses and finals whose last context retained both audio and image evidence.
 
-- Final verification is 174 tests passed with 4 strict expected failures, including 70 passing demo
-  tests and 88 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 175 tests passed with 4 strict expected failures, including 70 passing demo
+  tests and 89 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before
