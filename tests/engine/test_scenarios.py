@@ -1,8 +1,13 @@
+import json
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
 from accessflow.contracts import Observation, SessionView, Snapshot, ToolCall
 from accessflow.evaluation.scenarios import Scenario, ScriptedStep, StepReasoner
+
+DEV_SCENARIO = Path(__file__).resolve().parents[2] / "scenarios/dev/device_correction_during_write.json"
 
 
 def scenario():
@@ -45,15 +50,30 @@ def test_event_gaps_pace_each_pair_independently():
     assert Scenario.model_validate(raw).gaps() == [3.5]
 
 
-@pytest.mark.parametrize("gaps", [[], [1.0, 1.0], [-1.0], [61.0]])
+@pytest.mark.parametrize("gaps", [[], [1.0, 1.0], [-1.0], [61.0],
+                                   [float("nan")], [float("inf")], [float("-inf")]])
 def test_invalid_event_gaps_fail_before_starting_agent(gaps):
     with pytest.raises(ValidationError):
         Scenario.model_validate({**scenario(), "event_gaps_s": gaps})
 
 
+def test_event_gaps_accept_exact_boundary_values():
+    assert Scenario.model_validate({**scenario(), "event_gaps_s": [0.0]}).gaps() == [0.0]
+    assert Scenario.model_validate({**scenario(), "event_gaps_s": [60.0]}).gaps() == [60.0]
+
+
 def test_event_gaps_count_against_the_replay_budget():
     with pytest.raises(ValidationError):
         Scenario.model_validate({**scenario(), "event_gaps_s": [30.0], "completion_timeout_s": 90})
+
+
+def test_nan_gap_cannot_bypass_the_replay_budget_check():
+    # A NaN gap compares False against both `< 0` and `> 60`, so a naive range
+    # check alone would let it through; the sum must be checked for finiteness too.
+    raw = json.loads(DEV_SCENARIO.read_text(encoding="utf-8"))
+    raw["event_gaps_s"] = [float("nan"), 26.0]
+    with pytest.raises(ValidationError):
+        Scenario.model_validate(raw)
 
 
 async def test_step_reasoner_uses_public_call_state_to_resolve_status_query():

@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+import math
 from pathlib import Path
 
 from .adapters.models import JsonBackend, ModelReasoner
@@ -44,9 +45,12 @@ def main():
     responsiveness.add_argument("--samples", type=int, default=100, help="Independent samples per condition")
     responsiveness.add_argument("--output-dir", default="artifacts/responsiveness")
     args = parser.parse_args()
-    if getattr(args, "request_timeout", 1.0) <= 0:
+    request_timeout = getattr(args, "request_timeout", 1.0)
+    if request_timeout <= 0 or not math.isfinite(request_timeout):
         parser.error("--request-timeout must be positive")
-    if getattr(args, "inference_timeout", None) is not None and args.inference_timeout <= 0:
+    if getattr(args, "inference_timeout", None) is not None and (
+        args.inference_timeout <= 0 or not math.isfinite(args.inference_timeout)
+    ):
         parser.error("--inference-timeout must be positive")
     perception_factory = policy_factory = None
     component_config = {}
