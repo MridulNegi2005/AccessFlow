@@ -3,6 +3,7 @@
 import asyncio
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import uuid4
 
 from jsonschema import Draft202012Validator, validate
@@ -14,6 +15,7 @@ from .contracts import (
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
     ToolResult, TranscriptEvent,
 )
+from .corpus import CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest
 
 
 class DenyWrites:
@@ -39,7 +41,7 @@ class Agent:
 
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
                  scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
-                 disabled=()):
+                 disabled=(), corpus_root=None):
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
         unknown = set(disabled) - self.ABLATIONS
@@ -56,6 +58,11 @@ class Agent:
         self.scenario_timeout = min(scenario_timeout, 119)
         self.inference_timeout = inference_timeout
         self.partial_debounce_s = partial_debounce_s
+        # Installed directory holding corpus documents. None means no corpus is wired up:
+        # any session that still declares Start.corpus gets a bounded per-request refusal
+        # (see _execute_corpus) instead of a crash. A session with an empty corpus never
+        # touches this at all -- see the StartEvent handling in run().
+        self._corpus_root = corpus_root
         self.running = False
 
     async def run(self, input_queue, output_queue, clock=None):
@@ -124,6 +131,14 @@ class Agent:
         self.current_event_id = None
         self.call_causes = {}
         self._fresh_evidence = False
+        # Session-scoped corpus state. Reinitialized fresh here on every run() (a session
+        # boundary already shared by every other piece of state above) so corpus access
+        # from a previous session can never leak into a new one. Populated only if the
+        # StartEvent declares a non-empty corpus; an empty corpus leaves these at their
+        # defaults and self.manifests never gains the corpus tool -- see StartEvent below.
+        self.corpus_root = Path(self._corpus_root) if self._corpus_root else None
+        self.corpus_allowlist = frozenset()
+        self.corpus_store = None
 
         async def pump():
             while True:
@@ -159,6 +174,16 @@ class Agent:
                            self.manifests[tool.status_tool].effect != "read") for tool in self.manifests.values()):
                         await self._emit("error", code="invalid_status_tool_manifest")
                         break
+                    # Corpus document names are already validated (safe, unique) by
+                    # Start.valid_corpus; only the cross-item manifest-name collision is
+                    # this controller's own concern, same as duplicate_manifest_names above.
+                    if event.payload.corpus:
+                        if CORPUS_TOOL_NAME in self.manifests:
+                            await self._emit("error", code="duplicate_manifest_names")
+                            break
+                        self.manifests[CORPUS_TOOL_NAME] = corpus_manifest()
+                        self.corpus_allowlist = frozenset(event.payload.corpus)
+                        self.corpus_store = CorpusStore(self.corpus_root) if self.corpus_root else None
                     self.seen.add(event.event_id)
                     self.last_sequence = event.sequence
                     continue
@@ -777,7 +802,33 @@ class Agent:
                 call.status = "stale"
                 self.results = [result for result in self.results if result.call_id != call.call_id]
 
+    def _execute_corpus(self, call):
+        """Deterministic local lookup; never forwarded to the external executor.
+
+        The "document" argument is model-supplied and untrusted: CorpusStore.read enforces
+        the allowlist and refuses traversal/absolute names regardless of Start.corpus's own
+        (already-validated) contents. The passage returned is opaque text in a ToolResult,
+        entering evidence the same way any other read tool's result does.
+        """
+        document = call.arguments.get("document")
+        query = call.arguments.get("query", "")
+        if self.corpus_store is None:
+            return ToolResult(call_id=call.call_id, status="failed", error="corpus_unavailable")
+        try:
+            text = self.corpus_store.read(document, self.corpus_allowlist)
+        except CorpusAccessError as exc:
+            return ToolResult(call_id=call.call_id, status="failed", error=exc.code)
+        passage = best_passage(text, query)
+        return ToolResult(call_id=call.call_id, status="success",
+                          result={"document": document, "query": query, "passage": passage})
+
     async def _execute(self, call, timeout):
+        if call.tool == CORPUS_TOOL_NAME:
+            if call.status != "pending":
+                await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
+                return
+            await self.inbox.put(WorkerMessage("tool", 0, self._execute_corpus(call)))
+            return
         if self.executor is not None and call.status != "pending":
             await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
             return

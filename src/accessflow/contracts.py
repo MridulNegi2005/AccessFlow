@@ -1,5 +1,6 @@
 """Internal v0.1 protocol; this is NOT the unpublished organizer wire protocol."""
 
+import re
 from typing import Annotated, Any, Literal, Protocol
 from uuid import uuid4
 
@@ -7,6 +8,11 @@ from jsonschema import Draft202012Validator
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 VERSION = "0.1"
+
+# Plain, single-level filenames only: no path separators, no leading dot (also excludes
+# "." and ".."), no drive/scheme markers. Mirrors accessflow.corpus.is_safe_document_name;
+# kept independent (no cross-import) so contracts.py has no dependency on corpus.py.
+_SAFE_CORPUS_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$")
 
 
 class Model(BaseModel):
@@ -35,6 +41,14 @@ class ToolManifest(Model):
 class Start(Model):
     tools: list[ToolManifest] = Field(default_factory=list)
     corpus: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def valid_corpus(self):
+        if len(self.corpus) != len(set(self.corpus)):
+            raise ValueError("Corpus document names must be unique")
+        if any(not _SAFE_CORPUS_NAME.match(name) for name in self.corpus):
+            raise ValueError("Corpus document names must be plain filenames with no path separators")
+        return self
 
 
 class Transcript(Model):
