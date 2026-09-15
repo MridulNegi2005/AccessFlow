@@ -5,9 +5,10 @@ import pytest
 from pydantic import ValidationError
 
 from accessflow.contracts import Observation, SessionView, Snapshot, ToolCall
-from accessflow.evaluation.scenarios import Scenario, ScriptedStep, StepReasoner
+from accessflow.evaluation.scenarios import Scenario, ScriptedStep, StepReasoner, load_scenario
 
-DEV_SCENARIO = Path(__file__).resolve().parents[2] / "scenarios/dev/device_correction_during_write.json"
+ROOT = Path(__file__).resolve().parents[2]
+DEV_SCENARIO = ROOT / "scenarios/dev/device_correction_during_write.json"
 
 
 def scenario():
@@ -74,6 +75,63 @@ def test_nan_gap_cannot_bypass_the_replay_budget_check():
     raw["event_gaps_s"] = [float("nan"), 26.0]
     with pytest.raises(ValidationError):
         Scenario.model_validate(raw)
+
+
+def _audio_scenario_raw(path):
+    raw = scenario()
+    raw["events"] = [raw["events"][0], {"kind": "audio", "session_id": "s", "payload": {
+        "path": path, "utterance_id": "u", "revision": 0}}]
+    return raw
+
+
+def test_load_scenario_resolves_relative_audio_paths_against_scenario_file(tmp_path):
+    # A committed scenario's cwd is whatever directory the CLI was invoked from, not
+    # the scenario file's own location. The path must not depend on that choice.
+    scenario_dir = tmp_path / "nested" / "scenarios"
+    scenario_dir.mkdir(parents=True)
+    fixture = tmp_path / "fixture.wav"
+    fixture.write_bytes(b"not-a-real-wav")
+    scenario_path = scenario_dir / "case.json"
+    scenario_path.write_text(json.dumps(_audio_scenario_raw("../../fixture.wav")), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+
+    assert loaded.events[1].payload.path == str(fixture.resolve())
+
+
+def test_load_scenario_resolution_is_independent_of_process_cwd(tmp_path, monkeypatch):
+    scenario_dir = tmp_path / "nested" / "scenarios"
+    scenario_dir.mkdir(parents=True)
+    fixture = tmp_path / "fixture.wav"
+    fixture.write_bytes(b"not-a-real-wav")
+    scenario_path = scenario_dir / "case.json"
+    scenario_path.write_text(json.dumps(_audio_scenario_raw("../../fixture.wav")), encoding="utf-8")
+    monkeypatch.chdir(tmp_path.parent if tmp_path.parent.exists() else tmp_path)
+
+    loaded = load_scenario(scenario_path.resolve())
+
+    assert loaded.events[1].payload.path == str(fixture.resolve())
+
+
+def test_load_scenario_leaves_absolute_audio_paths_unchanged(tmp_path):
+    scenario_dir = tmp_path / "scenarios"
+    scenario_dir.mkdir()
+    absolute = str((tmp_path / "elsewhere.wav").resolve())
+    scenario_path = scenario_dir / "case.json"
+    scenario_path.write_text(json.dumps(_audio_scenario_raw(absolute)), encoding="utf-8")
+
+    loaded = load_scenario(scenario_path)
+
+    assert loaded.events[1].payload.path == absolute
+
+
+def test_committed_audio_scenario_resolves_to_the_checked_in_fixture():
+    loaded = load_scenario(ROOT / "scenarios/live_dev/audio_correction.json")
+    audio_event = next(e for e in loaded.events if e.kind == "audio")
+    resolved = Path(audio_event.payload.path)
+    assert resolved.is_absolute()
+    assert resolved == (ROOT / "tests/fixtures/audio/synthetic_pause_correction.wav").resolve()
+    assert resolved.is_file()
 
 
 async def test_step_reasoner_uses_public_call_state_to_resolve_status_query():

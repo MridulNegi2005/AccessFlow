@@ -22,15 +22,17 @@ commit that reports an unknown outcome.
 
 ## Known gaps
 
-- No audio fixture and no visual fixture exists. Multimodal is at zero, not partial. The
-  hidden set is half multimodal at a 1.5 multiplier, so this is the largest unclaimed score.
+- One audio scenario exists (`scenarios/live_dev/audio_correction.json`, real WAV through
+  actual Faster Whisper ASR); no visual fixture exists. Multimodal coverage is one file
+  against a planned 18 audio plus 12 visual. The hidden set is half multimodal at a 1.5
+  multiplier, so this remains the largest unclaimed score.
 - No scenario exceeds two user turns. Longer interruption chains are untested.
 - The only fault injected is an unresolved write outcome. Perception failures, tool timeouts
   and authorization refusals have unit coverage but no end-to-end scenario.
 - Held-out coverage is four planner probes, all text. The plan calls for twenty held out.
 
 <!-- generated -->
-Generated from 14 scenario files.
+Generated from 15 scenario files.
 Regenerate with `python scripts/scenario_inventory.py --write docs/SCENARIO_INVENTORY.md`.
 
 ## Coverage against the plan
@@ -38,10 +40,10 @@ Regenerate with `python scripts/scenario_inventory.py --write docs/SCENARIO_INVE
 | Modality | Planned | Present |
 |---|---|---|
 | text (`transcript`) | 30 | 14 |
-| audio (`audio`) | 18 | 0 |
+| audio (`audio`) | 18 | 1 |
 | visual (`frame`) | 12 | 0 |
 
-Distinct tool sets: **9** across 14 files. Longest scenario: **2** user turns.
+Distinct tool sets: **9** across 15 files. Longest scenario: **2** user turns.
 
 ## Every scenario
 
@@ -51,6 +53,7 @@ Distinct tool sets: **9** across 14 files. Longest scenario: **2** user turns.
 | dev | `lost-response-status-reconciliation` | 1 | transcript | submit_ticket_v3 | development |
 | dev | `support-read-then-service` | 1 | transcript | - | development |
 | dev | `development-text-correction-01` | 2 | transcript | - | development |
+| live_dev | `live-dev-audio-correction-01` | 1 | audio | - | development |
 | live_dev | `live-dev-device-correction-before-plan` | 2 | transcript | - | development |
 | live_dev | `live-dev-lost-response-status-reconciliation` | 1 | transcript | submit_ticket_v3 | development |
 | live_dev | `live-dev-stale-read-after-correction` | 2 | transcript | - | development |
@@ -68,10 +71,10 @@ Each group drives the same tool set. A group of more than one is one workflow me
 
 | Tool set | Files |
 |---|---|
+| reserve_service_slot | 3: `development-text-correction-01`, `live-dev-audio-correction-01`, `live-dev-development-text-correction-01` |
 | reserve_repair_window | 2: `device-correction-during-pending-write`, `live-dev-device-correction-before-plan` |
 | query_receipt_v3, submit_ticket_v3 | 2: `lost-response-status-reconciliation`, `live-dev-lost-response-status-reconciliation` |
 | file_visit_request, inspect_support_notes | 2: `support-read-then-service`, `live-dev-support-read-then-service` |
-| reserve_service_slot | 2: `development-text-correction-01`, `live-dev-development-text-correction-01` |
 | file_visit_request, inspect_support_notes, order_replacement_part | 2: `live-dev-stale-read-after-correction`, `live-dev-stale-read-after-device-correction` |
 | enqueue_calibration_visit | 1: `planner-probe-corrected-24h` |
 | queue_technician_visit | 1: `planner-probe-fluent-noon` |
