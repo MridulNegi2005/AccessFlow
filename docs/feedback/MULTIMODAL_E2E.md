@@ -455,4 +455,5 @@ confirms that valid uploaded media exists during the session and that the tempor
 removed after disconnect.
 The configured recovery companion, tests/demo/test_app.py::test_websocket_audio_revision_recovers_after_failure_with_image,
 proves one classified failure followed by same-utterance audio recovery while the PNG evidence remains
-available to the final context.
+available to the final context. The configured composition companion also verifies distinct generated event
+IDs for the retained text, audio and image observations.

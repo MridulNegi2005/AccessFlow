@@ -760,3 +760,5 @@ changed.
 2026-09-16: Added configured WebSocket audio failure/recovery evidence with a retained PNG: revision 0
 fails, revision 1 recovers for the same utterance, and the final contains only corrected audio plus the frame.
 Validation: 164 passed, 5 strict xfailed; demo 70 passed plus 4 strict xfailed; perception 78 passed.
+2026-09-16: Configured multimodal route now asserts distinct generated event IDs for retained text, audio
+and image observations, alongside existing source identity checks. No protected files changed.
