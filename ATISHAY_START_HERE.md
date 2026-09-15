@@ -3,6 +3,27 @@
 You own perception, turn policy and the minimal demo. Mridul owns the controller,
 tool execution and packaging. You do not need his engine, his API key or his machine.
 
+## Current handoff — 16 September 2026
+
+The published `atishay/perception` branch is verified through commit `4ee8632`.
+Read `docs/STATUS.md` before changing anything. The multimodal path now covers text,
+validated WAV, validated PNG, injected local ASR and vision providers, source IDs,
+event IDs, revisions, timestamps, session isolation, recovery, cleanup and bounded
+worker admission. The owned timing seam accepts optional `ActivitySummary` metadata.
+
+The current local baseline is **166 passed, 4 strict expected failures**. The four
+expected failures are controller integration examples for image-only informational
+output, active-frame replacement and conflicting visual evidence; upstream
+`origin/mridul/engine` at `919ed27` resolves the first two targeted cases. The
+conflict proposal still needs a controller-side pre-replacement comparison or
+provenance signal. Do not edit the controller or shared contracts to resolve these
+gaps; keep the failing example and proposal additive.
+
+The branch is clean and the remote is synchronized. Direct inspection of the existing
+browser captures found no visible clipping, overlap or broken text in the shown
+viewport; fresh current-HEAD full-page visual inspection, live model quality, human
+speech quality, feedback and final packaging remain open.
+
 ## First 30 minutes
 
 1. Clone the shared GitHub repository using the commands below.
@@ -42,8 +63,10 @@ For images, it is the frame ID with revision 0. Preserve originating event ID an
 For PNGs add a replaceable vision provider; do not return a canned caption as perception.
 `observe()` does not mutate session state or dispatch tools.
 
-Implement your policies under `src/accessflow/turn_policy/`. The interface is synchronous
-`update(observation, session_view) -> TurnDecision`. If semantic inference is necessary,
+Implement your policies under `src/accessflow/turn_policy/`. The shared interface remains
+synchronous and two-argument compatible: `update(observation, session_view) -> TurnDecision`.
+The owned `HeuristicTurnPolicy` also accepts optional `ActivitySummary` timing metadata;
+it keeps pauses separate from `TurnDecision.complete`. If semantic inference is necessary,
 compute it asynchronously in perception or propose an additive contract extension.
 The synchronous policy must stay cheap. The current final-flag fake is only a baseline;
 it does not infer silence or semantic completion. Timer-driven observations will need
