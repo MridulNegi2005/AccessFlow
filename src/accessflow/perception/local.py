@@ -69,6 +69,9 @@ class PngFormat:
     color_type: int
 
 
+MAX_PNG_DECODED_BYTES = 64 * 1024 * 1024
+
+
 def validate_png(path: Path) -> PngFormat:
     """Validate PNG chunks, CRCs, compressed data and termination without decoding pixels."""
     try:
@@ -141,10 +144,10 @@ def validate_png(path: Path) -> PngFormat:
         raise ValueError(f"Invalid PNG file: {path}")
     channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ihdr[3]]
     bits_per_pixel = channels * ihdr[2]
-    scanlines: list[int] = []
+    scanline_groups: list[tuple[int, int]] = []
     if interlace == 0:
         row_bytes = (ihdr[0] * bits_per_pixel + 7) // 8
-        scanlines.extend([row_bytes] * ihdr[1])
+        scanline_groups.append((row_bytes, ihdr[1]))
     else:
         for x_start, y_start, x_step, y_step in (
             (0, 0, 8, 8),
@@ -159,12 +162,13 @@ def validate_png(path: Path) -> PngFormat:
             pass_height = (ihdr[1] - y_start + y_step - 1) // y_step if ihdr[1] > y_start else 0
             row_bytes = (pass_width * bits_per_pixel + 7) // 8
             if pass_width and pass_height:
-                scanlines.extend([row_bytes] * pass_height)
-    expected_size = sum(row_bytes + 1 for row_bytes in scanlines)
+                scanline_groups.append((row_bytes, pass_height))
+    expected_size = sum((row_bytes + 1) * row_count for row_bytes, row_count in scanline_groups)
+    if expected_size > MAX_PNG_DECODED_BYTES:
+        raise ValueError(f"Invalid PNG decoded payload is too large: {path}")
     try:
         decompressor = zlib.decompressobj()
         decoded = decompressor.decompress(bytes(idat_data), expected_size + 1)
-        decoded += decompressor.flush()
         if (
             len(decoded) != expected_size
             or not decompressor.eof
@@ -173,10 +177,11 @@ def validate_png(path: Path) -> PngFormat:
         ):
             raise ValueError(f"Invalid PNG file: {path}")
         offset = 0
-        for row_bytes in scanlines:
-            if decoded[offset] > 4:
-                raise ValueError(f"Invalid PNG filter byte: {path}")
-            offset += row_bytes + 1
+        for row_bytes, row_count in scanline_groups:
+            for _ in range(row_count):
+                if decoded[offset] > 4:
+                    raise ValueError(f"Invalid PNG filter byte: {path}")
+                offset += row_bytes + 1
     except zlib.error as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
     return PngFormat(*ihdr)
