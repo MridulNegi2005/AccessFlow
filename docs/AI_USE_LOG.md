@@ -737,3 +737,8 @@ independent audio/image workers coalesce obsolete work, preserve session identit
 results, and close on demo shutdown. Added concurrency, revision, rapid-frame and session-isolation
 regressions. Full validation: 149 passed, 4 strict xfailed; demo 61 passed plus 4 strict xfailed;
 perception 72 passed. No protected files changed.
+
+2026-09-15 verification: Used a read-only subagent audit to identify missing stale provider-failure
+coverage. Added direct exception and timeout suppression tests and a recovered multimodal WebSocket
+regression. Full validation: 152 passed, 4 strict xfailed; demo 62 passed plus 4 strict xfailed;
+perception 74 passed. No protected files changed.
