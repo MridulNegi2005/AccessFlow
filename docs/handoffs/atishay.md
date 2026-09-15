@@ -3,7 +3,7 @@
 Date and branch: 2026-09-16 / atishay/perception
 Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, opt-in local audio demo path, opt-in local Ollama vision path, session path isolation, local model configuration guard, synthetic audio provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, feedback-session template, demo recording script, template-neutral presentation outline and multimodal end-to-end evidence implemented in owned paths; shared fakes/interfaces remain unchanged.
 Contract version used: 0.1
-Tests run and results: repository virtualenv pytest -q — 189 passed, 4 strict xfailed;
+Tests run and results: repository virtualenv pytest -q — 196 passed, 4 strict xfailed;
 Configured vision environment wiring is covered through a loopback HTTP provider at the WebSocket route; the final retains image evidence with the later spoken question.
 perception run — 102 passed; demo run — 71 passed, 4 strict xfailed; contract/engine — 16 passed;
 held-out fixture check included;

@@ -99,6 +99,27 @@ def test_browser_frame_preserves_source_timestamp():
     assert event.timestamp == 17.25
 
 
+@pytest.mark.parametrize(
+    ("kind", "identity_key"),
+    [("transcript", "utterance_id"), ("audio", "utterance_id"), ("frame", "frame_id")],
+)
+@pytest.mark.parametrize("blank_id", ["", "   "])
+def test_browser_message_rejects_blank_source_identity(kind, identity_key, blank_id):
+    with pytest.raises(ValueError, match=rf"browser {identity_key} must be a non-empty string"):
+        event_from_message(
+            "session-1",
+            {"kind": kind, "payload": {"path": "input", identity_key: blank_id}},
+        )
+
+
+def test_browser_message_generates_source_identity_when_omitted():
+    transcript = event_from_message("session-1", {"kind": "transcript", "payload": {}})
+    frame = event_from_message("session-1", {"kind": "frame", "payload": {"path": "image.png"}})
+
+    assert transcript.payload.utterance_id
+    assert frame.payload.frame_id
+
+
 @pytest.mark.asyncio
 async def test_demo_perception_can_delegate_audio_to_injected_local_backend():
     class LocalAudio:
