@@ -88,5 +88,35 @@ No new public authorization field; the independent authorization provider still 
   image observation and a committed mock effect. The model read `PANEL-B` from the image.
   That edit is reverted. The measurement is recorded in `docs/results/VISION_E2E_2026-09-15.md`
   and is not reproducible until this proposal is accepted.
-- Decision: Pending review by Atishay. No Workstream B file is changed. Workstream A will not
-  edit the worker.
+- Decision: Assigned to Workstream B on 15 September 2026 by Mridul. The proposal stands.
+  Workstream A does not edit the worker. See the ownership note below.
+
+### Ownership note, 15 September 2026
+
+Two documents gave different owners for `src/accessflow/adapters/perception_worker.py`.
+
+- `AGENTS.md` assigns all of `src/accessflow/adapters/` to Mridul, Workstream A.
+- This proposal and `.ai-sync/handoff.md` treated the same file as Workstream B property.
+
+`AGENTS.md` is the authoritative ownership document, so the directory rule puts the file in
+Workstream A. Mridul reviewed this contradiction on 15 September 2026 and decided that the
+change stays with Atishay. The decision is deliberate and overrides the directory rule for
+this one file. Workstream A does not edit the worker.
+
+The Workstream B boundary at `src/accessflow/perception/` is unchanged. `LocalPerception` in
+`src/accessflow/perception/local.py:84` already accepts a `vision_provider` callable and
+already calls it for each frame. That seam is complete and needs no change.
+
+Work that remains for Atishay, in his own file:
+
+1. Accept the optional provider options in `src/accessflow/adapters/perception_worker.py`.
+2. Pass the constructed provider to `LocalPerception(vision_provider=...)`.
+3. Keep the default `none`, so the audio-only worker behaviour does not change.
+
+Workstream A has already supplied everything on its side: `src/accessflow/adapters/vision.py`
+provides `OllamaVisionProvider`, `src/accessflow/cli.py` accepts and records the options, and
+`scenarios/live_dev/frame_device_panel.json` is ready to run.
+
+Until item 1 and item 2 are done, the parent CLI advertises `--vision-provider` and the child
+rejects it with exit code 2. Finding A2 in `docs/reviews/MRIDUL_REAUDIT_2026-09-15.md` stays
+open, and no vision scenario runs through the process adapter.
