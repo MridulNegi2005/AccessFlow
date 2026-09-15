@@ -28,6 +28,10 @@ class WorkerMessage:
     value: object
     perception_epoch: int = 0
     source: tuple | None = None
+    # True only for a "plan" message produced from a genuinely new observation
+    # (new/partial speech or an image). False for a plan triggered internally by a
+    # tool result, retry, or reconciliation continuation for the same request.
+    fresh_evidence: bool = False
 
 
 class Agent:
@@ -98,6 +102,7 @@ class Agent:
         self.planning_source = None
         self.current_event_id = None
         self.call_causes = {}
+        self._fresh_evidence = False
 
         async def pump():
             while True:
@@ -268,7 +273,8 @@ class Agent:
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
                            write_pending=self.speech_write_requested,
-                           repeated_completed_call=self.repeated_completed_call)
+                           repeated_completed_call=self.repeated_completed_call,
+                           active_request_id=self.request_id)
 
     async def _emit(self, kind, **payload):
         if self.current_event_id is not None:
@@ -329,6 +335,10 @@ class Agent:
             self._start_plan(source=key)
         elif message.kind == "plan":
             self.current_event_id = self.source_events.get(message.source)
+            # Stashed on self (rather than an _apply parameter) so subclasses that
+            # override _apply(self, plan, source=None) -- its signature before this
+            # fix -- keep working unchanged.
+            self._fresh_evidence = message.fresh_evidence
             await self._apply(message.value, message.source)
         elif message.kind == "plan_rejected":
             await self._emit("error", code="plan_schema_rejected", detail=message.value)
@@ -339,6 +349,12 @@ class Agent:
 
     def _start_plan(self, source=None):
         self.generation += 1
+        # A source given here comes from _worker's observation handling and means new
+        # user evidence (fresh/partial speech, or an image) just arrived. Every other
+        # caller reuses the existing planning_source to continue reasoning about the
+        # same request (a tool result, a bounded retry, a reconciliation step) and
+        # must not be mistaken for new evidence about user intent.
+        fresh_evidence = source is not None
         if source is not None:
             self.planning_source = source
         source = self.planning_source
@@ -354,7 +370,8 @@ class Agent:
                 proposal = await self._bounded(self.reasoner.plan(view, [m.model_copy(deep=True)
                                                                         for m in self.manifests.values()]),
                                                self.inference_timeout)
-                await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True), source=source))
+                await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True),
+                                                   source=source, fresh_evidence=fresh_evidence))
             except PlanSchemaViolation as exc:
                 # The reasoner's own generation failed the exact schema built for this
                 # request (dynamic tool/effect restrictions, forced null response, ...).
@@ -366,14 +383,18 @@ class Agent:
         self.planner = self._spawn(plan())
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        fresh_evidence = self._fresh_evidence
         # Snapshot before this proposal can mutate speech_write_requested below. Mirrors
-        # ModelReasoner.write_outstanding: true when this session's active spoken write
+        # ModelReasoner.write_outstanding: true when the CURRENT request's spoken write
         # request names a real write tool that has not been dispatched or confirmed by
-        # any call in the ledger yet.
+        # any call the current request has made yet. Scoped to self.request_id so an
+        # old, unrelated write earlier in the session cannot silently satisfy (or
+        # continuation-block) a brand new request -- see ToolCall.request_id.
         prior_write_owed = (self.speech_write_requested
                             and any(m.effect == "write" for m in self.manifests.values())
                             and not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
-                                       for call in self.ledger.values()))
+                                       for call in self.ledger.values()
+                                       if call.request_id == self.request_id))
         self.repeated_completed_call = False
         repeated, dispatched_any = [], False
         speech = self.observations.get(("speech", self.active_speech))
@@ -389,10 +410,24 @@ class Agent:
             self.state.correction_pending = False
             self.semantic_correction_event = None
         if speech_origin:
-            # Only the current spoken request can supply write intent. An image
-            # may fill missing details, but cannot invent or revive that intent.
-            self.speech_write_requested = bool(self.speech_ready and proposal.write_requested
-                                               and not proposal.clarification)
+            # Only the current spoken request can supply write intent. A genuinely
+            # new utterance/hypothesis (fresh_evidence) is authoritative either way,
+            # matching prior behaviour: it can newly recognise intent or retract it
+            # (an explicit correction/cancellation is new user evidence).
+            #
+            # A plan triggered by a tool result for this same request
+            # (fresh_evidence=False) may still newly RECOGNISE intent it had not
+            # seen before (e.g. deciding to book only after reading support notes),
+            # which is why read-then-write continuations work. What it must not do
+            # is ERASE already-recognised intent just because this follow-up omits
+            # or flips the flag -- that is not new user evidence, only a change of
+            # mind by the same model on the same evidence. See the request
+            # lifecycle note on ToolCall.request_id.
+            if fresh_evidence:
+                self.speech_write_requested = bool(self.speech_ready and proposal.write_requested
+                                                   and not proposal.clarification)
+            elif proposal.write_requested and self.speech_ready and not proposal.clarification:
+                self.speech_write_requested = True
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
@@ -443,7 +478,10 @@ class Agent:
                 if any(c.effect == "write" and c.status in {"unknown", "cancelled"} for c in self.ledger.values()):
                     await self._emit("clarify", text="The earlier action has an unresolved outcome; check its status first.")
                     continue
-            dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies}
+            # A dependency name may be ledger operation identity rather than a slot
+            # (see _argument_dependency_error); those carry no slot revision to track.
+            dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies
+                            if name in self.state.slots}
             args = dict(proposed.arguments)
             # This field belongs to the controller, including when a model supplies
             # a different value on each retry. It cannot split a logical operation.
@@ -464,7 +502,8 @@ class Agent:
                 await self._emit("error", code="invalid_tool_arguments", tool=proposed.tool)
                 continue
             call = ToolCall(call_id=str(uuid4()), operation_id=operation_id, tool=proposed.tool,
-                            arguments=args, dependencies=dependencies, effect=manifest.effect)
+                            arguments=args, dependencies=dependencies, effect=manifest.effect,
+                            request_id=self.request_id)
             if call.effect == "write" and not self.authorization.allows(self._view(), call):
                 await self._emit("clarify", text="This environment has not authorized that state-changing tool.")
                 continue
@@ -521,17 +560,36 @@ class Agent:
 
         This checks declared data dependencies; semantic context not represented in
         arguments must still be listed by the planner. No fuzzy alias/value inference.
+
+        Conversational slots and ledger operation identity are separate namespaces.
+        A status tool's lookup parameter (e.g. "receipt") is not a conversational
+        slot, so it never lives in session.state.slots -- but the planner may still
+        legitimately list that parameter name in `dependencies` to flag it as the
+        value the call depends on. `ledger_dependencies` recognises that specific,
+        narrow case: an unaliased argument whose value is exactly the operation_id
+        of an unresolved write this manifest is the declared status_tool for. This
+        does not create a slot and does not accept any other UUID-like string; a
+        stale or unrelated operation id, or a name that is not this argument's own
+        parameter name, still falls through to "missing_dependency" below.
         """
-        if any(name not in self.state.slots for name in proposed.dependencies):
-            return "missing_dependency"
-        if any(name not in proposed.arguments for name in proposed.argument_slots):
-            return "argument_dependency_mismatch"
         properties = manifest.parameters.get("properties", {})
         unresolved_operations = {
             call.operation_id for call in self.ledger.values()
             if call.effect == "write" and call.status in {"unknown", "cancelled"}
             and self.manifests[call.tool].status_tool == manifest.name
         } if manifest.effect == "read" else set()
+        ledger_dependencies = {
+            name for name in proposed.dependencies
+            if name not in self.state.slots
+            and name not in proposed.argument_slots
+            and isinstance(proposed.arguments.get(name), str)
+            and proposed.arguments.get(name) in unresolved_operations
+        }
+        if any(name not in self.state.slots and name not in ledger_dependencies
+               for name in proposed.dependencies):
+            return "missing_dependency"
+        if any(name not in proposed.arguments for name in proposed.argument_slots):
+            return "argument_dependency_mismatch"
         for parameter, value in proposed.arguments.items():
             if parameter == manifest.idempotency_parameter:
                 continue  # Replaced with the controller's stable operation identity.
@@ -550,6 +608,8 @@ class Agent:
                 if isinstance(value, str) and value in unresolved_operations:
                     continue
             slot_name = explicit_slot if explicit_slot is not None else parameter
+            if slot_name in ledger_dependencies:
+                continue
             slot = self.state.slots.get(slot_name)
             if slot is None or slot_name not in proposed.dependencies:
                 return "missing_dependency"
