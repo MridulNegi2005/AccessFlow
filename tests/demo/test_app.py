@@ -989,12 +989,13 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
 
 
 
-def test_websocket_malformed_vision_json_is_recoverable(monkeypatch):
+@pytest.mark.parametrize("vision_response", [b"[]", b"{not-json"])
+def test_websocket_malformed_vision_json_is_recoverable(monkeypatch, vision_response):
     class MalformedVisionHandler(BaseHTTPRequestHandler):
         def do_POST(self):
             length = int(self.headers["Content-Length"])
             self.rfile.read(length)
-            response = b"[]"
+            response = vision_response
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(response)))
