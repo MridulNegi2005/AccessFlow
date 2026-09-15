@@ -830,3 +830,4 @@ retained both modalities. This remains mock reasoning and protocol/backend evide
 2026-09-16 verification: Browser transcript controls now preserve one utterance ID across partial and final
 hypotheses, increment revisions for each follow-up submission, and close the active utterance after the final
 hypothesis. Focused demo tests and JavaScript syntax validation passed; no protected files changed.
+2026-09-16 verification: Browser media IDs now come from a page-scoped monotonic allocator, preventing rapid WAV, microphone and PNG submissions from reusing source identities. Lazy send payloads also prevent rejected connecting-queue actions from consuming transcript revisions or media IDs; the direct browser queue/revision harness passed. No protected files changed.
