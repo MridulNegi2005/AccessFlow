@@ -346,9 +346,16 @@ class ModelReasoner:
 
     @staticmethod
     def write_outstanding(view):
-        """True when no write call has been dispatched or confirmed for this request."""
+        """True when no write call has been dispatched or confirmed for THIS request.
+
+        Scoped to view.active_request_id via ToolCall.request_id, so an unrelated
+        write from an earlier, already-finished request in the same session cannot
+        suppress continuation for a brand new request that also needs a write.
+        Callers that never populate either field (e.g. hand-built SessionView/
+        ToolCall fixtures) keep their prior behaviour, since both default to "".
+        """
         return not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
-                       for call in view.calls)
+                       for call in view.calls if call.request_id == view.active_request_id)
 
     @staticmethod
     def reconciliation_context(view, manifests):

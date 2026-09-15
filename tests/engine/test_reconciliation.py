@@ -1,7 +1,8 @@
 import asyncio
 
-from accessflow.contracts import PlanProposal, ProposedCall, ToolManifest, ToolResult
-from accessflow.fakes import FakeTools
+from accessflow.contracts import PlanProposal, ProposedCall, Snapshot, ToolCall, ToolManifest, ToolResult
+from accessflow.engine import Agent
+from accessflow.fakes import FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization, ScriptedReasoner
 from test_safety import end, manifest, proposal, start, transcript, wait_for
 
 
@@ -103,5 +104,113 @@ async def test_unknown_write_timeout_with_manual_clock():
         event = await wait_for(oq, lambda e: e.payload.get("code") == "write_outcome_unknown")
         assert event.state.status == "needs_reconciliation"
         assert not agent.executor.effects
+    finally:
+        await end(iq, task)
+
+
+# --- R6: receipt/status-parameter namespace vs. conversational slots --------------
+#
+# A status tool's lookup parameter (e.g. "receipt") is ledger operation identity,
+# not a conversational slot. The planner may legitimately list that parameter name
+# in a call's `dependencies` to flag what the call depends on, even though no such
+# slot exists in session.state.slots. See docs/reviews/CLAUDE_REVIEW_2026-09-15.md,
+# "R6 -- Fix the reconciliation explanation and namespace handling".
+
+def _agent_with_ledger(manifests, calls):
+    agent = Agent(FakePerception(), FinalFlagPolicy(), ScriptedReasoner([]), None, MockOnlyAuthorization())
+    agent.manifests = {m.name: m for m in manifests}
+    agent.state = Snapshot()
+    agent.ledger = {c.call_id: c for c in calls}
+    return agent
+
+
+def _status_tool(name="check_receipt", parameter="receipt"):
+    return ToolManifest(name=name, description="Check receipt", effect="read",
+                        parameters={"type": "object", "properties": {parameter: {"type": "string"}},
+                                    "required": [parameter]})
+
+
+def test_receipt_named_dependency_for_the_matching_unresolved_write_is_accepted():
+    write = manifest()
+    write.status_tool = "check_receipt"
+    status = _status_tool()
+    unresolved = ToolCall(call_id="w1", operation_id="op-live", tool=write.name, arguments={},
+                          dependencies={}, effect="write", status="unknown")
+    agent = _agent_with_ledger([write, status], [unresolved])
+    proposed = ProposedCall(tool=status.name, arguments={"receipt": "op-live"}, dependencies=["receipt"])
+    assert agent._argument_dependency_error(proposed, status) is None
+
+
+def test_stale_resolved_operation_identity_in_dependencies_is_still_rejected():
+    # The operation is no longer unresolved (status "success", not "unknown" or
+    # "cancelled"): it must not be accepted just because it once was.
+    write = manifest()
+    write.status_tool = "check_receipt"
+    status = _status_tool()
+    resolved = ToolCall(call_id="w1", operation_id="op-old", tool=write.name, arguments={},
+                        dependencies={}, effect="write", status="success")
+    agent = _agent_with_ledger([write, status], [resolved])
+    proposed = ProposedCall(tool=status.name, arguments={"receipt": "op-old"}, dependencies=["receipt"])
+    assert agent._argument_dependency_error(proposed, status) == "missing_dependency"
+
+
+def test_unrelated_operation_identity_in_dependencies_is_still_rejected():
+    write = manifest()
+    write.status_tool = "check_receipt"
+    status = _status_tool()
+    unresolved = ToolCall(call_id="w1", operation_id="op-live", tool=write.name, arguments={},
+                          dependencies={}, effect="write", status="unknown")
+    agent = _agent_with_ledger([write, status], [unresolved])
+    proposed = ProposedCall(tool=status.name, arguments={"receipt": "invented-id"}, dependencies=["receipt"])
+    assert agent._argument_dependency_error(proposed, status) == "missing_dependency"
+
+
+def test_operation_identity_for_a_different_status_tool_in_dependencies_is_rejected():
+    # Genuinely unresolved, but this manifest is not ITS declared status tool: a
+    # matching string is not enough, the manifest identity must match too.
+    write = manifest()
+    write.status_tool = "check_receipt"
+    other_status = _status_tool(name="other_lookup")
+    unresolved = ToolCall(call_id="w1", operation_id="op-live", tool=write.name, arguments={},
+                          dependencies={}, effect="write", status="unknown")
+    agent = _agent_with_ledger([write, other_status], [unresolved])
+    proposed = ProposedCall(tool=other_status.name, arguments={"receipt": "op-live"}, dependencies=["receipt"])
+    assert agent._argument_dependency_error(proposed, other_status) == "missing_dependency"
+
+
+async def test_status_tool_confirms_unknown_when_planner_also_lists_the_status_parameter_as_a_dependency():
+    # End-to-end reproduction of the reviewer's exact repro: {"dependencies":
+    # ["receipt"], "guard_error": "missing_dependency"} must no longer occur.
+    write = manifest()
+    write.status_tool = "check_receipt"
+    status = _status_tool()
+
+    class Planner:
+        async def plan(self, view, manifests):
+            unknown = [c for c in view.calls if c.effect == "write" and c.status == "unknown"]
+            if unknown:
+                return PlanProposal(calls=[ProposedCall(tool="check_receipt",
+                                    arguments={"receipt": unknown[0].operation_id},
+                                    dependencies=["receipt"])])
+            return proposal()
+
+    class Executor(FakeTools):
+        async def execute(self, call):
+            self.calls.append(call)
+            if call.effect == "write":
+                self.operation = call.operation_id
+                return ToolResult(call_id=call.call_id, status="unknown")
+            return ToolResult(call_id=call.call_id, status="success",
+                              result={"operation_id": self.operation, "outcome": "committed"})
+
+    executor = Executor()
+    agent, iq, oq, task = await start([], tools=executor, manifests=[write, status], reasoner=Planner())
+    events = []
+    try:
+        await iq.put(transcript())
+        result = await wait_for(oq, lambda e: events.append(e) or e.kind == "final")
+        assert result.payload["basis"] == "reconciled_tool_effect"
+        assert not any(e.payload.get("code") == "missing_dependency" for e in events)
+        assert sum(c.effect == "write" for c in executor.calls) == 1
     finally:
         await end(iq, task)

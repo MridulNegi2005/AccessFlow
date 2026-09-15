@@ -196,6 +196,11 @@ class SessionView(Model):
     write_pending: bool = False
     # Set when the previous proposal only repeated calls that already completed.
     repeated_completed_call: bool = False
+    # The request `calls` entries should be matched against for continuation checks
+    # such as ModelReasoner.write_outstanding. Empty string is a valid id (used by
+    # callers, including most tests, that never populate ToolCall.request_id either)
+    # and matches only calls that likewise carry the default "".
+    active_request_id: str = ""
 
 
 class ToolCall(Model):
@@ -205,6 +210,21 @@ class ToolCall(Model):
     arguments: dict[str, Any]
     dependencies: dict[str, int]
     effect: Literal["read", "write"]
+    # Which accepted request produced this call. Additive/optional: history in the
+    # ledger is never deleted, but continuation logic can project only the calls
+    # belonging to the currently active request instead of the whole session.
+    #
+    # Request lifecycle, in terms of this id:
+    #  - A NEW REQUEST starts once the previous one is fully resolved (completed,
+    #    explicitly cancelled, or superseded) and fresh speech arrives; the engine
+    #    mints a new request_id (see Agent.request_id in engine.py).
+    #  - A CORRECTION amends slots/intent of the request that is still open, under
+    #    the SAME request_id; it invalidates dependent calls but does not start a
+    #    new request.
+    #  - An INTENTIONAL REPEATED ACTION (e.g. "book Wednesday" twice in a row) is
+    #    only possible once the first request finished, so it naturally gets its
+    #    own request_id and is dispatched as an independent call.
+    request_id: str = ""
     status: Literal["pending", "success", "failed", "cancelled", "unknown", "stale"] = "pending"
 
 
