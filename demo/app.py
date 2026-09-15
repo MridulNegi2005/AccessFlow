@@ -288,6 +288,13 @@ def _revision(payload: dict[str, Any]) -> int:
     return value
 
 
+def _sequence(message: dict[str, Any]) -> int:
+    value = message.get("sequence", 0)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("browser sequence must be a non-negative integer")
+    return value
+
+
 def _final_flag(payload: dict[str, Any]) -> bool:
     value = payload.get("final", True)
     if not isinstance(value, bool):
@@ -318,6 +325,7 @@ def event_from_message(
     timestamp = _finite_timestamp(
         message.get("timestamp", payload.get("timestamp", 0)), "timestamp"
     )
+    sequence = _sequence(message)
     if kind == "transcript":
         speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
         speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
@@ -326,6 +334,7 @@ def event_from_message(
         return TranscriptEvent(
             session_id=session_id,
             timestamp=timestamp,
+            sequence=sequence,
             payload=Transcript(
                 utterance_id=_source_id(payload, "utterance_id"),
                 revision=_revision(payload),
@@ -345,6 +354,7 @@ def event_from_message(
         return AudioEvent(
             session_id=session_id,
             timestamp=timestamp,
+            sequence=sequence,
             payload=Audio(
                 path=_materialize_upload("audio", payload, media_root),
                 utterance_id=utterance_id,
@@ -358,6 +368,7 @@ def event_from_message(
         return FrameEvent(
             session_id=session_id,
             timestamp=timestamp,
+            sequence=sequence,
             payload=Frame(
                 path=_materialize_upload("frame", payload, media_root),
                 frame_id=frame_id,
