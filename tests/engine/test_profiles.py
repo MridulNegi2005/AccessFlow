@@ -183,7 +183,10 @@ def test_legacy_trace_names_absent_fields_instead_of_a_bare_schema_error():
 
 
 def test_a_committed_trace_verifies_without_the_endpoint():
-    traces = sorted(Path(__file__).resolve().parents[2].glob("artifacts/**/*.jsonl"))
+    # The evidence bundle is committed; artifacts/ is gitignored, so a clean clone has
+    # nothing there. Read the bundle so this acceptance check runs on a fresh checkout.
+    bundle = Path(__file__).resolve().parents[2] / "docs/evidence/model-comparison-2026-09-15/traces"
+    traces = sorted(bundle.glob("**/*.jsonl"))
     for path in traces:
         metadata = None
         try:
@@ -196,7 +199,7 @@ def test_a_committed_trace_verifies_without_the_endpoint():
         assert validate_reasoner_evidence(evidence, strict=False) is evidence
         assert "endpoint" in missing_promised_config(evidence)
         return
-    pytest.skip("no committed trace carries reasoner_evidence")
+    pytest.fail("the committed evidence bundle carries no reasoner_evidence")
 
 
 def test_a_complete_current_config_still_passes_strictly():
