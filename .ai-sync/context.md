@@ -701,3 +701,8 @@ creating observations. Full validation: 128 passed, 4 strict xfailed; no protect
 2026-09-15: Bounded the demo reasoner's prior multimodal context to 16,384 characters while retaining
 the newest evidence under truncation. Full validation: 129 passed, 4 strict xfailed; demo 56 passed
 plus 4 strict xfailed; perception 57 passed. No protected files changed.
+
+2026-09-15: Added syntactically invalid vision JSON byte coverage at the provider and WebSocket
+boundaries. Both classify backend failure and preserve later transcript recovery. Full validation:
+131 passed, 4 strict xfailed; demo 57 passed plus 4 strict xfailed; perception 58 passed. No protected
+files changed.

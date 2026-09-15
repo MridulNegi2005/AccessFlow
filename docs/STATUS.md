@@ -57,8 +57,9 @@ Updated 15 September 2026.
   implying an Ollama model.
 - A configured vision-backend failure is also covered: it emits backend_failure without a
   misleading final response.
-- The Ollama vision provider normalizes syntactically valid non-object JSON roots into a classified
-  invalid JSON shape error, with list and null response coverage, and normalizes provider timeouts
+- The Ollama vision provider normalizes syntactically invalid JSON bytes and syntactically valid
+  non-object JSON roots into classified invalid JSON errors, with raw-byte, list and null response
+  coverage, and normalizes provider timeouts
   into the same stable runtime failure boundary.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
   emitted and the same session completes a later text request. A malformed list response and a
@@ -109,8 +110,8 @@ Updated 15 September 2026.
   audio and image context, with no console or page errors or horizontal overflow.
 - The demo reasoner now bounds prior multimodal context to 16,384 characters while retaining the newest evidence by truncating only the item that reaches the remaining capacity. Regressions cover recent evidence, oldest-history omission, the exact bound for an oversized prior item, and request completeness.
 
-- Final verification is 129 tests passed with 4 strict expected failures, including 56 passing demo
-  tests and 57 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 131 tests passed with 4 strict expected failures, including 57 passing demo
+  tests and 58 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational
   response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame

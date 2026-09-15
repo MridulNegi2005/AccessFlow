@@ -708,3 +708,7 @@ Validation: 128 passed, 4 strict xfailed; no protected files changed.
 its findings by truncating the item that reaches the remaining capacity, preserving newest evidence,
 and adding exact-bound, oversized-item and request-completeness assertions. Validation: 129 passed,
 4 strict xfailed; no protected files changed.
+
+2026-09-15: Used a read-only subagent audit to identify the missing syntactically invalid vision JSON
+scenario. Added direct provider coverage and WebSocket recovery coverage while preserving the existing
+classified failure boundary. Validation: 131 passed, 4 strict xfailed; no protected files changed.

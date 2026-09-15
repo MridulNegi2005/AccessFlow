@@ -317,3 +317,16 @@ capacity for an oversized item, and request completeness.
 
 **Status:** Full suite 129 passed, 4 strict expected failures; demo suite 56 passed, 4 strict expected
 failures; perception suite 57 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay invalid vision JSON recovery
+
+**Task:** Cover syntactically invalid vision-provider JSON at both the provider and browser-session
+boundaries.
+
+**Changes:** Added raw invalid-byte coverage for OllamaVisionProvider and parameterized the WebSocket
+malformed-response recovery regression over both a valid non-object JSON root and invalid JSON bytes.
+Both paths classify the failure without a misleading final and accept a later transcript in the same
+session.
+
+**Status:** Full suite 131 passed, 4 strict expected failures; demo suite 57 passed, 4 strict expected
+failures; perception suite 58 passed. No engine, contract, dependency or lockfile change.

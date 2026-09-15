@@ -10,8 +10,8 @@ from accessflow.perception import OllamaVisionProvider
 
 
 class FakeResponse:
-    def __init__(self, body: dict):
-        self._body = json.dumps(body).encode("utf-8")
+    def __init__(self, body: object):
+        self._body = body if isinstance(body, bytes) else json.dumps(body).encode("utf-8")
 
     def __enter__(self):
         return self
@@ -51,6 +51,14 @@ def test_ollama_provider_posts_one_png_and_returns_trimmed_response(tmp_path: Pa
     assert seen["body"]["prompt"] == "Describe the screen."
     assert seen["body"]["stream"] is False
     assert seen["body"]["images"] == [base64.b64encode(image_bytes).decode("ascii")]
+
+
+def test_ollama_provider_rejects_invalid_json_bytes(tmp_path: Path):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    with pytest.raises(RuntimeError, match="returned invalid JSON"):
+        OllamaVisionProvider(opener=lambda request, timeout: FakeResponse(b"{not-json"))(image)
 
 
 def test_ollama_provider_normalizes_timeout(tmp_path: Path):
