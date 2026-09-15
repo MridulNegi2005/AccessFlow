@@ -218,3 +218,18 @@ xfailed; perception 74 passed. No protected files changed.
 replace one another's pending frames. The two-session regression preserves each session's newest source
 ID while same-session obsolete work is coalesced. Full validation: 153 passed, 4 strict xfailed; demo
 62 passed plus 4 strict xfailed; perception 75 passed. No protected files changed.
+
+## 2026-09-15 - Codex Atishay serialized WebSocket multimodal path
+
+**Task:** Close the remaining owned transport and composition evidence gaps for multimodal input.
+
+**Changes:** All demo outbound messages now pass through one sender task, so controller output cannot
+overlap a media status or recoverable input error. Added a forced concurrent-send regression. Added a
+WebSocket regression using the real LocalPerception model-path branch with a deterministic factory and
+the real OllamaVisionProvider HTTP path; it verifies paired WAV/PNG provenance, timestamps, revision,
+backend labels and an informational final.
+
+**Status:** Full suite 155 passed, 4 strict expected failures; demo suite 64 passed, 4 strict expected
+failures; perception suite 75 passed. Ruff, compilation and git diff --check clean. No engine, contract,
+dependency or lockfile change. The deterministic ASR factory and loopback HTTP service are protocol
+evidence; live model quality and non-mock reasoning remain unverified.

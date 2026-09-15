@@ -21,6 +21,7 @@ from accessflow.contracts import (
     Frame,
     FrameEvent,
     Observation,
+    OutputEvent,
     PlanProposal,
     Start,
     StartEvent,
@@ -313,15 +314,30 @@ async def websocket(websocket: WebSocket) -> None:
     session_id = str(uuid.uuid4())
     incoming: asyncio.Queue = asyncio.Queue()
     outgoing: asyncio.Queue = asyncio.Queue()
+
+    async def send_outputs():
+        while True:
+            event = await outgoing.get()
+            if event is None:
+                return
+            if isinstance(event, OutputEvent):
+                event = event.model_dump(mode="json")
+            await websocket.send_json(event)
+
+    sender = asyncio.create_task(send_outputs())
     try:
         perception = DemoPerception.from_environment()
     except ValueError as error:
-        await websocket.send_json(
+        await outgoing.put(
             {"kind": "demo_error", "payload": {"backend": "demo/config", "message": str(error)}}
         )
+        await outgoing.put(None)
+        await asyncio.gather(sender, return_exceptions=True)
         await websocket.close(code=1008)
         return
-    await websocket.send_json({"kind": "demo_status", "payload": {"perception_backend": perception.backend_label}})
+    await outgoing.put(
+        {"kind": "demo_status", "payload": {"perception_backend": perception.backend_label}}
+    )
     agent = Agent(
         perception,
         FinalFlagPolicy(),
@@ -331,11 +347,6 @@ async def websocket(websocket: WebSocket) -> None:
     )
     agent_task = asyncio.create_task(agent.run(incoming, outgoing))
     await incoming.put(StartEvent(session_id=session_id, payload=Start()))
-
-    async def send_outputs():
-        while True:
-            event = await outgoing.get()
-            await websocket.send_json(event.model_dump(mode="json"))
 
     with tempfile.TemporaryDirectory(prefix="accessflow-demo-") as media_dir:
         media_root = Path(media_dir)
@@ -351,7 +362,7 @@ async def websocket(websocket: WebSocket) -> None:
                         media_root=media_root,
                     )
                 except (TypeError, ValueError) as error:
-                    await websocket.send_json(
+                    await outgoing.put(
                         {
                             "kind": "demo_error",
                             "payload": {"backend": "demo/input", "message": str(error)},
@@ -365,7 +376,7 @@ async def websocket(websocket: WebSocket) -> None:
                 else:
                     source_id = None
                 if source_id is not None:
-                    await websocket.send_json(
+                    await outgoing.put(
                         {
                             "kind": "demo_status",
                             "payload": {"media_received": event.kind, "source_id": source_id},
@@ -373,7 +384,6 @@ async def websocket(websocket: WebSocket) -> None:
                     )
                 await incoming.put(event)
 
-        sender = asyncio.create_task(send_outputs())
         receiver = asyncio.create_task(receive_inputs())
         try:
             done, _ = await asyncio.wait(
@@ -386,10 +396,10 @@ async def websocket(websocket: WebSocket) -> None:
         except (WebSocketDisconnect, RuntimeError, ValueError):
             pass
         finally:
-            for task in (sender, receiver):
+            for task in (receiver,):
                 if not task.done():
                     task.cancel()
-            await asyncio.gather(sender, receiver, return_exceptions=True)
+            await asyncio.gather(receiver, return_exceptions=True)
 
             if agent.running and not agent_task.done():
                 await incoming.put(EndEvent(session_id=session_id))
@@ -399,6 +409,9 @@ async def websocket(websocket: WebSocket) -> None:
                 except (asyncio.TimeoutError, RuntimeError):
                     agent_task.cancel()
             await asyncio.gather(agent_task, return_exceptions=True)
+            if not sender.done():
+                await outgoing.put(None)
+            await asyncio.gather(sender, return_exceptions=True)
             await perception.aclose()
 
 

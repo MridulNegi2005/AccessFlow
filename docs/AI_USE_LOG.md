@@ -747,3 +747,9 @@ perception 74 passed. No protected files changed.
 audio/image workers are now created per session, with a regression for competing active and pending
 frames across two sessions. Full validation: 153 passed, 4 strict xfailed; demo 62 passed plus 4 strict
 xfailed; perception 75 passed. No protected files changed.
+2026-09-15 verification: Used two read-only subagent audits to identify the next multimodal gaps. Routed
+controller events, media statuses and recoverable input errors through one WebSocket sender and added a
+non-overlap regression. Added a WebSocket composition regression using the real LocalPerception model-path
+branch with a deterministic factory and the real OllamaVisionProvider HTTP request. Full validation: 155
+passed, 4 strict xfailed; demo 64 passed plus 4 strict xfailed; perception 75 passed. No protected files
+changed.

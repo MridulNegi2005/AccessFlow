@@ -414,3 +414,13 @@ the newest source IDs, and confirms all provider calls remain isolated.
 
 **Status:** Full suite 153 passed, 4 strict expected failures; demo suite 62 passed, 4 strict expected
 failures; perception suite 75 passed. No engine, contract, dependency or lockfile change.
+
+The transport serialization companion, tests/demo/test_app.py::test_websocket_serializes_controller_and_input_messages,
+holds a controller send open while a malformed frame is received and confirms that the WebSocket never
+has overlapping outbound sends. The composition companion,
+tests/demo/test_app.py::test_websocket_real_local_perception_and_vision_share_context, exercises the
+real LocalPerception model-path branch with a deterministic Whisper factory and the real
+OllamaVisionProvider HTTP request through one WebSocket session. It verifies WAV and PNG source IDs,
+audio revision and speech bounds, frame timestamp bounds, backend labels and one informational final.
+The factory and loopback service make this reproducible protocol evidence; it is not live ASR or vision
+quality evidence.

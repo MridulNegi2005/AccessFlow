@@ -736,3 +736,7 @@ Validation: 152 passed, 4 strict xfailed; no protected files changed.
 2026-09-15: Scoped LocalPerception admission workers per session so concurrent session pending frames
 cannot supersede each other; same-session coalescing remains bounded. Validation: 153 passed, 4 strict
 xfailed; no protected files changed.
+2026-09-15: Added one serialized WebSocket sender for controller outputs, media statuses and input
+errors, with a forced concurrent-send regression. Added a configured route regression covering the real
+LocalPerception model-path branch and OllamaVisionProvider HTTP request together. Validation: 155 passed,
+4 strict xfailed; demo 64 passed plus 4 strict xfailed; perception 75 passed. No protected files changed.
