@@ -53,8 +53,8 @@ Updated 15 September 2026.
 - Failed WAV uploads now remove their post-header validation materialization, and local injected
   audio backends identify themselves separately from the installed Faster Whisper path in the demo label.
   An injected backend without an identity is reported as local/unknown-audio rather than overclaimed.
-  Injected vision backends without an identity now use local/unknown-vision rather than crashing or
-  implying an Ollama model.
+  Injected vision backends without an identity, including model-only test doubles, now use
+  local/unknown-vision rather than crashing or implying an Ollama model.
 - A configured vision-backend failure is also covered: it emits backend_failure without a
   misleading final response.
 - The Ollama vision provider normalizes syntactically invalid JSON bytes and syntactically valid
@@ -110,7 +110,7 @@ Updated 15 September 2026.
   audio and image context, with no console or page errors or horizontal overflow.
 - The demo reasoner now bounds prior multimodal context to 16,384 characters while retaining the newest evidence by truncating only the item that reaches the remaining capacity. Regressions cover recent evidence, oldest-history omission, the exact bound for an oversized prior item, and request completeness.
 
-- Final verification is 131 tests passed with 4 strict expected failures, including 57 passing demo
+- Final verification is 132 tests passed with 4 strict expected failures, including 58 passing demo
   tests and 58 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational

@@ -330,3 +330,14 @@ session.
 
 **Status:** Full suite 131 passed, 4 strict expected failures; demo suite 57 passed, 4 strict expected
 failures; perception suite 58 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay truthful vision provenance
+
+**Task:** Prevent injected vision backends from being presented as Ollama without an explicit identity.
+
+**Changes:** DemoPerception now requires an ollama/ backend identity as well as a model name before
+using the Ollama label. A model-only injected provider is classified as local/unknown-vision, with a
+regression covering the overclaim boundary.
+
+**Status:** Full suite 132 passed, 4 strict expected failures; demo suite 58 passed, 4 strict expected
+failures; perception suite 58 passed. No engine, contract, dependency or lockfile change.

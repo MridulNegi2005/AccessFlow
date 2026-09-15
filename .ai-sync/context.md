@@ -706,3 +706,7 @@ plus 4 strict xfailed; perception 57 passed. No protected files changed.
 boundaries. Both classify backend failure and preserve later transcript recovery. Full validation:
 131 passed, 4 strict xfailed; demo 57 passed plus 4 strict xfailed; perception 58 passed. No protected
 files changed.
+
+2026-09-15: Tightened vision provenance labeling: model-only injected backends now remain
+local/unknown-vision without an explicit ollama/ identity. Full validation: 132 passed, 4 strict
+xfailed; demo 58 passed plus 4 strict xfailed; perception 58 passed. No protected files changed.

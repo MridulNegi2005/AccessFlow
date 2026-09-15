@@ -146,6 +146,15 @@ def test_demo_perception_labels_injected_audio_backend_truthfully():
     assert perception.backend_label == "local/injected-asr audio + demo/mock text/image"
 
 
+def test_demo_perception_does_not_overclaim_model_only_vision_backend():
+    class ModelOnlyVision:
+        model = "gemma3:4b"
+
+    perception = DemoPerception(vision_backend=ModelOnlyVision())
+
+    assert perception.backend_label == "demo/mock audio + local/unknown-vision image"
+
+
 def test_demo_perception_does_not_overclaim_unknown_vision_backend():
     class UnknownVision:
         pass
@@ -982,7 +991,7 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
 
     error = next(item for item in failed_outputs if item["kind"] == "error")
     final = next(item for item in continued_outputs if item["kind"] == "final")
-    assert "local/Ollama failing-vision image" in status["payload"]["perception_backend"]
+    assert "local/failing-vision image" in status["payload"]["perception_backend"]
     assert media_status["payload"] == {"media_received": "frame", "source_id": "frame-failure"}
     assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
     assert "Still connected" in final["payload"]["text"]
