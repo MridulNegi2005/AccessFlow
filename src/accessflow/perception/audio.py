@@ -149,6 +149,8 @@ def energy_activity(
         or rms_threshold < 0
     ):
         raise ValueError("frame_ms must be positive and rms_threshold cannot be negative")
+    if len(buffer.pcm) % buffer.sample_width:
+        raise ValueError("PCM data ends with a partial sample")
     frame_samples = max(1, buffer.sample_rate * frame_ms // 1000)
     frame_bytes = frame_samples * buffer.sample_width
     frames = []
