@@ -65,6 +65,7 @@
     let utterance = 0;
     let activeUtteranceId = null;
     let mediaSequence = 0;
+    let eventSequence = 0;
     let microphone = null;
     const pendingMessages = [];
     const maxPendingMessages = 16;
@@ -88,7 +89,7 @@
         performance.timeOrigin / 1000 + performance.now() / 1000
       );
       const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
-      return JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload });
+      return JSON.stringify({ kind, timestamp: sourceTimestamp, sequence: ++eventSequence, payload: eventPayload });
     }
 
     function send(kind, payloadOrFactory) {

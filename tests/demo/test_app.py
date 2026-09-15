@@ -100,6 +100,15 @@ def test_browser_frame_preserves_source_timestamp():
     assert event.timestamp == 17.25
 
 
+def test_browser_message_preserves_event_sequence():
+    event = event_from_message(
+        "session-1",
+        {"kind": "transcript", "sequence": 7, "payload": {"text": "spoken"}},
+    )
+
+    assert event.sequence == 7
+
+
 @pytest.mark.parametrize(
     ("kind", "identity_key"),
     [("transcript", "utterance_id"), ("audio", "utterance_id"), ("frame", "frame_id")],
@@ -126,6 +135,7 @@ def test_browser_message_generates_source_identity_when_omitted():
     [
         ("timestamp", float("inf"), "browser timestamp must be a finite non-negative number"),
         ("timestamp", True, "browser timestamp must be a finite non-negative number"),
+        ("sequence", "1", "browser sequence must be a non-negative integer"),
         ("revision", "1", "browser revision must be a non-negative integer"),
         ("final", "yes", "browser final must be a boolean"),
         ("text", 7, "browser text must be a string"),
@@ -134,8 +144,10 @@ def test_browser_message_generates_source_identity_when_omitted():
 )
 def test_browser_message_rejects_coerced_or_inconsistent_timing_values(field, value, message):
     payload = {"path": "input", "text": "spoken", "speech_end": 0}
-    if field in {"timestamp"}:
+    if field == "timestamp":
         browser_message = {"kind": "transcript", "timestamp": value, "payload": payload}
+    elif field == "sequence":
+        browser_message = {"kind": "transcript", "sequence": value, "payload": payload}
     else:
         payload[field] = value
         browser_message = {"kind": "transcript", "payload": payload}
@@ -358,6 +370,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'recorder-worklet.js' in html
     assert 'performance.timeOrigin' in html
     assert 'timestamp: sourceTimestamp' in html
+    assert 'sequence: ++eventSequence' in html
     assert "socket.readyState === WebSocket.CONNECTING" in html
     assert "pendingMessages.push(message)" in html
     assert "The connection queue is full." in html
