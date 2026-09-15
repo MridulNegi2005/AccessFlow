@@ -124,7 +124,7 @@ Updated 15 September 2026.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
   open. Pixel inspection is also unverified because the local image helper could not open the
   captures.
-- origin/mridul/engine was fetched at ad04bca for integrated state review. No engine owned
+- origin/mridul/engine was fetched at 30ed402 for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
 
 ## Still required
