@@ -128,7 +128,17 @@ def energy_activity(
     rms_threshold: int = 500,
 ) -> tuple[ActivityFrame, ...]:
     """Return a deterministic energy baseline; this is not a speech classifier."""
-    if buffer.sample_width not in (1, 2, 3, 4):
+    if (
+        isinstance(buffer.sample_rate, bool)
+        or not isinstance(buffer.sample_rate, int)
+        or buffer.sample_rate < 1
+    ):
+        raise ValueError("sample_rate must be a positive integer")
+    if (
+        isinstance(buffer.sample_width, bool)
+        or not isinstance(buffer.sample_width, int)
+        or buffer.sample_width not in (1, 2, 3, 4)
+    ):
         raise ValueError("PCM loader supports sample widths from 1 to 4 bytes")
     if (
         isinstance(frame_ms, bool)
