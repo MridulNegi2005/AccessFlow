@@ -340,24 +340,27 @@ def event_from_message(
         speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
         if speech_end < speech_start:
             raise ValueError("browser speech_end must be at least speech_start")
+        utterance_id = _source_id(payload, "utterance_id")
+        revision = _revision(payload)
         return AudioEvent(
             session_id=session_id,
             timestamp=timestamp,
             payload=Audio(
                 path=_materialize_upload("audio", payload, media_root),
-                utterance_id=_source_id(payload, "utterance_id"),
-                revision=_revision(payload),
+                utterance_id=utterance_id,
+                revision=revision,
                 speech_start=speech_start,
                 speech_end=speech_end,
             ),
         )
     if kind == "frame":
+        frame_id = _source_id(payload, "frame_id")
         return FrameEvent(
             session_id=session_id,
             timestamp=timestamp,
             payload=Frame(
                 path=_materialize_upload("frame", payload, media_root),
-                frame_id=_source_id(payload, "frame_id"),
+                frame_id=frame_id,
             ),
         )
     raise ValueError(f"Unsupported browser event: {kind}")
