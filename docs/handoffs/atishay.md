@@ -300,3 +300,6 @@ revision from starving an unrelated queued utterance. Full suite: 175 passed, 4 
 session; the final transcript retained both audio and image evidence. No protected files changed.
 2026-09-16 verification: Browser sends now queue in order while the WebSocket connects, with a bounded queue and
 clear closed/full transport errors. Full suite: 175 passed, 4 strict expected failures. No protected files changed.
+2026-09-16 verification: Current-head served run used cached Faster Whisper base.en CPU INT8 plus a loopback Ollama
+vision endpoint. The speech fixture was transcribed and the final transcript retained both audio and image evidence;
+reasoning remained mock and no live quality benchmark is claimed.

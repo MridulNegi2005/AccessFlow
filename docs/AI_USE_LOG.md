@@ -824,3 +824,6 @@ no source or protected files changed.
 2026-09-16 verification: Ran the served demo through a real local Uvicorn/WebSocket session with WAV, PNG and
 transcript inputs. The sequential finals completed and the last context retained both audio and image evidence.
 No protected files changed.
+2026-09-16 verification: Ran the current head with the cached Faster Whisper base.en CPU INT8 model and a loopback
+Ollama vision endpoint. The speech fixture was transcribed, PNG evidence was returned, and the final transcript
+retained both modalities. This remains mock reasoning and protocol/backend evidence, not a quality benchmark.
