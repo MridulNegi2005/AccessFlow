@@ -22,17 +22,25 @@ commit that reports an unknown outcome.
 
 ## Known gaps
 
-- One audio scenario exists (`scenarios/live_dev/audio_correction.json`, real WAV through
-  actual Faster Whisper ASR); no visual fixture exists. Multimodal coverage is one file
-  against a planned 18 audio plus 12 visual. The hidden set is half multimodal at a 1.5
-  multiplier, so this remains the largest unclaimed score.
+- Multimodal coverage is 2 audio files and 1 visual file, against a planned 18 audio plus
+  12 visual. The hidden set is half multimodal at a 1.5 multiplier, so this remains the
+  largest unclaimed score.
+- Both audio files use the same committed WAV. `audio_correction.json` is an ASR and
+  turn-correction smoke check. `audio_correction_ambiguous_hour_clarification.json` scores
+  write safety when the spoken hour is ambiguous. Two files over one recording are not two
+  independent audio cases. More audio evidence needs more recordings, which are Workstream
+  B media fixtures.
+- The visual file `frame_device_panel.json` cannot run through the process adapter. The
+  perception worker rejects the vision options the parent sends. See finding A2 in
+  `reviews/MRIDUL_REAUDIT_2026-09-15.md` and the ownership note in `CONTRACT_PROPOSALS.md`.
+  The one recorded vision run used a temporary worker edit that is reverted.
 - No scenario exceeds two user turns. Longer interruption chains are untested.
 - The only fault injected is an unresolved write outcome. Perception failures, tool timeouts
   and authorization refusals have unit coverage but no end-to-end scenario.
 - Held-out coverage is four planner probes, all text. The plan calls for twenty held out.
 
 <!-- generated -->
-Generated from 16 scenario files.
+Generated from 17 scenario files.
 Regenerate with `python scripts/scenario_inventory.py --write docs/SCENARIO_INVENTORY.md`.
 
 ## Coverage against the plan
@@ -40,10 +48,10 @@ Regenerate with `python scripts/scenario_inventory.py --write docs/SCENARIO_INVE
 | Modality | Planned | Present |
 |---|---|---|
 | text (`transcript`) | 30 | 15 |
-| audio (`audio`) | 18 | 1 |
+| audio (`audio`) | 18 | 2 |
 | visual (`frame`) | 12 | 1 |
 
-Distinct tool sets: **10** across 16 files. Longest scenario: **2** user turns.
+Distinct tool sets: **10** across 17 files. Longest scenario: **2** user turns.
 
 ## Every scenario
 
@@ -54,6 +62,7 @@ Distinct tool sets: **10** across 16 files. Longest scenario: **2** user turns.
 | dev | `support-read-then-service` | 1 | transcript | - | development |
 | dev | `development-text-correction-01` | 2 | transcript | - | development |
 | live_dev | `live-dev-audio-correction-01` | 1 | audio | - | development |
+| live_dev | `live-dev-audio-correction-clarify-01` | 1 | audio | - | development |
 | live_dev | `live-dev-device-correction-before-plan` | 2 | transcript | - | development |
 | live_dev | `live-dev-frame-device-panel-01` | 2 | frame, transcript | - | development |
 | live_dev | `live-dev-lost-response-status-reconciliation` | 1 | transcript | submit_ticket_v3 | development |
@@ -72,7 +81,7 @@ Each group drives the same tool set. A group of more than one is one workflow me
 
 | Tool set | Files |
 |---|---|
-| reserve_service_slot | 3: `development-text-correction-01`, `live-dev-audio-correction-01`, `live-dev-development-text-correction-01` |
+| reserve_service_slot | 4: `development-text-correction-01`, `live-dev-audio-correction-01`, `live-dev-audio-correction-clarify-01`, `live-dev-development-text-correction-01` |
 | reserve_repair_window | 2: `device-correction-during-pending-write`, `live-dev-device-correction-before-plan` |
 | query_receipt_v3, submit_ticket_v3 | 2: `lost-response-status-reconciliation`, `live-dev-lost-response-status-reconciliation` |
 | file_visit_request, inspect_support_notes | 2: `support-read-then-service`, `live-dev-support-read-then-service` |
