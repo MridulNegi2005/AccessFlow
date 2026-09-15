@@ -44,6 +44,23 @@ class DemoPerception:
     def __init__(self, *, audio_backend=None, vision_backend=None):
         self._audio_backend = audio_backend
         self._vision_backend = vision_backend
+        self._closed = False
+        self._vision_perception = (
+            LocalPerception(vision_provider=vision_backend)
+            if vision_backend is not None
+            else None
+        )
+
+    async def aclose(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        backends = [self._audio_backend, self._vision_perception]
+        closers = [getattr(backend, "aclose", None) for backend in backends]
+        await asyncio.gather(
+            *(closer() for closer in closers if closer is not None),
+            return_exceptions=True,
+        )
 
     @classmethod
     def from_environment(cls):
@@ -134,9 +151,7 @@ class DemoPerception:
             return
         if isinstance(event, FrameEvent):
             if self._vision_backend is not None:
-                async for observation in LocalPerception(
-                    vision_provider=self._vision_backend
-                ).observe(event):
+                async for observation in self._vision_perception.observe(event):
                     yield observation
                 return
             payload = event.payload
@@ -384,6 +399,7 @@ async def websocket(websocket: WebSocket) -> None:
                 except (asyncio.TimeoutError, RuntimeError):
                     agent_task.cancel()
             await asyncio.gather(agent_task, return_exceptions=True)
+            await perception.aclose()
 
 
 if __name__ == "__main__":

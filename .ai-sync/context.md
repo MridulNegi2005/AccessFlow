@@ -723,3 +723,8 @@ strict xfailed; perception 67 passed. No protected files changed.
 2026-09-15: Added multimodal WebSocket recovery coverage: after a vision backend failure, a later
 valid frame and WAV complete in the same session and the final context retains both observations.
 Validation: 143 passed, 4 strict xfailed; no protected files changed.
+
+2026-09-15: LocalPerception now has independent bounded audio/image workers with same-session frame
+and same-utterance revision coalescing, stale-result suppression and shutdown cleanup. DemoPerception
+retains the vision worker per session. Validation: 149 passed, 4 strict xfailed; no protected files
+changed.

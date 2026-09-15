@@ -373,6 +373,227 @@ async def test_slow_image_provider_does_not_block_event_loop(tmp_path: Path):
     assert observation.source_id == "slow-frame"
     assert observation.text == "screen evidence"
 
+
+@pytest.mark.asyncio
+async def test_pending_frames_are_coalesced_and_stale_results_are_suppressed(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / f"frame-{index}.png" for index in range(1, 4)]
+    for path in paths:
+        _write_png(path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"evidence from {path.stem}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    events = [
+        FrameEvent(session_id="s1", payload=Frame(path=str(path), frame_id=f"frame-{index}"))
+        for index, path in enumerate(paths, start=1)
+    ]
+    first_task = asyncio.create_task(collect(adapter, events[0]))
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    second_task = asyncio.create_task(collect(adapter, events[1]))
+    await asyncio.sleep(0.05)
+    third_task = asyncio.create_task(collect(adapter, events[2]))
+    await asyncio.sleep(0.05)
+    release_first.set()
+
+    first, second, third = await asyncio.gather(first_task, second_task, third_task)
+
+    assert first == []
+    assert second == []
+    assert [item.source_id for item in third] == ["frame-3"]
+    assert calls == [paths[0], paths[2]]
+
+
+@pytest.mark.asyncio
+async def test_newer_audio_revision_replaces_pending_work(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def transcriber(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"revision {len(calls)}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(transcriber=transcriber)
+    first_event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="utterance-1", revision=0),
+    )
+    revised_event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="utterance-1", revision=1),
+    )
+    first_task = asyncio.create_task(collect(adapter, first_event))
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    revised_task = asyncio.create_task(collect(adapter, revised_event))
+    await asyncio.sleep(0.05)
+    release_first.set()
+
+    first, revised = await asyncio.gather(first_task, revised_task)
+
+    assert first == []
+    assert [item.revision for item in revised] == [1]
+    assert revised[0].text == "revision 2"
+    assert calls == [wav_path, wav_path]
+
+
+@pytest.mark.asyncio
+async def test_audio_and_image_workers_run_independently(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    wav_path = tmp_path / "speech.wav"
+    image_path = tmp_path / "screen.png"
+    _write_wav(wav_path)
+    _write_png(image_path)
+    audio_started = threading.Event()
+    image_started = threading.Event()
+    release = threading.Event()
+
+    def transcriber(path: Path) -> str:
+        audio_started.set()
+        assert release.wait(1)
+        return "spoken evidence"
+
+    def provider(path: Path) -> str:
+        image_started.set()
+        assert release.wait(1)
+        return "visual evidence"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(transcriber=transcriber, vision_provider=provider)
+    audio_task = asyncio.create_task(
+        collect(
+            adapter,
+            AudioEvent(
+                session_id="s1",
+                payload=Audio(path=str(wav_path), utterance_id="audio-1"),
+            ),
+        )
+    )
+    image_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(image_path), frame_id="frame-1")),
+        )
+    )
+    await asyncio.wait_for(
+        asyncio.gather(
+            asyncio.to_thread(audio_started.wait, 1),
+            asyncio.to_thread(image_started.wait, 1),
+        ),
+        timeout=1,
+    )
+    assert audio_started.is_set()
+    assert image_started.is_set()
+    release.set()
+    audio, image = await asyncio.gather(audio_task, image_task)
+
+    assert [item.text for item in audio] == ["spoken evidence"]
+    assert [item.text for item in image] == ["visual evidence"]
+
+
+@pytest.mark.asyncio
+async def test_same_frame_id_from_different_sessions_is_not_coalesced(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / "first.png", tmp_path / "second.png"]
+    for path in paths:
+        _write_png(path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"evidence from {path.stem}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    first_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="session-1", payload=Frame(path=str(paths[0]), frame_id="frame-1")),
+        )
+    )
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    second_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="session-2", payload=Frame(path=str(paths[1]), frame_id="frame-1")),
+        )
+    )
+    await asyncio.sleep(0.05)
+    release_first.set()
+
+    first, second = await asyncio.gather(first_task, second_task)
+
+    assert [item.source_id for item in first] == ["frame-1"]
+    assert [item.source_id for item in second] == ["frame-1"]
+    assert calls == paths
+
+
+@pytest.mark.asyncio
+async def test_aclose_releases_active_observer_without_waiting_for_thread(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    image_path = tmp_path / "screen.png"
+    _write_png(image_path)
+    provider_started = threading.Event()
+    release = threading.Event()
+    provider_finished = threading.Event()
+
+    def provider(path: Path) -> str:
+        provider_started.set()
+        try:
+            assert release.wait(1)
+            return "visual evidence"
+        finally:
+            provider_finished.set()
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(image_path), frame_id="frame-1")),
+        )
+    )
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    await adapter.aclose()
+    assert await task == []
+    release.set()
+    assert await asyncio.to_thread(provider_finished.wait, 1)
+    await adapter.aclose()
+
 def test_png_validation_returns_structural_metadata(tmp_path: Path):
     image_path = tmp_path / "valid.png"
     _write_png(image_path, width=320, height=240)

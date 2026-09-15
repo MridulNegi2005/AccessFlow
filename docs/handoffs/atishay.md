@@ -203,3 +203,8 @@ Full suite: 142 passed, 4 strict xfailed; perception 67 passed; demo 59 passed, 
 frame and WAV in the same session. The final informational response retained both recovered
 modalities with source IDs and truthful backend labels. Full validation: 143 passed, 4 strict
 xfailed; demo 60 passed plus 4 strict xfailed; perception 67 passed. No protected files changed.
+
+2026-09-15 verification: Added independent bounded LocalPerception workers for audio and image, with
+same-session frame and same-utterance revision coalescing, stale-result suppression, session-scoped
+keys, and idempotent DemoPerception shutdown cleanup. Full validation: 149 passed, 4 strict xfailed;
+demo 61 passed plus 4 strict xfailed; perception 72 passed. No protected files changed.

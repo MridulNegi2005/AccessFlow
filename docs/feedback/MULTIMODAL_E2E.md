@@ -377,3 +377,17 @@ audio transcript, source IDs and backend labels.
 
 **Status:** Full suite 143 passed, 4 strict expected failures; demo suite 60 passed, 4 strict expected
 failures; perception suite 67 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-15 - Codex Atishay bounded multimodal admission
+
+**Task:** Bound replaceable local perception work while preserving paired audio and image processing.
+
+**Changes:** LocalPerception now uses independent latest-only workers for audio and image. Each worker
+runs one provider call and keeps one pending item per modality, drops obsolete same-session frames
+and same-utterance audio revisions, suppresses stale successes and failures, and preserves direct
+observation fields. DemoPerception retains the vision worker for the session and closes queued work
+during WebSocket shutdown. Tests cover rapid frames, revised audio, cross-modal concurrency,
+session isolation, demo reuse and active-worker shutdown cleanup.
+
+**Status:** Full suite 149 passed, 4 strict expected failures; demo suite 61 passed, 4 strict expected
+failures; perception suite 72 passed. No engine, contract, dependency or lockfile change.
