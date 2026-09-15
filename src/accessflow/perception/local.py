@@ -82,6 +82,7 @@ def validate_png(path: Path) -> PngFormat:
 
     offset = len(signature)
     ihdr: tuple[int, int, int, int] | None = None
+    interlace: int | None = None
     saw_idat = False
     idat_data = bytearray()
     saw_iend = False
@@ -136,12 +137,46 @@ def validate_png(path: Path) -> PngFormat:
 
     if ihdr is None or not saw_idat or not saw_iend:
         raise ValueError(f"Invalid PNG file: {path}")
+    if interlace is None:
+        raise ValueError(f"Invalid PNG file: {path}")
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ihdr[3]]
+    bits_per_pixel = channels * ihdr[2]
+    scanlines: list[int] = []
+    if interlace == 0:
+        row_bytes = (ihdr[0] * bits_per_pixel + 7) // 8
+        scanlines.extend([row_bytes] * ihdr[1])
+    else:
+        for x_start, y_start, x_step, y_step in (
+            (0, 0, 8, 8),
+            (4, 0, 8, 8),
+            (0, 4, 4, 8),
+            (2, 0, 4, 4),
+            (0, 2, 2, 4),
+            (1, 0, 2, 2),
+            (0, 1, 1, 2),
+        ):
+            pass_width = (ihdr[0] - x_start + x_step - 1) // x_step if ihdr[0] > x_start else 0
+            pass_height = (ihdr[1] - y_start + y_step - 1) // y_step if ihdr[1] > y_start else 0
+            row_bytes = (pass_width * bits_per_pixel + 7) // 8
+            if pass_width and pass_height:
+                scanlines.extend([row_bytes] * pass_height)
+    expected_size = sum(row_bytes + 1 for row_bytes in scanlines)
     try:
         decompressor = zlib.decompressobj()
-        decompressor.decompress(bytes(idat_data))
-        decompressor.flush()
-        if not decompressor.eof or decompressor.unused_data:
+        decoded = decompressor.decompress(bytes(idat_data), expected_size + 1)
+        decoded += decompressor.flush()
+        if (
+            len(decoded) != expected_size
+            or not decompressor.eof
+            or decompressor.unused_data
+            or decompressor.unconsumed_tail
+        ):
             raise ValueError(f"Invalid PNG file: {path}")
+        offset = 0
+        for row_bytes in scanlines:
+            if decoded[offset] > 4:
+                raise ValueError(f"Invalid PNG filter byte: {path}")
+            offset += row_bytes + 1
     except zlib.error as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
     return PngFormat(*ihdr)
