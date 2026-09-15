@@ -761,5 +761,7 @@ contains no inherited image context. Full validation: 156 passed, 4 strict xfail
 an unintegrated timing boundary. Fixed the owned lifecycle race: LocalPerception closes admission before
 late validation can register workers, and DemoPerception ignores work after close. The demo sender now
 terminates cleanly when the peer is closed. Added parameterized audio/image validation-race and
-post-close regressions for all DemoPerception modalities. Full validation: 162 passed, 4 strict xfailed;
-demo 68 passed plus 4 strict xfailed; perception 78 passed. No protected files changed.
+post-close regressions for all DemoPerception modalities, plus a strict timing-channel example. Extended
+the configured WebSocket composition regression to carry text, WAV and PNG together with timing, identity,
+revision and backend assertions. Full validation: 162 passed, 5 strict xfailed; demo 68 passed plus 4
+strict xfailed; perception 78 passed. No protected files changed.

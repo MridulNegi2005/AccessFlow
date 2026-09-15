@@ -112,17 +112,18 @@ Updated 16 September 2026.
 - The demo reasoner now bounds prior multimodal context to 16,384 characters while retaining the newest evidence by truncating only the item that reaches the remaining capacity. Regressions cover recent evidence, oldest-history omission, the exact bound for an oversized prior item, and request completeness.
 - LocalPerception now gives each session one provider call plus one pending item per modality, coalesces obsolete same-session frames and same-utterance audio revisions, suppresses stale results and keeps audio/image workers independent. DemoPerception retains the vision worker for the session and closes active and queued work during WebSocket shutdown; synchronous worker threads remain non-force-cancellable.
 - The demo WebSocket now serializes controller events, media statuses and recoverable input errors through one outbound sender, preventing concurrent writes from interleaving. A route regression holds a controller send open while an invalid frame is received and confirms no overlapping WebSocket sends.
-- A configured WebSocket regression now exercises the real LocalPerception Faster Whisper model branch with a deterministic factory and the real OllamaVisionProvider HTTP path together. It verifies WAV/PNG transport, source IDs, timestamps, revisions, backend labels and one informational multimodal final.
+- A configured WebSocket regression now exercises the real LocalPerception Faster Whisper model branch with a deterministic factory and the real OllamaVisionProvider HTTP path together. It sends text, WAV and PNG in one session and verifies their source IDs, timestamps, revisions, backend labels and one informational multimodal final.
 - A concurrent WebSocket regression keeps two browser sessions open together and verifies that image context in one session cannot appear in a fresh transcript final from the other.
 - LocalPerception now closes admission before validation can register new work, suppresses observers that finish validation after shutdown, and marks each bounded worker closed. Audio, image and transcript shutdown races plus post-close DemoPerception admission are covered; closed peers also terminate the demo sender cleanly.
 
-- Final verification is 162 tests passed with 4 strict expected failures, including 68 passing demo
+- Final verification is 162 tests passed with 5 strict expected failures, including 68 passing demo
   tests and 78 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
-- The four expected failures record current controller integration gaps: image-only informational
+- The five expected failures record four current controller integration gaps: image-only informational
   response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame
-  evidence before a write. Proposals and corresponding integrated-branch behavior are available for
-  the engine owner; no engine or contract file was changed here.
+  evidence before a write; the fifth records the pending timing-policy integration proposal. Proposals and
+  corresponding integrated-branch behavior are available for the engine owner; no engine or contract file
+  was changed here.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
   open. Pixel inspection is also unverified because the local image helper could not open the
   captures.

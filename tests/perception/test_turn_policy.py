@@ -1,6 +1,7 @@
 import pytest
 
 from accessflow.contracts import Observation, SessionView, Snapshot
+from accessflow.perception import ActivitySummary, ActivityWindow
 from accessflow.turn_policy import HeuristicTurnPolicy
 
 
@@ -45,6 +46,25 @@ def test_partial_speech_continues_even_after_a_long_recorded_gap():
     item = item.model_copy(update={"speech_start": 0.0, "speech_end": 8.0})
 
     decision = HeuristicTurnPolicy().update(item, view())
+
+    assert decision.kind == "continue"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="v0.1 TurnPolicy has no additive channel for acoustic timing metadata",
+)
+def test_turn_policy_accepts_activity_timing_without_using_pause_as_completion():
+    item = observation("Book Wednesday", final=False)
+    timing = ActivitySummary(
+        windows=(ActivityWindow(0.0, 0.8),),
+        active_duration_s=0.8,
+        leading_silence_s=0.0,
+        trailing_silence_s=0.6,
+        pause_detected=True,
+    )
+
+    decision = HeuristicTurnPolicy().update(item, view(), timing=timing)
 
     assert decision.kind == "continue"
 

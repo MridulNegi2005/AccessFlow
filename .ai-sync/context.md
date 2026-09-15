@@ -745,5 +745,6 @@ separate while one completes a fresh transcript. Validation: 156 passed, 4 stric
 passed plus 4 strict xfailed; perception 75 passed. No protected files changed.
 2026-09-16: Added a lifecycle admission barrier for LocalPerception and a closed guard for DemoPerception.
 Late audio/image validation cannot create provider work after shutdown; closed WebSocket peers no longer
-leave sender-task exceptions. Validation: 162 passed, 4 strict xfailed; demo 68 passed plus 4 strict
-xfailed; perception 78 passed. No protected files changed.
+leave sender-task exceptions. Extended the configured WebSocket path to carry text, WAV and PNG together,
+and recorded the pending timing-policy seam as a strict expected failure. Validation: 162 passed, 5 strict
+xfailed; demo 68 passed plus 4 strict xfailed; perception 78 passed. No protected files changed.

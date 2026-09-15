@@ -251,8 +251,10 @@ failures; perception suite 75 passed. No engine, contract, dependency or lockfil
 **Changes:** LocalPerception now closes admission before validation can register a session worker, and
 closed workers reject a race that already captured a worker reference. DemoPerception ignores post-close
 observations, and the demo sender exits cleanly when a WebSocket peer has closed. Parameterized audio and
-image validation-race tests plus post-close demo tests cover the boundary.
+image validation-race tests plus post-close demo tests cover the boundary. The configured WebSocket
+composition regression now carries text, WAV and PNG together; the timing-policy seam remains a strict
+expected failure with its additive proposal recorded.
 
-**Status:** Full suite 162 passed, 4 strict expected failures; demo suite 68 passed, 4 strict expected
+**Status:** Full suite 162 passed, 5 strict expected failures; demo suite 68 passed, 4 strict expected
 failures; perception suite 78 passed. Ruff, compilation and git diff --check clean. No engine, contract,
 dependency or lockfile change.

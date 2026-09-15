@@ -415,6 +415,20 @@ the newest source IDs, and confirms all provider calls remain isolated.
 **Status:** Full suite 153 passed, 4 strict expected failures; demo suite 62 passed, 4 strict expected
 failures; perception suite 75 passed. No engine, contract, dependency or lockfile change.
 
+## 2026-09-16 - Codex Atishay complete configured multimodal composition
+
+**Task:** Extend the configured WebSocket evidence to carry text, WAV and PNG in one session and record
+the remaining timing-policy seam explicitly.
+
+**Changes:** The real LocalPerception and loopback OllamaVisionProvider composition regression now sends
+all three event modalities together and asserts transcript timing, source identity, audio revision,
+frame timing and truthful backend labels. A strict expected-failure example records that the current
+turn policy has no additive activity-timing channel; the proposal remains in `docs/CONTRACT_PROPOSALS.md`.
+
+**Status:** Full suite 162 passed, 5 strict expected failures; demo suite 68 passed, 4 strict expected
+failures; perception suite 78 passed plus 1 strict expected failure. No engine, contract, dependency or
+lockfile change.
+
 The transport serialization companion, tests/demo/test_app.py::test_websocket_serializes_controller_and_input_messages,
 holds a controller send open while a malformed frame is received and confirms that the WebSocket never
 has overlapping outbound sends. The composition companion,
@@ -432,6 +446,7 @@ second session's transcript final contains no inherited image context.
 The shutdown admission companion, tests/perception/test_local.py::test_aclose_blocks_work_still_in_validation,
 parameterizes audio and image validation, closes LocalPerception while validation is blocked, and confirms
 that late validation produces no provider call or observation. The demo companion,
-tests/demo/test_app.py::test_demo_perception_does_not_admit_work_after_close, covers both modalities after
+tests/demo/test_app.py::test_demo_perception_does_not_admit_work_after_close, covers all three event modalities after
 DemoPerception shutdown. The sender boundary also now absorbs closed-peer transport failures during route
-cleanup.
+cleanup. The configured composition companion carries text, a real WAV fixture and a real PNG through one
+session while asserting source identity, timestamps, revisions and backend labels.
