@@ -97,7 +97,20 @@ class Agent:
         self.active_frame = None
         self.active_speech = None
         self.speech_ready = False
-        self.speech_write_requested = False
+        # Retained spoken write authorization for the CURRENT request (self.request_id).
+        # Set only from a completed ("ready") spoken utterance. Survives a clarifying
+        # turn on the same request -- a clarifying question is unresolved information,
+        # not a retraction of intent -- and is only granted or retracted by a genuinely
+        # new spoken utterance's own write_requested flag. Never set or read from an
+        # image proposal: an image may resolve missing information but cannot itself
+        # authorize a write. Cleared on interrupt, explicit stop, and request
+        # completion/rotation.
+        self.write_intent_retained = False
+        # Whether the current request still has an unanswered clarifying question.
+        # Blocks write dispatch independently of write_intent_retained so a resolved
+        # or still-open information gap is never conflated with the user's underlying
+        # authorization to write.
+        self.clarification_outstanding = False
         self.semantic_correction_event = None
         self.last_sequence = -1
         self.invalidated = set()
@@ -176,7 +189,8 @@ class Agent:
                         self.planner.cancel()
                     self.latest_complete = False
                     self.speech_ready = False
-                    self.speech_write_requested = False
+                    self.write_intent_retained = False
+                    self.clarification_outstanding = False
                     self.semantic_correction_event = None
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
@@ -213,12 +227,13 @@ class Agent:
                     if source[0] == "speech":
                         self.active_speech = source[1]
                         self.speech_ready = False
-                        self.speech_write_requested = False
+                        self.write_intent_retained = False
                         self.semantic_correction_event = None
                     if self.last_request_finished:
                         self.request_id = str(uuid4())
                         self.last_request_finished = False
-                        self.speech_write_requested = False
+                        self.write_intent_retained = False
+                        self.clarification_outstanding = False
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -280,7 +295,7 @@ class Agent:
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
-                           write_pending=self.speech_write_requested,
+                           write_pending=self.write_intent_retained,
                            repeated_completed_call=self.repeated_completed_call,
                            no_progress=self.no_progress,
                            active_request_id=self.request_id)
@@ -329,6 +344,8 @@ class Agent:
             if decision.kind == "stop":
                 self.generation += 1
                 self.perception_epoch += 1
+                self.write_intent_retained = False
+                self.clarification_outstanding = False
                 await self._cancel_writes("explicit_stop")
                 self.state.status = "stopped"
                 await self._emit("acknowledge", text="Stopped.", stop_output=True)
@@ -424,13 +441,13 @@ class Agent:
 
     async def _apply(self, proposal: PlanProposal, source=None):
         fresh_evidence = self._fresh_evidence
-        # Snapshot before this proposal can mutate speech_write_requested below. Mirrors
+        # Snapshot before this proposal can mutate write_intent_retained below. Mirrors
         # ModelReasoner.write_outstanding: true when the CURRENT request's spoken write
         # request names a real write tool that has not been dispatched or confirmed by
         # any call the current request has made yet. Scoped to self.request_id so an
         # old, unrelated write earlier in the session cannot silently satisfy (or
         # continuation-block) a brand new request -- see ToolCall.request_id.
-        prior_write_owed = (self.speech_write_requested
+        prior_write_owed = (self.write_intent_retained
                             and any(m.effect == "write" for m in self.manifests.values())
                             and not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
                                        for call in self.ledger.values()
@@ -456,6 +473,14 @@ class Agent:
             # matching prior behaviour: it can newly recognise intent or retract it
             # (an explicit correction/cancellation is new user evidence).
             #
+            # A clarifying question is unresolved information, not a retraction: a
+            # completed utterance that both requests a write AND asks a clarification
+            # (e.g. "book the date shown in this image") must keep that intent alive
+            # for a later turn on the SAME request to complete it once the missing
+            # information (spoken or visual) arrives. Only the write_requested flag
+            # itself -- never the presence of a clarification -- grants or retracts
+            # intent here.
+            #
             # A plan triggered by a tool result for this same request
             # (fresh_evidence=False) may still newly RECOGNISE intent it had not
             # seen before (e.g. deciding to book only after reading support notes),
@@ -465,10 +490,9 @@ class Agent:
             # mind by the same model on the same evidence. See the request
             # lifecycle note on ToolCall.request_id.
             if fresh_evidence:
-                self.speech_write_requested = bool(self.speech_ready and proposal.write_requested
-                                                   and not proposal.clarification)
+                self.write_intent_retained = bool(self.speech_ready and proposal.write_requested)
             elif proposal.write_requested and self.speech_ready and not proposal.clarification:
-                self.speech_write_requested = True
+                self.write_intent_retained = True
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
@@ -498,8 +522,17 @@ class Agent:
         await self._invalidate_dependencies(changed, "dependency_changed")
         said_something = bool(proposal.clarification)
         if proposal.clarification and (self.latest_complete or final_correction):
+            # Required information is now outstanding for this request. This is tracked
+            # separately from write_intent_retained: asking a question never touches
+            # whether the user authorized a write, only whether dispatch may proceed yet.
+            self.clarification_outstanding = True
             self.state.status = "clarifying"
             await self._emit("clarify", text=proposal.clarification)
+        elif self.latest_complete or final_correction:
+            # A complete turn that does not clarify is the model's own signal that any
+            # previously missing information (spoken or supplied by an image) is now
+            # resolved for this request.
+            self.clarification_outstanding = False
         for proposed in proposal.calls:
             manifest = self.manifests.get(proposed.tool)
             if not manifest:
@@ -512,9 +545,10 @@ class Agent:
                 blocked_calls += 1
                 continue
             if manifest.effect == "write":
-                if not (self.latest_complete and self.speech_ready and self.speech_write_requested
+                if not (self.latest_complete and self.speech_ready and self.write_intent_retained
                         and proposal.request_complete and proposal.write_requested
-                        and not self.state.correction_pending and not proposal.clarification):
+                        and not self.state.correction_pending and not proposal.clarification
+                        and not self.clarification_outstanding):
                     blocked_calls += 1
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
@@ -593,7 +627,7 @@ class Agent:
             # for the same spoken request (e.g. write_requested=False on a follow-up, or an
             # empty plan). That is not new user evidence of cancellation, so restore intent
             # and give the reasoner one bounded corrective turn.
-            self.speech_write_requested = True
+            self.write_intent_retained = True
             await self._emit("error", code="write_owed_not_progressed",
                              message="A requested state-changing effect is not complete; "
                                      "an empty or prose-only response cannot finish it.")
