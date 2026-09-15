@@ -278,3 +278,9 @@ retained text, corrected audio and image observations. No protected files change
 added focused coverage proving pause timing keeps partial speech open and never overrides final-transcript completion.
 Shared engine/controller wiring remains the pending additive proposal. Full suite: 166 passed, 4 strict expected
 failures; demo 70 passed plus 4 strict expected failures; perception 80 passed. No protected files changed.
+2026-09-16 verification: Made the conflicting-frame strict example deterministic by waiting for frame one to reach
+the reasoner before sending frame two. It remains an expected controller integration failure rather than a rapid-frame
+coalescing artifact. No protected files changed.
+2026-09-16 verification: Corrected the conflict reproducer to use two valid content-distinct PNG uploads and assert
+the injected Tuesday/Wednesday captions. With --runxfail it reaches the expected write-safety assertion, isolating
+the controller conflict-state gap. No protected files changed.

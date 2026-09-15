@@ -464,3 +464,7 @@ pending.
 
 Final verification after this promotion: 166 tests passed with 4 strict expected failures; demo 70 passed plus 4
 strict expected failures; perception 80 passed. No protected files changed.
+The conflicting-frame strict example now waits for frame one to reach the reasoner before submitting frame two, so
+its remaining failure isolates the missing controller conflict state from the owned same-session frame coalescing.
+The reproducer also uses two valid content-distinct PNG uploads and asserts the injected Tuesday/Wednesday captions,
+so the evidence no longer depends on the session path fallback or a filename convention.

@@ -2843,19 +2843,32 @@ async def test_partial_speech_and_final_image_never_authorize_a_write(tmp_path: 
     reason="The current controller does not represent conflicting frame evidence before a write.",
 )
 async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path):
+    first_png = _png_bytes(width=2, height=3)
+    second_png = _png_bytes(width=3, height=2)
+
     class ConflictingVision:
         backend_name = "local/injected-vision"
 
         def __call__(self, path: Path) -> str:
-            return "Wednesday" if path.name == "second.png" else "Tuesday"
+            return "Tuesday" if path.read_bytes() == first_png else "Wednesday"
 
     class ConflictReasoner:
         def __init__(self):
             self.conflict_seen = asyncio.Event()
+            self.frame_one_seen = asyncio.Event()
 
         async def plan(self, view, manifests):
-            frame_ids = {item.source_id for item in view.observations if item.modality == "image"}
+            frames = {
+                item.source_id: item.text
+                for item in view.observations
+                if item.modality == "image"
+            }
+            frame_ids = set(frames)
+            if "frame-1" in frame_ids:
+                self.frame_one_seen.set()
             if {"frame-1", "frame-2"} <= frame_ids:
+                assert frames["frame-1"] == "Tuesday"
+                assert frames["frame-2"] == "Wednesday"
                 self.conflict_seen.set()
                 return PlanProposal(
                     intent="service",
@@ -2898,12 +2911,24 @@ async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path
     )
     frame_one = event_from_message(
         session_id,
-        {"kind": "frame", "payload": {"path": "first.png", "frame_id": "frame-1"}},
+        {
+            "kind": "frame",
+            "payload": {
+                "data_base64": base64.b64encode(first_png).decode("ascii"),
+                "frame_id": "frame-1",
+            },
+        },
         media_root=tmp_path,
     )
     frame_two = event_from_message(
         session_id,
-        {"kind": "frame", "payload": {"path": "second.png", "frame_id": "frame-2"}},
+        {
+            "kind": "frame",
+            "payload": {
+                "data_base64": base64.b64encode(second_png).decode("ascii"),
+                "frame_id": "frame-2",
+            },
+        },
         media_root=tmp_path,
     )
     incoming = asyncio.Queue()
@@ -2924,6 +2949,7 @@ async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path
         await incoming.put(StartEvent(session_id=session_id, payload=Start(tools=[manifest])))
         await incoming.put(transcript)
         await incoming.put(frame_one)
+        await asyncio.wait_for(reasoner.frame_one_seen.wait(), timeout=1)
         await incoming.put(frame_two)
         await asyncio.wait_for(reasoner.conflict_seen.wait(), timeout=1)
         await asyncio.sleep(0.05)
