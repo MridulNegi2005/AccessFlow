@@ -790,6 +790,9 @@ passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Normalized Ollama vision configuration validation for non-string model/endpoints and
 non-finite, boolean or non-positive timeouts. Added focused cases; full suite: 174 passed, 4 strict xfailed.
 No protected files changed.
+2026-09-16 verification: Added a browser WebSocket ready-state guard so early text, WAV or PNG actions produce
+a labeled connecting error instead of throwing. Extended the existing page regression; demo suite: 70 passed,
+4 strict xfailed. No protected files changed.
 2026-09-16 verification: Fresh shallow public clone checked out atishay/perception from the shared GitHub
 repository and included ATISHAY_START_HERE.md at commit 4892c185. The disposable clone was removed afterward;
 no source or protected files changed.

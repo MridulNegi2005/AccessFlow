@@ -76,11 +76,16 @@
     }
 
     function send(kind, payload) {
+      if (socket.readyState !== WebSocket.OPEN) {
+        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session is still connecting.' } });
+        return false;
+      }
       const sourceTimestamp = payload.timestamp ?? (
         performance.timeOrigin / 1000 + performance.now() / 1000
       );
       const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
       socket.send(JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload }));
+      return true;
     }
 
     function transcript(final) {

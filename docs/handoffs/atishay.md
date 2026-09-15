@@ -23,6 +23,8 @@ The combined configured-backend WebSocket regression calls DemoPerception.from_e
 The WebSocket recovery regression also proves an ASR backend_failure does not end the session: a later PNG and spoken request complete with retained image context.
 A fresh served WebSocket run combined the cached Faster Whisper base.en CPU INT8 backend with the configured OllamaVisionProvider over a loopback protocol service in 1.326 seconds; the final retained both recognized speech and image evidence. This remains mixed evidence with mock reasoning and no live vision-quality claim.
 PNG validation now also checks the concatenated IDAT zlib stream for a complete, non-trailing decode; CRC-valid compressed corruption is rejected before vision inference.
+The browser send path now checks WebSocket readiness and reports a labeled connecting error instead of throwing
+when an input is submitted before the session opens.
 
 ## 2026-09-14 - Codex Atishay speech-cue modality boundary
 
