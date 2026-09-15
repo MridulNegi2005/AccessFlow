@@ -67,6 +67,14 @@ def test_energy_activity_rejects_invalid_configuration():
         energy_activity(AudioBuffer(b"\x00\x00", 16_000, 2), rms_threshold=500.0)
 
 
+def test_energy_activity_rejects_invalid_buffer_metadata():
+    for sample_rate in (0, 16_000.0, True):
+        with pytest.raises(ValueError, match="sample_rate"):
+            energy_activity(AudioBuffer(b"\x00\x00", sample_rate, 2))
+    with pytest.raises(ValueError, match="sample widths"):
+        energy_activity(AudioBuffer(b"\x00\x00", 16_000, True))
+
+
 def test_audio_buffer_metadata_is_explicit():
     assert WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=8_000)
 
