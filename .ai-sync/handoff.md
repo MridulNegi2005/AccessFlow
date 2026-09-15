@@ -1,54 +1,75 @@
 # Active Handoff
 
 > Last updated by: Claude Code
-> Timestamp: 2026-09-15T20:10:00+05:30
-> Branch: `mridul/engine` at `785d967` · 327 tests, 1 xfail, Ruff pass · dev suite 4/4
+> Timestamp: 2026-09-16
+> Branch: `mridul/engine`. Current status, measured by the orchestrator on 16 September 2026
+> at commit `fd53aca`: 384 tests passed, 0 xfailed, two unrelated deprecation warnings, Ruff
+> clean, offline dev suite 4/4. See `docs/STATUS.md` "Current status" for the full, sourced
+> fact list; do not quote the numbers in this header past that section.
 > Security review over the whole range has not run yet. Do not push before it passes.
 
 > Before starting: read `docs/STATUS.md` "Still required" and update it before you finish.
 
-## Codex review: all twelve findings closed
+## Review findings status
 
-Review: `docs/reviews/CLAUDE_REVIEW_2026-09-15.md`, audited baseline `92ead42`.
-Each slice was reproduced here before it was committed, never accepted from an agent report.
+The Codex review (`docs/reviews/CLAUDE_REVIEW_2026-09-15.md`, audited baseline `92ead42`)
+recorded its twelve findings, R1 to R12, as closed on 15 September. The later
+`docs/reviews/MRIDUL_REAUDIT_2026-09-15.md` re-examined the codebase against that claim and
+found several R-items still partial or open, re-numbered A1 through A9. **The re-audit is the
+correct, current statement. "All twelve findings closed" is superseded and must not be
+repeated.**
 
-| ID | Finding | Evidence |
+| ID | Finding | Current position |
 |---|---|---|
-| R1 | Hosted output bypassed the per-request schema | Exploit reproduced, then rejected with zero successful generations |
-| R2 | Continuation not scoped to the active request | `write_outstanding` now True for a new request after an old write |
-| R3 | A null response did not force progress | Empty proposal now rejected; valid alternatives stated |
-| R4 | Scoreboard `Latest` not chronological | 15 groups mis-selected, 5 verdicts corrected |
-| R5 | Raw provider bodies in exportable evidence | Secret marker absent from `evidence()`; quota still parsed |
-| R6 | Receipt name rejected as a missing slot | `lost_response_reconcile` clean 8 of 8 |
-| R7 | Model not delivered as a profile | `docs/PROFILES.md` |
-| R8 | Evidence not portable | 57 sanitised traces with a manifest under `docs/evidence/` |
-| R9 | Ablation claims too broad | Cohort enumerated, three claims withdrawn |
-| R10 | Non-finite gaps bypassed validation | NaN, infinity and JSON literals rejected |
-| R11 | Multimodal absent | Audio path complete; vision blocked, see below |
-| R12 | Documents contradicted the code | All 19 error codes documented |
+| A1 | Clarify-then-image deadlock (was part of R2/R3/R11) | **Addressed.** `write_intent_retained` and `clarification_outstanding` replace the old `speech_write_requested` flag. See "Open work" below. |
+| A2 | Vision options rejected by the perception worker (was R11) | **Open, blocked on Workstream B.** See "Cautions". |
+| A3 | Audio task-effect oracle (was part of R11) | **Addressed.** |
+| A4 | Evidence eligibility (was part of R4/R8) | **Addressed.** |
+| A5 | Portable evidence ordering (was part of R8) | **Addressed.** |
+| A6 | Profile verification (was R7) | **Addressed.** |
+| A7 | Contradictory current documents (was R12) | This file and `docs/STATUS.md`, both dated 16 September, are the repair. |
+| A8a-c | Test command, malformed JSONL, relative inventory path | **Addressed.** |
+| A9 | Corpus integration, scenario independence, baseline timing, release gates | **Open, remaining scope.** |
+
+Full evidence for each row is in `docs/reviews/MRIDUL_REAUDIT_2026-09-15.md`. This table is a
+pointer, not a substitute for reading it.
 
 ## Open work
 
-1. **Vision is blocked on Workstream B.** The vision adapter, CLI options, fixture and
-   scenario are committed. The process worker needs one additive parameter to pass a
-   provider to `LocalPerception`. That file belongs to Atishay, so Workstream A did not
-   change it. The request is in `docs/CONTRACT_PROPOSALS.md`, dated 15 September. The path
-   was measured once with a temporary local edit that is now reverted; the result document
-   is marked blocked.
-2. **Clarify-then-image deadlock.** A spoken write request, one clarifying question, then
-   the answering image never completes. `speech_write_requested` and `latest_complete` are
-   both false at the stall and no error code is emitted. Reproduced as a strict xfail in
-   `tests/engine/test_known_defects.py`. This is write-authorization code and wants its own
-   reviewed slice.
-3. **Corpus is 15 files, 10 distinct tool sets, 1 audio, 0 visual.** See
-   `docs/SCENARIO_INVENTORY.md`, which is generated from the files.
-4. Held-out probes have still never run. Run them only after the request contract settles.
-5. Docker execution on a Docker-capable host. Official kit adapter. Submission assembly.
+1. **Vision is blocked on Workstream B (finding A2).** The vision adapter, CLI options,
+   fixture and scenario are committed. The perception worker needs one additive parameter to
+   pass a provider to `LocalPerception`. `AGENTS.md` places `src/accessflow/adapters/` in
+   Workstream A, but Mridul deliberately assigned this one file,
+   `src/accessflow/adapters/perception_worker.py`, to Atishay on 15 September, overriding the
+   directory rule for that file only. The request is in `docs/CONTRACT_PROPOSALS.md`. The
+   path was measured once with a temporary local edit that is now reverted; the result
+   document, `docs/results/VISION_E2E_2026-09-15.md`, is marked blocked and not reproducible
+   from this checkout.
+2. **Corpus is 17 files, 10 distinct tool sets, 2 audio, 1 visual.** See
+   `docs/SCENARIO_INVENTORY.md`, which is generated from the files and lists which files
+   repeat the same underlying workflow.
+3. Held-out probes have still never run. Run them only after the request contract settles.
+4. Docker execution on a Docker-capable host. Official kit adapter. Submission assembly.
+   Docker is not installed on this machine, so this cannot be checked here at all.
+
+**Resolved, removed from this list:** the clarify-then-image deadlock (previously item 2
+here). A spoken write request, a clarifying question, then the answering image now completes.
+The stall was gated on `speech_write_requested` and `latest_complete`; that field no longer
+exists. `SessionView` now carries `write_intent_retained` and `clarification_outstanding`
+(`src/accessflow/engine.py`), and the former strict-xfail reproduction is a passing acceptance
+test in `tests/engine/test_component_integration.py` (`tests/engine/test_known_defects.py` is
+now empty by design; see its module docstring). This is finding A1 in the re-audit.
 
 ## Cautions
 
-- **Do not edit Workstream B files.** Perception, turn policy, the process worker and the
-  demo belong to Atishay. Raise a proposal in `docs/CONTRACT_PROPOSALS.md` instead.
+- **Perception worker ownership is resolved, not a blanket Workstream B rule.** `AGENTS.md`
+  places `src/accessflow/adapters/` in Workstream A. `src/accessflow/adapters/perception_worker.py`
+  is the one deliberate exception: Mridul assigned its vision-provider wiring to Atishay on
+  15 September, overriding the directory rule for that file only. See the ownership note in
+  `docs/CONTRACT_PROPOSALS.md`. Everything else under `src/accessflow/perception/`,
+  `src/accessflow/turn_policy/`, `demo/`, `tests/perception/` and `tests/demo/` remains
+  Atishay's untouched territory; raise a proposal in `docs/CONTRACT_PROPOSALS.md` before
+  editing any of it, including the worker file.
 - Subagents have twice left `find /` scans running for half an hour. Sweep for stray
   `find.exe` and `bash.exe` after every agent finishes.
 - Regenerate `MODEL_COMPARISON.md` and `SCENARIO_INVENTORY.md` with their scripts. Do not
@@ -60,7 +81,7 @@ Each slice was reproduced here before it was committed, never accepted from an a
 Workstream A. Model selection and local inference speed are finished and documented.
 The ablation is done and returned a negative result. Multimodal evidence is the next work.
 
-## Completed this session
+## Completed this session (dated 14-15 September 2026, historical)
 
 - **Backends.** Groq and NVIDIA NIM added behind a shared OpenAI-compatible branch keyed by
   env prefix. Ollama and Gemini unchanged. Selection stays explicit with no automatic fallback.
@@ -97,34 +118,37 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
 
 - **Held-out probes unused.** Four independently authored planner probes exist, have never been
   run, and their labels have never been read. This is the only unseen data available.
-- **Scenario corpus is 8 of 60.** Plan calls for 30 text, 18 audio, 12 visual, split 40
-  development and 20 held out.
+- **Scenario corpus is 17 files, 10 distinct tool sets** (2 audio, 1 visual, 15 transcript).
+  See `docs/SCENARIO_INVENTORY.md` for the full breakdown. The plan calls for 30 text, 18
+  audio, 12 visual, split 40 development and 20 held out; the corpus is well short of that on
+  every axis.
 
 ## Next Steps
 
 1. **Multimodal end to end.** Audio and visual are 50 percent of the hidden set at a 1.5
-   multiplier and have no evidence at all. Largest unclaimed score.
-2. **Fix the write-intent defect.** `qwen3:4b` never sets `write_requested`, so the
-   write-continuation constraint never starts. See the open defect below. This blocks every
-   local multi-step result.
+   multiplier and have thin evidence: 2 audio files over one recording, 1 visual file that
+   cannot run through the process adapter (finding A2). Largest unclaimed score.
+2. **Fix the local write-intent defect.** `qwen3:4b` never sets `write_requested`, so the
+   write-continuation constraint never starts locally. See "Known Defects" below. This is a
+   local-model planning gap, separate from the clarify-then-image deadlock (A1), which is
+   fixed. It blocks every local multi-step result.
 3. Run the four held-out probes once, after the engine stops changing.
-4. Verify Docker container execution on a Docker-capable host.
+4. Verify Docker container execution on a Docker-capable host. Not possible on this machine:
+   Docker is not installed here.
 5. Official kit adapter once the organizer publishes the schema. Do not invent wire compatibility.
 6. Submission assembly: deck, video of five minutes or less, AI disclosure, release tag
    `PRISM_GENAI_HACKATHON_Y2026`. Do not create the tag during ordinary development.
 
 ## Known Defects and Cautions
 
-- **`missing_dependency` on reconciliation.** `lost-response-status-reconciliation`
-  intermittently fails because the status tool's `receipt` parameter carries the controller
-  operation id, which is not a slot, so listing it as a dependency is rejected. This is the
-  compatibility edge recorded in the 13 September review entry.
-- **Open defect: the write-continuation constraint is self-triggered.** It gates on
-  `speech_write_requested`, which the controller sets from the model's own `write_requested`
+- **Local-model write-intent gap (open, distinct from the fixed A1 clarify-then-image
+  deadlock).** The write-continuation constraint gates on the model's own `write_requested`
   flag. `qwen3:4b` proposes the read again on every turn and never sets the flag, so the
   safeguard never starts. The controller ignores the duplicate call and emits nothing, so the
   turn stalls silently until the scenario deadline. A stall with no diagnostic is the second
-  half of this defect.
+  half of this defect. This has not been re-verified against the current engine fields
+  (`write_intent_retained`, `clarification_outstanding`) in this update; treat its current
+  status as unverified rather than assume it still reproduces unchanged.
 - **Pin `ACCESSFLOW_OLLAMA_NUM_GPU=37` for `qwen3:4b` on the GTX 1650.** Automatic fitting is
   not dependable. Ollama holds a 1024 MiB free-memory reserve and drops to 29/37 layers when
   full offload does not clear it. The 14 September auto-fit result cleared the reserve by
@@ -149,17 +173,22 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
   `docs/AI_USE_LOG.md` concatenate both sides automatically. Never add a rewritten-in-place
   file such as `docs/STATUS.md` to that list.
 - `main` and `mridul/engine` both sit at `ad04bca` and are pushed. Security review was run
-  over the whole range before pushing and returned clean.
+  over the whole range before pushing and returned clean. Branch `mridul/engine` has since
+  advanced locally past `fd53aca`; the push/security-review state above is not re-verified as
+  part of this update and should be re-checked before the next push.
 
 ## Key Files Modified
 
 - `src/accessflow/adapters/models.py` — backends, error detail, think flag, continuation rule
 - `src/accessflow/contracts.py` — additive `SessionView.write_pending`
-- `src/accessflow/engine.py` — sets `write_pending` on the view
-- `src/accessflow/cli.py` — deadline flags, `groq` and `nvidia` choices
+- `src/accessflow/engine.py` — sets `write_pending` on the view; also owns
+  `write_intent_retained` and `clarification_outstanding` (finding A1 fix)
+- `src/accessflow/cli.py` — deadline flags, `groq` and `nvidia` choices, `vision_provider_requested`
 - `src/accessflow/evaluation/replay.py` — deadline plumbing
 - `scripts/start-local-ollama.ps1` — `-FlashAttention`, `-KvCacheType`, `-ContextLength`
 - `tests/engine/test_models.py` — backend, think, continuation and diagnostics coverage
+- `tests/engine/test_component_integration.py` — the clarify-then-image acceptance test
+  (finding A1); `tests/engine/test_known_defects.py` is now empty by design
 - `.env.example` — Groq, NVIDIA, think and layer-placement guidance
 - `src/accessflow/evaluation/scenarios.py` — `event_gaps_s` per-pair pacing
 - `scenarios/live_dev/stale_read_after_correction.json`, `stale_read_after_device_correction.json`
