@@ -4,6 +4,11 @@ Every number comes from a run_metadata row in artifacts/. Nothing is typed by ha
 so the table cannot drift from the evidence. Regenerate after any model run:
 
     python scripts/model_scoreboard.py --write docs/results/MODEL_COMPARISON.md
+
+Ordering and deduplication rely on `run_id`/`run_started_at`/`run_ended_at`, written
+by replay.py from this point forward. Traces recorded before those fields existed
+fall back to file mtime; that fallback is disclosed inline wherever it is used,
+never presented as an authoritative timestamp.
 """
 import argparse
 import datetime as dt
@@ -15,33 +20,97 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def runs(artifacts):
-    for path in sorted(artifacts.rglob("*.jsonl")):
-        try:
-            with path.open(encoding="utf-8") as handle:
-                for line in handle:
-                    row = json.loads(line)
-                    if row.get("type") != "run_metadata":
-                        continue
-                    evidence = row.get("reasoner_evidence") or {}
-                    latencies = [r["elapsed_seconds"] for r in evidence.get("requests", [])
-                                 if r.get("outcome") == "success"]
-                    codes = {r.get("status_code") for r in evidence.get("requests", [])
-                             if r.get("status_code")}
-                    yield {
-                        "path": path.relative_to(ROOT).as_posix(),
-                        "model": row.get("backend") or "unknown",
-                        "scenario": row.get("scenario") or "unknown",
-                        "status": row.get("completion_status"),
-                        "oracle": (row.get("task_oracle") or {}).get("passed"),
-                        "ablated": bool(row.get("disabled_components")),
-                        "latencies": latencies,
-                        "http_errors": sorted(codes),
-                        "when": dt.datetime.fromtimestamp(path.stat().st_mtime).date().isoformat(),
-                    }
-                    break
-        except (OSError, json.JSONDecodeError):
+def display_path(path):
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.resolve().as_posix()
+
+
+def run_time(row, path):
+    """Return (sort_epoch, source, display_string) for a run_metadata row.
+
+    Prefers the recorded end/start timestamp. Falls back to file mtime only when
+    no recorded timestamp exists, and always labels that fallback in the display
+    string so it is never mistaken for verified chronology.
+    """
+    for key in ("run_ended_at", "run_started_at"):
+        value = row.get(key)
+        if not value:
             continue
+        try:
+            parsed = dt.datetime.fromisoformat(value)
+        except ValueError:
+            continue
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=dt.timezone.utc)
+        parsed = parsed.astimezone(dt.timezone.utc)
+        return parsed.timestamp(), "recorded", parsed.isoformat(timespec="seconds")
+    mtime = path.stat().st_mtime
+    inferred = dt.datetime.fromtimestamp(mtime, tz=dt.timezone.utc)
+    return mtime, "mtime_inferred", inferred.isoformat(timespec="seconds") + " (mtime, order unverified)"
+
+
+def collect_records(artifacts):
+    """Scan `artifacts` for run_metadata rows.
+
+    Returns (records, exclusions). Nothing is silently dropped: every skipped file
+    or duplicate run lands in `exclusions` with a reason.
+    """
+    records, exclusions = [], []
+    if not artifacts.exists():
+        exclusions.append({"path": display_path(artifacts), "reason": "artifacts_directory_missing"})
+        return records, exclusions
+    seen_run_ids = {}
+    for path in sorted(artifacts.rglob("*.jsonl")):
+        rel = display_path(path)
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            exclusions.append({"path": rel, "reason": f"read_error: {exc}"})
+            continue
+        row = None
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                candidate = json.loads(line)
+            except json.JSONDecodeError as exc:
+                exclusions.append({"path": rel, "reason": f"malformed_json: {exc}"})
+                continue
+            if candidate.get("type") == "run_metadata":
+                row = candidate
+                break
+        if row is None:
+            exclusions.append({"path": rel, "reason": "no_run_metadata_row"})
+            continue
+        run_id = row.get("run_id")
+        if run_id is not None:
+            if run_id in seen_run_ids:
+                exclusions.append({"path": rel,
+                                    "reason": f"duplicate_run_id: {run_id} (first seen at {seen_run_ids[run_id]})"})
+                continue
+            seen_run_ids[run_id] = rel
+        time_epoch, time_source, when = run_time(row, path)
+        evidence = row.get("reasoner_evidence") or {}
+        latencies = [r["elapsed_seconds"] for r in evidence.get("requests", [])
+                     if r.get("outcome") == "success"]
+        codes = {r.get("status_code") for r in evidence.get("requests", []) if r.get("status_code")}
+        records.append({
+            "path": rel,
+            "run_id": run_id,
+            "model": row.get("backend") or "unknown",
+            "scenario": row.get("scenario") or "unknown",
+            "status": row.get("completion_status"),
+            "oracle": (row.get("task_oracle") or {}).get("passed"),
+            "ablated": bool(row.get("disabled_components")),
+            "latencies": latencies,
+            "http_errors": sorted(codes),
+            "time_epoch": time_epoch,
+            "time_source": time_source,
+            "when": when,
+        })
+    return records, exclusions
 
 
 def summarize(records):
@@ -60,21 +129,27 @@ def summarize(records):
         bucket["latencies"] += record["latencies"]
         bucket["scenarios"].add(record["scenario"])
         bucket["http"].update(record["http_errors"])
-        bucket["first"] = min(bucket["first"] or record["when"], record["when"])
-        bucket["last"] = max(bucket["last"] or record["when"], record["when"])
+        if bucket["first"] is None or record["time_epoch"] < bucket["first"][0]:
+            bucket["first"] = (record["time_epoch"], record["when"])
+        if bucket["last"] is None or record["time_epoch"] > bucket["last"][0]:
+            bucket["last"] = (record["time_epoch"], record["when"])
     return by_model
 
 
 def table(by_model):
-    lines = ["| Model | Runs | Completed | Oracle passed | Mean request | Slowest | Scenarios | HTTP errors | Last run |",
-             "|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| Model | Runs | Completed | Oracle passed | Unscored | Mean request (successful) | "
+             "Slowest (successful) | Scenarios | HTTP errors | Last run |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
     for model, bucket in sorted(by_model.items(), key=lambda item: -item[1]["runs"]):
         mean = f"{statistics.mean(bucket['latencies']):.2f} s" if bucket["latencies"] else "-"
         slowest = f"{max(bucket['latencies']):.2f} s" if bucket["latencies"] else "-"
         scored = f"{bucket['passed']}/{bucket['scored']}" if bucket["scored"] else "unscored"
+        unscored = bucket["runs"] - bucket["scored"]
         http = ", ".join(str(code) for code in sorted(bucket["http"])) or "none"
+        last = bucket["last"][1] if bucket["last"] else "-"
         lines.append(f"| `{model}` | {bucket['runs']} | {bucket['completed']}/{bucket['runs']} | "
-                     f"{scored} | {mean} | {slowest} | {len(bucket['scenarios'])} | {http} | {bucket['last']} |")
+                     f"{scored} | {unscored} | {mean} | {slowest} | {len(bucket['scenarios'])} | "
+                     f"{http} | {last} |")
     return "\n".join(lines)
 
 
@@ -91,18 +166,25 @@ def matrix(records, minimum=4):
     cells = defaultdict(list)
     for record in records:
         if counts[record["model"]] >= minimum:
-            cells[(record["model"], record["scenario"])].append(record["oracle"])
+            cells[(record["model"], record["scenario"])].append(record)
     lines = ["| Scenario | " + " | ".join(f"`{m.split('/')[-1]}`" for m in models) + " |",
              "|---" * (len(models) + 1) + "|"]
     for scenario in scenarios:
         row = [scenario]
         for model in models:
-            results = cells.get((model, scenario), [])
-            if not results:
+            entries = cells.get((model, scenario), [])
+            scored = [e for e in entries if e["oracle"] is not None]
+            unscored = len(entries) - len(scored)
+            if not entries:
                 row.append("-")
+            elif not scored:
+                row.append(f"unscored ({unscored})")
             else:
-                passed = sum(1 for r in results if r)
-                row.append(f"{passed}/{len(results)}")
+                passed = sum(1 for e in scored if e["oracle"])
+                cell = f"{passed}/{len(scored)}"
+                if unscored:
+                    cell += f" (+{unscored} unscored)"
+                row.append(cell)
         lines.append("| " + " | ".join(row) + " |")
     return "\n".join(lines)
 
@@ -112,7 +194,9 @@ def per_model(records):
 
     The latest column matters more than the totals. Scores span several days, and
     controller changes moved results independently of the model, so an old failure
-    still counts against a model that was never retested.
+    still counts against a model that was never retested. "Latest" is selected by
+    recorded run timestamp; where no run recorded a timestamp, the file's mtime is
+    used and the row says so explicitly.
     """
     grouped = defaultdict(lambda: defaultdict(list))
     for record in records:
@@ -120,10 +204,11 @@ def per_model(records):
             grouped[record["model"]][record["scenario"]].append(record)
     sections = []
     for model in sorted(grouped, key=lambda m: -sum(len(v) for v in grouped[m].values())):
-        rows = ["| Scenario | Runs | Passed | Completed | Mean request | Slowest | Latest | Last run |",
+        rows = ["| Scenario | Runs | Passed | Completed | Mean request (successful) | "
+                "Slowest (successful) | Latest | Last run |",
                 "|---|---|---|---|---|---|---|---|"]
         for scenario in sorted(grouped[model]):
-            entries = sorted(grouped[model][scenario], key=lambda r: r["when"])
+            entries = sorted(grouped[model][scenario], key=lambda r: r["time_epoch"])
             latencies = [value for entry in entries for value in entry["latencies"]]
             scored = [entry for entry in entries if entry["oracle"] is not None]
             passed = sum(1 for entry in scored if entry["oracle"])
@@ -140,14 +225,34 @@ def per_model(records):
     return "\n\n".join(sections)
 
 
+def exclusions_section(exclusions):
+    if not exclusions:
+        return "No files were excluded."
+    lines = [f"- `{item['path']}`: {item['reason']}" for item in exclusions]
+    return f"{len(exclusions)} file(s) excluded from this table:\n\n" + "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifacts", default=str(ROOT / "artifacts"))
     parser.add_argument("--write")
     args = parser.parse_args()
-    records = list(runs(Path(args.artifacts)))
-    body = (f"Generated from {len(records)} recorded runs in `artifacts/`.\n"
-            f"Regenerate with `python scripts/model_scoreboard.py --write docs/results/MODEL_COMPARISON.md`.\n\n"
+    records, exclusions = collect_records(Path(args.artifacts))
+    inferred = sum(1 for r in records if r["time_source"] != "recorded")
+    notes = (
+        f"Generated from {len(records)} recorded runs in `artifacts/`.\n"
+        f"Regenerate with `python scripts/model_scoreboard.py --write docs/results/MODEL_COMPARISON.md`.\n\n"
+        f"`Oracle passed` and per-scenario pass counts divide by scored runs only (null/unscored "
+        f"oracles excluded from that denominator, counted separately as `Unscored`). `Completed` "
+        f"divides by every attempted run regardless of scoring, so infrastructure failures do not "
+        f"disappear from the record.\n\n"
+        f"`Mean request`/`Slowest` cover only requests marked successful. They are not end-to-end "
+        f"scenario latency and do not include timed-out or failed requests.\n\n"
+        f"{inferred} of {len(records)} run(s) have no recorded run timestamp and fall back to file "
+        f"mtime for ordering; those are marked `(mtime, order unverified)` wherever shown.\n\n"
+        f"## Excluded evidence\n\n{exclusions_section(exclusions)}\n\n"
+    )
+    body = (f"{notes}"
             f"## Totals by model\n\n{table(summarize(records))}\n\n"
             f"## Oracle results per scenario\n\n{matrix(records)}\n\n"
             f"## Every model, every scenario\n\n{per_model(records)}\n")
