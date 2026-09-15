@@ -47,3 +47,6 @@ These are not permission to silently change v0.1. Preserve existing fields and f
 - Compatibility: All fields are optional and default to the current v0.1 behavior. Existing frame IDs,
   timestamps and image observations remain valid; older adapters can omit the metadata. This branch
   contains the failing example only and does not modify the controller or shared contracts.
+  The integrated engine at origin/mridul/engine 919ed27 now replaces the prior active frame before
+  planning, so conflict detection must compare or record the superseded frame before that removal if
+  conflicting visual evidence is still required.

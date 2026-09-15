@@ -468,3 +468,6 @@ The conflicting-frame strict example now waits for frame one to reach the reason
 its remaining failure isolates the missing controller conflict state from the owned same-session frame coalescing.
 The reproducer also uses two valid content-distinct PNG uploads and asserts the injected Tuesday/Wednesday captions,
 so the evidence no longer depends on the session path fallback or a filename convention.
+Integrated-state review at origin/mridul/engine 919ed27 confirms active-frame replacement and image-only informational
+response behavior in targeted tests. Its pre-planning frame removal means conflict detection needs an additive
+pre-replacement comparison or provenance signal; this branch leaves that controller work to Mridul.

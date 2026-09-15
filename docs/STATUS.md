@@ -118,6 +118,7 @@ Updated 16 September 2026.
 - LocalPerception now closes admission before validation can register new work, suppresses observers that finish validation after shutdown, and marks each bounded worker closed. Audio, image and transcript shutdown races plus post-close DemoPerception admission are covered; closed peers also terminate the demo sender cleanly.
 - A route-level cleanup regression confirms valid uploaded WAV and PNG files exist inside the live session directory and that the directory is removed after WebSocket disconnect.
 - The conflicting-frame expected failure now uses two content-distinct valid PNG payloads, asserts their Tuesday/Wednesday captions, and waits until the first reaches the reasoner before sending the second. Its remaining failure is a deterministic controller conflict-state gap rather than a perception coalescing or fixture artifact.
+- Integrated-state review against origin/mridul/engine 919ed27 confirms targeted active-frame replacement and image-only informational tests pass there. That controller removes the superseded frame before planning, so the conflicting-evidence proposal still needs an additive pre-replacement comparison or provenance signal; no protected engine or contract file was changed here.
 
 - Final verification is 166 tests passed with 4 strict expected failures, including 70 passing demo
   tests and 80 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
@@ -130,7 +131,7 @@ Updated 16 September 2026.
 - Evidence is mixed and still bounded: live vision quality and non mock reasoning are still
   open. Pixel inspection is also unverified because the local image helper could not open the
   captures.
-- origin/mridul/engine was fetched at 30ed402 for integrated state review. No engine owned
+- origin/mridul/engine was fetched at 919ed27 for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
 
 ## Still required

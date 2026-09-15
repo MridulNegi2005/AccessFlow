@@ -662,6 +662,10 @@ no source, contract or protected files changed.
 2026-09-16: Corrected the conflict reproducer to use two valid content-distinct PNG uploads and assert the injected
 Tuesday/Wednesday captions. With --runxfail it reaches the expected write-safety assertion, isolating controller
 conflict state. No source, contract or protected files changed.
+2026-09-16: Reviewed origin/mridul/engine at 919ed27 in a disposable overlay with current owned demo/perception
+paths. Targeted active-frame replacement and image-only informational tests pass upstream; the conflict case is
+blocked before planning because the prior frame is removed. The remaining proposal needs pre-replacement comparison
+or provenance. No protected files changed.
 
 
 2026-09-15: Invalid PNG materialization cleanup now has direct regression evidence. Full validation:
