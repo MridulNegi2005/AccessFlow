@@ -716,3 +716,8 @@ classified failure boundary. Validation: 131 passed, 4 strict xfailed; no protec
 2026-09-15: Added a truthful backend-label regression after auditing injected vision provenance. The
 demo now requires an explicit ollama/ backend identity before exposing an Ollama model label.
 Validation: 132 passed, 4 strict xfailed; no protected files changed.
+
+2026-09-15: Used a subagent design review to validate an opt-in LocalPerception deadline and its
+non-forcible thread-cancellation limitation. Implemented modality-specific timeout classification,
+direct audio/image tests, configuration validation, and WebSocket recovery. Validation: 141 passed,
+4 strict xfailed; no protected files changed.
