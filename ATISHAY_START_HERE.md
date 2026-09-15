@@ -5,8 +5,8 @@ tool execution and packaging. You do not need his engine, his API key or his mac
 
 ## Current handoff — 16 September 2026
 
-The published `atishay/perception` branch currently points to `c1555f2`; the last
-code-bearing verification is recorded at `4ee8632`.
+The published `atishay/perception` branch carries this handoff. The current
+implementation baseline is **166 passed, 4 strict expected failures**.
 Read `docs/STATUS.md` before changing anything. The multimodal path now covers text,
 validated WAV, validated PNG, injected local ASR and vision providers, source IDs,
 event IDs, revisions, timestamps, session isolation, recovery, cleanup and bounded
