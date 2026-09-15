@@ -18,6 +18,7 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+DIAG_LIMIT = 200
 
 
 def display_path(path):
@@ -27,16 +28,53 @@ def display_path(path):
         return path.resolve().as_posix()
 
 
+def _truncate(value):
+    """Bound a diagnostic snippet so exclusion reasons cannot embed unbounded content."""
+    text = repr(value)
+    if len(text) <= DIAG_LIMIT:
+        return text
+    return text[:DIAG_LIMIT] + "...(truncated)"
+
+
+def _record_shape_error(row):
+    """Return a reason string if a run_metadata row's nested fields have the wrong
+    type, else None. Missing fields are not an error here; only present-but-wrong-type
+    fields are, since absence already has defined defaults elsewhere.
+    """
+    evidence = row.get("reasoner_evidence")
+    if evidence is not None and not isinstance(evidence, dict):
+        return f"reasoner_evidence must be an object, got {type(evidence).__name__}: {_truncate(evidence)}"
+    if isinstance(evidence, dict):
+        requests = evidence.get("requests")
+        if requests is not None and not isinstance(requests, list):
+            return (f"reasoner_evidence.requests must be a list, got "
+                    f"{type(requests).__name__}: {_truncate(requests)}")
+        if isinstance(requests, list):
+            for index, entry in enumerate(requests):
+                if not isinstance(entry, dict):
+                    return (f"reasoner_evidence.requests[{index}] must be an object, got "
+                            f"{type(entry).__name__}: {_truncate(entry)}")
+    oracle = row.get("task_oracle")
+    if oracle is not None and not isinstance(oracle, dict):
+        return f"task_oracle must be an object, got {type(oracle).__name__}: {_truncate(oracle)}"
+    for key in ("run_ended_at", "run_started_at"):
+        value = row.get(key)
+        if value is not None and not isinstance(value, str):
+            return f"{key} must be a string, got {type(value).__name__}: {_truncate(value)}"
+    return None
+
+
 def run_time(row, path):
     """Return (sort_epoch, source, display_string) for a run_metadata row.
 
     Prefers the recorded end/start timestamp. Falls back to file mtime only when
     no recorded timestamp exists, and always labels that fallback in the display
-    string so it is never mistaken for verified chronology.
+    string so it is never mistaken for verified chronology. A timestamp of the
+    wrong type (not a string) is treated as absent rather than raising.
     """
     for key in ("run_ended_at", "run_started_at"):
         value = row.get(key)
-        if not value:
+        if not value or not isinstance(value, str):
             continue
         try:
             parsed = dt.datetime.fromisoformat(value)
@@ -78,11 +116,20 @@ def collect_records(artifacts):
             except json.JSONDecodeError as exc:
                 exclusions.append({"path": rel, "reason": f"malformed_json: {exc}"})
                 continue
+            if not isinstance(candidate, dict):
+                exclusions.append({"path": rel,
+                                    "reason": f"invalid_record_type: expected a JSON object, got "
+                                              f"{type(candidate).__name__}: {_truncate(candidate)}"})
+                continue
             if candidate.get("type") == "run_metadata":
                 row = candidate
                 break
         if row is None:
             exclusions.append({"path": rel, "reason": "no_run_metadata_row"})
+            continue
+        shape_error = _record_shape_error(row)
+        if shape_error is not None:
+            exclusions.append({"path": rel, "reason": f"invalid_record_shape: {shape_error}"})
             continue
         run_id = row.get("run_id")
         if run_id is not None:

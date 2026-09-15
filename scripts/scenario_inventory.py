@@ -16,7 +16,20 @@ EXPOSURE = {"dev": "development", "live_dev": "development", "planner_probes": "
 PLANNED = {"text": 30, "audio": 18, "visual": 12}
 
 
+def display_path(path):
+    """Render `path` relative to ROOT, or as an absolute path when it lies outside ROOT.
+
+    Mirrors `display_path` in `scripts/model_scoreboard.py` so both tools report
+    out-of-tree paths the same way instead of raising.
+    """
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.resolve().as_posix()
+
+
 def scenarios(root):
+    root = root.resolve()
     for path in sorted(root.rglob("*.json")):
         try:
             definition = json.loads(path.read_text(encoding="utf-8"))
@@ -30,7 +43,7 @@ def scenarios(root):
         modalities = sorted({e["kind"] for e in inputs}) or ["none"]
         yield {
             "set": path.parent.name,
-            "path": path.relative_to(ROOT).as_posix(),
+            "path": display_path(path),
             "id": definition.get("id", path.stem),
             "tools": tools,
             "modalities": modalities,
