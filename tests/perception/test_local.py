@@ -960,6 +960,14 @@ def test_png_validation_rejects_oversized_decoded_payload(tmp_path: Path):
         validate_png(image_path)
 
 
+def test_png_validation_rejects_oversized_compressed_file(tmp_path: Path):
+    image_path = tmp_path / "oversized-file.png"
+    image_path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * (local_module.MAX_PNG_FILE_BYTES + 1))
+
+    with pytest.raises(ValueError, match="PNG file is too large"):
+        validate_png(image_path)
+
+
 def test_png_validation_rejects_indexed_image_without_palette(tmp_path: Path):
     def chunk(kind: bytes, payload: bytes) -> bytes:
         return (

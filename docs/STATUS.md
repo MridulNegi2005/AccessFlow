@@ -50,6 +50,8 @@ Updated 16 September 2026.
   integrity and terminal IEND structure before a frame reaches a vision backend; rejected uploads are
   removed from the session directory. A direct cleanup regression verifies invalid PNG materialization
   leaves no session file behind.
+- Direct PNG validation now bounds the compressed file at 8 MiB before reading it, complementing the
+  64 MiB decoded-payload limit and preventing an oversized local image from consuming unbounded input memory.
 - Failed WAV uploads now remove their post-header validation materialization, and local injected
   audio backends identify themselves separately from the installed Faster Whisper path in the demo label.
   An injected backend without an identity is reported as local/unknown-audio rather than overclaimed.
@@ -145,7 +147,7 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 206 tests passed with 4 strict expected failures, including 88 passing demo
+- Final verification is 207 tests passed with 4 strict expected failures, including 88 passing demo
   tests and 102 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
