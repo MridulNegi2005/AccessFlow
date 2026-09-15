@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from jsonschema import Draft202012Validator, validate
+from jsonschema.exceptions import ValidationError as PlanSchemaViolation
 
 from .clock import RealClock
 from .contracts import (
@@ -79,6 +80,8 @@ class Agent:
         self.planner = None
         self.repeated_completed_call = False
         self.repeat_recoveries = {}
+        self.write_stall_recoveries = {}
+        self.schema_rejection_recoveries = {}
         self.active_frame = None
         self.active_speech = None
         self.speech_ready = False
@@ -327,6 +330,12 @@ class Agent:
         elif message.kind == "plan":
             self.current_event_id = self.source_events.get(message.source)
             await self._apply(message.value, message.source)
+        elif message.kind == "plan_rejected":
+            await self._emit("error", code="plan_schema_rejected", detail=message.value)
+            attempts = self.schema_rejection_recoveries.get(self.request_id, 0)
+            if attempts < 1 and self.state.status not in {"stopped", "ended"}:
+                self.schema_rejection_recoveries[self.request_id] = attempts + 1
+                self._start_plan()
 
     def _start_plan(self, source=None):
         self.generation += 1
@@ -346,11 +355,25 @@ class Agent:
                                                                         for m in self.manifests.values()]),
                                                self.inference_timeout)
                 await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True), source=source))
+            except PlanSchemaViolation as exc:
+                # The reasoner's own generation failed the exact schema built for this
+                # request (dynamic tool/effect restrictions, forced null response, ...).
+                # This is a rejection, not a generic backend outage: route it into a
+                # bounded correction attempt instead of a silent stall.
+                await self.inbox.put(WorkerMessage("plan_rejected", generation, str(exc)))
             except Exception as exc:
                 await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
         self.planner = self._spawn(plan())
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        # Snapshot before this proposal can mutate speech_write_requested below. Mirrors
+        # ModelReasoner.write_outstanding: true when this session's active spoken write
+        # request names a real write tool that has not been dispatched or confirmed by
+        # any call in the ledger yet.
+        prior_write_owed = (self.speech_write_requested
+                            and any(m.effect == "write" for m in self.manifests.values())
+                            and not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
+                                       for call in self.ledger.values()))
         self.repeated_completed_call = False
         repeated, dispatched_any = [], False
         speech = self.observations.get(("speech", self.active_speech))
@@ -454,10 +477,31 @@ class Agent:
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
         said_something = bool(proposal.clarification)
+        write_owed_unmet = False
         if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
-            if not any(c.effect == "write" for c in self.ledger.values()):
+            if any(c.effect == "write" for c in self.ledger.values()):
+                pass  # A write call already exists in this session; unchanged prior behaviour.
+            elif prior_write_owed:
+                # The accepted request still owes a state-changing effect. A completed read
+                # or a change of mind in this proposal's flags is evidence, never a
+                # substitute for the effect: prose alone must not claim completion.
+                write_owed_unmet = True
+            else:
                 said_something = True
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
+        if write_owed_unmet and not self.last_request_finished:
+            # This proposal silently dropped the write intent a prior proposal established
+            # for the same spoken request (e.g. write_requested=False on a follow-up). That
+            # is not new user evidence of cancellation, so restore it and give the reasoner
+            # one bounded corrective turn -- the same shape as repeated_completed_call.
+            self.speech_write_requested = True
+            await self._emit("error", code="write_owed_not_progressed",
+                             message="A requested state-changing effect is not complete; "
+                                     "a prose-only response cannot finish it.")
+            attempts = self.write_stall_recoveries.get(self.request_id, 0)
+            if attempts < 1 and self.state.status not in {"stopped", "ended"}:
+                self.write_stall_recoveries[self.request_id] = attempts + 1
+                self._start_plan()
         if (repeated and not dispatched_any and not said_something
                 and not self.state.pending_call_ids and not self.last_request_finished):
             # The planner re-proposed only calls that already succeeded. Dropping those
