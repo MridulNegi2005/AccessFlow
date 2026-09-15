@@ -6,6 +6,7 @@ import asyncio
 import base64
 import os
 import binascii
+import math
 import tempfile
 import uuid
 from pathlib import Path
@@ -269,6 +270,38 @@ def _source_id(payload: dict[str, Any], key: str) -> str:
     return value
 
 
+def _finite_timestamp(value: Any, key: str) -> int | float:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value < 0
+    ):
+        raise ValueError(f"browser {key} must be a finite non-negative number")
+    return value
+
+
+def _revision(payload: dict[str, Any]) -> int:
+    value = payload.get("revision", 0)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("browser revision must be a non-negative integer")
+    return value
+
+
+def _final_flag(payload: dict[str, Any]) -> bool:
+    value = payload.get("final", True)
+    if not isinstance(value, bool):
+        raise ValueError("browser final must be a boolean")
+    return value
+
+
+def _text(payload: dict[str, Any]) -> str:
+    value = payload.get("text", "")
+    if not isinstance(value, str):
+        raise ValueError("browser text must be a string")
+    return value
+
+
 def event_from_message(
     session_id: str,
     message: dict[str, Any],
@@ -282,30 +315,40 @@ def event_from_message(
     payload = message.get("payload", {})
     if not isinstance(payload, dict):
         raise ValueError("browser event payload must be an object")
-    timestamp = message.get("timestamp", payload.get("timestamp", 0))
+    timestamp = _finite_timestamp(
+        message.get("timestamp", payload.get("timestamp", 0)), "timestamp"
+    )
     if kind == "transcript":
+        speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
+        speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
+        if speech_end < speech_start:
+            raise ValueError("browser speech_end must be at least speech_start")
         return TranscriptEvent(
             session_id=session_id,
             timestamp=timestamp,
             payload=Transcript(
                 utterance_id=_source_id(payload, "utterance_id"),
-                revision=payload.get("revision", 0),
-                text=payload.get("text", ""),
-                final=payload.get("final", True),
-                speech_start=payload.get("speech_start", 0),
-                speech_end=payload.get("speech_end", 0),
+                revision=_revision(payload),
+                text=_text(payload),
+                final=_final_flag(payload),
+                speech_start=speech_start,
+                speech_end=speech_end,
             ),
         )
     if kind == "audio":
+        speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
+        speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
+        if speech_end < speech_start:
+            raise ValueError("browser speech_end must be at least speech_start")
         return AudioEvent(
             session_id=session_id,
             timestamp=timestamp,
             payload=Audio(
                 path=_materialize_upload("audio", payload, media_root),
                 utterance_id=_source_id(payload, "utterance_id"),
-                revision=payload.get("revision", 0),
-                speech_start=payload.get("speech_start", 0),
-                speech_end=payload.get("speech_end", 0),
+                revision=_revision(payload),
+                speech_start=speech_start,
+                speech_end=speech_end,
             ),
         )
     if kind == "frame":
