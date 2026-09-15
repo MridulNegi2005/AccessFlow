@@ -1181,6 +1181,43 @@ def test_websocket_configured_audio_and_vision_share_context(monkeypatch, tmp_pa
         server.server_close()
         server_thread.join(timeout=1)
 
+
+def test_websocket_cleans_valid_session_media_after_disconnect(monkeypatch):
+    created_paths = []
+    real_temporary_directory = demo_app.tempfile.TemporaryDirectory
+
+    def tracked_temporary_directory(*args, **kwargs):
+        directory = real_temporary_directory(*args, **kwargs)
+        created_paths.append(Path(directory.name))
+        return directory
+
+    monkeypatch.setattr(demo_app.tempfile, "TemporaryDirectory", tracked_temporary_directory)
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "payload": {"data_base64": encoded_audio, "utterance_id": "cleanup-audio"},
+                }
+            )
+            while True:
+                message = socket.receive_json()
+                if (
+                    message.get("kind") == "demo_status"
+                    and message.get("payload", {}).get("media_received") == "audio"
+                ):
+                    break
+
+            assert created_paths and created_paths[0].is_dir()
+            assert list(created_paths[0].iterdir())
+
+    assert not created_paths[0].exists()
+
+
 def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeypatch):
     class FailingAudio:
         async def observe(self, event):
