@@ -726,3 +726,8 @@ direct audio/image tests, configuration validation, and WebSocket recovery. Vali
 scheduling yield inside its child-task cleanup guard. Added a regression for observer cancellation
 while a synchronous worker continues to completion. Validation: 142 passed, 4 strict xfailed; no
 protected files changed.
+
+2026-09-15 verification: Added a WebSocket regression for vision failure recovery into a later valid
+image plus audio session. Both modalities and their source identities remain in the final context.
+Full validation: 143 passed, 4 strict xfailed; demo 60 passed plus 4 strict xfailed; perception 67
+passed. No protected files changed.

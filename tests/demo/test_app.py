@@ -1054,6 +1054,96 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
 
 
 
+def test_websocket_vision_failure_recovers_to_multimodal_session(monkeypatch):
+    class RecoveringVision:
+        backend_name = "local/recovering-vision"
+
+        def __init__(self):
+            self.calls = 0
+
+        def __call__(self, path: Path) -> str:
+            self.calls += 1
+            if self.calls == 1:
+                raise RuntimeError("vision service unavailable")
+            return "screen shows the approval prompt"
+
+    vision = RecoveringVision()
+
+    def transcribe(path: Path) -> str:
+        return "Please inspect the attached screen"
+
+    def configured_perception(cls):
+        return DemoPerception(
+            audio_backend=demo_app.LocalPerception(transcriber=transcribe),
+            vision_backend=vision,
+        )
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    png = _png_bytes(width=2, height=3)
+    encoded_image = base64.b64encode(png).decode("ascii")
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "failed-frame"},
+                }
+            )
+            failed_frame_status = socket.receive_json()
+            failed_outputs = _receive_controller_outputs(socket)
+
+            socket.send_json(
+                {
+                    "kind": "frame",
+                    "payload": {"data_base64": encoded_image, "frame_id": "recovered-frame"},
+                }
+            )
+            recovered_frame_status = socket.receive_json()
+
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "payload": {
+                        "data_base64": encoded_audio,
+                        "utterance_id": "recovered-audio",
+                    },
+                }
+            )
+            audio_status = socket.receive_json()
+            multimodal_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    final = next(item for item in multimodal_outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == (
+        "local/injected-asr audio + local/recovering-vision image"
+    )
+    assert failed_frame_status["payload"] == {
+        "media_received": "frame",
+        "source_id": "failed-frame",
+    }
+    assert recovered_frame_status["payload"] == {
+        "media_received": "frame",
+        "source_id": "recovered-frame",
+    }
+    assert audio_status["payload"] == {
+        "media_received": "audio",
+        "source_id": "recovered-audio",
+    }
+    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    assert "Please inspect the attached screen" in final["payload"]["text"]
+    assert "screen shows the approval prompt" in final["payload"]["text"]
+    assert vision.calls == 2
+    assert final["payload"]["basis"] == "informational"
+
 @pytest.mark.parametrize("vision_response", [b"[]", b"{not-json"])
 def test_websocket_malformed_vision_json_is_recoverable(monkeypatch, vision_response):
     class MalformedVisionHandler(BaseHTTPRequestHandler):
