@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -28,9 +29,9 @@ class OllamaVisionProvider:
         timeout_s: float = 30.0,
         opener: Callable[..., Any] | None = None,
     ) -> None:
-        if not model.strip():
+        if not isinstance(model, str) or not model.strip():
             raise ValueError("Ollama vision model cannot be empty")
-        if not endpoint.strip():
+        if not isinstance(endpoint, str) or not endpoint.strip():
             raise ValueError("Ollama vision endpoint cannot be empty")
         parsed_endpoint = urlparse(endpoint.strip())
         if parsed_endpoint.scheme not in {"http", "https"} or parsed_endpoint.hostname not in {
@@ -39,7 +40,12 @@ class OllamaVisionProvider:
             "::1",
         }:
             raise ValueError("Ollama vision endpoint must use a loopback host")
-        if timeout_s <= 0:
+        if (
+            isinstance(timeout_s, bool)
+            or not isinstance(timeout_s, (int, float))
+            or not math.isfinite(timeout_s)
+            or timeout_s <= 0
+        ):
             raise ValueError("Ollama vision timeout_s must be positive")
         self.model = model.strip()
         self.endpoint = endpoint.strip()
