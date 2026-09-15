@@ -259,6 +259,16 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
     raise ValueError(f"Unsupported upload kind: {kind}")
 
 
+def _source_id(payload: dict[str, Any], key: str) -> str:
+    """Return a generated identity for omitted IDs and reject blank identities."""
+    if key not in payload:
+        return str(uuid.uuid4())
+    value = payload[key]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"browser {key} must be a non-empty string")
+    return value
+
+
 def event_from_message(
     session_id: str,
     message: dict[str, Any],
@@ -278,7 +288,7 @@ def event_from_message(
             session_id=session_id,
             timestamp=timestamp,
             payload=Transcript(
-                utterance_id=payload.get("utterance_id", str(uuid.uuid4())),
+                utterance_id=_source_id(payload, "utterance_id"),
                 revision=payload.get("revision", 0),
                 text=payload.get("text", ""),
                 final=payload.get("final", True),
@@ -292,7 +302,7 @@ def event_from_message(
             timestamp=timestamp,
             payload=Audio(
                 path=_materialize_upload("audio", payload, media_root),
-                utterance_id=payload.get("utterance_id", str(uuid.uuid4())),
+                utterance_id=_source_id(payload, "utterance_id"),
                 revision=payload.get("revision", 0),
                 speech_start=payload.get("speech_start", 0),
                 speech_end=payload.get("speech_end", 0),
@@ -304,7 +314,7 @@ def event_from_message(
             timestamp=timestamp,
             payload=Frame(
                 path=_materialize_upload("frame", payload, media_root),
-                frame_id=payload.get("frame_id", str(uuid.uuid4())),
+                frame_id=_source_id(payload, "frame_id"),
             ),
         )
     raise ValueError(f"Unsupported browser event: {kind}")
