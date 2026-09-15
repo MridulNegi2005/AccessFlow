@@ -1,10 +1,58 @@
 # Active Handoff
 
 > Last updated by: Claude Code
-> Timestamp: 2026-09-15T00:35:00+05:30
-> Branch: `mridul/engine` = `main` = `ad04bca` · 254 tests and Ruff pass · **ablation work uncommitted** · CI disabled
+> Timestamp: 2026-09-15T10:20:00+05:30
+> Branch: `mridul/engine` at `051ce5a` · 296 tests and Ruff pass · dev suite 4/4
+> **15 commits unpushed.** Security review has not been run on them. Do not push first.
 
 > Before starting: read `docs/STATUS.md` "Still required" and update it before you finish.
+
+## Paused here
+
+Working the Codex review in `docs/reviews/CLAUDE_REVIEW_2026-09-15.md`, audited baseline
+`92ead42`. Twelve findings. Work was paused by the user at a clean point: the working tree
+is clean and every finished slice is committed and verified.
+
+| ID | Finding | State |
+|---|---|---|
+| R1 | Hosted output bypassed the per-request schema; false completion prose | done |
+| R2 | Continuation not scoped to the active request | done |
+| R4 | Scoreboard `Latest` not chronological | done |
+| R6 | Receipt name rejected as a missing slot dependency | done |
+| R7 | Chosen model not delivered as a profile | done |
+| R9 | Ablation claims broader than the experiment | done |
+| R10 | Non-finite event gaps bypass validation | done |
+| R12 | Documents contradict the code | partial: STATUS header done |
+| R3 | No-progress plans need a bounded typed outcome | open, next |
+| R5 | Raw provider error bodies enter exportable evidence | open |
+| R8 | Evidence lives in ignored `artifacts/`, not portable | open |
+| R11 | Real multimodal turn handling | open, largest |
+
+## Next actions, in order
+
+1. **R3.** A fully expanded empty `PlanProposal` still validates against the
+   outstanding-write schema, so a null response does not force progress. Other quiescent
+   cases remain: invalid dependencies, a second failed repair, calls that cannot dispatch.
+   A mixed proposal with one repeated call and one invalid call also makes the
+   `repeated_completed_call` message inaccurate. Bound recovery per request and per input
+   revision, and validate the retry outcome rather than that a retry was scheduled.
+2. **R5.** `response.text[:400]` keeps arbitrary provider error text in `evidence()`, which
+   promises no model content. Normalise to allowlisted codes before any evidence is
+   published.
+3. **R12 remainder.** `docs/CONTRACT.md` and `CONTRACT_PROPOSALS.md` still do not describe
+   `SessionView.write_pending`, `repeated_completed_call`, `active_request_id` or
+   `ToolCall.request_id`. Write these once, after R3 stops changing them.
+4. **R8**, then **R11**.
+
+## Verification standard used
+
+Every slice was reproduced independently before it was committed, not accepted from the
+agent's report. The schema exploit, the scoreboard ordering, the non-finite gaps and the
+`write_outstanding` scoping were each re-derived here. Keep doing that.
+
+Live regression after each engine change: `qwen/qwen3.8-27b` with
+`ACCESSFLOW_MAX_OUTPUT_TOKENS=950`. The offline suite cannot catch a schema change that
+rejects real model output.
 
 ## Current Task
 
