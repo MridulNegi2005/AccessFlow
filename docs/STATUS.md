@@ -46,6 +46,8 @@ Updated 16 September 2026.
 - The WebSocket input boundary also recovers from a non-object multimodal payload with a labeled
   demo/input error and keeps the session available for a subsequent transcript. Encoded uploads are
   rejected before base64 decoding when they exceed the 8 MiB raw-media budget.
+- The WebSocket route also recovers from invalid envelope metadata, returning a labeled demo/input
+  error for a non-finite timestamp and completing a later transcript in the same session.
 - PNG ingestion now validates chunk boundaries, CRCs, legal IHDR values, IDAT presence, zlib stream
   integrity and terminal IEND structure before a frame reaches a vision backend; rejected uploads are
   removed from the session directory. A direct cleanup regression verifies invalid PNG materialization
@@ -150,7 +152,7 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 221 tests passed with 4 strict expected failures, including 88 passing demo
+- Final verification is 222 tests passed with 4 strict expected failures, including 89 passing demo
   tests and 117 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
