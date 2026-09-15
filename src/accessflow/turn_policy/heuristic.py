@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from ..contracts import Observation, SessionView, TurnDecision
+from ..perception.timing import ActivitySummary
 
 _CORRECTION = re.compile(r"\b(actually|rather|correction|sorry|i mean)\b|^\s*(no|wait)\s*[,.-]", re.I)
 _BACKCHANNELS = frozenset({"mm", "mm-hmm", "mhm", "uh huh", "uh-huh", "right", "okay", "ok"})
@@ -13,7 +14,13 @@ _BACKCHANNELS = frozenset({"mm", "mm-hmm", "mhm", "uh huh", "uh-huh", "right", "
 class HeuristicTurnPolicy:
     """Classify obvious conversational cues without blocking or calling a model."""
 
-    def update(self, observation: Observation, view: SessionView) -> TurnDecision:
+    def update(
+        self,
+        observation: Observation,
+        view: SessionView,
+        *,
+        timing: ActivitySummary | None = None,
+    ) -> TurnDecision:
         text = " ".join(observation.text.split())
         normalized = text.casefold().strip(" .,!?")
 
@@ -21,6 +28,8 @@ class HeuristicTurnPolicy:
             return TurnDecision(kind="continue", uncertainty=1.0)
         if observation.modality == "image":
             return TurnDecision(kind="continue", uncertainty=1.0)
+        if timing is not None and timing.pause_detected and not observation.final:
+            return TurnDecision(kind="continue", uncertainty=0.25)
         if normalized in _BACKCHANNELS and observation.final:
             return TurnDecision(kind="backchannel", uncertainty=0.05)
         if _CORRECTION.search(text):
