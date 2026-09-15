@@ -82,12 +82,17 @@ def main():
             policy_factory = HeuristicTurnPolicy
             component_config["asr_model_path"] = str(args.asr_model_path) if args.asr_model_path else None
             if args.vision_provider == "none":
-                component_config["vision_provider"] = "none"
+                component_config["vision_provider_requested"] = "none"
             else:
                 from .adapters.vision import DEFAULT_MODEL as vision_default_model
                 resolved_vision_model = args.vision_model or os.getenv(
                     "ACCESSFLOW_VISION_OLLAMA_MODEL", vision_default_model)
-                component_config["vision_provider"] = f"{args.vision_provider}/{resolved_vision_model}"
+                # What the parent asked for, never proof that the child honoured it. The
+                # child rejects these options today, so a resolved-sounding name here would
+                # claim a vision backend that never ran. The observation backend field is
+                # the evidence of what actually served a frame. See CONTRACT_PROPOSALS.md.
+                component_config["vision_provider_requested"] = (
+                    f"{args.vision_provider}/{resolved_vision_model}")
             component_config["native_worker"] = "subprocess"
     if args.command == "metrics":
         result = metrics(args.trace)
