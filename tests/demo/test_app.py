@@ -397,6 +397,52 @@ def test_websocket_returns_controller_output_event():
     assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
 
+
+def test_websocket_serializes_controller_and_input_messages(monkeypatch):
+    original_send_json = demo_app.WebSocket.send_json
+    controller_send_started = threading.Event()
+    release_controller_send = threading.Event()
+    overlapping_sends = threading.Event()
+    active_sends = 0
+    active_lock = threading.Lock()
+
+    async def tracked_send_json(self, data, mode="text"):
+        nonlocal active_sends
+        with active_lock:
+            if active_sends:
+                overlapping_sends.set()
+            active_sends += 1
+        try:
+            if isinstance(data, dict) and data.get("kind") in {"acknowledge", "final"}:
+                controller_send_started.set()
+                await asyncio.to_thread(release_controller_send.wait, 1)
+            return await original_send_json(self, data, mode=mode)
+        finally:
+            with active_lock:
+                active_sends -= 1
+
+    monkeypatch.setattr(demo_app.WebSocket, "send_json", tracked_send_json)
+    try:
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                assert socket.receive_json()["kind"] == "demo_status"
+                socket.send_json({"kind": "transcript", "payload": {"text": "Book Wednesday"}})
+                assert controller_send_started.wait(timeout=1)
+                socket.send_json(
+                    {"kind": "frame", "payload": {"data_base64": "%%%", "frame_id": "bad-frame"}}
+                )
+                release_controller_send.set()
+                received = []
+                while not any(item["kind"] == "demo_error" for item in received):
+                    received.append(socket.receive_json())
+    finally:
+        release_controller_send.set()
+
+    assert not overlapping_sends.is_set()
+    error = next(item for item in received if item["kind"] == "demo_error")
+    assert error["payload"]["backend"] == "demo/input"
+
+
 def _receive_controller_outputs(socket):
     received = []
     while not any(item["kind"] in {"final", "error"} for item in received):
@@ -798,6 +844,151 @@ def test_websocket_environment_vision_provider_reaches_multimodal_context(monkey
         server.server_close()
         server_thread.join(timeout=1)
 
+
+def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, tmp_path: Path):
+    class VisionHandler(BaseHTTPRequestHandler):
+        requests = []
+
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            VisionHandler.requests.append(json.loads(self.rfile.read(length).decode("utf-8")))
+            response = json.dumps({"response": "screen shows the approval prompt"}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+        def log_message(self, format, *args):
+            return
+
+    class Segment:
+        text = "Please inspect the attached screen"
+
+    class WhisperModel:
+        calls = []
+
+        def transcribe(self, path, *, beam_size):
+            WhisperModel.calls.append((path, beam_size))
+            return [Segment()], {}
+
+    model_dir = tmp_path / "whisper-model"
+    model_dir.mkdir()
+
+    def whisper_factory(model_path, *, device, compute_type):
+        assert model_path == str(model_dir)
+        assert device == "cpu"
+        assert compute_type == "int8"
+        return WhisperModel()
+
+    real_local_perception = demo_app.LocalPerception
+
+    def configured_local_perception(*, model_path=None, vision_provider=None):
+        if model_path is not None:
+            return real_local_perception(
+                model_path=model_path,
+                whisper_factory=whisper_factory,
+            )
+        return real_local_perception(vision_provider=vision_provider)
+
+    class CapturingReasoner(demo_app.DemoReasoner):
+        latest_view = None
+
+        async def plan(self, view, manifests):
+            CapturingReasoner.latest_view = view.model_copy(deep=True)
+            if {item.modality for item in view.observations} >= {"audio", "image"}:
+                return PlanProposal(
+                    response="Audio context and screen evidence are available together.",
+                    request_complete=True,
+                )
+            return PlanProposal()
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), VisionHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    monkeypatch.setattr(demo_app, "LocalPerception", configured_local_perception)
+    monkeypatch.setattr(demo_app, "DemoReasoner", CapturingReasoner)
+    monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(model_dir))
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "gemma3:4b")
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_OLLAMA_ENDPOINT",
+        f"http://127.0.0.1:{server.server_port}/api/generate",
+    )
+
+    try:
+        fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_speech.wav"
+        encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+        png = _png_bytes(width=2, height=3)
+        encoded_image = base64.b64encode(png).decode("ascii")
+
+        def receive_media_status(socket, media_kind):
+            messages = []
+            while True:
+                message = socket.receive_json()
+                if (
+                    message.get("kind") == "demo_status"
+                    and message.get("payload", {}).get("media_received") == media_kind
+                ):
+                    return message, messages
+                messages.append(message)
+
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                status = socket.receive_json()
+                socket.send_json(
+                    {
+                        "kind": "audio",
+                        "timestamp": 12.5,
+                        "payload": {
+                            "data_base64": encoded_audio,
+                            "utterance_id": "real-audio",
+                            "revision": 2,
+                            "speech_start": 8.25,
+                            "speech_end": 11.75,
+                        },
+                    }
+                )
+                audio_status, audio_messages = receive_media_status(socket, "audio")
+                socket.send_json(
+                    {
+                        "kind": "frame",
+                        "timestamp": 17.25,
+                        "payload": {"data_base64": encoded_image, "frame_id": "real-frame"},
+                    }
+                )
+                frame_status, frame_messages = receive_media_status(socket, "frame")
+                outputs = audio_messages + frame_messages + _receive_controller_outputs(socket)
+
+        final = next(item for item in outputs if item["kind"] == "final")
+        assert status["payload"]["perception_backend"] == (
+            "local/Faster Whisper CPU INT8 audio + local/Ollama gemma3:4b image"
+        )
+        assert audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
+        assert frame_status["payload"] == {"media_received": "frame", "source_id": "real-frame"}
+        assert final["payload"] == {
+            "text": "Audio context and screen evidence are available together.",
+            "basis": "informational",
+            "backend": "reasoner",
+        }
+        assert CapturingReasoner.latest_view is not None
+        observations = {item.source_id: item for item in CapturingReasoner.latest_view.observations}
+        assert observations["real-audio"].revision == 2
+        assert observations["real-audio"].speech_start == 8.25
+        assert observations["real-audio"].speech_end == 11.75
+        assert observations["real-audio"].backend == "faster-whisper/cpu-int8"
+        assert observations["real-frame"].speech_start == 17.25
+        assert observations["real-frame"].speech_end == 17.25
+        assert observations["real-frame"].backend == "ollama/gemma3:4b"
+        assert observations["real-frame"].text == "screen shows the approval prompt"
+        assert len(WhisperModel.calls) == 1
+        assert WhisperModel.calls[0][1] == 5
+        request = VisionHandler.requests[-1]
+        assert request["model"] == "gemma3:4b"
+        assert request["images"] == [base64.b64encode(png).decode("ascii")]
+    finally:
+        server.shutdown()
+        server.server_close()
+        server_thread.join(timeout=1)
 
 
 def test_websocket_configured_audio_and_vision_share_context(monkeypatch, tmp_path: Path):
