@@ -428,3 +428,10 @@ quality evidence.
 The concurrent-session companion, tests/demo/test_app.py::test_websocket_concurrent_sessions_do_not_share_multimodal_context,
 keeps two WebSocket connections open at once, sends image evidence to only the first, and verifies the
 second session's transcript final contains no inherited image context.
+
+The shutdown admission companion, tests/perception/test_local.py::test_aclose_blocks_work_still_in_validation,
+parameterizes audio and image validation, closes LocalPerception while validation is blocked, and confirms
+that late validation produces no provider call or observation. The demo companion,
+tests/demo/test_app.py::test_demo_perception_does_not_admit_work_after_close, covers both modalities after
+DemoPerception shutdown. The sender boundary also now absorbs closed-peer transport failures during route
+cleanup.

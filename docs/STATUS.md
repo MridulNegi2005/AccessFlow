@@ -17,7 +17,7 @@ Updated 13 September 2026. This file records implementation, not aspirational co
 
 ## Workstream B — Atishay
 
-Updated 15 September 2026.
+Updated 16 September 2026.
 
 - Multimodal end to end evidence now covers one session carrying a validated WAV and PNG through
   event_from_message, injected local ASR and vision providers, DemoPerception, and one Agent
@@ -114,9 +114,10 @@ Updated 15 September 2026.
 - The demo WebSocket now serializes controller events, media statuses and recoverable input errors through one outbound sender, preventing concurrent writes from interleaving. A route regression holds a controller send open while an invalid frame is received and confirms no overlapping WebSocket sends.
 - A configured WebSocket regression now exercises the real LocalPerception Faster Whisper model branch with a deterministic factory and the real OllamaVisionProvider HTTP path together. It verifies WAV/PNG transport, source IDs, timestamps, revisions, backend labels and one informational multimodal final.
 - A concurrent WebSocket regression keeps two browser sessions open together and verifies that image context in one session cannot appear in a fresh transcript final from the other.
+- LocalPerception now closes admission before validation can register new work, suppresses observers that finish validation after shutdown, and marks each bounded worker closed. Audio, image and transcript shutdown races plus post-close DemoPerception admission are covered; closed peers also terminate the demo sender cleanly.
 
-- Final verification is 156 tests passed with 4 strict expected failures, including 65 passing demo
-  tests and 75 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 162 tests passed with 4 strict expected failures, including 68 passing demo
+  tests and 78 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational
   response, direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame

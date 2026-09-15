@@ -9,8 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.contracts import Audio, AudioEvent, Transcript, TranscriptEvent
+from accessflow.contracts import Audio, AudioEvent, Frame, FrameEvent, Transcript, TranscriptEvent
 from accessflow.perception import LocalPerception, PngFormat, WavFormat, validate_png, validate_wav
+from accessflow.perception import local as local_module
 
 def _write_png(path: Path, *, width: int = 1, height: int = 1) -> None:
     def chunk(kind: bytes, data: bytes) -> bytes:
@@ -665,6 +666,73 @@ async def test_aclose_releases_active_observer_without_waiting_for_thread(tmp_pa
     release.set()
     assert await asyncio.to_thread(provider_finished.wait, 1)
     await adapter.aclose()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("modality", ["audio", "image"])
+async def test_aclose_blocks_work_still_in_validation(monkeypatch, tmp_path: Path, modality: str):
+    validation_started = threading.Event()
+    release_validation = threading.Event()
+    provider_calls = []
+
+    def blocked_validation(path: Path):
+        validation_started.set()
+        assert release_validation.wait(1)
+
+    if modality == "audio":
+        path = tmp_path / "speech.wav"
+        _write_wav(path)
+        monkeypatch.setattr(local_module, "validate_wav", blocked_validation)
+        adapter = LocalPerception(
+            transcriber=lambda value: provider_calls.append(value) or "spoken evidence"
+        )
+        event = AudioEvent(
+            session_id="s1",
+            payload=Audio(path=str(path), utterance_id="audio-1"),
+        )
+    else:
+        path = tmp_path / "screen.png"
+        _write_png(path)
+        monkeypatch.setattr(local_module, "validate_png", blocked_validation)
+
+        def provider(value: Path) -> str:
+            provider_calls.append(value)
+            return "visual evidence"
+
+        adapter = LocalPerception(vision_provider=provider)
+        event = FrameEvent(
+            session_id="s1",
+            payload=Frame(path=str(path), frame_id="frame-1"),
+        )
+
+    async def collect():
+        return [item async for item in adapter.observe(event)]
+
+    task = asyncio.create_task(collect())
+    assert await asyncio.to_thread(validation_started.wait, 1)
+    await adapter.aclose()
+    release_validation.set()
+
+    assert await task == []
+    assert provider_calls == []
+
+
+@pytest.mark.asyncio
+async def test_local_perception_does_not_emit_after_close():
+    adapter = LocalPerception()
+    await adapter.aclose()
+
+    event = TranscriptEvent(
+        session_id="closed-session",
+        payload=Transcript(
+            utterance_id="closed-utterance",
+            revision=0,
+            text="This must not be admitted",
+            final=True,
+        ),
+    )
+
+    assert [item async for item in adapter.observe(event)] == []
 
 
 @pytest.mark.asyncio

@@ -118,6 +118,8 @@ class DemoPerception:
         return " + ".join(labels)
 
     async def observe(self, event):
+        if self._closed:
+            return
         if isinstance(event, TranscriptEvent):
             payload = event.payload
             yield Observation(
@@ -322,7 +324,11 @@ async def websocket(websocket: WebSocket) -> None:
                 return
             if isinstance(event, OutputEvent):
                 event = event.model_dump(mode="json")
-            await websocket.send_json(event)
+            try:
+                await websocket.send_json(event)
+            except Exception:
+                # A closed peer makes the transport unusable; route cleanup owns shutdown.
+                return
 
     sender = asyncio.create_task(send_outputs())
     try:

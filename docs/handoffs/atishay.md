@@ -243,3 +243,16 @@ one session, and confirms the other session's fresh transcript final contains no
 
 **Status:** Full suite 156 passed, 4 strict expected failures; demo suite 65 passed, 4 strict expected
 failures; perception suite 75 passed. No engine, contract, dependency or lockfile change.
+
+## 2026-09-16 - Codex Atishay multimodal shutdown admission
+
+**Task:** Prevent late perception work from entering after session shutdown.
+
+**Changes:** LocalPerception now closes admission before validation can register a session worker, and
+closed workers reject a race that already captured a worker reference. DemoPerception ignores post-close
+observations, and the demo sender exits cleanly when a WebSocket peer has closed. Parameterized audio and
+image validation-race tests plus post-close demo tests cover the boundary.
+
+**Status:** Full suite 162 passed, 4 strict expected failures; demo suite 68 passed, 4 strict expected
+failures; perception suite 78 passed. Ruff, compilation and git diff --check clean. No engine, contract,
+dependency or lockfile change.

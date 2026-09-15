@@ -743,3 +743,7 @@ LocalPerception model-path branch and OllamaVisionProvider HTTP request together
 2026-09-15: Added concurrent WebSocket session isolation evidence: two open sessions keep image context
 separate while one completes a fresh transcript. Validation: 156 passed, 4 strict xfailed; demo 65
 passed plus 4 strict xfailed; perception 75 passed. No protected files changed.
+2026-09-16: Added a lifecycle admission barrier for LocalPerception and a closed guard for DemoPerception.
+Late audio/image validation cannot create provider work after shutdown; closed WebSocket peers no longer
+leave sender-task exceptions. Validation: 162 passed, 4 strict xfailed; demo 68 passed plus 4 strict
+xfailed; perception 78 passed. No protected files changed.
