@@ -6,6 +6,10 @@ environment. Set them in the shell, then verify.
 
 Do not put a key in this file or in any committed file.
 
+Each profile command below clears the settings of the other profiles first. Run the full
+command for the profile you use. Do not mix commands from different profiles in one
+session.
+
 ## Profile: hosted-qwen (primary)
 
 | Setting | Value |
@@ -16,7 +20,7 @@ Do not put a key in this file or in any committed file.
 | Response mode | `json_object`, with the generated schema in the prompt |
 | Output cap | `ACCESSFLOW_MAX_OUTPUT_TOKENS=950` |
 | HTTP request deadline | `--request-timeout 30` |
-| Controller inference deadline | default |
+| Controller inference deadline | default (25 seconds) |
 
 The output cap is required. Groq refuses each request at admission without it:
 
@@ -31,13 +35,18 @@ request, so pacing does not avoid it.
 These numbers come from measured runs on 15 September 2026. They are a starting
 configuration, not a guarantee about future quota.
 
-PowerShell:
+PowerShell, full command:
 
 ```powershell
+Remove-Item Env:ACCESSFLOW_GROQ_API_KEY, Env:ACCESSFLOW_GROQ_MODEL, Env:ACCESSFLOW_GROQ_URL, `
+  Env:ACCESSFLOW_MAX_OUTPUT_TOKENS, Env:ACCESSFLOW_OLLAMA_URL, Env:ACCESSFLOW_OLLAMA_NUM_GPU, `
+  Env:ACCESSFLOW_OLLAMA_THINK -ErrorAction SilentlyContinue
+
 $env:ACCESSFLOW_GROQ_API_KEY = "<your key>"
 $env:ACCESSFLOW_GROQ_MODEL   = "qwen/qwen3.8-27b"
 $env:ACCESSFLOW_GROQ_URL     = "https://api.groq.com/openai/v1"
 $env:ACCESSFLOW_MAX_OUTPUT_TOKENS = "950"
+
 .venv\Scripts\python.exe -m accessflow.cli replay scenarios\live_dev\support_then_service.json `
   --backend groq --request-timeout 30 --output artifacts\check.jsonl
 ```
@@ -49,12 +58,35 @@ input tokens.
 
 | Setting | Value |
 |---|---|
+| Backend | `groq` |
 | Model | `openai/gpt-oss-120b` |
+| Endpoint | `https://api.groq.com/openai/v1` |
 | Output cap | not required |
+| HTTP request deadline | `--request-timeout 30` |
+| Controller inference deadline | default (25 seconds) |
 | Limit | 8000 tokens per minute; pace one run per 95 seconds |
 
 Use this profile when the primary model is refused or throttled. Select it explicitly. The
 adapter has no automatic fallback and must not gain one.
+
+The output cap is not required for this model. Clear it explicitly. A cap left over from
+the primary profile still applies here and the exported evidence would then show a value
+this profile does not promise.
+
+PowerShell, full command:
+
+```powershell
+Remove-Item Env:ACCESSFLOW_GROQ_API_KEY, Env:ACCESSFLOW_GROQ_MODEL, Env:ACCESSFLOW_GROQ_URL, `
+  Env:ACCESSFLOW_MAX_OUTPUT_TOKENS, Env:ACCESSFLOW_OLLAMA_URL, Env:ACCESSFLOW_OLLAMA_NUM_GPU, `
+  Env:ACCESSFLOW_OLLAMA_THINK -ErrorAction SilentlyContinue
+
+$env:ACCESSFLOW_GROQ_API_KEY = "<your key>"
+$env:ACCESSFLOW_GROQ_MODEL   = "openai/gpt-oss-120b"
+$env:ACCESSFLOW_GROQ_URL     = "https://api.groq.com/openai/v1"
+
+.venv\Scripts\python.exe -m accessflow.cli replay scenarios\live_dev\support_then_service.json `
+  --backend groq --request-timeout 30 --output artifacts\check.jsonl
+```
 
 ## Profile: local-qwen3-4b
 
@@ -67,6 +99,8 @@ adapter has no automatic fallback and must not gain one.
 | Layer placement | `ACCESSFLOW_OLLAMA_NUM_GPU=37` |
 | Server flags | `-FlashAttention 1 -KvCacheType q8_0` |
 | Context length | 4096 |
+| HTTP request deadline | `--request-timeout 30` |
+| Controller inference deadline | default (25 seconds) |
 
 Start the server first:
 
@@ -91,14 +125,75 @@ and a stale pin once made `qwen2.5:7b` request more memory than the card has.
 
 `qwen3:4b` passes the single-turn fixtures. It does not complete the three-turn fixtures.
 
+PowerShell, full command (run after the server prints its URL):
+
+```powershell
+Remove-Item Env:ACCESSFLOW_GROQ_API_KEY, Env:ACCESSFLOW_GROQ_MODEL, Env:ACCESSFLOW_GROQ_URL, `
+  Env:ACCESSFLOW_MAX_OUTPUT_TOKENS -ErrorAction SilentlyContinue
+
+$env:ACCESSFLOW_OLLAMA_MODEL  = "qwen3:4b"
+$env:ACCESSFLOW_OLLAMA_URL    = "<url the start script printed>"
+$env:ACCESSFLOW_OLLAMA_THINK  = "0"
+$env:ACCESSFLOW_OLLAMA_NUM_GPU = "37"
+
+.venv\Scripts\python.exe -m accessflow.cli replay scenarios\live_dev\support_then_service.json `
+  --backend ollama --request-timeout 30 --output artifacts\check.jsonl
+```
+
+## Two deadlines, not one
+
+A run has two independent time limits. Both are correct at their documented values, and
+one being shorter than the other is not an error:
+
+- **HTTP request deadline.** How long the backend adapter waits for one model response.
+  Set with `--request-timeout`. Exported as `reasoner_evidence.config.request_timeout_seconds`.
+- **Controller inference deadline.** How long the controller waits for one planning step
+  before it moves on. Set with `--inference-timeout`; defaults to 25 seconds when omitted.
+  Exported as `run_metadata.config.inference_timeout_s`.
+
+The controller inference deadline can be shorter than the HTTP request deadline on
+purpose: the controller gives up on a slow planning step before the HTTP client would time
+out, so a stalled step does not stall the whole session. Do not treat that difference as a
+misconfiguration when you read these two values back.
+
 ## Verify the profile reached the process
 
 Run in a shell with no inherited project variables. The run metadata records what was
-actually used:
+actually used. `load_run_metadata` reads the one `run_metadata` row from the trace file
+(that row is written first, not last) and `validate_reasoner_evidence` checks it against
+the schema this document promises, instead of a person having to notice a missing key by
+eye:
 
 ```powershell
-.venv\Scripts\python.exe -c "import json; m=[json.loads(l) for l in open('artifacts/check.jsonl',encoding='utf-8')][-1]; e=m['reasoner_evidence']; print(e['backend'], e['model'], e['config'])"
+.venv\Scripts\python.exe -c "from accessflow.evaluation.replay import load_run_metadata; from accessflow.adapters.models import validate_reasoner_evidence; m = load_run_metadata('artifacts/check.jsonl'); e = validate_reasoner_evidence(m['reasoner_evidence']); print(e['backend'], e['model'], e['config']['endpoint'], e['config']['max_output_tokens'], e['config']['request_timeout_seconds']); print('controller_inference_timeout_s', m['config']['inference_timeout_s'])"
 ```
 
-Check the model id, the output cap, the endpoint and the deadline. If any value is missing,
-the profile did not reach the process.
+Check the model id, the output cap, the endpoint and both deadlines against the profile
+table above. `validate_reasoner_evidence` raises a specific error instead of a bare
+`KeyError` when a value is missing:
+
+- `reasoner_evidence is null` means the run used no model backend at all (for example
+  `--backend offline-fake`). No profile reached the process.
+- A schema error names the missing or malformed field directly, for example a missing
+  `endpoint`.
+
+The endpoint value has credentials and query-string secrets removed before export. It
+matches the profile table's endpoint plus the request path (`/chat/completions` or
+`/api/chat`), never a bare host with no path.
+
+### Older traces
+
+A trace recorded before a config value was exported does not carry that value. No trace
+in `artifacts/` from 15 September 2026 or earlier carries `endpoint`, and most do not
+carry `max_output_tokens`. The strict check above names the absent fields and stops.
+
+To read such a trace, verify the remaining values and report each absent field as
+unverified:
+
+```powershell
+.venv\Scripts\python.exe -c "from accessflow.evaluation.replay import load_run_metadata; from accessflow.adapters.models import validate_reasoner_evidence, missing_promised_config; m = load_run_metadata('artifacts/check.jsonl'); e = validate_reasoner_evidence(m['reasoner_evidence'], strict=False); print(e['backend'], e['model'], e['config'].get('request_timeout_seconds')); print('unverified:', missing_promised_config(e))"
+```
+
+An absent field is not evidence that a particular value was used. Do not substitute a
+default and do not report a profile as confirmed for that run. Make a new run to verify
+the endpoint and the output cap.
