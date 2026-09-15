@@ -186,7 +186,8 @@ def test_invalid_constructor_gpu_profile_rejected(layers):
 async def test_ollama_request_uses_explicit_model_and_schema():
     def handler(request):
         assert request.url.path == "/api/chat"
-        return httpx.Response(200, json={"message": {"content": '{"response":"Here is general information"}'}})
+        return httpx.Response(200, json={"message": {"content": json.dumps(
+            PlanProposal(response="Here is general information").model_dump())}})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         reasoner = ModelReasoner(JsonBackend(client=client))
         result = await reasoner.plan(SessionView(session_id="s", state=Snapshot(), observations=[], results=[]), [])
@@ -230,7 +231,8 @@ async def test_missing_hosted_key_fails_before_network(monkeypatch):
 async def test_ollama_evidence_keeps_safe_metrics_and_reasoner_forwards_it():
     def handler(request):
         return httpx.Response(200, json={
-            "message": {"content": '{"response":"Here is general information"}'},
+            "message": {"content": json.dumps(
+                PlanProposal(response="Here is general information").model_dump())},
             "prompt_eval_count": 12,
             "prompt_eval_duration": 345678,
             "eval_count": 7,
@@ -348,7 +350,7 @@ async def test_groq_request_shape_and_default_json_object(monkeypatch):
         seen["auth"] = request.headers.get("Authorization")
         seen["body"] = json.loads(request.content)
         return httpx.Response(200, json={"choices": [{"message": {
-            "content": '{"response":"Here is general information"}'}}]})
+            "content": json.dumps(PlanProposal(response="Here is general information").model_dump())}}]})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         reasoner = ModelReasoner(JsonBackend("groq", client))
         result = await reasoner.plan(

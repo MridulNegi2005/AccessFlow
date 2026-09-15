@@ -8,6 +8,7 @@ from collections import deque
 from collections.abc import Mapping
 
 import httpx
+from jsonschema import Draft202012Validator
 
 from accessflow.contracts import PlanProposal
 
@@ -316,16 +317,31 @@ class ModelReasoner:
                 "instruction": "Do not call the write tools again. Query each declared status tool using "
                                "the listed operation_id and its parameter schema. If there is no status tool, "
                                "explain the unknown outcome instead of inventing success or retrying."}
-        kwargs = {"_validator": PlanProposal.model_validate} if isinstance(self.backend, JsonBackend) else {}
         # Bind model generation to the caller's manifest.  An unresolved write is
         # deliberately a read-only planning turn; the controller remains the final
         # authority even when a backend does not enforce this JSON schema.
-        result = await self.backend.generate(
-            SYSTEM,
-            request,
-            self.output_schema(manifests, allow_write_calls=not bool(unresolved),
-                               allow_final_response=not outstanding),
-            **kwargs)
+        schema = self.output_schema(manifests, allow_write_calls=not bool(unresolved),
+                                    allow_final_response=not outstanding)
+
+        def _validate(result):
+            # Static shape first: cheap, and keeps the existing pydantic-error contract
+            # for callers that only care whether this is a well-formed PlanProposal.
+            PlanProposal.model_validate(result)
+            # Provider structured output (response_format=json_object/json_schema) is an
+            # aid, never the enforcement layer. Re-check the EXACT dynamic schema built
+            # for this request -- restricted tool names, forced null response while a
+            # write is outstanding, no write calls during an unresolved-outcome turn --
+            # before this generation is accepted or counted as successful.
+            errors = sorted(Draft202012Validator(schema).iter_errors(result), key=str)
+            if errors:
+                raise errors[0]
+
+        kwargs = {"_validator": _validate} if isinstance(self.backend, JsonBackend) else {}
+        result = await self.backend.generate(SYSTEM, request, schema, **kwargs)
+        if not isinstance(self.backend, JsonBackend):
+            # Non-JsonBackend reasoners (test doubles, alternative adapters) do not
+            # accept the _validator hook; enforce the same two layers here instead.
+            _validate(result)
         return PlanProposal.model_validate(result)
 
     @staticmethod
