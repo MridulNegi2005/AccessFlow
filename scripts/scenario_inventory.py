@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 # Development exposure: fixtures the engine has been tuned against are no longer unseen.
-EXPOSURE = {"dev": "development", "live_dev": "development", "planner_probes": "held out, never run"}
+EXPOSURE = {"dev": "development", "live_dev": "development", "planner_probes": "spent, run once 16 Sep 2026"}
 PLANNED = {"text": 30, "audio": 18, "visual": 12}
 
 
