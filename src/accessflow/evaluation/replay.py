@@ -1,10 +1,12 @@
 import asyncio
+import datetime as dt
 import json
 import hashlib
 import os
 import platform
 import subprocess
 import time
+import uuid
 from pathlib import Path
 
 from accessflow.contracts import EndEvent, ResultEvent, ToolResult
@@ -104,6 +106,8 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                   tools, MockOnlyAuthorization(), **agent_kwargs)
     runner = asyncio.create_task(agent.run(incoming, outgoing))
     events = []
+    run_id = str(uuid.uuid4())
+    run_started_at = dt.datetime.now(dt.timezone.utc).isoformat()
     started = time.perf_counter()
     terminal = asyncio.Event()
     completion_status = "completed"
@@ -199,7 +203,9 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
             row["type"] == "output" and row["event"]["payload"].get("code") == "backend_failure" for row in events):
         completion_status = "backend_failure"
     tool_profile = "manifest-mock" if definition.environment is not None else "fake"
+    run_ended_at = dt.datetime.now(dt.timezone.utc).isoformat()
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
+                "run_id": run_id, "run_started_at": run_started_at, "run_ended_at": run_ended_at,
                 "provenance": definition.provenance, "disabled_components": sorted(disabled),
                 "tools": tool_profile, "perception": perception_profile, "commit": commit_revision(),
                 "perception_backends_observed": sorted(observed_backends),
