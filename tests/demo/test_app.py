@@ -934,9 +934,9 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
 
         async def plan(self, view, manifests):
             CapturingReasoner.latest_view = view.model_copy(deep=True)
-            if {item.modality for item in view.observations} >= {"audio", "image"}:
+            if {item.modality for item in view.observations} >= {"audio", "image", "text"}:
                 return PlanProposal(
-                    response="Audio context and screen evidence are available together.",
+                    response="Text, audio context and screen evidence are available together.",
                     request_complete=True,
                 )
             return PlanProposal()
@@ -989,6 +989,20 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
                 audio_status, audio_messages = receive_media_status(socket, "audio")
                 socket.send_json(
                     {
+                        "kind": "transcript",
+                        "timestamp": 14.0,
+                        "payload": {
+                            "utterance_id": "spoken-question",
+                            "revision": 1,
+                            "text": "What is on this screen?",
+                            "final": True,
+                            "speech_start": 12.0,
+                            "speech_end": 13.5,
+                        },
+                    }
+                )
+                socket.send_json(
+                    {
                         "kind": "frame",
                         "timestamp": 17.25,
                         "payload": {"data_base64": encoded_image, "frame_id": "real-frame"},
@@ -1004,12 +1018,16 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
         assert audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
         assert frame_status["payload"] == {"media_received": "frame", "source_id": "real-frame"}
         assert final["payload"] == {
-            "text": "Audio context and screen evidence are available together.",
+            "text": "Text, audio context and screen evidence are available together.",
             "basis": "informational",
             "backend": "reasoner",
         }
         assert CapturingReasoner.latest_view is not None
         observations = {item.source_id: item for item in CapturingReasoner.latest_view.observations}
+        assert observations["spoken-question"].revision == 1
+        assert observations["spoken-question"].speech_start == 12.0
+        assert observations["spoken-question"].speech_end == 13.5
+        assert observations["spoken-question"].backend == "demo/mock-text"
         assert observations["real-audio"].revision == 2
         assert observations["real-audio"].speech_start == 8.25
         assert observations["real-audio"].speech_end == 11.75
