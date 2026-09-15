@@ -60,6 +60,8 @@
     let revision = 0;
     let utterance = 0;
     let microphone = null;
+    const pendingMessages = [];
+    const maxPendingMessages = 16;
 
     function show(event) {
       if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
@@ -76,15 +78,25 @@
     }
 
     function send(kind, payload) {
-      if (socket.readyState !== WebSocket.OPEN) {
-        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session is still connecting.' } });
-        return false;
-      }
       const sourceTimestamp = payload.timestamp ?? (
         performance.timeOrigin / 1000 + performance.now() / 1000
       );
       const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
-      socket.send(JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload }));
+      const message = JSON.stringify({ kind, timestamp: sourceTimestamp, payload: eventPayload });
+      if (socket.readyState === WebSocket.CONNECTING) {
+        if (pendingMessages.length >= maxPendingMessages) {
+          show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The connection queue is full.' } });
+          return false;
+        }
+        pendingMessages.push(message);
+        show({ kind: 'demo_status', payload: { backend: 'browser/transport', queued: true } });
+        return true;
+      }
+      if (socket.readyState !== WebSocket.OPEN) {
+        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session is closed.' } });
+        return false;
+      }
+      socket.send(message);
       return true;
     }
 
@@ -224,7 +236,14 @@
     }
 
     socket.onmessage = (message) => show(JSON.parse(message.data));
-    socket.onopen = () => show({ kind: 'demo_status', payload: { connected: true } });
+    socket.onopen = () => {
+      while (pendingMessages.length) socket.send(pendingMessages.shift());
+      show({ kind: 'demo_status', payload: { connected: true } });
+    };
+    socket.onclose = () => {
+      pendingMessages.length = 0;
+      show({ kind: 'demo_status', payload: { connected: false } });
+    };
     socket.onerror = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: false } });
 
     document.querySelector('#text-form').onsubmit = (event) => {

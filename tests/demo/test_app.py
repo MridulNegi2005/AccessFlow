@@ -274,8 +274,10 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'recorder-worklet.js' in html
     assert 'performance.timeOrigin' in html
     assert 'timestamp: sourceTimestamp' in html
-    assert "socket.readyState !== WebSocket.OPEN" in html
-    assert "The session is still connecting." in html
+    assert "socket.readyState === WebSocket.CONNECTING" in html
+    assert "pendingMessages.push(message)" in html
+    assert "The connection queue is full." in html
+    assert "The session is closed." in html
     assert 'card.innerHTML' not in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
