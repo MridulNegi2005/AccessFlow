@@ -459,7 +459,9 @@ def test_cli_rejects_non_positive_request_timeout(monkeypatch, value):
         cli.main()
 
 
-async def test_http_status_failures_record_code_and_bounded_detail(monkeypatch):
+async def test_http_status_failures_record_code_and_sanitized_category(monkeypatch):
+    # R5: evidence() must carry a normalized category/type, never the raw provider body --
+    # a 400-char cap bounds length but not content (docs/reviews/CLAUDE_REVIEW_2026-09-15.md).
     monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "unit-test-placeholder-not-a-real-key")
     body = {"error": {"type": "invalid_request_error", "message": "context too long"}}
     async with httpx.AsyncClient(transport=httpx.MockTransport(
@@ -470,7 +472,12 @@ async def test_http_status_failures_record_code_and_bounded_detail(monkeypatch):
     record = backend.evidence()["requests"][0]
     assert record["status_code"] == 400
     assert record["exception_type"] == "HTTPStatusError"
-    assert "invalid_request_error" in record["error_detail"]
+    assert record["error_type"] == "invalid_request_error"
+    assert record["category"] == "client_error"
+    assert "error_detail" not in record
+    assert "context too long" not in json.dumps(backend.evidence())
+    # the raw body is still available locally, bounded, but never through evidence()
+    assert "invalid_request_error" in backend.local_only_raw_errors()[0]
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(
             lambda request: httpx.Response(429, text="y" * 900))) as client:
@@ -479,7 +486,10 @@ async def test_http_status_failures_record_code_and_bounded_detail(monkeypatch):
             await bounded.generate("system", {}, {})
     throttled = bounded.evidence()["requests"][0]
     assert throttled["status_code"] == 429
-    assert len(throttled["error_detail"]) == 400
+    assert throttled["category"] == "rate_limit"
+    assert "error_detail" not in throttled
+    assert "y" * 900 not in json.dumps(bounded.evidence())
+    assert len(bounded.local_only_raw_errors()[0]) == 400
 
 
 @pytest.mark.parametrize("value,expected", [("0", False), ("false", False), ("1", True), ("true", True)])
