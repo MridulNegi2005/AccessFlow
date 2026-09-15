@@ -862,6 +862,53 @@ async def test_image_input_rejects_structurally_invalid_png(tmp_path: Path, corr
 
     with pytest.raises(ValueError, match="Invalid PNG"):
         await _one(LocalPerception(vision_provider=lambda _: "never"), event)
+
+
+def test_png_validation_rejects_incomplete_scanline_payload(tmp_path: Path):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "short-scanline.png"
+    ihdr = struct.pack(">IIBBBBB", 2, 1, 8, 6, 0, 0, 0)
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(b"\x00"))
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG"):
+        validate_png(image_path)
+
+
+def test_png_validation_accepts_adam7_scanline_payload(tmp_path: Path):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "adam7.png"
+    ihdr = struct.pack(">IIBBBBB", 2, 2, 8, 6, 0, 0, 1)
+    pixel = b"\x00\x40\x80\xff"
+    scanlines = b"\x00" + pixel + b"\x00" + pixel + b"\x00" + pixel * 2
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(scanlines))
+        + chunk(b"IEND", b"")
+    )
+
+    assert validate_png(image_path) == PngFormat(width=2, height=2, bit_depth=8, color_type=6)
+
+
 @pytest.mark.asyncio
 async def test_image_input_rejects_malformed_png(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
