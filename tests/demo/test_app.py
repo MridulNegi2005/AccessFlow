@@ -1420,6 +1420,35 @@ async def test_demo_perception_coalesces_rapid_frames_per_session(tmp_path: Path
     assert calls == [first_path, second_path]
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["audio", "frame", "transcript"])
+async def test_demo_perception_does_not_admit_work_after_close(kind):
+    calls = []
+
+    class Backend:
+        async def observe(self, event):
+            calls.append(event)
+            if False:
+                yield None
+
+    backend = Backend()
+    perception = (
+        DemoPerception(audio_backend=backend)
+        if kind == "audio"
+        else DemoPerception(vision_backend=backend)
+    )
+    await perception.aclose()
+
+    event = event_from_message(
+        "closed-session",
+        {"kind": kind, "payload": {"path": f"{kind}.data"}},
+    )
+    observations = [item async for item in perception.observe(event)]
+
+    assert observations == []
+    assert calls == []
+
+
 def test_websocket_stale_vision_failure_does_not_break_recovered_multimodal_session(monkeypatch):
     class RecoveringVision:
         backend_name = "local/recovering-vision"

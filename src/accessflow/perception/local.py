@@ -172,6 +172,7 @@ class _LatestWorker:
         self._next_token = 0
         self._active: _PendingWork | None = None
         self._task: asyncio.Task | None = None
+        self._closed = False
 
     async def submit(
         self,
@@ -183,6 +184,8 @@ class _LatestWorker:
         loop = asyncio.get_running_loop()
         result = loop.create_future()
         async with self._lock:
+            if self._closed:
+                return _SUPERSEDED
             if revision is not None and revision <= self._latest_revisions.get(key, -1):
                 return _SUPERSEDED
             self._next_token += 1
@@ -235,6 +238,7 @@ class _LatestWorker:
 
     async def aclose(self) -> None:
         async with self._lock:
+            self._closed = True
             work = self._active
             pending = self._pending
             self._pending = None
@@ -285,11 +289,21 @@ class LocalPerception:
         self._timeout_s = timeout_s
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
+        self._lifecycle_lock = asyncio.Lock()
+        self._closed = False
         self._audio_workers: dict[str, _LatestWorker] = {}
         self._vision_workers: dict[str, _LatestWorker] = {}
 
+    async def _worker_for(
+        self, workers: dict[str, _LatestWorker], session_id: str
+    ) -> _LatestWorker | None:
+        async with self._lifecycle_lock:
+            if self._closed:
+                return None
+            return self._worker_for_open(workers, session_id)
+
     @staticmethod
-    def _worker_for(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
+    def _worker_for_open(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
         worker = workers.get(session_id)
         if worker is None:
             worker = _LatestWorker()
@@ -306,6 +320,8 @@ class LocalPerception:
         return "local/unconfigured-asr"
 
     async def observe(self, event: InputEvent) -> AsyncIterator[Observation]:
+        if self._closed:
+            return
         if isinstance(event, TranscriptEvent):
             yield Observation(
                 event_id=event.event_id,
@@ -323,7 +339,10 @@ class LocalPerception:
         if isinstance(event, AudioEvent):
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_wav, path)
-            result = await self._worker_for(self._audio_workers, event.session_id).submit(
+            worker = await self._worker_for(self._audio_workers, event.session_id)
+            if worker is None:
+                return
+            result = await worker.submit(
                 ("audio", event.payload.utterance_id),
                 lambda: self._run_with_timeout(self._transcribe(path), "audio"),
                 revision=event.payload.revision,
@@ -350,7 +369,10 @@ class LocalPerception:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_png, path)
-            text = await self._worker_for(self._vision_workers, event.session_id).submit(
+            worker = await self._worker_for(self._vision_workers, event.session_id)
+            if worker is None:
+                return
+            text = await worker.submit(
                 ("frame",),
                 lambda: self._run_with_timeout(
                     asyncio.to_thread(self._vision_provider, path), "image"
@@ -375,9 +397,11 @@ class LocalPerception:
 
     async def aclose(self) -> None:
         """Stop queued local work when its owning session is shutting down."""
-        workers = [*self._audio_workers.values(), *self._vision_workers.values()]
-        self._audio_workers.clear()
-        self._vision_workers.clear()
+        async with self._lifecycle_lock:
+            self._closed = True
+            workers = [*self._audio_workers.values(), *self._vision_workers.values()]
+            self._audio_workers.clear()
+            self._vision_workers.clear()
         await asyncio.gather(*(worker.aclose() for worker in workers))
 
     async def _run_with_timeout(self, awaitable, modality: str):

@@ -757,3 +757,9 @@ changed.
 remain open together while one receives an image and the other completes a transcript; the second final
 contains no inherited image context. Full validation: 156 passed, 4 strict xfailed; demo 65 passed plus
 4 strict xfailed; perception 75 passed. No protected files changed.
+2026-09-16 verification: Used two read-only subagent audits to identify a shutdown admission race and
+an unintegrated timing boundary. Fixed the owned lifecycle race: LocalPerception closes admission before
+late validation can register workers, and DemoPerception ignores work after close. The demo sender now
+terminates cleanly when the peer is closed. Added parameterized audio/image validation-race and
+post-close regressions for all DemoPerception modalities. Full validation: 162 passed, 4 strict xfailed;
+demo 68 passed plus 4 strict xfailed; perception 78 passed. No protected files changed.
