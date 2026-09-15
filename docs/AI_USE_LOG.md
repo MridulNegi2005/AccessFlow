@@ -785,3 +785,9 @@ perception 78 passed. No protected files changed.
 guard proving an acoustic pause cannot override completion. HeuristicTurnPolicy now accepts optional ActivitySummary
 metadata; shared engine/controller wiring remains pending. Full validation: 166 passed, 4 strict xfailed; demo 70
 passed plus 4 strict xfailed; perception 80 passed. No protected files changed.
+2026-09-16 verification: Made the conflicting-frame strict example deterministic by waiting for frame one to reach the
+reasoner before submitting frame two. It still fails only at the controller conflict-state assertion; no source,
+contract or protected files changed.
+2026-09-16 verification: Corrected the conflict reproducer to use two valid content-distinct PNG uploads and assert
+the injected Tuesday/Wednesday captions. With --runxfail it now reaches the expected write-safety assertion, proving
+the controller gap is observable. No source, contract or protected files changed.
