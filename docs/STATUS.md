@@ -1,7 +1,18 @@
 # Implementation status
 
-Updated 13 September 2026. Workstream A remains in progress; this is implementation
+Updated 15 September 2026. Workstream A remains in progress; this is implementation
 evidence, not an evaluated submission.
+
+The dated entries below are historical. Read this header for current state.
+
+- HEAD is on `mridul/engine`. 280 tests and Ruff pass. The offline `scenarios/dev` suite
+  passes 4 of 4.
+- `qwen/qwen3.8-27b` on Groq is the primary model. It passed all six `live_dev` fixtures on
+  15 September. It requires `ACCESSFLOW_MAX_OUTPUT_TOKENS=950`. See `PROFILES.md` and
+  `results/MODEL_COMPARISON.md`, which is generated from recorded traces.
+- The Codex review in `reviews/CLAUDE_REVIEW_2026-09-15.md` lists twelve findings. R1, R4,
+  R7, R9 and R10 are addressed. R2, R3, R5, R6, R8, R11 and R12 are open.
+- No audio or visual fixture exists. Multimodal is at zero, not partial.
 
 ## Implemented and locally exercised
 
@@ -22,7 +33,8 @@ evidence, not an evaluated submission.
 - Replay crash/timeout/cancellation evidence and nonzero CLI exits for failed runs or task criteria.
 - Late committed writes retained after earlier no-effect claims; contradictory transport status reported.
 - Four-condition synthetic controller responsiveness command with auditable raw timestamps.
-- 204 local tests and Ruff pass; four development workflows pass in fake reasoning mode. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
+- 204 local tests and Ruff pass at that date; four development workflows pass in fake
+  reasoning mode. Measured run on clean 7a67b44: 400/400 synthetic probes; see results/RESPONSIVENESS_2026-09-13.md.
 - Actual gemma3:4b live development suite: 0/4 completed. Two request timeouts and two
   incorrect semantic plans; no effects. Explicit GPU placement improved one request's
   speed but its task still failed. Raw proposals and traces are preserved, not replaced
@@ -41,8 +53,12 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 
 ### Workstream A — Mridul
 
-- Independently authored held-out cases, and the full 60-scenario set. Eight exist today.
-- Baseline comparison and the dependency-rejection ablation.
+- Independently authored held-out cases, and the full 60-scenario set. Fourteen scenario
+  files exist: four in `scenarios/dev`, six in `scenarios/live_dev` and four planner probes.
+  Several are variants of the same underlying workflow, so the count of independent
+  workflows is lower. The probes have never been run and their labels are unread.
+- Baseline comparison. The dependency-rejection ablation is complete and returned a negative
+  result; see `results/ABLATION_2026-09-15.md`. No baseline arm exists yet.
 - End-to-end multimodal runs through the controller, reported by modality and backend.
 - Corrected Docker execution on a Docker-capable host; hardware and warm-up measurements.
 - Official-kit translation and public-kit runs after the organizer supplies the schema.
@@ -59,8 +75,10 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 
 ### Completed since this list was last written
 
-- Live reasoning adapters. Four backends are measured; `qwen/qwen3.8-27b` scores 4/4 at a
-  0.91 s mean. See results/MODEL_SWEEP_2026-09-14.md.
+- Live reasoning adapters. `qwen/qwen3.8-27b` is primary and scored 6/6 across `live_dev`
+  on 15 September. See results/MODEL_COMPARISON.md, which supersedes the 14 September sweep
+  for model selection. The sweep's 20 B to 27 B capacity wall is doubtful: `gpt-oss-20b`
+  later cleared a harder fixture, so its earlier failure was probably the output contract.
 - Real reasoning on the development scenarios, including the two-step read-then-write chain.
 - Team registration.
 

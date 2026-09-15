@@ -100,7 +100,8 @@ Request too large ... on output tokens per minute (OTPM): Limit 1000, Requested 
 
 
 
-The adapter sends no `max_tokens`, so the provider assumes the model's default ceiling and
+The adapter sends `max_tokens` only when `ACCESSFLOW_MAX_OUTPUT_TOKENS` is set. On the
+uncapped path it sends none, so the provider assumes the model's default ceiling and
 
 compares that against the per-minute output budget. This is an admission check on one
 
