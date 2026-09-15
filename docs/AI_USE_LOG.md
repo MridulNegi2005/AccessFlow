@@ -791,3 +791,7 @@ contract or protected files changed.
 2026-09-16 verification: Corrected the conflict reproducer to use two valid content-distinct PNG uploads and assert
 the injected Tuesday/Wednesday captions. With --runxfail it now reaches the expected write-safety assertion, proving
 the controller gap is observable. No source, contract or protected files changed.
+2026-09-16 verification: Reviewed origin/mridul/engine at 919ed27 in a disposable overlay with the current
+owned demo/perception paths. Targeted active-frame replacement and image-only informational tests pass upstream;
+the conflict case is blocked before planning because the prior frame is removed. Recorded the required
+pre-replacement comparison/provenance seam; no protected files changed.
