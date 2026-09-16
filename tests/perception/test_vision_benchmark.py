@@ -178,6 +178,17 @@ async def test_vision_benchmark_rejects_manifest_hash_mismatch_before_provider_c
     assert sum(item["status"] == "completed" for item in report["results"]) == 11
 
 
+def test_vision_benchmark_rejects_oversized_asset_before_base64_decode():
+    _, manifest = _manifest()
+    image_case = next(case for case in manifest["cases"] if case["modality"] == "image")
+    image_case["asset"]["payload_base64"] = "A" * (
+        benchmark.MAX_VISION_IMAGE_BASE64_CHARS + 4
+    )
+
+    with pytest.raises(ValueError, match="payload is too large"):
+        benchmark._asset_bytes(image_case)
+
+
 def test_vision_benchmark_is_explicitly_opt_in(capsys):
     assert benchmark.main([]) == 0
 
