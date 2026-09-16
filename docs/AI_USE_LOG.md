@@ -993,3 +993,10 @@ budgets and pending-input backpressure. A delegated test agent returned no patch
 and regressions were authored and reviewed in the current session. The final route enforces an 8 MiB
 per-file and 16 MiB per-session aggregate cap, releases failed reservations, and bounds the incoming
 queue at 16. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: A delegated demo review found malformed WebSocket JSON could
+terminate the recoverable input path; added structured error recovery and a same-session regression.
+A separate delegated perception review found unknown critical PNG chunks were accepted before vision
+inference; added parser rejection and a provider-not-called regression. Focused checks passed, with
+full-suite verification recorded at 635 passed and one retained expected conflict example. No engine,
+contracts, adapters, lockfile or model/network behavior changed.

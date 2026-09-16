@@ -359,3 +359,17 @@ event queue is bounded at 16 items; validation and disk work remain in the worke
 633 passed with one retained expected conflict example, and Ruff passes. Tests cover cross-modality budget
 accounting, overflow without a new file and reservation release. No engine, contracts, adapters, lockfile
 or live device behavior changed. Commits: `31fc5b7`, `660088a`.
+
+## 2026-09-16 - Recoverable browser parse and critical PNG validation
+
+**Task:** Close two bounded input-validation gaps found during the Workstream B continuation review.
+
+**Changes:** The demo WebSocket now converts malformed JSON into a structured demo/input error and
+keeps the session available for later valid events. The owned PNG validator now rejects unknown critical
+PNG chunks before any vision provider call; ancillary chunks remain accepted. No engine, contract,
+adapter, lockfile or script changes were made.
+
+**Status:** The demo suite passes 106 tests with one retained expected conflict example; the focused
+perception-local suite passes 45 tests. The full suite passes 635 tests with one retained expected
+conflict example, and Ruff plus diff checks pass. Live vision quality remains unverified. Commits:
+650e172, ee66a5.

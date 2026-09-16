@@ -158,6 +158,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Demo media intake now enforces a 16 MiB per-session aggregate budget in addition to the 8 MiB
   per-file bound, releases reservations after failed validation, and applies backpressure with a
   16-item incoming queue. Focused and full checks pass; live device behavior remains unverified.
+- Browser input now reports malformed JSON as a recoverable `demo/input` error, and PNG validation
+  rejects unknown critical chunks before a vision provider is called. The full branch passes 635
+  tests with one retained conflict example; Ruff and diff checks pass.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
