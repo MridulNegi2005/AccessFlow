@@ -120,3 +120,56 @@ provides `OllamaVisionProvider`, `src/accessflow/cli.py` accepts and records the
 Until item 1 and item 2 are done, the parent CLI advertises `--vision-provider` and the child
 rejects it with exit code 2. Finding A2 in `docs/reviews/MRIDUL_REAUDIT_2026-09-15.md` stays
 open, and no vision scenario runs through the process adapter.
+
+## Additive image-only informational response
+
+- Observed example: tests/demo/test_app.py::test_image_only_informational_response_needs_additive_controller_support
+  is a strict expected failure on atishay/perception. A frame reaches DemoPerception and the
+  reasoner returns an informational response, but the current controller does not emit its final
+  because latest_complete is derived from speech completion.
+- Proposed additive change: Add an optional informational-response basis to the planning
+  proposal, for example informational_evidence: Literal["speech", "image", "multimodal"] | None.
+  The controller may emit an informational response for image or multimodal evidence when the
+  proposal opts in, while retaining the existing completed-speech and authorization gates for every
+  state-changing call.
+- Compatibility: The field defaults to None, does not alter existing writes or turn-policy
+  decisions, and keeps frame-only responses explicitly informational. The engine owner should
+  implement and review this on mridul/engine; this branch intentionally contains only the
+  failing example and proposal.
+
+
+## Conflicting visual evidence requires resolution
+
+- Author: Atishay Workstream B
+- Failing example: tests/demo/test_app.py::test_conflicting_frames_require_resolution_before_write
+  sends a completed spoken request followed by frames whose captions disagree. The current controller
+  retains both frame observations and can accept a write proposal without a structured conflict state.
+- Proposed additive change: Add optional frame provenance and conflict metadata, such as
+  supersedes_source_id and an evidence status of consistent, conflicting or uncertain. The controller
+  should retain the latest frame for ordinary replacement, mark unresolved visual conflict as
+  correction-pending, and require clarification or a new resolving observation before any write.
+- Compatibility: All fields are optional and default to the current v0.1 behavior. Existing frame IDs,
+  timestamps and image observations remain valid; older adapters can omit the metadata. This branch
+  contains the failing example only and does not modify the controller or shared contracts.
+  The integrated engine at origin/mridul/engine 919ed27 now replaces the prior active frame before
+  planning, so conflict detection must compare or record the superseded frame before that removal if
+  conflicting visual evidence is still required.
+
+## Resolution note, 16 September 2026
+
+The two proposals above were written while every image path stalled. The cause was the
+image branch in `HeuristicTurnPolicy`, which returns `continue` for a frame, combined with a
+controller that read that verdict as image readiness. The controller no longer asks the turn
+policy about a frame. See `docs/INTEGRATION_NOTE_2026-09-16.md`.
+
+An image now completes as evidence and can produce an informational answer. An image alone
+still cannot authorize a write; that gate is unchanged and verified.
+
+"Additive image-only informational response" is therefore already the engine's behaviour, and
+it predates both branches. The open question is the opposite one: whether a lone image should
+stay silent until the person speaks. That is a contract decision for Mridul and Atishay
+together, not a test fix.
+
+"Conflicting visual evidence requires resolution" stays open. Replacement frames are handled
+by source and revision freshness, but the controller does not represent two frames that
+disagree.

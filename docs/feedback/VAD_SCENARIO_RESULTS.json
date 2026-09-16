@@ -1,0 +1,596 @@
+{
+  "recorded": "2026-09-16",
+  "mode": "live_local_webrtc_activity",
+  "backend": "webrtcvad-wheels 2.0.14",
+  "device": "CPU Intel(R) Core(TM) Ultra 5 125H",
+  "python": "3.12.10",
+  "settings": {
+    "sample_rate": 16000,
+    "frame_ms": 20,
+    "aggressiveness": 2,
+    "pause_threshold_s": 0.4
+  },
+  "cases": 18,
+  "summary": {
+    "active_frames": 2463,
+    "total_frames": 3764,
+    "cases_with_internal_pause_candidate": 10,
+    "cases_with_trailing_pause_candidate": 18,
+    "max_analysis_elapsed_s": 0.0916
+  },
+  "results": [
+    {
+      "id": "audio-01",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/synthetic_speech.wav",
+      "duration_s": 5.304,
+      "analysis_elapsed_s": 0.0796,
+      "active_frames": 189,
+      "total_frames": 265,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 2.52
+        },
+        {
+          "start_s": 3.3,
+          "end_s": 4.66
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 2.52,
+          "end_s": 3.3,
+          "duration_s": 0.78,
+          "trailing": false
+        },
+        {
+          "start_s": 4.66,
+          "end_s": 5.3,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-02",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/synthetic_pause_correction.wav",
+      "duration_s": 6.024,
+      "analysis_elapsed_s": 0.0867,
+      "active_frames": 139,
+      "total_frames": 301,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 0.96
+        },
+        {
+          "start_s": 3.22,
+          "end_s": 3.98
+        },
+        {
+          "start_s": 4.2,
+          "end_s": 5.38
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 0.96,
+          "end_s": 3.22,
+          "duration_s": 2.26,
+          "trailing": false
+        },
+        {
+          "start_s": 5.38,
+          "end_s": 6.02,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-03",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
+      "duration_s": 3.449,
+      "analysis_elapsed_s": 0.0492,
+      "active_frames": 130,
+      "total_frames": 172,
+      "active_windows": [
+        {
+          "start_s": 0.18,
+          "end_s": 2.78
+        }
+      ],
+      "trailing_silence_s": 0.66,
+      "pause_candidates": [
+        {
+          "start_s": 2.78,
+          "end_s": 3.44,
+          "duration_s": 0.66,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-04",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
+      "duration_s": 4.724,
+      "analysis_elapsed_s": 0.0727,
+      "active_frames": 173,
+      "total_frames": 236,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.18
+        },
+        {
+          "start_s": 1.46,
+          "end_s": 2.18
+        },
+        {
+          "start_s": 2.42,
+          "end_s": 4.08
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 4.08,
+          "end_s": 4.72,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-05",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
+      "duration_s": 5.958,
+      "analysis_elapsed_s": 0.0916,
+      "active_frames": 162,
+      "total_frames": 297,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.88
+        },
+        {
+          "start_s": 3.86,
+          "end_s": 5.32
+        }
+      ],
+      "trailing_silence_s": 0.62,
+      "pause_candidates": [
+        {
+          "start_s": 1.88,
+          "end_s": 3.86,
+          "duration_s": 1.98,
+          "trailing": false
+        },
+        {
+          "start_s": 5.32,
+          "end_s": 5.94,
+          "duration_s": 0.62,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-06",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-06.wav",
+      "duration_s": 3.254,
+      "analysis_elapsed_s": 0.0457,
+      "active_frames": 114,
+      "total_frames": 162,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 1.3
+        },
+        {
+          "start_s": 1.52,
+          "end_s": 2.62
+        }
+      ],
+      "trailing_silence_s": 0.62,
+      "pause_candidates": [
+        {
+          "start_s": 2.62,
+          "end_s": 3.24,
+          "duration_s": 0.62,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-07",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-07.wav",
+      "duration_s": 4.924,
+      "analysis_elapsed_s": 0.0676,
+      "active_frames": 131,
+      "total_frames": 246,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 0.96
+        },
+        {
+          "start_s": 1.72,
+          "end_s": 2.34
+        },
+        {
+          "start_s": 3.12,
+          "end_s": 4.28
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 0.96,
+          "end_s": 1.72,
+          "duration_s": 0.76,
+          "trailing": false
+        },
+        {
+          "start_s": 2.34,
+          "end_s": 3.12,
+          "duration_s": 0.78,
+          "trailing": false
+        },
+        {
+          "start_s": 4.28,
+          "end_s": 4.92,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-08",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-08.wav",
+      "duration_s": 4.219,
+      "analysis_elapsed_s": 0.0597,
+      "active_frames": 120,
+      "total_frames": 210,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 1.24
+        },
+        {
+          "start_s": 2.0,
+          "end_s": 2.48
+        },
+        {
+          "start_s": 2.74,
+          "end_s": 3.54
+        }
+      ],
+      "trailing_silence_s": 0.66,
+      "pause_candidates": [
+        {
+          "start_s": 1.24,
+          "end_s": 2.0,
+          "duration_s": 0.76,
+          "trailing": false
+        },
+        {
+          "start_s": 3.54,
+          "end_s": 4.2,
+          "duration_s": 0.66,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-09",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-09.wav",
+      "duration_s": 3.864,
+      "analysis_elapsed_s": 0.0587,
+      "active_frames": 139,
+      "total_frames": 193,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 1.14
+        },
+        {
+          "start_s": 1.44,
+          "end_s": 3.2
+        }
+      ],
+      "trailing_silence_s": 0.66,
+      "pause_candidates": [
+        {
+          "start_s": 3.2,
+          "end_s": 3.86,
+          "duration_s": 0.66,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-10",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-10.wav",
+      "duration_s": 3.039,
+      "analysis_elapsed_s": 0.043,
+      "active_frames": 112,
+      "total_frames": 151,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 2.36
+        }
+      ],
+      "trailing_silence_s": 0.66,
+      "pause_candidates": [
+        {
+          "start_s": 2.36,
+          "end_s": 3.02,
+          "duration_s": 0.66,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-11",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-11.wav",
+      "duration_s": 3.819,
+      "analysis_elapsed_s": 0.0543,
+      "active_frames": 115,
+      "total_frames": 190,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.66
+        },
+        {
+          "start_s": 2.42,
+          "end_s": 3.16
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 1.66,
+          "end_s": 2.42,
+          "duration_s": 0.76,
+          "trailing": false
+        },
+        {
+          "start_s": 3.16,
+          "end_s": 3.8,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-12",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-12.wav",
+      "duration_s": 3.279,
+      "analysis_elapsed_s": 0.0445,
+      "active_frames": 126,
+      "total_frames": 163,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 2.14
+        },
+        {
+          "start_s": 2.76,
+          "end_s": 3.26
+        }
+      ],
+      "trailing_silence_s": 0.0,
+      "pause_candidates": [
+        {
+          "start_s": 2.14,
+          "end_s": 2.76,
+          "duration_s": 0.62,
+          "trailing": false
+        }
+      ]
+    },
+    {
+      "id": "audio-13",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-13.wav",
+      "duration_s": 3.279,
+      "analysis_elapsed_s": 0.0469,
+      "active_frames": 90,
+      "total_frames": 163,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.0
+        },
+        {
+          "start_s": 1.74,
+          "end_s": 2.64
+        }
+      ],
+      "trailing_silence_s": 0.62,
+      "pause_candidates": [
+        {
+          "start_s": 1.0,
+          "end_s": 1.74,
+          "duration_s": 0.74,
+          "trailing": false
+        },
+        {
+          "start_s": 2.64,
+          "end_s": 3.26,
+          "duration_s": 0.62,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-14",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-14.wav",
+      "duration_s": 3.454,
+      "analysis_elapsed_s": 0.049,
+      "active_frames": 135,
+      "total_frames": 172,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 2.8
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 2.8,
+          "end_s": 3.44,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-15",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-15.wav",
+      "duration_s": 5.419,
+      "analysis_elapsed_s": 0.0755,
+      "active_frames": 170,
+      "total_frames": 270,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 1.44
+        },
+        {
+          "start_s": 2.18,
+          "end_s": 2.88
+        },
+        {
+          "start_s": 3.12,
+          "end_s": 3.84
+        },
+        {
+          "start_s": 4.1,
+          "end_s": 4.76
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 1.44,
+          "end_s": 2.18,
+          "duration_s": 0.74,
+          "trailing": false
+        },
+        {
+          "start_s": 4.76,
+          "end_s": 5.4,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-16",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-16.wav",
+      "duration_s": 4.759,
+      "analysis_elapsed_s": 0.0681,
+      "active_frames": 162,
+      "total_frames": 237,
+      "active_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.88
+        },
+        {
+          "start_s": 2.66,
+          "end_s": 4.12
+        }
+      ],
+      "trailing_silence_s": 0.62,
+      "pause_candidates": [
+        {
+          "start_s": 1.88,
+          "end_s": 2.66,
+          "duration_s": 0.78,
+          "trailing": false
+        },
+        {
+          "start_s": 4.12,
+          "end_s": 4.74,
+          "duration_s": 0.62,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-17",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-17.wav",
+      "duration_s": 3.449,
+      "analysis_elapsed_s": 0.051,
+      "active_frames": 130,
+      "total_frames": 172,
+      "active_windows": [
+        {
+          "start_s": 0.18,
+          "end_s": 2.78
+        }
+      ],
+      "trailing_silence_s": 0.66,
+      "pause_candidates": [
+        {
+          "start_s": 2.78,
+          "end_s": 3.44,
+          "duration_s": 0.66,
+          "trailing": true
+        }
+      ]
+    },
+    {
+      "id": "audio-18",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-18.wav",
+      "duration_s": 3.299,
+      "analysis_elapsed_s": 0.0443,
+      "active_frames": 126,
+      "total_frames": 164,
+      "active_windows": [
+        {
+          "start_s": 0.12,
+          "end_s": 2.64
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "pause_candidates": [
+        {
+          "start_s": 2.64,
+          "end_s": 3.28,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "WebRTC output is acoustic activity and endpoint-candidate evidence, not a speech or semantic classifier.",
+    "All fixtures are generated local material and are not representative human speech.",
+    "Pause candidates must be reconciled with transcript revisions and controller policy."
+  ]
+}

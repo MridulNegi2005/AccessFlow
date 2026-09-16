@@ -7,10 +7,12 @@ passing it to an optional local transcriber. Model work runs off the event loop.
 from __future__ import annotations
 
 import asyncio
+import math
 import struct
 import threading
 import wave
-from collections.abc import AsyncIterator, Callable
+import zlib
+from collections.abc import AsyncIterator, Awaitable, Callable, Hashable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -39,6 +41,14 @@ def validate_wav(path: Path) -> WavFormat:
                 sample_rate=handle.getframerate(),
                 frames=handle.getnframes(),
             )
+            frame_width = metadata.channels * metadata.sample_width
+            remaining = metadata.frames
+            while remaining:
+                chunk_frames = min(remaining, 8192)
+                chunk = handle.readframes(chunk_frames)
+                if len(chunk) != chunk_frames * frame_width:
+                    raise ValueError(f"WAV PCM payload is truncated: {path}")
+                remaining -= chunk_frames
     except (OSError, EOFError, wave.Error) as error:
         raise ValueError(f"Invalid WAV file: {path}") from error
 
@@ -49,23 +59,278 @@ def validate_wav(path: Path) -> WavFormat:
     return metadata
 
 
-def _validate_png(path: Path) -> None:
-    signature = b"\x89PNG\r\n\x1a\n"
+@dataclass(frozen=True)
+class PngFormat:
+    """Structurally validated PNG metadata used by local vision backends."""
+
+    width: int
+    height: int
+    bit_depth: int
+    color_type: int
+
+
+MAX_PNG_FILE_BYTES = 8 * 1024 * 1024
+MAX_PNG_DECODED_BYTES = 64 * 1024 * 1024
+
+
+def validate_png(path: Path) -> PngFormat:
+    """Validate PNG chunks, CRCs, compressed data and termination without decoding pixels."""
     try:
-        with path.open("rb") as handle:
-            header = handle.read(24)
+        if path.stat().st_size > MAX_PNG_FILE_BYTES:
+            raise ValueError(f"PNG file is too large: {path}")
+        data = path.read_bytes()
     except OSError as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
-    if len(header) != 24 or header[:8] != signature or header[12:16] != b"IHDR":
+    if len(data) > MAX_PNG_FILE_BYTES:
+        raise ValueError(f"PNG file is too large: {path}")
+
+    signature = b"\x89PNG\r\n\x1a\n"
+    if len(data) < len(signature) or data[:8] != signature:
         raise ValueError(f"Invalid PNG file: {path}")
-    width, height = struct.unpack(">II", header[16:24])
-    if width < 1 or height < 1:
-        raise ValueError(f"PNG has invalid dimensions: {path}")
+
+    offset = len(signature)
+    ihdr: tuple[int, int, int, int] | None = None
+    interlace: int | None = None
+    palette_entries: int | None = None
+    saw_idat = False
+    idat_data = bytearray()
+    saw_iend = False
+    while offset < len(data):
+        if len(data) - offset < 12:
+            raise ValueError(f"Invalid PNG file: {path}")
+        length = struct.unpack(">I", data[offset : offset + 4])[0]
+        chunk_end = offset + 12 + length
+        if chunk_end > len(data):
+            raise ValueError(f"Invalid PNG file: {path}")
+        chunk_type = data[offset + 4 : offset + 8]
+        chunk_data = data[offset + 8 : offset + 8 + length]
+        chunk_crc = struct.unpack(">I", data[offset + 8 + length : chunk_end])[0]
+        if zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF != chunk_crc:
+            raise ValueError(f"Invalid PNG file: {path}")
+
+        if ihdr is None:
+            if chunk_type != b"IHDR" or length != 13:
+                raise ValueError(f"Invalid PNG file: {path}")
+            width, height, bit_depth, color_type, compression, filter_method, interlace = struct.unpack(
+                ">IIBBBBB", chunk_data
+            )
+            valid_depths = {
+                0: {1, 2, 4, 8, 16},
+                2: {8, 16},
+                3: {1, 2, 4, 8},
+                4: {8, 16},
+                6: {8, 16},
+            }
+            if (
+                width < 1
+                or height < 1
+                or bit_depth not in valid_depths.get(color_type, set())
+                or compression != 0
+                or filter_method != 0
+                or interlace not in (0, 1)
+            ):
+                raise ValueError(f"Invalid PNG file: {path}")
+            ihdr = (width, height, bit_depth, color_type)
+        elif chunk_type == b"IHDR":
+            raise ValueError(f"Invalid PNG file: {path}")
+
+        if chunk_type == b"PLTE":
+            if (
+                ihdr is None
+                or saw_idat
+                or palette_entries is not None
+                or length < 3
+                or length > 768
+                or length % 3
+            ):
+                raise ValueError(f"Invalid PNG palette: {path}")
+            palette_entries = length // 3
+            if ihdr[3] == 3 and palette_entries > (1 << ihdr[2]):
+                raise ValueError(f"Invalid PNG palette: {path}")
+        if chunk_type == b"IDAT":
+            if ihdr is not None and ihdr[3] == 3 and palette_entries is None:
+                raise ValueError(f"Invalid PNG palette: {path}")
+            saw_idat = True
+            idat_data.extend(chunk_data)
+        if chunk_type == b"IEND":
+            if length != 0 or chunk_end != len(data):
+                raise ValueError(f"Invalid PNG file: {path}")
+            saw_iend = True
+            break
+        offset = chunk_end
+
+    if ihdr is None or not saw_idat or not saw_iend:
+        raise ValueError(f"Invalid PNG file: {path}")
+    if ihdr[3] == 3 and palette_entries is None:
+        raise ValueError(f"Invalid PNG palette: {path}")
+    if interlace is None:
+        raise ValueError(f"Invalid PNG file: {path}")
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ihdr[3]]
+    bits_per_pixel = channels * ihdr[2]
+    scanline_groups: list[tuple[int, int]] = []
+    if interlace == 0:
+        row_bytes = (ihdr[0] * bits_per_pixel + 7) // 8
+        scanline_groups.append((row_bytes, ihdr[1]))
+    else:
+        for x_start, y_start, x_step, y_step in (
+            (0, 0, 8, 8),
+            (4, 0, 8, 8),
+            (0, 4, 4, 8),
+            (2, 0, 4, 4),
+            (0, 2, 2, 4),
+            (1, 0, 2, 2),
+            (0, 1, 1, 2),
+        ):
+            pass_width = (ihdr[0] - x_start + x_step - 1) // x_step if ihdr[0] > x_start else 0
+            pass_height = (ihdr[1] - y_start + y_step - 1) // y_step if ihdr[1] > y_start else 0
+            row_bytes = (pass_width * bits_per_pixel + 7) // 8
+            if pass_width and pass_height:
+                scanline_groups.append((row_bytes, pass_height))
+    expected_size = sum((row_bytes + 1) * row_count for row_bytes, row_count in scanline_groups)
+    if expected_size > MAX_PNG_DECODED_BYTES:
+        raise ValueError(f"Invalid PNG decoded payload is too large: {path}")
+    try:
+        decompressor = zlib.decompressobj()
+        decoded = decompressor.decompress(bytes(idat_data), expected_size + 1)
+        if (
+            len(decoded) != expected_size
+            or not decompressor.eof
+            or decompressor.unused_data
+            or decompressor.unconsumed_tail
+        ):
+            raise ValueError(f"Invalid PNG file: {path}")
+        offset = 0
+        for row_bytes, row_count in scanline_groups:
+            for _ in range(row_count):
+                if decoded[offset] > 4:
+                    raise ValueError(f"Invalid PNG filter byte: {path}")
+                offset += row_bytes + 1
+    except zlib.error as error:
+        raise ValueError(f"Invalid PNG file: {path}") from error
+    return PngFormat(*ihdr)
 
 
 def _transcribe_with_whisper(model: Any, path: Path) -> str:
     segments, _ = model.transcribe(str(path), beam_size=5)
     return " ".join(segment.text.strip() for segment in segments).strip()
+
+
+def _normalize_provider_text(value: Any, modality: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeError(f"{modality} perception returned empty text")
+    return value.strip()
+
+
+_SUPERSEDED = object()
+
+
+@dataclass
+class _PendingWork:
+    key: Hashable
+    token: int
+    operation: Callable[[], Awaitable[Any]]
+    result: asyncio.Future
+
+
+class _LatestWorker:
+    """Run one provider call at a time while bounding pending work per source."""
+
+    def __init__(self, *, max_pending_keys: int = 8) -> None:
+        if max_pending_keys < 1:
+            raise ValueError("max_pending_keys must be positive")
+        self._lock = asyncio.Lock()
+        self._pending: dict[Hashable, _PendingWork] = {}
+        self._max_pending_keys = max_pending_keys
+        self._latest_tokens: dict[Hashable, int] = {}
+        self._latest_revisions: dict[Hashable, int] = {}
+        self._next_token = 0
+        self._active: _PendingWork | None = None
+        self._task: asyncio.Task | None = None
+        self._closed = False
+
+    async def submit(
+        self,
+        key: Hashable,
+        operation: Callable[[], Awaitable[Any]],
+        *,
+        revision: int | None = None,
+    ) -> Any:
+        loop = asyncio.get_running_loop()
+        result = loop.create_future()
+        async with self._lock:
+            if self._closed:
+                return _SUPERSEDED
+            if revision is not None and revision <= self._latest_revisions.get(key, -1):
+                return _SUPERSEDED
+            self._next_token += 1
+            token = self._next_token
+            self._latest_tokens[key] = token
+            if revision is not None:
+                self._latest_revisions[key] = revision
+            previous = self._pending.get(key)
+            if previous is not None and not previous.result.done():
+                previous.result.set_result(_SUPERSEDED)
+            if previous is None and len(self._pending) >= self._max_pending_keys:
+                oldest_key = next(iter(self._pending))
+                oldest = self._pending.pop(oldest_key)
+                if not oldest.result.done():
+                    oldest.result.set_result(_SUPERSEDED)
+            self._pending[key] = _PendingWork(key, token, operation, result)
+            if self._task is None or self._task.done():
+                self._task = asyncio.create_task(self._run())
+        try:
+            return await result
+        except asyncio.CancelledError:
+            async with self._lock:
+                pending = self._pending.get(key)
+                if pending is not None and pending.result is result:
+                    del self._pending[key]
+            raise
+
+    async def _run(self) -> None:
+        while True:
+            async with self._lock:
+                if not self._pending:
+                    self._task = None
+                    return
+                key = next(iter(self._pending))
+                work = self._pending.pop(key)
+                self._active = work
+            try:
+                value = await work.operation()
+            except Exception as error:
+                async with self._lock:
+                    current = self._latest_tokens.get(work.key) == work.token
+                if current and not work.result.done():
+                    work.result.set_exception(error)
+                elif not work.result.done():
+                    work.result.set_result(_SUPERSEDED)
+            else:
+                async with self._lock:
+                    current = self._latest_tokens.get(work.key) == work.token
+                if not work.result.done():
+                    work.result.set_result(value if current else _SUPERSEDED)
+            finally:
+                async with self._lock:
+                    if self._active is work:
+                        self._active = None
+
+    async def aclose(self) -> None:
+        async with self._lock:
+            self._closed = True
+            work = self._active
+            pending = list(self._pending.values())
+            self._pending.clear()
+            task = self._task
+            self._task = None
+            for item in pending:
+                if not item.result.done():
+                    item.result.set_result(_SUPERSEDED)
+            if work is not None and not work.result.done():
+                work.result.set_result(_SUPERSEDED)
+        if task is not None and not task.done():
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
 
 
 class LocalPerception:
@@ -83,17 +348,60 @@ class LocalPerception:
         model_path: str | Path | None = None,
         vision_provider: Callable[[Path], str] | None = None,
         whisper_factory: Callable[..., Any] | None = None,
+        timeout_s: float | None = None,
     ) -> None:
         if transcriber is not None and model_path is not None:
             raise ValueError("Pass transcriber or model_path, not both")
+        if (
+            timeout_s is not None
+            and (
+                isinstance(timeout_s, bool)
+                or not isinstance(timeout_s, (int, float))
+                or not math.isfinite(timeout_s)
+                or timeout_s <= 0
+            )
+        ):
+            raise ValueError("timeout_s must be a finite positive number")
         self._transcriber = transcriber
         self._model_path = Path(model_path) if model_path is not None else None
         self._vision_provider = vision_provider
         self._whisper_factory = whisper_factory
+        self._timeout_s = timeout_s
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
+        self._lifecycle_lock = asyncio.Lock()
+        self._closed = False
+        self._audio_workers: dict[str, _LatestWorker] = {}
+        self._vision_workers: dict[str, _LatestWorker] = {}
+
+    async def _worker_for(
+        self, workers: dict[str, _LatestWorker], session_id: str
+    ) -> _LatestWorker | None:
+        async with self._lifecycle_lock:
+            if self._closed:
+                return None
+            return self._worker_for_open(workers, session_id)
+
+    @staticmethod
+    def _worker_for_open(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
+        worker = workers.get(session_id)
+        if worker is None:
+            worker = _LatestWorker()
+            workers[session_id] = worker
+        return worker
+
+    @property
+    def audio_backend_name(self) -> str:
+        """Return the truthful label for the configured local audio path."""
+        if self._transcriber is not None:
+            return "local/injected-asr"
+        if self._model_path is not None:
+            return "faster-whisper/cpu-int8"
+        return "local/unconfigured-asr"
 
     async def observe(self, event: InputEvent) -> AsyncIterator[Observation]:
+        if self._closed:
+            return
         if isinstance(event, TranscriptEvent):
             yield Observation(
                 event_id=event.event_id,
@@ -111,7 +419,18 @@ class LocalPerception:
         if isinstance(event, AudioEvent):
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_wav, path)
-            text, backend = await self._transcribe(path)
+            worker = await self._worker_for(self._audio_workers, event.session_id)
+            if worker is None:
+                return
+            result = await worker.submit(
+                ("audio", event.payload.utterance_id),
+                lambda: self._run_with_timeout(self._transcribe(path), "audio"),
+                revision=event.payload.revision,
+            )
+            if result is _SUPERSEDED:
+                return
+            text, backend = result
+            text = _normalize_provider_text(text, "audio")
             yield Observation(
                 event_id=event.event_id,
                 source_id=event.payload.utterance_id,
@@ -129,8 +448,19 @@ class LocalPerception:
             if self._vision_provider is None:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
-            await asyncio.to_thread(_validate_png, path)
-            text = await asyncio.to_thread(self._vision_provider, path)
+            await asyncio.to_thread(validate_png, path)
+            worker = await self._worker_for(self._vision_workers, event.session_id)
+            if worker is None:
+                return
+            text = await worker.submit(
+                ("frame",),
+                lambda: self._run_with_timeout(
+                    asyncio.to_thread(self._vision_provider, path), "image"
+                ),
+            )
+            if text is _SUPERSEDED:
+                return
+            text = _normalize_provider_text(text, "image")
             yield Observation(
                 event_id=event.event_id,
                 source_id=event.payload.frame_id,
@@ -140,10 +470,36 @@ class LocalPerception:
                 final=True,
                 speech_start=event.timestamp,
                 speech_end=event.timestamp,
-                backend="local/injected-vision",
+                backend=getattr(self._vision_provider, "backend_name", "local/injected-vision"),
             )
             return
         raise ValueError(f"Unsupported perception event: {event.kind}")
+
+    async def aclose(self) -> None:
+        """Stop queued local work when its owning session is shutting down."""
+        async with self._lifecycle_lock:
+            self._closed = True
+            workers = [*self._audio_workers.values(), *self._vision_workers.values()]
+            self._audio_workers.clear()
+            self._vision_workers.clear()
+        await asyncio.gather(*(worker.aclose() for worker in workers))
+
+    async def _run_with_timeout(self, awaitable, modality: str):
+        if self._timeout_s is None:
+            return await awaitable
+        work = asyncio.create_task(awaitable)
+        try:
+            await asyncio.sleep(0)
+            done, _ = await asyncio.wait({work}, timeout=self._timeout_s)
+            if work in done:
+                return work.result()
+            work.cancel()
+            await asyncio.gather(work, return_exceptions=True)
+            raise RuntimeError(f"{modality} perception timed out after {self._timeout_s:g}s")
+        finally:
+            if not work.done():
+                work.cancel()
+            await asyncio.gather(work, return_exceptions=True)
 
     async def _transcribe(self, path: Path) -> tuple[str, str]:
         if self._transcriber is not None:

@@ -363,8 +363,16 @@ class Agent:
             if obs.modality == "image":
                 # An image can invite an informational answer on its own. It does
                 # not finish pending speech or authorize a state-changing action.
-                self.latest_complete = (self.speech_ready or self.active_speech is None) and (
-                    obs.final and decision.kind == "complete")
+                #
+                # Readiness comes from the observation, not from the turn policy. The
+                # policy answers one question -- has the speaker finished this utterance
+                # -- and a frame is not an utterance, so it has no turn to end. Asking
+                # the policy about a frame also drags the caption text through the
+                # backchannel and correction rules, where "okay" in a photo reads as a
+                # backchannel. HeuristicTurnPolicy now returns "continue" for every
+                # image for that reason, so a policy verdict here would stall every
+                # frame permanently.
+                self.latest_complete = (self.speech_ready or self.active_speech is None) and obs.final
             self.state.correction_pending = not self.latest_complete
             if decision.kind == "stop":
                 self.generation += 1
@@ -377,10 +385,15 @@ class Agent:
                 return
             if decision.kind == "backchannel":
                 return
-            if self.latest_complete or (obs.final and decision.kind == "possible_correction"):
+            if obs.modality != "image" and (self.latest_complete
+                                            or (obs.final and decision.kind == "possible_correction")):
                 # A final correction can be acknowledged while semantics are still
                 # unresolved. This does not mark the request complete or authorize
                 # a write; partial speech continues without an interjection.
+                #
+                # Speech only. "I'll check that." answers a speaker who is waiting to
+                # hear that the turn landed. A frame has no speaker waiting on it, so
+                # the same interjection is noise in the output stream.
                 await self._emit("acknowledge", text="I'll check that.", backend=obs.backend)
             # Partial plans may prepare reads but may never authorize writes.
             self._start_plan(source=key)

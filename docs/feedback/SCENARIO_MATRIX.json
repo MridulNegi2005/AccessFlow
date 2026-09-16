@@ -1,0 +1,1384 @@
+{
+  "created": "2026-09-16",
+  "author": "AccessFlow Workstream B",
+  "purpose": "Local development inventory for weighted multimodal scenarios",
+  "status": "authored_provenance_tracked_fake_replay",
+  "evidence_note": "Fixture existence and generation provenance are verified locally; they are not execution, accuracy, latency, or user-benefit evidence.",
+  "provenance": {
+    "text": "Team-authored scripts; no participant data.",
+    "audio": "Generated locally with the installed Windows speech synthesizer; no participant or third-party recording.",
+    "image": "Generated locally as synthetic PNG cards; no participant screenshots or third-party images."
+  },
+  "target_split": {
+    "development": 40,
+    "held_out": 20
+  },
+  "target_modality_counts": {
+    "text": 30,
+    "audio": 18,
+    "image": 12
+  },
+  "cases": [
+    {
+      "id": "text-01",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book a screen repair for Friday at ten.",
+      "expected_boundary": "complete only when the request is sufficiently specified",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "complete only when the request is sufficiently specified"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-02",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tuesday ... actually Wednesday at five.",
+      "expected_boundary": "retain Wednesday and five as the latest corrected values",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "retain Wednesday and five as the latest corrected values"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-03",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "I want two tickets, two tickets.",
+      "expected_boundary": "preserve repetition while interpreting the intended quantity",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "preserve repetition while interpreting the intended quantity"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-04",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "I tried restarting already, then the screen still flickers.",
+      "expected_boundary": "keep the two clauses in the same request context",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "keep the two clauses in the same request context"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-05",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Wait, use the other device.",
+      "expected_boundary": "treat wait/use-other-device as a possible correction",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "treat wait/use-other-device as a possible correction"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-06",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "No, keep the original device.",
+      "expected_boundary": "supersede the device slot while retaining unrelated state",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "supersede the device slot while retaining unrelated state"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-07",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Stop speaking while a read-only lookup is running.",
+      "expected_boundary": "stop or supersede speech output without canceling the task automatically",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "stop or supersede speech output without canceling the task automatically"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-08",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Stop the whole task before any write.",
+      "expected_boundary": "block state-changing dispatch after explicit task cancellation",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "block state-changing dispatch after explicit task cancellation"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-09",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "mm-hmm",
+      "expected_boundary": "classify as a backchannel without completing a task",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "classify as a backchannel without completing a task"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-10",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Background noise arrives during a partial request.",
+      "expected_boundary": "avoid treating noise as a completed spoken request",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "avoid treating noise as a completed spoken request"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-11",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tues",
+      "expected_boundary": "keep the partial hypothesis open",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "keep the partial hypothesis open"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-12",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tuesday actually Wed",
+      "expected_boundary": "replace the earlier hypothesis for the same utterance",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "replace the earlier hypothesis for the same utterance"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-13",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tuesday actually Wednesday at five",
+      "expected_boundary": "allow completion only after the final revision",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "allow completion only after the final revision"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-14",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Change only the appointment time to six.",
+      "expected_boundary": "invalidate dependent time work while preserving other slots",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "invalidate dependent time work while preserving other slots"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-15",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Change the day but preserve the existing device.",
+      "expected_boundary": "invalidate dependent day work while preserving device evidence",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "invalidate dependent day work while preserving device evidence"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-16",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Ask for the missing appointment day.",
+      "expected_boundary": "clarify the missing required slot",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "clarify the missing required slot"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-17",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Read the repair policy before the request ends.",
+      "expected_boundary": "permit reversible read-only work when intent is stable",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "permit reversible read-only work when intent is stable"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-18",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "A late result returns for an old day.",
+      "expected_boundary": "reject the stale result as outdated evidence",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "reject the stale result as outdated evidence"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-19",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "A duplicate result returns for the current call.",
+      "expected_boundary": "prevent duplicate acceptance of the same logical result",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "prevent duplicate acceptance of the same logical result"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-20",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "A write times out with a status tool available.",
+      "expected_boundary": "reconcile unknown outcome before retrying",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "reconcile unknown outcome before retrying"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-21",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Repeat the same intentional booking after completion.",
+      "expected_boundary": "distinguish an intentional repeat from a duplicate delivery",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "distinguish an intentional repeat from a duplicate delivery"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-22",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Cancel after the write is confirmed.",
+      "expected_boundary": "report cancellation without claiming rollback of a confirmed effect",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "report cancellation without claiming rollback of a confirmed effect"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-23",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "The response is lost after a write attempt.",
+      "expected_boundary": "separate attempted from confirmed effect",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "separate attempted from confirmed effect"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-24",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Use an unfamiliar tool manifest for the same request.",
+      "expected_boundary": "resolve capability from the supplied manifest",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "resolve capability from the supplied manifest"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-25",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Correct the time twice before completion.",
+      "expected_boundary": "retain only the newest correction for the affected slot",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "retain only the newest correction for the affected slot"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-26",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Keep unrelated device details across a correction.",
+      "expected_boundary": "preserve unrelated useful session details",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "preserve unrelated useful session details"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-27",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "A final transcript arrives after a partial revision.",
+      "expected_boundary": "prevent the older revision from becoming a new command",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "prevent the older revision from becoming a new command"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-28",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Ask for clarification rather than guessing a location.",
+      "expected_boundary": "ask rather than inventing a location",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "ask rather than inventing a location"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-29",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Finish a fluent request without an unnecessary long wait.",
+      "expected_boundary": "avoid adding delay beyond the evidence needed for completion",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "avoid adding delay beyond the evidence needed for completion"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "text-30",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Restart the session and submit a new request.",
+      "expected_boundary": "clear session-scoped state before the new request",
+      "evidence_status": "fake_mode_replayed",
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "clear session-scoped state before the new request"
+      },
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "audio-01",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "My screen keeps flickering after the update. Book Wednesday at five.",
+      "expected_boundary": "carry audio speech through one session with a final source revision",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/synthetic_speech.wav",
+        "status": "existing_generated",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 233944,
+        "sha256": "B42354F90462A08AD23DF835256289116DEFDE4287AB2AC3D9D3CF2E87BCD5E6"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-13",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "carry audio speech through one session with a final source revision"
+      },
+      "reference_text": "My screen keeps flickering after the update. Book Wednesday at five.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-02",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Book Tuesday ... actually, Wednesday at five.",
+      "expected_boundary": "preserve correction wording and the latest day",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/synthetic_pause_correction.wav",
+        "status": "existing_generated",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 265706,
+        "sha256": "49B0B26FD1EBCAE0772B2559A4ABA3782444F59FAB7E7E7038122F06157C872B"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-13",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "preserve correction wording and the latest day"
+      },
+      "reference_text": "Book Tuesday. Actually, Wednesday at five.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-03",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Please book a screen repair for Friday at ten.",
+      "expected_boundary": "measure fluent ASR and completion without an internal pause",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
+        "status": "existing_held_out_generated",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 152144,
+        "sha256": "0D6A41360CC1102B2A359B3C303E913733FB83A5939D54ABD2C364E8FBE5DCF9"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-13",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "measure fluent ASR and completion without an internal pause"
+      },
+      "reference_text": "Please book a screen repair for Friday at ten.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-04",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "I want Tuesday, Tuesday, actually Wednesday at five.",
+      "expected_boundary": "preserve repetition and correction instead of deleting words",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
+        "status": "existing_held_out_generated",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 208378,
+        "sha256": "D16355E7D1E702EBC309227E18BD9925A3EC7290CC7D454754D89DBAAE55853F"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-13",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "preserve repetition and correction instead of deleting words"
+      },
+      "reference_text": "I want Tuesday, Tuesday, actually Wednesday at five.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-05",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "I tried restarting already. [pause] The screen still flickers.",
+      "expected_boundary": "expose an internal pause candidate without forcing completion",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
+        "status": "existing_held_out_generated",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 262806,
+        "sha256": "AE2C76972D9C398E7E9C102A381A09B44B3D4C2FC8A6937D3EA257D998E39210"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-13",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "expose an internal pause candidate without forcing completion"
+      },
+      "reference_text": "I tried restarting already. The screen still flickers.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-06",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "The screen flickers ... after the update.",
+      "expected_boundary": "keep the utterance open across the pause",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-06.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 143550,
+        "sha256": "7C6FD7255A3AFB7BE2D6AD9A62BBC71594D591C7975AB962F7F2487330698E91"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "keep the utterance open across the pause"
+      },
+      "reference_text": "The screen flickers ... after the update.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-07",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Book Tues ... Tuesday ... actually Wednesday.",
+      "expected_boundary": "replace earlier audio hypotheses for one utterance",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-07.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 217190,
+        "sha256": "FFBC38F16BEC25FDC85B6E50CBDE52005762475C8D22BE945A63941278C8669A"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "replace earlier audio hypotheses for one utterance"
+      },
+      "reference_text": "Book Tuesday. Tuesday. Actually Wednesday.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-08",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Use this device ... wait, the other one.",
+      "expected_boundary": "retain the latest device correction",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-08.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 186104,
+        "sha256": "74BCB7E2A55912BBF4A75E167277C1AA131AE1E9F1B0ABE8015A801BBAE9FF69"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "retain the latest device correction"
+      },
+      "reference_text": "Use this device. Wait, the other one.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-09",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Stop speaking, but keep the repair task ready.",
+      "expected_boundary": "separate stop-speaking from stop-task",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-09.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 170444,
+        "sha256": "89E4359A32C642C32BEAE8BFFFD0F94727834B3555CD1003E87F15AEFB4D8DD0"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "separate stop-speaking from stop-task"
+      },
+      "reference_text": "Stop speaking, but keep the repair task ready.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-10",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Stop the task before it books anything.",
+      "expected_boundary": "block state-changing work after stop-task",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-10.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 134064,
+        "sha256": "E358BC7D2547D460F5D413346CC9CF9C62CA2D01B558AB2341572C75B09F8CDA"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "block state-changing work after stop-task"
+      },
+      "reference_text": "Stop the task before it books anything.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-11",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "A backchannel follows a partial spoken request.",
+      "expected_boundary": "classify the backchannel without losing the active utterance",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-11.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 168462,
+        "sha256": "41FFC4204B235AF6435139949E917BE4FA88DEA9064A3F6080B78109215F5374"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "classify the backchannel without losing the active utterance"
+      },
+      "reference_text": "I need a repair for Friday. Mm-hmm.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-12",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Background noise follows a spoken correction.",
+      "expected_boundary": "avoid a false completion from non-speech audio",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-12.wav",
+        "status": "generated_speech_with_noise_tail",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer plus deterministic 0.5s white-noise tail (seed 20260916)",
+        "bytes": 144652,
+        "sha256": "162EDD66445102A806D7563EC45F147BF8CCB905101A92634A79679FB07D8FA8"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "avoid a false completion from non-speech audio"
+      },
+      "reference_text": "The screen flickers after the update.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-13",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Two tickets ... two tickets.",
+      "expected_boundary": "preserve repeated quantity words for downstream interpretation",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-13.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 144654,
+        "sha256": "16F61BBB74026723B0559CDB8213FF469AA212061550BDE568F3F57D8B7FC323"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "preserve repeated quantity words for downstream interpretation"
+      },
+      "reference_text": "Two tickets. Two tickets.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-14",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Change the appointment time from five to six.",
+      "expected_boundary": "update only the dependent time slot",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-14.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 152360,
+        "sha256": "672FF49F2EA57B8603BE9FFD13FCC70790D3DA0C6797146483FEC10D759513B9"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "update only the dependent time slot"
+      },
+      "reference_text": "Change the appointment time from five to six.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-15",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Correct the date twice before the final hypothesis.",
+      "expected_boundary": "accept only the newest audio revision",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-15.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 239010,
+        "sha256": "4DADB58C984CD23619CD512CB02A882E65ADEA2C1BD5AC839D83F7A7EE0A0187"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "accept only the newest audio revision"
+      },
+      "reference_text": "Correct the date twice. Tuesday, Wednesday, Thursday.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-16",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Continue after a long internal pause.",
+      "expected_boundary": "keep timing as evidence rather than a semantic completion decision",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-16.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 209912,
+        "sha256": "E0D85733542D881A10D4F49CA232840AE9244C5A117ECA8E97D022AC43AD3AC0"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "keep timing as evidence rather than a semantic completion decision"
+      },
+      "reference_text": "I tried restarting already ... The screen still flickers.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-17",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Speak a fluent request without a correction.",
+      "expected_boundary": "avoid treating ordinary fluency as a correction",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-17.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 152144,
+        "sha256": "0D6A41360CC1102B2A359B3C303E913733FB83A5939D54ABD2C364E8FBE5DCF9"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "avoid treating ordinary fluency as a correction"
+      },
+      "reference_text": "Please book a screen repair for Friday at ten.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "audio-18",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Submit a new request after session reset.",
+      "expected_boundary": "avoid inheriting prior audio observations after reset",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "fixture": "tests/fixtures/audio/audio-18.wav",
+        "status": "generated_speech",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
+        "bytes": 145526,
+        "sha256": "C3BEA2FFA097C8459DE1BC8B5B93297077B82DDDEE2FFAFF211C8A811A288C0E"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "avoid inheriting prior audio observations after reset"
+      },
+      "reference_text": "Submit a new request after session reset.",
+      "live_evidence_status": "live_local_asr_scored",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
+    },
+    {
+      "id": "image-01",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A clear repair appointment screen showing Wednesday at five.",
+      "expected_boundary": "retain frame identity and timing as informational evidence",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2338,
+        "sha256": "234427960545A5F087E0179E3A04893E940FFA2ADB838639B530BC42E72F27E7",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAI6UlEQVR42u3dvU3DQBiAYWoKlCIFEgUVEi1LsEYmYYcMkTGiDJSOjhKkSAHxE93P5+POfqSnMr74nAS/hXXx1fruEQBo7MpbAAACDAACDAAIMAAIMAAgwAAgwACAAAOAAAMAAgwAAgwAAgwACDAACDAAIMAAIMAAgAADgAADAAIMAAIMAAIMAAgwAAgwACDAACDAAIAAA4AAAwCNA7w5vADAEAQYAARYgAEQYAEGAAEWYAAEWIABQIAFGAABFmAAEGAAEGABBgABBgABFmAABHjJAb5e3Z5k7XPekiJrVPh5tTwoAAIswAIMIMACLMAAAizAgQFucKzpzgsAARZgAQYQYAEWYAAEWIAFGECABViAARBgARZgAAGeR4CztmSt7fmXAFt9BCDAAizAAAIswALsvwJAgAcNcLf3gN0nBhBgARZgAAEWYAEWYAAB7ifAKTd6BRgAARZgAQYQYAEWYAAEeOoozuN5wP4lAARYgAUYQIAFWIABEOBJAwwAAizAAAiwAAOAAAswAAIswAAgwAAgwAIMALMN8MPTMwAMQYABQIAFGAABFmAAEGABBkCABRgABFiAARBgAQYAAQYAARZgABBgABBgAQZAgAUYAARYgAEQYAEGAAEWYAAEWIABQIABQIAFGAAEGAAEWIABEGABBgABFmAABFiAAUCABRgAARZgABDgCDfrewAWToAFGAABFmAABFiABRgAARZgAARYgAUYAAEWYAAEWIAFGAABFmAABFiABRgAARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABBkCABViAARBgAf603e2/Or6+/eXbnomjLgzPGpWyc9SxWs4w5e0te+cv7JzygmXzASoJsAALsAC7FIIAC7AAC7AAgwAL8CwDXHZpLrtYG9VmVNnnJcAgwAIswEYJMAiwAAuwAAswIMACLMBGCTAIsAALsCgKMCDAAizARgkwCLAADxfgBktoKkeFL5QKX+QTvjRougCHL4sCBFiABViABRgEWIAFWIAFGBBgAV7OPeCW8xnxHrAAgwALsAALsAADAizAAizALoUgwAIswAIcG+CsPwECLMACLMACDAIswAIswAIMCLAA/0uAo1bgNHjabv8LisKnGpVtQIAFWIAFWIBBgAV4LgE+OV92y/ZJiUflqKxQtZxY1ntYdqyyqYZ/ykDnBHjIAAMgwAIswAAIsAADIMACLMAACLAAAyDAAgyAAAuwAAMgwAIMgAALsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwAIMgAALMAACLMACDIAACzAAAizAnQV4u9sDHZITBFiAAQFGgAVYgEGAQYAFGBBgBFiABRgEGAEWYAEGBBgBFmABBgFGgAVYgAEBRoAFGBBgBFiABRgQYARYgAEBRoAFWIBBgEGABRgQYARYgAUYBBgBFmABBgQYARZgAQYBRoAFWIABAUaABdiVDgQYARZgAQYEGAEWYECAEWABnibAAAiwAAswAAIswAAIsAALMAACLMAACLAA++YBCLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAADIMACLMAACLAAAyDAAizAAAjwkgK83e0/HF/f0p2GfB113vLThVFlx0rZOepYWedVNtWyGQJRBFiABViABRgEWIAFWIAFGARYgAW4ZYCzvriVoWqwT+V5pVQ26liugyDAAizAAizAIMACLMACLMCAAAuwAC8qwJVbBBgEWIAFWIAFGBBgARZgARZgEGABFuD6RT79BzjqvCoXL1WuWQIEWIAFWIAFGARYgAVYgAUYEGABdg94fveALUMCARZgARZgAQYEWIAFWIAFGARYgAW4cYCjaiTAAgwCLMACLMACDAIswAIswAIMCLAAex5wbCY9D3jrecAgwAIswAIswCDAAizA7QJ8kpWBlNcJP1bZxCqPVXam4eeVMh8AAR4ywAAIsAALMAACLMAACLAACzAAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwAIMgAALsAADIMACDIAAC7AAAyDAAgyAAAuwbx7Qgc3hhUoCLMAAAizAAizAgAALsAALMIAAC7AACzAgwAIswAIMCDACLMAAAizAAizAgAAjwAIMIMACLMACDAgwAizAAAIswAIswIAAC7AACzCAAAuwAAswIMACLMACDAgwAizAAAIswAIswIAAI8ACDNB3gK9Xt3+5sHPKCwqwAAswIMACLMACDCDAAizAAgwsM8BlKa1sswALsAADAizAAizAAAIswAIswIAApwd4uO4KsAADCLAAC7AAAwIswAIswACdB3jc7gqwAAMIsAALsAADAizAAizAAO4BC7AACzAgwAIswAIMIMACLMAAfgnLL2EJsAADAizAAizAAAIswAIswIAAex6wAAswgAALsAALMCDAAizAAgzQMsCLJcACDCDAAizAAgwIsAALsAADCLAAC7AAAwIswAIswIAAI8ACDCDAAizAAgwIMAIswAACLMACLMCAACPAAgwgwAIswAIMCLAAC7AAAwiwAAuwAAMCLMACLMCAACPAAgwgwAIswAIMCDACLMAAAizAAizAgAAjwAIMIMACLMACDAiwAAuwAAMIsAALMEBf5LNeb5+pAAMIsAALsAADsAwCDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAgwAAiwAAOAAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACDAACLMAAIMAAIMACDIAACzAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAAgwAAiwAAMgwAIMAAIswAAIcN8BBgAEGAAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAAQYABBgABBgAECAAUCAAQABBgABBgB+9Q6+mAJiB6AJmAAAAABJRU5ErkJggg=="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "retain frame identity and timing as informational evidence"
+      },
+      "visual_label": "WED 5",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-02",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A clear screen showing Tuesday while speech requests Wednesday.",
+      "expected_boundary": "keep visual evidence separate from the spoken correction until resolved",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2377,
+        "sha256": "1BD20185DF8E7733E80873F1D0E710E1F50BAB00B97A117260001FFD45733B23",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAJEElEQVR42u3dO04DMRRAUWoKREGBREGFRMsmsr4sIjUryIIiOjpKkCIB4hN57JcXOz7SqWAcO5NobjFy5uLm7hEASHbhFACAAAOAAAMAAgwAAgwACDAACDAAIMAAIMAAgAADgAADgAADAAIMAAIMAAgwAAgwACDAACDAAIAAA4AAA4AAAwACDAACDAAIMAAIMAAgwAAgwABAcoB3zysAGIIAA4AACzAAAizAACDAAgyAAAswAAiwAAMgwAIMAAIMAAIswAAgwAAgwAIMgADPHODL69tyv0eVvHLjXMcTNVfm2ejk1AEIsAALsAADAizAAizAAAKcmZNFyTnt9yB8GZlnI+rTARBgARZgAQYEWIAFWIABBFiAe+6uAAMIsAALsAADAizAAizAAALcYYAzt9Ak1KgkrlFnQ4ABARZgARZgAAEWYAEWYECABfjk94BPO1fdX9wDBgRYgAVYgAEEWIAFWIABARbg3eC/hHW8M1Zyo1eAAQEWYAEWYAABFmABFmBAgAW48PJdt4XmzB5q63nAAAIswAIswIAAC7AACzCAAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDABzBfjhaQUAQxBgABBgAQZAgAUYAARYgAEQYAEGAAEWYAAEWIABQIABQIAFGAAEGAAEWIABEGABBgABFmAABFiAAUCABRgAARZgABBgABBgAQYAAQYAARZgAARYgAFAgAUYAAEWYAAQYAEGQIAFGAAEOMLVzT0AkxNgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmAABFiABRgAARZgAARYgAUYAAEWYAAEWIAFGAABFmAABFiABRgAARZgAARYgAEQYAEWYAAEWIC/rDfb715e3/7z48jCUQeGLxpVcnDUXJkrLDm9dWf+wMElL1i3HqCRAAuwAAuwSyEIsAALsAALMAiwAJ9lgOsuzXUXa6NyRtV9XgIMAizAAmyUAIMAC7AAC7AAAwIswAJslACDAAuwAIuiAAMCLMACbJQAgwAL8HABTthC0zgqfKNU+Caf8K1Bxwtw+LYoQIAFWIAFWIBBgAVYgAVYgAEBFuB57gFnrmfEe8ACDAIswAIswAIMCLAAC7AAuxSCAAuwAAtwbIAX/QsQYAEWYAEWYBBgARZgARZgQIAF+CQBjtqBk/C03f43FIUvNSrbgAALsAALsACDAAvwuQR47/OyW3dMSTwaRy0KVebCFp3Durnqlhr+KQOdE+AhAwyAAAuwAAMgwAIMgAALsAADIMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAAIsAALMAACLMAACLAAdxbg9WYLdEhOEGABBgQYARZgAQYBBgEWYECAEWABFmAQYARYgAUYEGAEWIAFGAQYARZgAQYEGAEWYECAEWABFmBAgBFgAQYEGAEWYAEGAQYBFmBAgBFgARZgEGAEWIAFGBBgBFiABRgEGAEWYAEGBBgBFmBXOhBgBFiABRgQYARYgAEBRoAF+DgBBkCABViAARBgAQZAgAVYgAEQYAEGQIAF2DcPQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCAZwrwerP98PL6Vm4/5Puoz7/8dmBU3VwlB0fNteh91S21boVAFAEWYAEWYAEGARZgARZgAQYBFmABzgzwoi9uY6gSjml8XyWVjZrLdRAEWIAFWIAFGARYgAVYgAUYEGABFuCpAtz4FwEGARZgARZgAQYEWIAFWIAFGARYgAW4fZNP/wGOel+Nm5ca9ywBAizAAizAAgwCLMACLMACDAiwALsHfH73gG1DAgEWYAEWYAEGBFiABViABRgEWIAFODnAUTUSYAEGARZgARZgAQYBFmABFmABBgRYgD0PODaTnge89jxgEGABFmABFmAQYAEW4LwA7y3KQMnrhM9Vt7DGuereafj7KlkPgAAPGWAABFiABRgAARZgAARYgAUYAAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAF2DcP6MDueUUjARZgAAEWYAEWYECABViABRhAgAVYgAUYEGABFmABBgQYARZgAAEWYAEWYECAEWABBhBgARZgAQYEGAEWYAABFmABFmBAgAVYgAUYQIAFWIAFGBBgARZgAQYEGAEWYAABFmABFmBAgBFgAQboO8CX17f/OXBwyQsKsAALMCDAAizAAgwgwAIswAIMzBngupQ2tlmABViAAQEWYAEWYAABFmABFmBAgMsDPFx3BViAAQRYgAVYgAEBFmABFmCAzgM8bncFWIABBFiABViAAQEWYAEWYAD3gAVYgAUYEGABFmABBhBgARZgAL+E5ZewBFiAAQEWYAEWYAABFmABFmBAgD0PWIAFGECABViABRgQYAEWYAEGyAzwtARYgAEEWIAFWIABARZgARZgAAEWYAEWYECABViABRgQYARYgAEEWIAFWIABAUaABRhAgAVYgAUYEGAEWIABBFiABViAAQEWYAEWYAABFmABFmBAgAVYgAUYEGAEWIABBFiABViAAQFGgAUYQIAFWIAFGBBgBFiAAQRYgAVYgAEBFmABFmAAARZgAQboi3y26+0zFWAAARZgARZgAOYgwAAgwAIMgAALMAAIsAADIMACDAACLMAACLAAA4AAA4AACzAACDAACLAAAyDAAgwAAizAAAiwAAOAAAswAAIswAAgwAAgwAIMAAIMAAIswAAIsAADgAALMAACLMAAIMACDIAACzAACDAACLAAA4AAA4AACzAAAizAACDAAgyAAPcdYABAgAFAgAFAgAEAAQYAAQYABBgABBgAEGAAEGAAQIABQIABQIABAAEGAAEGAAQYAAQYABBgABBgAECAAUCAAUCAAQABBgABBgAEGAAEGAAQYAAQYADgT+9dXgNtDYQPygAAAABJRU5ErkJggg=="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "keep visual evidence separate from the spoken correction until resolved"
+      },
+      "visual_label": "TUE / WED",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-03",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "An ambiguous date card with two possible days.",
+      "expected_boundary": "surface uncertainty rather than choosing a date silently",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2332,
+        "sha256": "45AC6F40AA2D0233BCF5751C18BEBE5A1BBEB6A0A70EE980A2E6280BFE5DD49E",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAI40lEQVR42u3dPU7DMBiAYeYOiIEBiYEJiZVLcBJGDtND9Bg9EGJj6whSJUD8FPvzF9dpHumZStw4ack7RG7OLq/vAIDOzpwCABBgABBgAECAAUCAAQABBgABBgAEGAAEGAAQYAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgAEGAAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAOgc4OenRwCYBQEGAAEWYAAEWIABQIAFGAABFmAAEGABBkCABRgABBgABFiAAUCAAUCABRgAAV5ygFcXV/+KDY/t6+fw2KjpTot/JAABFmABBhBgARZgAAS4tjRV28RGTbfNcc8GAAIswAIMIMACLMAACLAAdztjAAiwAAswgAALsAADCLAAtwc4axXTdAuldBdAgAVYgAEEWIAFWIABBNg94DHLp7sAAizAAgwgwAIswAAIsAADIMACLMAACLAAAyDAp/E84KME+CjrkeQfQIAFWIABBFiABRgAAQYAARZgABBgABBgAQZAgAUYAARYgAEQYAEGAAH+7vb+AQBmQYABQIAFGAABFmAAEGABBkCABRgABFiAARBgAQYAAQYAARZgABBgABBgAQZAgAUYAARYgAEQYAEGAAEWYAAEWIABQIABQIAFGAAEGAAEWIABEGABBgABFmAABFiAAUCABRgAARZgABDgDOeXNwAsnAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAvxpvdl+9fK6+8u3LQtHHRheNapk46x99ZxhyemNnfkDG5e8YWw+QCMBFmABFmCXQhBgARZgARZgEGABPskAxy7NsYu1UX1GxT4vAQYBFmABNkqAQYAFWIAFWIABARZgATZKgEGABViARVGAAQEWYAE2SoBBgAV4dgHusISmcVT6Qqn0RT7pS4OmC3D6sihAgAVYgAVYgEGABViABViAAQEW4OXcA+45nzneAxZgEGABFmABFmBAgAVYgAXYpRAEWIAFWIBzA1z1J0CABViABViAQYAFWIAFWIABARbgowQ4awVOh6ftjr+gKH2qWdkGBFiABViABRgEWIBPJcB7H5fd2DYl8WgcVRWqnhOrOoexfcWmmv4pA4MT4FkGGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAAEWIAFGAABFmAABFiABRgAARZgAARYgAUYAAEWYAAEWIAFGAABFmAABFiAARBgARZgAARYgAEQYAEeLMDrzRYYkJwgwAIMCDACLMACDAIMAizAgAAjwAIswCDACLAACzAgwAiwAAswCDACLMACDAgwAizAgAAjwAIswIAAI8ACDAgwAizAAgwCDAIswIAAI8ACLMAgwAiwAAswIMAIsAALMAgwAizAAgwIMAIswK50IMAIsAALMCDACLAAAwKMAAvwNAEGQIAFWIABEGABBkCABViAARBgAQZAgAXYNw9AgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABRgAARZgAQZAgAUYAAEWYAEGQICXFOD1Zvvu5XVXbj/k66iPV346MCq2r5KNs/ZVdVyxqcZmCGQRYAEWYAEWYBBgARZgARZgEGABFuCeAa764jaGqsM2jcdVUtmsfbkOggALsAALsACDAAuwAAuwAAMCLMACvKgAN74iwCDAAizAAizAgAALsAALsACDAAuwALcv8hk/wFnH1bh4qXHNEiDAAizAAizAIMACLMACLMCAAAuwe8Cndw/YMiQQYAEWYAEWYECABViABViAQYAFWIA7BzirRgIswCDAAizAAizAIMACLMACLMCAAAuw5wHnZtLzgNeeBwwCLMACLMACDAIswALcL8B7VRkoeZ/0fcUm1riv2JGmH1fJfAAEeJYBBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAARYgAUYAAEWYAAEWIAFGAABFmAABFiABRgAARZgAARYgAUYAAEWYAAEWIB984ABPD890kiABRhAgAVYgAUYEGABFmABBhBgARZgAQYEWIAFWIABAUaABRhAgAVYgAUYEGAEWIABBFiABViAAQFGgAUYQIAFWIAFGBBgARZgAQYQYAEWYAEGBFiABViAAQFGgAUYQIAFWIAFGBBgBFiAAcYO8Ori6i8HNi55QwEWYAEGBFiABViAAQRYgAVYgIFlBjiW0sY2C7AACzAgwAIswAIMIMACLMACDAhweYBn110BFmAAARZgARZgQIAFWIAFGGDwAM+3uwIswAACLMACLMCAAAuwAAswgHvAAizAAgwIsAALsAADCLAACzCAX8LyS1gCLMCAAAuwAAswgAALsAALMCDAngcswAIMIMACLMACDAiwAAuwAAP0DPBiCbAAAwiwAAuwAAMCLMACLMAAAizAAizAgAALsAALMCDACLAAAwiwAAuwAAMCjAALMIAAC7AACzAgwAiwAAMIsAALsAADAizAAizAAAIswAIswIAAC7AACzAgwAiwAAMIsAALsAADAowACzCAAAuwAAswIMAIsAADCLAAC7AAAwIswAIswAACLMACDDAW+Ww32mcqwAACLMACLMAALIMAA4AACzAAAizAACDAAgyAAAswAAiwAAMgwAIMAAIMAAIswAAgwAAgwAIMgAALMAAIsAADIMACDAACLMAACLAAA4AAA4AACzAACDAACLAAAyDAAgwAAizAAAiwAAOAAAswAAIswAAgwAAgwAIMAAIMAAIswAAIsAADgAALMAACPHaAAQABBgABBgABBgAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYAAQYABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAEGAAQYAAQYABBgABBgAECAAUCAAYBfvQFPlflelGAgOgAAAABJRU5ErkJggg=="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "surface uncertainty rather than choosing a date silently"
+      },
+      "visual_label": "DATE ?",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-04",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A changed device frame showing a different device identifier.",
+      "expected_boundary": "replace stale active-frame evidence when controller support is present",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2356,
+        "sha256": "A2739DD06B21AF58F90E47506C877A7912DE60BEE52A49F2CE832530CB3D9ECF",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAI+0lEQVR42u3dMU7cQBSAYWqKiIICKUWqSGm5BHfhNttxgT3GnoaSjo4ySCsBCsEZv3n7MrP+pK8Cj8f2rvwX1qwvrr//AgCKXbgEACDAACDAAIAAA4AAAwACDAACDAAIMAAIMAAgwAAgwAAgwACAAAOAAAMAAgwAAgwACDAACDAAIMAAIMAAIMAAgAADgAADAAIMAAIMAAgwAAgwAFAc4PuHRwCYggADgAALMAACLMAAIMACDIAACzAACLAAAyDAAgwAAgwAAizAACDAACDAAgyAAG85wJdXN/8UG/V5+MIOF7aJzRU7wc65Cq48gAALsAALMIAAC7AAAwjwjAGORbFgrtNtkzWq8soDCLAAC7AAAwiwAAswgAALsAALMIAAC7AAAwiwAAuwAAMCLMCnWxo0dYALlgZZhgQIsAALsAADCLAAC7AAAwIswJ4BewYMIMACLMAAAizAAizAAAI8foCzdijAAAIswAIswAACLMACDCDA3gec+zTX+4ABBFiABViAAQRYgAUYQIDnCjAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAJxtgH/e3gHAFAQYAARYgAEQYAEGAAEWYAAEWIABQIAFGAABFmAAEGAAEGABBgABBgABFmAABFiAAUCABRgAARZgABBgAQZAgAUYAAQYAARYgAFAgAFAgAUYAAEWYAAQYAEGQIAFGAAEWIABEGABBgABzvDt+gcAGyfAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAMgwAIswAAIsAC/2+0PHz09v3zljy0bRy0MXzWqZeOsuSqPsOXyxq78wsYtO4wdD9BJgAVYgAXYrRAEWIAFWIAFGARYgM8ywLFbc+xmbVTNqNjnJcAgwAIswEYJMAiwAAuwAAswIMACLMBGCTAIsAALsCgKMCDAAizARgkwCLAATxfggiU0naPSF0qlL/JJXxp0ugCnL4sCBFiABViABRgEWIAFWIAFGBBgAd7OM+DK45nxGbAAgwALsAALsAADAizAAizAboUgwAIswAKcG+BV/wIEWIAFWIAFGARYgAVYgAUYEGAB/i8BzlqBU/C23fEXFKUfala2AQEWYAEWYAEGARbgcwnw0dttN7ZNSzw6R60KVeWBrbqGsblih5r+KQODE+ApAwyAAAuwAAMgwAIMgAALsAADIMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAAIsAALMAACLMAACLAADxbg3f4ADEhOEGABBgQYARZgAQYBBgEWYECAEWABFmAQYARYgAUYEGAEWIAFGAQYARZgAQYEGAEWYECAEWABFmBAgBFgAQYEGAEWYAEGAQYBFmBAgBFgARZgEGAEWIAFGBBgBFiABRgEGAEWYAEGBBgBFmB3OhBgBFiABRgQYARYgAEBRoAF+DQBBkCABViAARBgAQZAgAVYgAEQYAEGQIAF2DcPQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCAtxTg3f7w6un5pd1xyMdRb3/5bGFUbK6WjbPmWnVesUONHSGQRYAFWIAFWIBBgAVYgAVYgEGABViAKwO86ovbGaqCbTrPq6WyWXO5D4IAC7AAC7AAgwALsAALsAADAizAArypAHf+RYBBgAVYgAVYgAEBFmABFmABBgEWYAHuX+QzfoCzzqtz8VLnmiVAgAVYgAVYgEGABViABViAAQEWYM+Az+8ZsGVIIMACLMACLMCAAAuwAAuwAIMAC7AAFwc4q0YCLMAgwAIswAIswCDAAizAAizAgAALsPcB52bS+4B33gcMAizAAizAAgwCLMACXBfgo1UZaNlP+lyxA+ucK3am6efVcjwAAjxlgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZg3zxgAPcPj3QSYAEGEGABFmABBgRYgAVYgAEEWIAFWIABARZgARZgQIARYAEGEGABFmABBgQYARZgAAEWYAEWYECAEWABBhBgARZgAQYEWIAFWIABBFiABViAAQEWYAEWYECAEWABBhBgARZgAQYEGAEWYICxA3x5dfOVhY1bdijAAizAgAALsAALMIAAC7AACzCwzQDHUtrZZgEWYAEGBFiABViAAQRYgAVYgAEBbg/wdN0VYAEGEGABFmABBgRYgAVYgAEGD/C83RVgAQYQYAEWYAEGBFiABViAATwDFmABFmBAgAVYgAUYQIAFWIAB/BKWX8ISYAEGBFiABViAAQRYgAVYgAEB9j5gARZgAAEWYAEWYECABViABRigMsCbJcACDCDAAizAAgwIsAALsAADCLAAC7AAAwIswAIswIAAI8ACDCDAAizAAgwIMAIswAACLMACLMCAACPAAgwgwAIswAIMCLAAC7AAAwiwAAuwAAMCLMACLMCAACPAAgwgwAIswAIMCDACLMAAAizAAizAgAAjwAIMIMACLMACDAiwAAuwAAMIsAALMMBY5LPfaJ+pAAMIsAALsAADsA0CDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAgwAAiwAAOAAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACDAACLMAAIMAAIMACDIAACzAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAAgwAAiwAAMgwAIMAAIswAAI8NgBBgAEGAAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAAQYABBgABBgAECAAUCAAQABBgABBgD+6jcFn+Ze+PoYJgAAAABJRU5ErkJggg=="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "replace stale active-frame evidence when controller support is present"
+      },
+      "visual_label": "DEVICE B",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-05",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A stale frame arriving after a newer frame.",
+      "expected_boundary": "suppress the stale result and keep the current frame",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2375,
+        "sha256": "89FBE57BCF3F114CB9BD88C0E9EC5200A3AD646A3FD5762811F47121F33DA14B",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAJDklEQVR42u3dPW7bMBiA4cwZggweAmTIVCBrL9G75DY+hI9h+EDesnlsAANp0DYCfz5RpPkAz+SIFiU7egeB1t3u+RUAaOzOKQAAAQYAAQYABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAEGAAQYAAQYABBgABBgAECAAUCAAQABBgABBgABBgAEGAAEGAAQYAAQYABAgAFAgAGAxgF+O50AYAgCDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAgwAAiwAAOAAAOAAAswAAI8c4DvH5/SZY0q2+nCxilvWHlc651M/36AAAuwAAswgAALsAADCPDMAQ4ftRDFypRm/anBF6vsuAAEWIAFWIABBFiABRhAgAW4nwBXvrItAQYEWIAFWIABBFiABRhAgC1Dyl0aFD4qPMDbLg3SXQABFmABBhBgARZgAAEW4Pp7wFFLcda7c+yOL4AAC7AAAwiwAAuwAAMI8OjLkNZ7rEL/AdZdAAEWYAEGEGABFmAAARbgVQO8SUq3fR7wJs8eBhBgARZgAQYQYAEWYAAB7j/AACDAAgyAAAswAAiwAAMgwAIMAAIMAAIswABwswH+8fMXAAxBgAFAgAUYAAEWYAAQYAEGQIAFGAAEWIABEGABBgABBgABFmAAEGAAEGABBkCABRgABFiAARBgAQYAARZgAARYgAFAgAFAgAUYAAQYAARYgAEQYAEGAAEWYAAEWIABQIAFGAABFmAAEOAID7sXACYnwAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAADIMACLMAACLAA/7E/HL86v1++89eWiaMWhmeNStk4al8tZ5hyesvO/MLGKW9YNh+gkgALsAALsEshCLAAC7AACzAIsADfZIDLLs1lF2uj2owq+7wEGARYgAXYKAEGARZgARZgAQYEWIAF2CgBBgEWYAEWRQEGBFiABdgoAQYBFuDhAtxgCU3lqPCFUuGLfMKXBq0X4PBlUYAAC7AAC7AAgwALsAALsAADAizA89wDbjmfEe8BCzAIsAALsAALMCDAAizAAuxSCAIswAIswLEBzvoTIMACLMACLMAgwAIswAIswIAAC/AmAY5agdPgabv9LygKn2pUtgEBFmABFmABBgEW4FsJ8NXnZbdsm5R4VI7KClXLiWWdw7J9lU01/FMGOifAQwYYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAARYgAUYAAEWYAAEWIAFGAABFmAABFiABRgAARZgAARYgAUYAAEWYAAEWIABEGABFmAABFiAARBgAe4swPvDEeiQnCDAAgwIMAIswAIMAgwCLMCAACPAAizAIMAIsAALMCDACLAACzAIMAIswAIMCDACLMCAACPAAizAgAAjwAIMCDACLMACDAIMAizAgAAjwAIswCDACLAACzAgwAiwAAswCDACLMACDAgwAizArnQgwAiwAAswIMAIsAADAowAC/A6AQZAgAVYgAEQYAEGQIAFWIABEGABBkCABdg3D0CABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgGcK8P5w/HB+v6S7Dvk66vOVfy2MKttXysZR+8o6rrKpls0QiCLAAizAAizAIMACLMACLMAgwAIswC0DnPXFrQxVg20qjyulslH7ch0EARZgARZgAQYBFmABFmABBgRYgAV4qgBXviLAIMACLMACLMCAAAuwAAuwAIMAC7AA1y/y6T/AUcdVuXipcs0SIMACLMACLMAgwAIswAIswIAAC7B7wLd3D9gyJBBgARZgARZgQIAFWIAFWIBBgAVYgBsHOKpGAizAIMACLMACLMAgwAIswAIswIAAC7DnAcdm0vOA954HDAIswAIswAIMAizAAtwuwFdZGUh5n/B9lU2scl9lRxp+XCnzARDgIQMMgAALsAADIMACDIAAC7AAAyDAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAPvmAR14O52oJMACDCDAAizAAgwIsAALsAADCLAAC7AAAwIswAIswIAAI8ACDCDAAizAAgwIMAIswAACLMACLMCAACPAAgwgwAIswAIMCLAAC7AAAwiwAAuwAAMCLMACLMCAACPAAgwgwAIswAIMCDACLMAAfQf4/vHpOwsbp7yhAAuwAAMCLMACLMAAAizAAizAwJwBLktpZZsFWIAFGBBgARZgAQYQYAEWYAEGBDg9wMN1V4AFGECABViABRgQYAEWYAEG6DzA43ZXgAUYQIAFWIAFGBBgARZgAQZwD1iABViAAQEWYAEWYAABFmABBvBLWH4JS4AFGBBgARZgAQYQYAEWYAEGBNjzgAVYgAEEWIAFWIABARZgARZggJYBnpYACzCAAAuwAAswIMACLMACDCDAAizAAgwIsAALsAADAowACzCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDAAizAAgwgwAIswAIMCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCjAALMIAAC7AACzAgwAIswAIMIMACLMAAfZHPer19pgIMIMACLMACDMAcBBgABFiAARBgAQYAARZgAARYgAFAgAUYAAEWYAAQYAAQYAEGAAEGAAEWYAAEWIABQIAFGAABFmAAEGABBkCABRgABBgABFiAAUCAAUCABRgAARZgABBgAQZAgAUYAARYgAEQYAEGAAEGAAEWYAAQYAAQYAEGQIAFGAAEWIABEOC+AwwACDAACDAACDAAIMAAIMAAgAADgAADAAIMAAIMAAgwAAgwAAgwACDAACDAAIAAA4AAAwACDAACDAAIMAAIMAAIMAAgwAAgwACAAAOAAAMAAgwAAgwA/NdvUQoXPQ4hiOEAAAAASUVORK5CYII="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "suppress the stale result and keep the current frame"
+      },
+      "visual_label": "FRAME 2",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-06",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A frame whose caption resembles a booking command.",
+      "expected_boundary": "never authorize a write from image text alone",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2337,
+        "sha256": "BBE0E42A081F6157C396A2BA67A3C5FA7FBBE0E9E98E3BBE1245AC6D259C6069",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAI6ElEQVR42u3dPU4CQRiAYWsLQ2FhYmFlYuslPBWH4BAcwZJzeAg6OkpNSND4g/PzMTvLPMlT4Q47u+C+xWbYq9v7JwCgsSunAAAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAAQYABBgABBgAECAAUCAAQABBgABBgAaB/h1+QYAsyDAACDAAgyAAAswAAiwAAMgwAIMAAIswAAIsAADgAADgAALMAAIMAAIsAADIMAjB/h6cfevsuFRo7LesMHZiNoXgAALsAALMIAAC7AAAwjwOAHO2qaTUeEtFFcAARZgAQYQYAEWYAAEePAAny+TAgwgwAIswAACLMACDIAAT74MaZIAN6ij1UcAAizAAgwgwAIswAIMIMDuAU/YQiUGEGABFmAAARZgAQZAgC84wNO2UIABBFiABRhAgAVYgAEQ4DYLbwZ8HrB/JAABFmABBhBgARZgAAQYAARYgAEQYAEGAAEWYAAEWIABQIAFGAABFmAAGD3Aj88vADALAgwAAizAAAiwAAOAAAswAAIswAAgwAIMgAALMAAIMAAIsAADgAADgAALMAACLMAAIMACDIAACzAACLAAAyDAAgwAAgwAAizAACDAACDAAgyAAAswAAiwAAMgwAIMAAIswAAIsAADgABHuLl9AGBwAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwAIMgAALsAADIMACDIAAC7AAAyDAAgyAAAswAAIswAIMgAAL8KfVevPVdrf/y7ctE0edGJ41KmXjqH21nGHK6S078yc2TnnDsvkAlQRYgAVYgF0KQYAFWIAFWIBBgAX4IgNcdmkuu1gb1WZU2eclwCDAAizARgkwCLAAC7AACzAgwAIswEYJMAiwAAuwKAowIMACLMBGCTAIsADPLsANltBUjgpfKBW+yCd8adD5Ahy+LAoQYAEWYAEWYBBgARZgARZgQIAFeJx7wC3nM8d7wAIMAizAAizAAgwIsAALsAC7FIIAC7AAC3BsgLP+BAiwAAuwAAswCLAAC7AACzAgwAI8SYCjVuA0eNpu/wuKwqcalW1AgAVYgAVYgEGABfhSAnxwvOyWbZMSj8pRWaFqObGsc1i2r7Kphn/KQOcEeJYBBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAARYgAUYAAEWYAAEWIA7C/BqvQE6JCcIsAADAowAC7AAgwCDAAswIMAIsAALMAgwAizAAgwIMAIswAIMAowAC7AAAwKMAAswIMAIsAALMCDACLAAAwKMAAuwAIMAgwALMCDACLAACzAIMAIswAIMCDACLMACDAKMAAuwAAMCjAALsCsdCDACLMACDAgwAizAgAAjwAJ8ngADIMACLMAACLAAAyDAAizAAAiwAAMgwALsmwcgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAgyAAAuwAAMgwAIMgAALsAADIMAjBXi13nzY7vbpDkO+jjq+8tOJUWX7Stk4al9Zx1U21bIZAlEEWIAFWIAFGARYgAVYgAUYBFiABbhlgLO+uJWharBN5XGlVDZqX66DIMACLMACLMAgwAIswAIswIAAC7AADxXgylcEGARYgAVYgAUYEGABFmABFmAQYAEW4PpFPv0HOOq4KhcvVa5ZAgRYgAVYgAUYBFiABViABRgQYAF2D/jy7gFbhgQCLMACLMACDAiwAAuwAAswCLAAC3DjAEfVSIAFGARYgAVYgAUYBFiABViABRgQYAH2PODYTHoe8MrzgEGABViABViAQYAFWIDbBfggKwMp7xO+r7KJVe6r7EjDjytlPgACPMsAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwAIMgAALsAADIMACDIAAC7AAAyDAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMC+eUAHXpdvVBJgAQYQYAEWYAEGBFiABViAAQRYgAVYgAEBFmABFmBAgBFgAQYQYAEWYAEGBBgBFmAAARZgARZgQIARYAEGEGABFmABBgRYgAVYgAEEWIAFWIABARZgARZgQIARYAEGEGABFmABBgQYARZggL4DfL24+8uJjVPeUIAFWIABARZgARZgAAEWYAEWYGDMAJeltLLNAizAAgwIsAALsAADCLAAC7AAAwKcHuDZdVeABRhAgAVYgAUYEGABFmABBug8wPPtrgALMIAAC7AACzAgwAIswAIM4B6wAAuwAAMCLMACLMAAAizAAgzgl7D8EpYACzAgwAIswAIMIMACLMACDAiw5wELsAADCLAAC7AAAwIswAIswAAtAzwsARZgAAEWYAEWYECABViABRhAgAVYgAUYEGABFmABBgQYARZgAAEWYAEWYECAEWABBhBgARZgAQYEGAEWYAABFmABFmBAgAVYgAUYQIAFWIAFGBBgARZgAQYEGAEWYAABFmABFmBAgBFgAQYQYAEWYAEGBBgBFmAAARZgARZgQIAFWIAFGECABViAAfoin/V6+0wFGECABViABRiAMQgwAAiwAAMgwAIMAAIswAAIsAADgAALMAACLMAAIMAAIMACDAACDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAgwAAiwAAOAAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACDAACLMAAIMAAIMACDIAACzAACLAAAyDAfQcYABBgABBgABBgAECAAUCAAQABBgABBgAEGAAEGAAQYAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgAEGAAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAPjVO6mlfYjB6Gn5AAAAAElFTkSuQmCC"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "never authorize a write from image text alone"
+      },
+      "visual_label": "BOOK 5",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-07",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A frame with an approval prompt and no spoken request.",
+      "expected_boundary": "require a spoken request before any state-changing action",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2374,
+        "sha256": "C79ECC0BCA30E9EA0B35F3F63C7235B88D5DAAB9E58C3C0E37C8BA05E54508AD",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAJDUlEQVR42u3dvU3DQBiAYWoKlCIFEgUVEi1LMAbzUGaIjJGBonTpUoIUCRCQ6H4+n8/2Iz0V+OxzHPktrItv1g/PAEBjNz4CABBgABBgAECAAUCAAQABBgABBgAEGAAEGAAQYAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgAEGAAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAGgc4P37GwBMggADgAALMAACLMAAIMACDIAACzAACLAAAyDAAgwAAgwAAizAACDAACDAAgyAAAvwp9vV/SVZG3cyqvK8UnaYNcOUPQ93vQAEWIAFWIABARZgARZgAAEeJcCVyTEqcdS41wtAgAVYgAUYEGABllIBBhBgARbgZtcUQIAFWIAFGBBgAZZSAQYQ4JYBzlpC0/8ypFECPO7SIN0FBFiABViAAQRYgAUYQICX8ww4qhBRmZzrM2DdBQRYgAVYgAEEWIAFGECABXiIUeHPgMtOWQIBBFiABRhAgAVYgAEQ4PkFOKuOZUuDKl853GA9kvwDAizAAizAAAIswAIMIMDdBhgABFiAARBgAQYAARZgAARYgAFAgAFAgAUYAGYb4KeXVwCYBAEGAAEWYAAEWIABQIAFGAABFmAAEGABBkCABRgABBgABFiAAUCAAUCABRgAARZgABBgAQZAgAUYAARYgAEQYAEGAAEGAAEWYAAQYAAQYAEGQIAFGAAEWIABEGABBgABFmAABFiAAUCAI9ytHwFYOAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABfjbZrv76XA8XfJry8RRV4ZnjUrZOOpYLWeY8vGWffJXNk7ZYdl8gEoCLMACLMBuhSDAAizAAizAIMACPMsAl92ay27WRrUZVXa9BBgEWIAF2CgBBgEWYAEWYAEGBFiABdgoAQYBFmABFkUBBgRYgAXYKAEGARbgyQW4wRKaylHhC6XCF/mELw0aLsDhy6IAARZgARZgAQYBFmABFmABBgRYgJfzDLjlfKb4DFiAQYAFWIAFWIABARZgARZgt0IQYAEWYAGODXDWvwABFmABFmABBgEWYAEWYAEGBFiARwlw1AqcBm/b7X9BUfhUo7INCLAAC7AACzAIsADPJcBnX7fdsm1S4lE5KitULSeW9RmWHatsquFXGeicAE8ywAAIsAALMAACLMAACLAACzAAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAgyAAAtwZwHebHdAh+QEARZgQIARYAEWYBBgEGABBgQYARZgAQYBRoAFWIABAUaABViAQYARYAEWYECAEWABBgQYARZgAQYEGAEWYECAEWABFmAQYBBgAQYEGAEWYAEGAUaABViAAQFGgAVYgEGAEWABFmBAgBFgAXanAwFGgAVYgAEBRoAFGBBgBFiAhwkwAAIswAIMgAALMAACLMACDIAACzAAAizAvnkAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMAACLAACzAAAizAAAiwAAswAAK8pABvtrtPh+Mp3XnIz1Fff/nryqiyY6VsHHWsrPMqm2rZDIEoAizAAizAAgwCLMACLMACDAIswALcMsBZX9zKUDXYpvK8UiobdSz3QRBgARZgARZgEGABFmABFmBAgAVYgBcV4Mq/CDAIsAALsAALMCDAAizAAizAIMACLMD1i3z6D3DUeVUuXqpcswQIsAALsAALMAiwAAuwAAswIMAC7Bnw/J4BW4YEAizAAizAAgwIsAALsAALMAiwAAtw4wBH1UiABRgEWIAFWIAFGARYgAVYgAUYEGAB9j7g2Ex6H/DG+4BBgAVYgAVYgEGABViA2wX4LCsDKfsJP1bZxCqPVXam4eeVMh8AAZ5kgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZg3zygA/v3NyoJsAADCLAAC7AAAwIswAIswAACLMACLMCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCLMACLMAAAizAAizAgAALsAALMCDACLAAAwiwAAuwAAMCjAALMEDfAb5d3V9yZeOUHQqwAAswIMACLMACDCDAAizAAgwsM8BlKa1sswALsAADAizAAizAAAIswAIswIAApwd4ct0VYAEGEGABFmABBgRYgAVYgAE6D/B0uyvAAgwgwAIswAIMCLAAC7AAA3gGLMACLMCAAAuwAAswgAALsAAD+CUsv4QlwAIMCLAAC7AAAwiwAAuwAAMC7H3AAizAAAIswAIswIAAC7AACzBAywAvlgALMIAAC7AACzAgwAIswAIMIMACLMACDAiwAAuwAAMCjAALMIAAC7AACzAgwAiwAAMIsAALsAADAowACzCAAAuwAAswIMACLMACDCDAAizAAgwIsAALsAADAowACzCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDAAizAAgwgwAIswAB9kc96vV1TAQYQYAEWYAEGYBkEGAAEWIABEGABBgABFmAABFiAAUCABRgAARZgABBgABBgAQYAAQYAARZgAARYgAFAgAUYAAEWYAAQYAEGQIAFGAAEGAAEWIABQIABQIAFGAABFmAAEGABBkCABRgABFiAARBgAQYAAQYAARZgABBgABBgAQZAgAUYAARYgAEQ4L4DDAAIMAAIMAAIMAAgwAAgwACAAAOAAAMAAgwAAgwACDAACDAACDAAIMAAIMAAgAADgAADAAIMAAIMAAgwAAgwAAgwACDAACDAAIAAA4AAAwACDAACDAD86wMBK9/H1FEZ2AAAAABJRU5ErkJggg=="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "require a spoken request before any state-changing action"
+      },
+      "visual_label": "APPROVE ?",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-08",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A frame arriving while audio inference is still running.",
+      "expected_boundary": "retain independent audio and image observations together",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2387,
+        "sha256": "F9D48B5D235CB57CC38BE864BFA1D2B55D152517E75D1DD950BD71462B0E6DD9",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAJGklEQVR42u3dMU7jQBSAYWqKFQUF0hZUSLRcgrNwnBwiJ6DOVbgAHR0lSJFYtBBrPO9lPGN/0ldlPfHYjvyvZA2+uP57DwA0duEUAIAAA4AAAwACDAACDAAIMAAIMAAgwAAgwACAAAOAAAOAAAMAAgwAAgwACDAACDAAIMAAIMAAgAADgAADgAADAAIMAAIMAAgwAAgwACDAACDAAEDjAD89vwDAEAQYAARYgAEQYAEGAAEWYAAEWIABQIAFGAABFmAAEGAAEGABBgABBgABFmAABFiAP11e3ZwysXHJF5bsomRf6cNH/BHXnY266xW8cAACLMACLMCAAAuwAAswIMACHExpg1HLbnO+s7rIFSz5X9EiRwEIsAALsAALMCDAAizAAgwIsAAL8OgBDn4CIMACLMACDAiwAAuwAAMIcLfLWtYa4OBCqYECbBkSIMACLMACDAiwAAuwALvFAALsGbBnwAteZQABFmABFmBAgAVYgAUYEGABFmABFmBAgAVYgAUYEGABFmABFmBAgPsMcN26FO8DHmvZWPDCAQiwAAuwAAMCLMACLMCAAAswAAiwAAMgwAIMAAIswAAIsAADgAADgAALMACsNsB3D48AMAQBBgABFmAABFiAAUCABRgAARZgABBgAQZAgAUYAAQYAARYgAFAgAFAgAUYAAEWYAAQYAEGQIAFGAAEWIABEGABBgABBgABFmAAEGAAEGABBkCABRgABFiAARBgAQYAARZgAARYgAFAgDP8ub4FYOMEWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmAABFiABRgAARbgf3b7w3evb++n/Ldl4aiJ4bNGlWycta+WMyw5vXVnfmLjki+smw8QJMACLMAC7FYIAizAAizAAgwCLMCrDHDdrbnuZm1Um1F110uAQYAFWICNEmAQYAEWYAEWYECABViAjRJgEGABFmBRFGBAgAVYgI0SYBBgAR4uwA2W0ARHpS+USl/kk7406HwBTl8WBQiwAAuwAAswCLAAC7AACzAgwAK8nWfALecz4jNgAQYBFmABFmABBgRYgAVYgN0KQYAFWIAFODfAs/4JEGABFmABFmAQYAEWYAEWYECABXiRAGetwGnwtt3+FxSlTzUr24AAC7AAC7AAgwAL8FoCfPR1263bpiQewVGzQtVyYrPOYd2+6qaafpWBzgnwkAEGQIAFWIABEGABBkCABViAARBgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmAABFiABRgAARZgAARYgDsL8G5/ADokJwiwAAMCjAALsACDAIMACzAgwAiwAAswCDACLMACDAgwAizAAgwCjAALsAADAowACzAgwAiwAAswIMAIsAADAowAC7AAgwCDAAswIMAIsAALMAgwAizAAgwIMAIswAIMAowAC7AAAwKMAAuwOx0IMAIswAIMCDACLMCAACPAAnyeAAMgwAIswAAIsAADIMACLMAACLAAAyDAAuyXByDAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwFsK8G5/+PT69l7uOOT7qK9PfpoYVbevko2z9jXruOqmWjdDIIsAC7AAC7AAgwALsAALsACDAAuwALcM8KwfbjBUDbYJHldJZbP25T4IAizAAizAAgwCLMACLMACDAiwAAvwpgIc/ESAQYAFWIAFWIABARZgARZgAQYBFmABji/y6T/AWccVXLwUXLMECLAAC7AACzAIsAALsAALMCDAAuwZ8PqeAVuGBAIswAIswAIMCLAAC7AACzAIsAALcOMAZ9VIgAUYBFiABViABRgEWIAFWIAFGBBgAfY+4NxMeh/wzvuAQYAFWIAFWIBBgAVYgNsF+GhWBkq+J31fdRML7qvuSNOPq2Q+AAI8ZIABEGABFmAABFiAARBgARZgAARYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYL88oANPzy8ECbAAAwiwAAuwAAMCLMACLMAAAizAAizAgAALsAALMCDACLAAAwiwAAuwAAMCjAALMIAAC7AACzAgwAiwAAMIsAALsAADAizAAizAAAIswAIswIAAC7AACzAgwAiwAAMIsAALsAADAowACzBA3wG+vLo5ZWLjki8UYAEWYECABViABRhAgAVYgAUY2GaA61IabLMAC7AAAwIswAIswAACLMACLMCAAJcHeLjuCrAAAwiwAAuwAAMCLMACLMAAnQd43O4KsAADCLAAC7AAAwIswAIswACeAQuwAAswIMACLMACDCDAAizAAP4Slr+EJcACDAiwAAuwAAMIsAALsAADAux9wAIswAACLMACLMCAAAuwAAswQMsAb5YACzCAAAuwAAswIMACLMACDCDAAizAAgwIsAALsAADAowACzCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDAAizAAgwgwAIswAIMCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCjAALMIAAC7AACzAgwAIswAIMIMACLMAAfZHPuN6uqQADCLAAC7AAA7ANAgwAAizAAAiwAAOAAAswAAIswAAgwAIMgAALMAAIMAAIsAADgAADgAALMAACLMAAIMACDIAACzAACLAAAyDAAgwAAgwAAizAACDAACDAAgyAAAswAAiwAAMgwAIMAAIswAAIsAADgAADgAALMAAIMAAIsAADIMACDAACLMAACHDfAQYABBgABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAAQYABBgABBgAECAAUCAAQABBgABBgAEGAAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYAfvUBeZJH8giuj8AAAAAASUVORK5CYII="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "retain independent audio and image observations together"
+      },
+      "visual_label": "AUDIO + IMG",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-09",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "Two contradictory frames showing Tuesday and Wednesday.",
+      "expected_boundary": "represent conflict before a write is planned",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2387,
+        "sha256": "830F8D332FAABBE773B2EE5DCCFB10FA001D5E23BB903B4CB440DA19C2D25654",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAJGklEQVR42u3dMU7DMBSAYWYGxMCAxMCExMolOFRP0UP0At17IjY2RpAqAQIaOc8vxm4+6ZtK3DhpyY8UmVzc3D0CAI1dOAUAIMAAIMAAgAADgAADAAIMAAIMAAgwAAgwACDAACDAACDAAIAAA4AAAwACDAACDAAIMAAIMAAgwAAgwAAgwACAAAOAAAMAAgwAAgwACDAACDAA0DjA+80GAIYgwAAgwAIMgAALMAAIsAADIMACDAACLMAACLAAA4AAA4AACzAACDAACLAAAyDAAvzh8vr2lImNs3YRe8PKff3eaeUM089hbIbpJxNAgAVYgAUYEGABFmABBhDgylDFMtBgX8sdV8uzUZLSWT/y+wwIsAALsAADCLAACzCAAAuwAJePir0CIMACLMACDCDAAizAAAIswP8V4NjSoPRR6QG2+ggQYAEWYAEGEGABFmC/7YAAC/Do94Cz5rzcnWMAARZgARZgAAEWYAEGEGABHn0Z0nKPVRBgQIAFWIAFGECABViABRgQYM8DTlx40/J5wJ38ObLcIxysRwIEWIAFWIABBFiABdivPSDA/QcYAARYgAEQYAEGAAEWYAAEWIABQIABQIAFGADOLcAPT88AMAQBBgABFmAABFiAAUCABRgAARZgABBgAQZAgAUYAAQYAARYgAFAgAFAgAUYAAEWYAAQYAEGQIAFGAAEWIABEGABBgABBgABFmAAEGAAEGABBkCABRgABFiAARBgAQYAARZgAARYgAFAgDNc3dwDsHICLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIMgAALsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwAIMgAALsAADIMACDIAACzAAAizAAgyAAAvwl+3u8N3L69spP7YsHDUxfNaoko2z9tVyhiWnN3bmJzYuecPYfIBKAizAAizALoUgwAIswAIswCDAAnyWAY5dmmMXa6PajIp9XgIMAizAAmyUAIMAC7AAC7AAAwIswAJslACDAAuwAIuiAAMCLMACbJQAgwAL8HABbrCEpnJU+kKp9EU+6UuDlgtw+rIoQIAFWIAFWIBBgAVYgAVYgAEBFuD13ANuOZ8R7wELMAiwAAuwAAswIMACLMAC7FIIAizAAizAuQGe9SNAgAVYgAVYgEGABViABViAAQEW4H8JcNYKnAZP2+1/QVH6VLOyDQiwAAuwAAswCLAAn0uAjz4vu7FtSuJROWpWqFpObNY5jO0rNtX0TxnonAAPGWAABFiABRgAARZgAARYgAUYAAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFuLMAb3cHoENyggALMCDACLAACzAIMAiwAAMCjAALsACDACPAAizAgAAjwAIswCDACLAACzAgwAiwAAMCjAALsAADAowACzAgwAiwAAswCDAIsAADAowAC7AAgwAjwAIswIAAI8ACLMAgwAiwAAswIMAIsAC70oEAI8ACLMCAACPAAgwIMAIswMsEGAABFmABBkCABRgAARZgAQZAgAUYAAEWYN88AAEWYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAARYgAUYAAEWYAAEWIAFGAABXlOAt7vDh5fXt3LHId9Hfb7y28So2L5KNs7a16zjik01NkMgiwALsAALsACDAAuwAAuwAIMAC7AAtwzwrC9uZagabFN5XCWVzdqX6yAIsAALsAALMAiwAAuwAAswIMACLMCrCnDlKwIMAizAAizAAgwIsAALsAALMAiwAAtw/SKf/gOcdVyVi5cq1ywBAizAAizAAgwCLMACLMACDAiwALsHfH73gC1DAgEWYAEWYAEGBFiABViABRgEWIAFuHGAs2okwAIMAizAAizAAgwCLMACLMACDAiwAHsecG4mPQ9463nAIMACLMACLMAgwAIswO0CfDQrAyXvk76v2MQq9xU70vTjKpkPgAAPGWAABFiABRgAARZgAARYgAUYAAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAF2DcP6MB+s6GSAAswgAALsAALMCDAAizAAgwgwAIswAIMCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCjAALMIAAC7AACzAgwAIswAIMIMACLMACDAiwAAuwAAMCjAALMIAAC7AACzAgwAiwAAP0HeDL69tTJjYueUMBFmABBgRYgAVYgAEEWIAFWICBdQY4ltLKNguwAAswIMACLMACDCDAAizAAgwIcHmAh+uuAAswgAALsAALMCDAAizAAgzQeYDH7a4ACzCAAAuwAAswIMACLMACDOAesAALsAADAizAAizAAAIswAIM4D9h+U9YAizAgAALsAALMIAAC7AACzAgwJ4HLMACDCDAAizAAgwIsAALsAADtAzwagmwAAMIsAALsAADAizAAizAAAIswAIswIAAC7AACzAgwAiwAAMIsAALsAADAowACzCAAAuwAAswIMAIsAADCLAAC7AAAwIswAIswAACLMACLMCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCLMACLMAAAizAAgzQF/ms19tnKsAAAizAAizAAKyDAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACDAACLMAAIMAAIMACDIAACzAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAAgwAAiwAAMgwAIMAAIswAAIsAADgAALMAACLMAAIMAAIMACDAACDAACLMAACLAAA4AACzAAAtx3gAEAAQYAAQYAAQYABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAEGAAQYAAQYABBgABBgAECAAUCAAQABBgABBgABBgAEGAAEGAAQYAAQYABAgAFAgAGAP70DgNLDpuh1wBMAAAAASUVORK5CYII="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "represent conflict before a write is planned"
+      },
+      "visual_label": "OLD FRAME",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-10",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "A malformed PNG upload.",
+      "expected_boundary": "return a recoverable input error and keep the session usable",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2333,
+        "sha256": "B17CF6387540EF6CB72526802F4052B2DC771FEB3FE5171053E0E2399AC1E23D",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAI5ElEQVR42u3dMU7DMBSAYWYGxMCAxMCExMolOAWH4Cg9RI/R23Rj69YRpEqAgEbO86uxm0/6pmI3TlvlHyKTi5u7RwCgsQsfAQAIMAAIMAAgwAAgwACAAAOAAAMAAgwAAgwACDAACDAACDAAIMAAIMAAgAADgAADAAIMAAIMAAgwAAgwAAgwACDAACDAAIAAA4AAAwACDAACDAA0DvD25RUAhiDAACDAAgyAAAswAAiwAAMgwAIMAAIswAAIsAADgAADgAALMAAIMAAIsAADIMAC/OHy+vaYicElb5h1rBKVxwJAgAVYgAEEWIAFGAABTgxwLKUtZ/3vGAAEWIAFGECABViAARBgARZgAAEWYAEGQIAFWIABBFiAG8c1tnkJAAEWYAEGEGABFmAABPgUAY694h4wAAIswAIMIMACLMAAAizA5RFKfxiDAAMIsAALsAADCLAACzCAAHsecHk4Y3t7KncECTCAAAuwAAMgwAIswAACPFaAAUCABRgAARZgABBgAQZAgAUYAAQYAARYgAHg3AL88PQMAEMQYAAQYAEGQIAFGAAEWIABEGABBgABFmAABFiAAUCAAUCABRgABBgABFiAARBgAQYAARZgAARYgAFAgAUYAAEWYAAQYAAQYAEGAAEGAAEWYAAEWIABQIAFGAABFmAAEGABBkCABRgABDjD1c09AAsnwAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAADIMACLMAACLAAf1mtN9+97fbH/BhZOGti+qxZJYOzjtVyhSUfb+yTnxhc8oax9QCVBFiABViAXQpBgAVYgAVYgEGABfgsAxy7NMcu1ma1mRX7vgQYBFiABdgsAQYBFmABFmABBgRYgAXYLAEGARZgARZFAQYEWIAF2CwBBgEW4OEC3GALTeWs9I1S6Zt80rcGnS7A6duiAAEWYAEWYAEGARZgARZgAQYEWICXcw+45XpGvAcswCDAAizAAizAgAALsAALsEshCLAAC7AA5wZ41p8AARZgARZgAQYBFmABFmABBgRYgP8lwFk7cBo8bbf/DUXpS83KNiDAAizAAizAIMACfC4BPvi87MbGlMSjctasULVc2KzPMHas2FLTv2WgcwI8ZIABEGABFmAABFiAARBgARZgAARYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABRgAARZgAQZAgAUYAAEW4M4CvFpvgA7JCQIswIAAI8ACLMAgwCDAAgwIMAIswAIMAowAC7AAAwKMAAuwAIMAI8ACLMCAACPAAgwIMAIswAIMCDACLMCAACPAAizAIMAgwAIMCDACLMACDAKMAAuwAAMCjAALsACDACPAAizAgAAjwALsSgcCjAALsAADAowACzAgwAiwAJ8mwAAIsAALMAACLMAACLAACzAAAizAAAiwAPvlAQiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAAAyDAAizAAAiwAAMgwAIswAAI8JICvFpvPrzt9uUOU77P+nzlt4lZsWOVDM461qzzii01tkIgiwALsAALsACDAAuwAAuwAIMAC7AAtwzwrB9uZagajKk8r5LKZh3LdRAEWIAFWIAFGARYgAVYgAUYEGABFuBFBbjyFQEGARZgARZgAQYEWIAFWIAFGARYgAW4fpNP/wHOOq/KzUuVe5YAARZgARZgAQYBFmABFmABBgRYgN0DPr97wLYhgQALsAALsAADAizAAizAAgwCLMAC3DjAWTUSYAEGARZgARZgAQYBFmABFmABBgRYgD0PODeTnge88jxgEGABFmABFmAQYAEW4HYBPpiVgZL3ST9WbGGVx4qdafp5lawHQICHDDAAAizAAgyAAAswAAIswAIMgAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMAC7JcHdGD78kolARZgAAEWYAEWYECABViABRhAgAVYgAUYEGABFmABBgQYARZgAAEWYAEWYECAEWABBhBgARZgAQYEGAEWYAABFmABFmBAgAVYgAUYQIAFWIAFGBBgARZgAQYEGAEWYAABFmABFmBAgBFgAQboO8CX17fHTAwueUMBFmABBgRYgAVYgAEEWIAFWICBZQY4ltLKNguwAAswIMACLMACDCDAAizAAgwIcHmAh+uuAAswgAALsAALMCDAAizAAgzQeYDH7a4ACzCAAAuwAAswIMACLMACDOAesAALsAADAizAAizAAAIswAIM4D9h+U9YAizAgAALsAALMIAAC7AACzAgwJ4HLMACDCDAAizAAgwIsAALsAADtAzwYgmwAAMIsAALsAADAizAAizAAAIswAIswIAAC7AACzAgwAiwAAMIsAALsAADAowACzCAAAuwAAswIMAIsAADCLAAC7AAAwIswAIswAACLMACLMCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCLMACLMAAAizAAgzQF/ms19t3KsAAAizAAizAACyDAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACDAACLMAAIMAAIMACDIAACzAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAAgwAAiwAAMgwAIMAAIswAAIsAADgAALMAACLMAAIMAAIMACDAACDAACLMAACLAAA4AACzAAAtx3gAEAAQYAAQYAAQYABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAEGAAQYAAQYABBgABBgAECAAUCAAQABBgABBgABBgAEGAAEGAAQYAAQYABAgAFAgAGAP70DNH3iE+qMMrAAAAAASUVORK5CYII="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "return a recoverable input error and keep the session usable"
+      },
+      "visual_label": "QUOTA",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-11",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "A valid PNG followed by a corrected spoken request.",
+      "expected_boundary": "retain the frame beside the corrected audio/text evidence",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2397,
+        "sha256": "1D60329C8BF4AECAE4E7BBFE1C580336CAD2B9026FBABFFBB56F19A6E4CE3784",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAJJElEQVR42u3dMW7bMBSA4cwZigwZAnToVKBrL9E9N/MhfILMvklukC1bxhYwkAZNI5CPTwxpfsA3OaJFyY7+QaB1dfv1BwDQ2ZVTAAACDAACDAAIMAAIMAAgwAAgwACAAAOAAAMAAgwAAgwAAgwACDAACDAAIMAAIMAAgAADgAADAAIMAAIMAAIMAAgwAAgwACDAACDAAIAAA4AAAwCdA/z4cA8AUxBgABBgAQZAgAUYAARYgAEQYAEGAAEWYAAEWIABQIABQIAFGAAEGAAEWIABEOCVA3x9c3dWtU1s1Ps/bajaODYqNrHY8Kx9NZ55AAEWYAEWYECABViABRhAgCcKcElgGsOw36ipt6k68wACLMACLMCAAAuwAAswgABPfQ849ooA9/ksAARYgAVYgAEBFmABFmAAAb6MZUiNS2ga1yw1jsq6LxvbafriLv/zgAALsAALMCDAAizAAgwgwOv8Etbn3gN2LxlAgAVYgAUYEGABFmABBhBgAd57GdJ+94AFGECABViABRgQYAEWYAEGBFiAa9fSdFgws9/zgIeNoucBAwIswAIswAACLMACLMCAAK8TYAAQYAEGQIAFGAAEWIABEGABBgABBgABFmAAuLQAf//5CwCmIMAAIMACDIAACzAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAAgwAAiwAAMgwAIMAAIswAAIsAADgAALMAACLMAAIMAAIMACDAACDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAhwhi+33wBYnAALMAACLMAACLAACzAAAizAAAiwAAswAAIswAAIsAALMAACLMAACLAACzAAAizAAAiwAAMgwAIswAAIsAADIMACLMAACLAAAyDAAizAAAiwAAMgwAIswAAIsAADIMACDIAAC7AAAyDAAvzX4Xh66+n55SP/bFk4amN41aiSjbP21XOGJac3duY3Ni55w9h8gEYCLMACLMAuhSDAAizAAizAIMACfJEBjl2aYxdro/qMin1eAgwCLMACbJQAgwALsAALsAADAizAAmyUAIMAC7AAi6IAAwIswAJslACDAAvwdAHusISmcVT6Qqn0RT7pS4P2C3D6sihAgAVYgAVYgEGABViABViAAQEW4HXuAfecz4z3gAUYBFiABViABRgQYAEWYAF2KQQBFmABFuDcAFf9CRBgARZgARZgEGABFmABFmBAgAX4UwKctQKnw9N2x19QlD7VrGwDAizAAizAAgwCLMCXEuCz18tubJuSeDSOqgpVz4lVncPYvmJTTf+UgcEJ8JQBBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZgAARYgAUYAAEWYAAEWIAHC/DheAIGJCcIsAADAowAC7AAgwCDAAswIMAIsAALMAgwAizAAgwIMAIswAIMAowAC7AAAwKMAAswIMAIsAALMCDACLAAAwKMAAuwAIMAgwALMCDACLAACzAIMAIswAIMCDACLMACDAKMAAuwAAMCjAALsCsdCDACLMACDAgwAizAgAAjwAK8T4ABEGABFmAABFiAARBgARZgAARYgAEQYAH2zQMQYAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEOCVAnw4nv54en4pdx7ydtTrK+9tjIrtq2TjrH1VHVdsqrEZAlkEWIAFWIAFGARYgAVYgAUYBFiABbhngKu+uI2h6rBN43GVVDZrX66DIMACLMACLMAgwAIswAIswIAAC7AALxXgxlcEGARYgAVYgAUYEGABFmABFmAQYAEW4PZFPuMHOOu4GhcvNa5ZAgRYgAVYgAUYBFiABViABRgQYAF2D/jy7gFbhgQCLMACLMACDAiwAAuwAAswCLAAC3DnAGfVSIAFGARYgAVYgAUYBFiABViABRgQYAH2PODcTHoe8MHzgEGABViABViAQYAFWID7BfisKgMl75O+r9jEGvcVO9L04yqZD4AATxlgAARYgAUYAAEWYAAEWIAFGAABFmAABFiAARBgARZgAARYgAEQYAEWYAAEWIABEGABFmAABFiAARBgARZgAARYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABdg3DxjA48M9jQRYgAEEWIAFWIABARZgARZgAAEWYAEWYECABViABRgQYARYgAEEWIAFWIABAUaABRhAgAVYgAUYEGAEWIABBFiABViAAQEWYAEWYAABFmABFmBAgAVYgAUYEGAEWIABBFiABViAAQFGgAUYYOwAX9/cfWRj45I3FGABFmBAgAVYgAUYQIAFWIAFGFgzwLGUNrZZgAVYgAEBFmABFmAAARZgARZgQIDLAzxddwVYgAEEWIAFWIABARZgARZggMEDPG93BViAAQRYgAVYgAEBFmABFmAA94AFWIAFGBBgARZgAQYQYAEWYAC/hOWXsARYgAEBFmABFmAAARZgARZgQIA9D1iABRhAgAVYgAUYEGABFmABBugZ4GUJsAADCLAAC7AAAwIswAIswAACLMACLMCAAAuwAAswIMAIsAADCLAAC7AAAwKMAAswgAALsAALMCDACLAAAwiwAAuwAAMCLMACLMAAAizAAizAgAALsAALMCDACLAAAwiwAAuwAAMCjAALMIAAC7AACzAgwAiwAAMIsAALsAADAizAAizAAAIswAIMMBb5bDfaZyrAAAIswAIswACsQYABQIAFGAABFmAAEGABBkCABRgABFiAARBgAQYAAQYAARZgABBgABBgAQZAgAUYAARYgAEQYAEGAAEWYAAEWIABQIABQIAFGAAEGAAEWIABEGABBgABFmAABFiAAUCABRgAARZgABBgABBgAQYAAQYAARZgAARYgAFAgAUYAAEeO8AAgAADgAADgAADAAIMAAIMAAgwAAgwACDAACDAAIAAA4AAA4AAAwACDAACDAAIMAAIMAAgwAAgwACAAAOAAAOAAAMAAgwAAgwACDAACDAAIMAAIMAAwH/9BnnRljGGu0CrAAAAAElFTkSuQmCC"
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "retain the frame beside the corrected audio/text evidence"
+      },
+      "visual_label": "UNCERTAIN",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    },
+    {
+      "id": "image-12",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "An image-only request with uncertain visible text.",
+      "expected_boundary": "respond informationally without overclaiming visual certainty",
+      "evidence_status": "fake_mode_replayed",
+      "asset": {
+        "status": "generated_synthetic_png_inline",
+        "generator": "AccessFlow deterministic standard-library PNG writer",
+        "bytes": 2338,
+        "sha256": "E02A11FE4B59DDF46010B28E445729A78DC075F1EB3521DE315319CFDFCFA227",
+        "source": "inline_base64_png",
+        "payload_base64": "iVBORw0KGgoAAAANSUhEUgAAAoAAAAFoCAIAAABIUN0GAAAI6UlEQVR42u3dvU0DMRiAYWoKREGBREGFRMsSLMQimYAqY2QTNqCjowQpEiB+gu/zF8eOH+mp4Bz7kuje4uTcycXVLQDQ2Im3AAAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAAQYABBgABBgAECAAUCAAQABBgABBgAaB/jh8QkAhiDAACDAAgyAAAswAAiwAAMgwAIMAAIswAAIsAADgAADgAALMAAIMAAIsAADIMAzB/j0/PJfsVGVwyvnqlwhAAIswAIMIMACLMAACHBigBcdE0tXy1H7ex0ABFiABRhAgAVYgAEQYAEWYAABFmABBhBgARZgAAT4WLchxSZNn0uAAQRYgAUYQIAFWIABEOB+7gHH7gofdj0CDCDAAizAAAiwAAswgACPtQ0p9i8BBkCABViAAQRYgAUYQIAFuOaO7/6e0RvbhnTY+9YACLAACzCAAAuwAAMgwAAgwAIMgAALMAAIsAADIMACDAACLMAACLAAA8BcAb65uweAIQgwAAiwAAMgwAIMAAIswAAIsAADgAALMAACLMAAIMAAIMACDAACDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAgwAAiwAAOAAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACnOHs4hqAyQmwAAMgwAIMgAALsAADIMACDIAAC7AAAyDAAgyAAAuwAAMgwAIMgAALsAADIMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAAIsAALMAACLMCfVuvNV88vr3/5dmThqB3DF40qOThrrpYrLHl7Y+/8joNLXjC2HqCSAAuwAAuwSyEIsAALsAALMAiwAB9lgGOX5tjF2qg2o2KflwCDAAuwABslwCDAAizAAizAgAALsAAbJcAgwAIswKIowIAAC7AAGyXAIMACPFyAG2yhqRyVvlEqfZNP+tag/QU4fVsUIMACLMACLMAgwAIswAIswIAAC/A894BbrmfEe8ACDAIswAIswAIMCLAAC7AAuxSCAAuwAAtwboAX/QsQYAEWYAEWYBBgARZgARZgQIAF+CABztqB0+Bpu/1vKEpfala2AQEWYAEWYAEGARbgYwnw1sdlN3ZMSTwqRy0KVcuFLXoPY3PFlpr+KQOdE+AhAwyAAAuwAAMgwAIMgAALsAADIMACDIAACzAAAizAAgyAAAswAAIswAIMgAALMAACLMACDIAACzAAAizAAgyAAAswAAIswAAIsAALMAACLMAACLAAdxbg1XoDdEhOEGABBgQYARZgAQYBBgEWYECAEWABFmAQYARYgAUYEGAEWIAFGAQYARZgAQYEGAEWYECAEWABFmBAgBFgAQYEGAEWYAEGAQYBFmBAgBFgARZgEGAEWIAFGBBgBFiABRgEGAEWYAEGBBgBFmBXOhBgBFiABRgQYARYgAEBRoAFeD8BBkCABViAARBgAQZAgAVYgAEQYAEGQIAF2DcPQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCAZwrwar159/zyWm475Ouoj7/8tGNUbK6Sg7PmWnResaXGVghkEWABFmABFmAQYAEWYAEWYBBgARbglgFe9MWtDFWDYyrPq6SyWXO5DoIAC7AAC7AAgwALsAALsAADAizAAjxVgCv/IsAgwAIswAIswIAAC7AAC7AAgwALsADXb/LpP8BZ51W5ealyzxIgwAIswAIswCDAAizAAizAgAALsHvAx3cP2DYkEGABFmABFmBAgAVYgAVYgEGABViAGwc4q0YCLMAgwAIswAIswCDAAizAAizAgAALsOcB52bS84BXngcMAizAAizAAgwCLMAC3C7AW4syUPI66XPFFlY5V+xM08+rZD0AAjxkgAEQYAEWYAAEWIABEGABFmAABFiAARBgAQZAgAVYgAEQYAEGQIAFWIABEGABBkCABViAARBgAQZAgAVYgAEQYAEGQIAFGAABFmABBkCABRgAARZgAQZAgAUYAAEWYAEGQIAFGAABFmABBkCABRgAARZg3zygAw+PT1QSYAEGEGABFmABBgRYgAVYgAEEWIAFWIABARZgARZgQIARYAEGEGABFmABBgQYARZgAAEWYAEWYECAEWABBhBgARZgAQYEWIAFWIABBFiABViAAQEWYAEWYECAEWABBhBgARZgAQYEGAEWYIC+A3x6fvmXHQeXvKAAC7AAAwIswAIswAACLMACLMDAnAGOpbSyzQIswAIMCLAAC7AAAwiwAAuwAAMCXB7g4borwAIMIMACLMACDAiwAAuwAAN0HuBxuyvAAgwgwAIswAIMCLAAC7AAA7gHLMACLMCAAAuwAAswgAALsAAD+CUsv4QlwAIMCLAAC7AAAwiwAAuwAAMC7HnAAizAAAIswAIswIAAC7AACzBAywBPS4AFGECABViABRgQYAEWYAEGEGABFmABBgRYgAVYgAEBRoAFGECABViABRgQYARYgAEEWIAFWIABAUaABRhAgAVYgAUYEGABFmABBhBgARZgAQYEWIAFWIABAUaABRhAgAVYgAUYEGAEWIABBFiABViAAQFGgAUYQIAFWIAFGBBgARZgAQYQYAEWYIC+yGe93j5TAQYQYAEWYAEGYA4CDAACLMAACLAAA4AACzAAAizAACDAAgyAAAswAAgwAAiwAAOAAAOAAAswAAIswAAgwAIMgAALMAAIsAADIMACDAACDAACLMAAIMAAIMACDIAACzAACLAAAyDAAgwAAizAAAiwAAOAAAOAAAswAAgwAAiwAAMgwAIMAAIswAAIcN8BBgAEGAAEGAAEGAAQYAAQYABAgAFAgAEAAQYAAQYABBgABBgABBgAEGAAEGAAQIABQIABAAEGAAEGAAQYAAQYAAQYABBgABBgAECAAUCAAQABBgABBgB+9Qbx+Fb78dc58gAAAABJRU5ErkJggg=="
+      },
+      "provenance": {
+        "author": "AccessFlow Workstream B",
+        "created": "2026-09-16",
+        "consent_license": "Generated locally; no participant or third-party data.",
+        "expected_outcome": "respond informationally without overclaiming visual certainty"
+      },
+      "visual_label": "RESET",
+      "live_evidence_status": "not_run",
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
+    }
+  ],
+  "execution": {
+    "mode": "offline_fake_mode",
+    "runner": "tests/perception/test_scenario_replay.py",
+    "cases_replayed": 60,
+    "observations_emitted": 60,
+    "by_modality": {
+      "text": 30,
+      "audio": 18,
+      "image": 12
+    },
+    "backend_labels": [
+      "local/text-pass-through",
+      "local/injected-asr",
+      "fake/replay-vision"
+    ],
+    "evidence_note": "Replay verifies owned perception routing and metadata preservation; it does not measure model quality, latency, or user benefit."
+  },
+  "live_audio_scoring": {
+    "recorded": "2026-09-16",
+    "mode": "live_local_asr",
+    "result_file": "docs/feedback/ASR_SCENARIO_RESULTS.json",
+    "model": "Systran/faster-whisper-base.en",
+    "model_snapshot": "3d3d5dee26484f91867d81cb899cfcf72b96be6c",
+    "device": "CPU",
+    "cpu": "Intel(R) Core(TM) Ultra 5 125H",
+    "python": "3.12.10",
+    "compute_type": "int8",
+    "cases_scored": 18,
+    "summary": {
+      "reference_words": 132,
+      "word_errors": 13,
+      "micro_word_error_rate": 0.098,
+      "mean_realtime_factor": 0.158,
+      "max_realtime_factor": 0.251
+    },
+    "evidence_note": "Generated local audio only; this does not establish human speech accuracy or multimodal task quality."
+  },
+  "mixed_e2e_replay": {
+    "recorded": "2026-09-16",
+    "mode": "mixed_local_audio_injected_vision_mock_reasoning",
+    "result_file": "docs/feedback/MULTIMODAL_SCENARIO_RESULTS.json",
+    "session_id": "live-mixed-inventory",
+    "cases": 60,
+    "observations": 60,
+    "total_elapsed_s": 12.38,
+    "by_modality": {
+      "text": {
+        "cases": 30,
+        "finals": 30
+      },
+      "audio": {
+        "cases": 18,
+        "finals": 18
+      },
+      "image": {
+        "cases": 12,
+        "finals": 12
+      }
+    },
+    "backend_boundary": {
+      "audio": "faster-whisper/cpu-int8",
+      "image": "fake/replay-vision",
+      "reasoning": "mock/capturing-reasoner"
+    },
+    "evidence_note": "Mixed end-to-end routing and context evidence; injected vision and mock reasoning do not establish live model quality."
+  },
+  "live_timing_scoring": {
+    "recorded": "2026-09-16",
+    "mode": "live_local_webrtc_activity",
+    "result_file": "docs/feedback/VAD_SCENARIO_RESULTS.json",
+    "backend": "webrtcvad-wheels 2.0.14",
+    "device": "CPU Intel(R) Core(TM) Ultra 5 125H",
+    "python": "3.12.10",
+    "settings": {
+      "sample_rate": 16000,
+      "frame_ms": 20,
+      "aggressiveness": 2,
+      "pause_threshold_s": 0.4
+    },
+    "cases_scored": 18,
+    "summary": {
+      "active_frames": 2463,
+      "total_frames": 3764,
+      "cases_with_internal_pause_candidate": 10,
+      "cases_with_trailing_pause_candidate": 18,
+      "max_analysis_elapsed_s": 0.0916
+    },
+    "evidence_note": "Acoustic activity and endpoint candidates only; this does not establish speech boundaries, semantic completion or user benefit."
+  }
+}

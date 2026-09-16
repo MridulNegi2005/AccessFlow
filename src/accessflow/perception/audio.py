@@ -111,7 +111,7 @@ def load_pcm(path: Path, *, target_rate: int = 16_000) -> AudioBuffer:
         raise ValueError("PCM loader supports mono or stereo WAV input")
     if metadata.sample_width not in (1, 2, 3, 4):
         raise ValueError("PCM loader supports sample widths from 1 to 4 bytes")
-    if target_rate < 1:
+    if isinstance(target_rate, bool) or not isinstance(target_rate, int) or target_rate < 1:
         raise ValueError("target_rate must be positive")
 
     with wave.open(str(path), "rb") as handle:
@@ -128,10 +128,29 @@ def energy_activity(
     rms_threshold: int = 500,
 ) -> tuple[ActivityFrame, ...]:
     """Return a deterministic energy baseline; this is not a speech classifier."""
-    if buffer.sample_width not in (1, 2, 3, 4):
+    if (
+        isinstance(buffer.sample_rate, bool)
+        or not isinstance(buffer.sample_rate, int)
+        or buffer.sample_rate < 1
+    ):
+        raise ValueError("sample_rate must be a positive integer")
+    if (
+        isinstance(buffer.sample_width, bool)
+        or not isinstance(buffer.sample_width, int)
+        or buffer.sample_width not in (1, 2, 3, 4)
+    ):
         raise ValueError("PCM loader supports sample widths from 1 to 4 bytes")
-    if frame_ms < 1 or rms_threshold < 0:
+    if (
+        isinstance(frame_ms, bool)
+        or not isinstance(frame_ms, int)
+        or frame_ms < 1
+        or isinstance(rms_threshold, bool)
+        or not isinstance(rms_threshold, int)
+        or rms_threshold < 0
+    ):
         raise ValueError("frame_ms must be positive and rms_threshold cannot be negative")
+    if len(buffer.pcm) % buffer.sample_width:
+        raise ValueError("PCM data ends with a partial sample")
     frame_samples = max(1, buffer.sample_rate * frame_ms // 1000)
     frame_bytes = frame_samples * buffer.sample_width
     frames = []

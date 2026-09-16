@@ -1,7 +1,35 @@
 # Atishay: start independently
 
-You own perception, turn policy and the minimal demo. Mridul owns the controller,
-tool execution and packaging. You do not need his engine, his API key or his machine.
+You own `src/accessflow/perception/`, `src/accessflow/turn_policy/`, `demo/`,
+`tests/perception/`, `tests/demo/`, `docs/feedback/`, `docs/presentation/` and
+`docs/handoffs/atishay.md`, plus `tests/fixtures/audio/` for audio fixtures. Mridul owns the controller, contracts, interfaces,
+fakes, clock, tool execution, adapters, evaluation, CI, Docker, root configuration,
+lockfile, release documentation and packaging. You do not need his API key or machine.
+
+## Current handoff — 16 September 2026
+
+The published `atishay/perception` branch carries this handoff. The verified
+baseline at this snapshot is **255 passed, 4 strict expected failures**.
+Read `docs/STATUS.md` before changing anything. The multimodal path now covers text,
+validated WAV, validated PNG, injected local ASR and vision providers, source IDs,
+event IDs, revisions, timestamps, session isolation, recovery, cleanup and bounded
+worker admission. The owned timing seam accepts optional `ActivitySummary` metadata.
+
+The four expected failures are controller integration examples for image-only
+informational output, two active-frame replacement cases and conflicting visual
+evidence. Upstream `origin/mridul/engine` at `919ed27` resolves the first two
+targeted cases. The conflict proposal still needs a controller-side pre-replacement
+comparison or provenance signal. Do not edit the controller or shared contracts to
+resolve these gaps; keep the failing example and proposal additive.
+
+The branch is clean and the remote is synchronized. Direct inspection of the existing
+browser captures and a current-head 1280x1600 headless Chrome capture with labeled controls found no visible
+clipping, overlap or broken text in the inspected viewports. A current-head Chrome CDP interaction also
+drove text, WAV and PNG controls with no page exceptions; live interactive device behavior,
+live model quality, human speech quality, feedback and final packaging remain open.
+A fresh shallow public-clone check on 16 September 2026 checked out
+`atishay/perception`, resolved `origin` to the shared GitHub repository and included
+this guide at commit `4892c185`.
 
 ## Continue from the integrated checkpoint
 
@@ -43,6 +71,10 @@ disabled; run checks locally. The initial setup instructions below remain a refe
    `git push -u origin atishay/perception` only if Mridul has granted you collaborator
    access; otherwise create your own fork, push `atishay/perception` there, and open a
    pull request back to the shared repository.
+   If `uv python install 3.11` reports a stale or missing interpreter link, repair that
+   uv-managed Python or use a clean local Python 3.11 environment before running
+   `uv sync`; the existing development environment on the handoff machine is Python
+   3.12.10 and is only a fallback for local verification.
 
    This repository is public. Atishay9828 has been invited with write permission;
    accept https://github.com/MridulNegi2005/AccessFlow/invitations before your first push.
@@ -54,21 +86,31 @@ disabled; run checks locally. The initial setup instructions below remain a refe
 5. Record RAM, Python version and available audio/model backends in
    `docs/handoffs/atishay.md`. API access is optional; no paid fallback.
 
-## Your first independently testable slice
+## Completed capabilities and next gaps
 
-Implement `src/accessflow/perception/local.py` with a `LocalPerception` class exposing
-`observe(event)` as an async iterator of `Observation`. Begin with transcript pass-through
-and WAV validation. Add Faster Whisper CPU int8 transcription behind a lazy import.
-Run blocking decoding in a worker; never block the event loop. Models are installed
-explicitly, not downloaded during scenario execution. Return real backend names.
+`LocalPerception`, the deterministic turn policy, PNG vision seam, minimal fake-agent
+demo, optional loopback Ollama JSON reasoner, owned tests and multimodal evidence are
+already implemented. Preserve their boundaries while working on the remaining gaps:
+broader engine race and status reconciliation coverage, live reasoning execution,
+replay and metrics, official-kit integration after the kit is supplied, live
+vision/reasoning execution and scoring of the
+remaining 42 scenarios, Docker/CI, voluntary feedback, disclosure, demo
+video and final release assembly.
+
+The perception boundary exposes `observe(event)` as an async iterator of
+`Observation`. Keep blocking decoding in a worker; models are installed explicitly,
+not downloaded during scenario execution. Return real backend names and keep fake,
+injected and live evidence distinguishable.
 
 For text and audio, `Observation.source_id` is the utterance ID, with the input revision.
 For images, it is the frame ID with revision 0. Preserve originating event ID and timing.
 For PNGs add a replaceable vision provider; do not return a canned caption as perception.
 `observe()` does not mutate session state or dispatch tools.
 
-Implement your policies under `src/accessflow/turn_policy/`. The interface is synchronous
-`update(observation, session_view) -> TurnDecision`. If semantic inference is necessary,
+Implement your policies under `src/accessflow/turn_policy/`. The shared interface remains
+synchronous and two-argument compatible: `update(observation, session_view) -> TurnDecision`.
+The owned `HeuristicTurnPolicy` also accepts optional `ActivitySummary` timing metadata;
+it keeps pauses separate from `TurnDecision.complete`. If semantic inference is necessary,
 compute it asynchronously in perception or propose an additive contract extension.
 The synchronous policy must stay cheap. The current final-flag fake is only a baseline;
 it does not infer silence or semantic completion. Timer-driven observations will need

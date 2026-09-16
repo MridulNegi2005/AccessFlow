@@ -198,3 +198,165 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
 - `scenarios/live_dev/stale_read_after_correction.json`, `stale_read_after_device_correction.json`
 - `docs/results/` — HOSTED_MODEL, LOCAL_REPEAT, MODEL_SWEEP, CONTINUATION, INFERENCE_TUNING, ABLATION
 - `docs/handoffs/mridul.md`, `.ai-sync/context.md`
+
+## Historical: Workstream B handoff log
+
+Merged from `atishay/perception` on 16 September 2026. These entries are dated history.
+The header at the top of this file is the current state.
+
+## 2026-09-14 - Codex Atishay multimodal end-to-end evidence
+
+- **Task:** Complete the next Workstream B priority for multimodal coverage.
+- **Changes:** Added the served demo/recorder-worklet.js path, focused route coverage and one
+  Agent-level test for a validated WAV plus PNG sharing a context through injected local ASR/vision.
+- **Status:** Full suite 81 passed; demo 22 passed; perception 43 passed; fresh Chrome CDP smoke
+  passed synthetic microphone, text, WAV, PNG plus paired transcript, clean console and layout checks.
+- **Limits:** Physical microphone, pixel inspection, live ASR/vision quality and non-mock reasoning
+  remain unverified. No engine or contract files were changed.
+
+## 2026-09-14 - Codex Atishay image-only controller gap
+
+- **Task:** Make the remaining image-only multimodal gap explicit.
+- **Changes:** Added a strict expected-failure demo example and an additive proposal for an
+  informational evidence basis; no engine or contract files changed.
+- **Status:** Full suite 81 passed, 1 strict xfailed; demo 22 passed, 1 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The expected failure remains until the engine owner implements and reviews the
+  additive proposal. Live ASR/vision, physical capture and pixel inspection remain unverified.
+
+## 2026-09-14 - Codex Atishay live local audio plus injected vision
+
+- **Task:** Strengthen multimodal end-to-end evidence with the cached local ASR model.
+- **Changes:** Ran synthetic_speech.wav through Faster Whisper base.en CPU INT8, paired the result
+  with a validated PNG and injected vision provider in one Agent context, and recorded the run in
+  docs/feedback/MULTIMODAL_E2E.md.
+- **Status:** Both observations reached one context and produced an informational final in 3.222
+  seconds. Vision was injected because Ollama is unavailable.
+- **Limits:** This does not certify live multimodal model quality or non-mock reasoning.
+
+## 2026-09-14 - Codex Atishay multimodal ordering coverage
+
+- **Task:** Broaden multimodal end-to-end coverage across arrival orderings.
+- **Changes:** The Agent-context test now covers audio-to-image and image-to-audio sequences.
+- **Status:** Full suite 82 passed, 1 strict xfailed; demo 23 passed, 1 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only controller gap remains the intentional strict xfail pending the additive
+  engine proposal.
+
+## 2026-09-14 - Codex Atishay multimodal revision and frame retention
+
+- **Task:** Cover revised speech hypotheses while retaining image evidence.
+- **Changes:** Added one demo Agent test for audio revision 0 followed by revision 1 and a frame.
+- **Status:** Full suite 83 passed, 1 strict xfailed; demo 24 passed, 1 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only controller gap remains the intentional strict xfail.
+
+## 2026-09-14 - Codex Atishay browser local-ASR multimodal run
+
+- **Task:** Connect local ASR evidence to the real browser transport.
+- **Changes:** Chrome uploaded synthetic_speech.wav with the cached Faster Whisper backend, then
+  uploaded a PNG and follow-up text in the same WebSocket session.
+- **Status:** Local audio acknowledgment and transcript-bearing final passed; both media statuses,
+  clean console and no overflow were observed.
+- **Limits:** Image/text remained demo/mock; live vision quality, physical capture and non-mock
+  reasoning remain unverified.
+
+## 2026-09-14 - Codex Atishay changed-frame integration gap
+
+- **Task:** Expose active-frame replacement for multimodal scenarios.
+- **Changes:** Added a strict expected-failure demo example for frame 2 replacing frame 1 in the
+  reasoner context; no engine-owned files changed.
+- **Status:** Full suite 83 passed, 2 strict xfailed; demo 24 passed, 2 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only response and changed-frame behavior await engine integration.
+
+## 2026-09-14 - Codex Atishay visible multimodal reasoner context
+
+- **Task:** Make the browser demo response expose all retained modalities.
+- **Changes:** DemoReasoner now includes prior observations; Chrome confirmed audio, image and text
+  context in the visible final.
+- **Status:** Full suite 84 passed, 2 strict xfailed; demo 25 passed, 2 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The response remains mock and informational; live vision and non-mock reasoning remain
+  unverified.
+
+## 2026-09-14 - Codex Atishay combined WebSocket context regression
+
+- **Task:** Protect the browser-observed multimodal final with an automated route test.
+- **Changes:** Added WAV, PNG and follow-up transcript coverage through one TestClient WebSocket,
+  including source IDs and retained modality assertions.
+- **Status:** Full suite 85 passed, 2 strict xfailed; demo 26 passed, 2 strict xfailed; perception
+  43 passed; Ruff and git diff --check clean.
+- **Limits:** The image-only response and changed-frame behavior remain intentional xfails pending
+  engine integration.
+
+## 2026-09-14 - Codex Atishay in-flight frame stale-result coverage
+
+**Task:** Cover a changed-device-frame race while the first vision result is still in flight.
+
+**Changes:** Added an owned async Agent regression with a delayed frame 1 perception result. Frame 2
+arrives and reaches the reasoner first; after frame 1 is released, its stale result is rejected and
+never appears in a frame-bearing reasoner view.
+
+**Status:** Focused regression passed. Expected suite counts after this change are 94 passed, 3 strict
+xfailed; demo suite 35 passed, 3 strict xfailed; perception suite 43 passed.
+
+**Notes:** This covers stale-result handling with a perception seam and makes no live vision quality
+claim. No engine, contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay structural PNG validation
+
+**Task:** Ensure malformed image payloads cannot reach the multimodal vision backend.
+
+**Changes:** Hardened the owned PNG validator to check chunk boundaries, CRCs, legal IHDR metadata,
+IDAT presence and terminal IEND structure. The demo now uses the same validator and removes rejected
+materializations. Migrated image tests to real small PNG fixtures and added valid metadata, truncated,
+bad-CRC and WebSocket recovery coverage.
+
+**Status:** Full suite 98 passed, 3 strict xfailed; demo suite 36 passed, 3 strict xfailed; perception
+suite 46 passed; Ruff and git diff --check clean.
+
+**Notes:** Validation is structural and does not decode pixels or claim image understanding. No engine,
+contract, lockfile or dependency manifest changes were made.
+
+## 2026-09-14 - Codex Atishay configured vision WebSocket wiring
+
+**Task:** Exercise the configured Ollama vision path through the actual demo WebSocket route.
+
+**Changes:** Added an owned route regression that sets the vision environment configuration, runs a
+loopback HTTP protocol service, uploads a real PNG, waits for the image observation, and submits a
+follow-up transcript. The final contains both the service result and the spoken question.
+
+**Status:** Full suite 99 passed, 3 strict xfailed; demo suite 37 passed, 3 strict xfailed; perception
+suite 46 passed; Ruff, compilation and git diff --check clean.
+
+**Notes:** The loopback service is a deterministic protocol stub and does not provide live vision quality
+evidence. No engine, contract, lockfile or dependency manifest changes were made.
+
+
+2026-09-14: Multimodal boundary follow-up committed locally on atishay/perception: failed WAV materializations are cleaned up and injected ASR receives an accurate backend label. Validation: 101 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Combined configured multimodal route regression added on atishay/perception. Validation: 102 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: ASR failure multimodal recovery regression added on atishay/perception. Validation: 103 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Fresh mixed runtime route evidence captured: cached Faster Whisper CPU INT8 plus loopback OllamaVisionProvider, 1.326 seconds, combined context retained. No protected files changed.
+
+2026-09-14: PNG IDAT integrity regression added on atishay/perception. Validation: 104 passed, 3 strict xfailed; no protected files changed.
+2026-09-14: Speech cue modality guard committed locally on atishay/perception. Image observations return continue with uncertainty 1.0 before speech cue matching. Full suite: 105 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Demo input parser now rejects non-object messages and payloads with ValueError handled as demo/input errors; WebSocket recovery regression passes. Full suite: 107 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Backend label fallback now reports local/unknown-audio for unidentified injected audio instead of Faster Whisper; focused and full validation passed. Full suite: 108 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Vision provider now rejects non-object JSON roots with RuntimeError invalid JSON shape; focused and full validation passed. Full suite: 110 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Configured Ollama route regression now covers malformed list JSON and same-session transcript recovery. Full suite: 111 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: Ollama vision timeout regression added on atishay/perception; timeout now has explicit stable failure evidence. Full suite: 112 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-14: WebSocket session reset regression added: new connection does not inherit multimodal observations from the prior connection. Full suite: 113 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-15: Added pre-decode encoded upload limit derived from the 8 MiB raw-media budget; oversized PNG regression passes. Full suite: 114 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-15: Configured OllamaVisionProvider timeout regression now covers WebSocket backend_failure and same-session transcript recovery. Full suite: 115 passed, 3 strict xfailed; no protected files changed.

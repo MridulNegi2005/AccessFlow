@@ -1,0 +1,136 @@
+{
+  "created": "2026-09-13",
+  "model": "Systran/faster-whisper-base.en",
+  "model_snapshot": "3d3d5dee26484f91867d81cb899cfcf72b96be6c",
+  "device": "CPU Intel(R) Core(TM) Ultra 5 125H",
+  "compute_type": "int8",
+  "vad": "webrtcvad-wheels 2.0.14, aggressiveness 2, 20 ms, normalized 16 kHz PCM",
+  "results": {
+    "fluent": {
+      "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 76049
+      },
+      "duration_s": 3.449,
+      "asr_elapsed_s": 3.243,
+      "realtime_factor": 0.94,
+      "transcript": "Please book a screen repair for Friday at 10.",
+      "backend": "faster-whisper/cpu-int8",
+      "vad_active_frames": 130,
+      "vad_total_frames": 172,
+      "vad_windows": [
+        {
+          "start_s": 0.18,
+          "end_s": 2.78
+        }
+      ],
+      "trailing_silence_s": 0.66,
+      "candidates": [
+        {
+          "start_s": 2.78,
+          "end_s": 3.44,
+          "duration_s": 0.66,
+          "trailing": true
+        }
+      ],
+      "label_comparison": []
+    },
+    "repetition": {
+      "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 104166
+      },
+      "duration_s": 4.724,
+      "asr_elapsed_s": 0.834,
+      "realtime_factor": 0.176,
+      "transcript": "I want Tuesday, Tuesday, actually Wednesday at 5.",
+      "backend": "faster-whisper/cpu-int8",
+      "vad_active_frames": 173,
+      "vad_total_frames": 236,
+      "vad_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.18
+        },
+        {
+          "start_s": 1.46,
+          "end_s": 2.18
+        },
+        {
+          "start_s": 2.42,
+          "end_s": 4.08
+        }
+      ],
+      "trailing_silence_s": 0.64,
+      "candidates": [
+        {
+          "start_s": 4.08,
+          "end_s": 4.72,
+          "duration_s": 0.64,
+          "trailing": true
+        }
+      ],
+      "label_comparison": []
+    },
+    "pause": {
+      "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 131381
+      },
+      "duration_s": 5.958,
+      "asr_elapsed_s": 0.812,
+      "realtime_factor": 0.136,
+      "transcript": "I tried restarting already. The screen still flickers.",
+      "backend": "faster-whisper/cpu-int8",
+      "vad_active_frames": 162,
+      "vad_total_frames": 297,
+      "vad_windows": [
+        {
+          "start_s": 0.1,
+          "end_s": 1.88
+        },
+        {
+          "start_s": 3.86,
+          "end_s": 5.32
+        }
+      ],
+      "trailing_silence_s": 0.62,
+      "candidates": [
+        {
+          "start_s": 1.88,
+          "end_s": 3.86,
+          "duration_s": 1.98,
+          "trailing": false
+        },
+        {
+          "start_s": 5.32,
+          "end_s": 5.94,
+          "duration_s": 0.62,
+          "trailing": true
+        }
+      ],
+      "label_comparison": [
+        {
+          "label_start_s": 2.549,
+          "label_end_s": 3.749,
+          "candidate_start_s": 1.88,
+          "candidate_end_s": 3.86,
+          "candidate_duration_s": 1.98,
+          "start_error_s": -0.669,
+          "end_error_s": 0.111,
+          "overlap_s": 1.2,
+          "iou": 0.606
+        }
+      ]
+    }
+  }
+}

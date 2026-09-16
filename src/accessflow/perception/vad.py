@@ -20,13 +20,21 @@ def webrtc_activity(
     This produces acoustic activity only. It does not decide whether a transcript
     is complete or whether a tool action is safe.
     """
-    if buffer.sample_rate not in (8_000, 16_000, 32_000, 48_000):
+    if (
+        isinstance(buffer.sample_rate, bool)
+        or not isinstance(buffer.sample_rate, int)
+        or buffer.sample_rate not in (8_000, 16_000, 32_000, 48_000)
+    ):
         raise ValueError("WebRTC VAD requires an 8, 16, 32 or 48 kHz sample rate")
     if buffer.sample_width != 2:
         raise ValueError("WebRTC VAD requires 16-bit PCM")
-    if frame_ms not in (10, 20, 30):
+    if isinstance(frame_ms, bool) or not isinstance(frame_ms, int) or frame_ms not in (10, 20, 30):
         raise ValueError("WebRTC VAD frame_ms must be 10, 20 or 30")
-    if aggressiveness not in (0, 1, 2, 3):
+    if (
+        isinstance(aggressiveness, bool)
+        or not isinstance(aggressiveness, int)
+        or aggressiveness not in (0, 1, 2, 3)
+    ):
         raise ValueError("WebRTC VAD aggressiveness must be 0, 1, 2 or 3")
 
     if vad_factory is None:
