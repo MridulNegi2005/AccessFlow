@@ -553,6 +553,10 @@ Updated 16 September 2026.
   materialization or provider invocation. A tampered case is recorded as one per-case failure while
   the other 11 cases continue; the regression and full integrated suite pass with 770 tests and one
   retained conflict xfail.
+- The opt-in vision benchmark now records the backend observed for every completed case and can
+  persist its stable JSON report through an explicit `--output` path. A writer regression passes,
+  and the integrated branch now passes 771 tests with one retained conflict xfail; live model
+  quality remains unmeasured.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
