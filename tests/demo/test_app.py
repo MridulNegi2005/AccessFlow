@@ -3511,6 +3511,25 @@ def test_browser_media_budget_releases_failed_validation_reservation(tmp_path: P
     assert list(tmp_path.iterdir()) == []
 
 
+def test_browser_media_budget_cleans_unexpected_validation_failure(
+    monkeypatch, tmp_path: Path
+):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    payload = {"data_base64": base64.b64encode(fixture.read_bytes()).decode("ascii")}
+    budget = demo_app._SessionMediaBudget()
+
+    def broken_validator(path: Path):
+        raise RuntimeError("validator crashed")
+
+    monkeypatch.setattr(demo_app, "validate_wav", broken_validator)
+
+    with pytest.raises(RuntimeError, match="validator crashed"):
+        demo_app._materialize_upload("audio", payload, tmp_path, media_budget=budget)
+
+    assert list(tmp_path.iterdir()) == []
+    assert budget.used == 0
+
+
 def test_browser_media_upload_rejects_oversized_encoded_payload(tmp_path: Path):
     oversized = "A" * (demo_app.MAX_BASE64_CHARS + 1)
 

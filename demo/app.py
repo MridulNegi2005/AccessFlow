@@ -296,30 +296,31 @@ def _materialize_upload(
 
     if media_budget is not None:
         media_budget.reserve(len(raw))
+    materialized_path: Path | None = None
     try:
         if kind == "audio":
             if raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
                 raise ValueError("audio upload must be a RIFF WAV file")
-            path = media_root / f"audio-{uuid.uuid4().hex}.wav"
-            path.write_bytes(raw)
+            materialized_path = media_root / f"audio-{uuid.uuid4().hex}.wav"
+            materialized_path.write_bytes(raw)
             try:
-                validate_wav(path)
+                validate_wav(materialized_path)
             except ValueError as error:
-                path.unlink(missing_ok=True)
                 raise ValueError("audio upload must be a valid PCM WAV file") from error
-            return str(path)
+            return str(materialized_path)
 
         if kind == "frame":
-            path = media_root / f"frame-{uuid.uuid4().hex}.png"
-            path.write_bytes(raw)
+            materialized_path = media_root / f"frame-{uuid.uuid4().hex}.png"
+            materialized_path.write_bytes(raw)
             try:
-                validate_png(path)
+                validate_png(materialized_path)
             except ValueError as error:
-                path.unlink(missing_ok=True)
                 raise ValueError("image upload must be a valid PNG file") from error
-            return str(path)
+            return str(materialized_path)
         raise ValueError(f"Unsupported upload kind: {kind}")
     except Exception:
+        if materialized_path is not None:
+            materialized_path.unlink(missing_ok=True)
         if media_budget is not None:
             media_budget.release(len(raw))
         raise
