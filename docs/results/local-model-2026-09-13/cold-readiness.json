@@ -1,0 +1,21 @@
+{
+  "elapsed_s": 144.92958050000016,
+  "http_status": 200,
+  "response": {
+    "model": "gemma3:4b",
+    "created_at": "2026-09-13T12:06:51.0712029Z",
+    "message": {
+      "role": "assistant",
+      "content": "{\"ready\": true}"
+    },
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 144718394400,
+    "load_duration": 89099240400,
+    "prompt_eval_count": 18,
+    "prompt_eval_cached_count": 0,
+    "prompt_eval_duration": 55071004000,
+    "eval_count": 6,
+    "eval_duration": 524822000
+  }
+}

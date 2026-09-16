@@ -37,3 +37,77 @@ does not undo committed effects. Unknown outcomes must not trigger automatic wri
 
 Golden examples and `tests/test_contract.py` are the shared compatibility gate. The fake
 perception accepts text or explicitly scripted observations; fake audio is never live ASR.
+
+## Additive engine updates, 13 September
+
+- `SessionView.calls` defaults to an empty list for existing constructors. It exposes
+  detached ToolCall snapshots, including operation_id/status, so a reasoner can request
+  status reconciliation without reaching into the executor. Observe-only clients need no changes.
+- Output payloads may include `caused_by_event_id`; confirmed write finals include
+  operation_id. These are additive fields inside the existing extensible payload.
+- Perception must echo the original input event_id as already required. Results from an
+  interrupted or superseded utterance/frame are rejected. Previously accepted completed
+  utterances remain session context; a late result from an older utterance cannot start a plan.
+- Session views, perception input and policy arguments are detached copies; component
+  mutation never constitutes an authoritative state update.
+- Provisional slot/intent changes are associated with the input source that triggered the
+  plan. Replacing that hypothesis restores earlier confirmed values or removes new tentative
+  ones, and invalidates dependent reads. Fine-grained model-provided field evidence remains
+  future work; this is trigger-source provenance, not a claim of perfect semantic attribution.
+- Partial planning is debounced by 80 ms by default; final observations bypass that delay.
+  EventReasoner binds fake proposals to event IDs so coalescing doesn't shift script answers.
+- A model-proposed retry after a definitively failed/no-effect attempt is bounded to one
+  retry and keeps operation_id with a fresh call_id. Unknown/cancelled outcomes block writes.
+  A new user request after a terminal write failure/success starts a new operation identity.
+
+## Completed corrections and image readiness
+
+A final speech observation classified `possible_correction` remains unresolved until a
+fresh, accepted semantic plan originating from that speech source sets `request_complete=True` without a clarification.
+Partial speech cannot be promoted by that flag. A clarification may be emitted for a
+final unresolved correction; a proposal containing a clarification cannot dispatch writes,
+even if it also claims completion and requests a write. Existing authorization and
+confirmed-dependency checks still apply.
+
+An image may support an informational answer when no speech is active. It does not finish
+partial speech or resolve another source's possible correction. An image cannot independently
+supply write intent. A current final speech-origin proposal may establish `write_requested`
+without complete details; a later image-origin proposal may complete those details. Both
+still require the independent environment authorization. Clarification blocks dispatch.
+The controller clears spoken write intent on new speech, interruption or a new request
+after a committed action. Informational speech and completed old requests cannot authorize
+image-origin writes. These are controller interpretations of existing v0.1 fields;
+Atishay's policy and public wire schema are unchanged.
+
+## Optional resource ownership hook
+
+Replay owns its injected perception instance once a run starts and invokes async `aclose()`
+when provided. The existing Perception.observe protocol is unchanged; stateless implementations
+need no new method. Direct Agent callers own provider cleanup, using an async context manager
+or `finally`. A closed ProcessPerception is not reusable; suite factories create fresh instances.
+The controller requests cancellation on superseded same-utterance revisions, replaced frames
+and explicit interruption, while retaining all stale source/revision/epoch checks.
+
+## Grounded tool arguments
+
+`ProposedCall.argument_slots` is an optional parameter-to-slot mapping, default `{}`.
+For example, `arguments={"visit_day": "Wednesday"}`, `argument_slots={"visit_day": "day"}`
+and `dependencies=["day"]` require the authoritative `day` slot to equal `"Wednesday"`.
+Without a mapping, each dynamic argument uses its own name as the slot name. Arguments
+do not create slots: the proposal must include any new slot values in `slot_updates`.
+
+Both read and write dispatch check dependencies and JSON value equality. Writes additionally
+require confirmed slots and the existing completion/authorization gates. A mapping key must
+be a supplied argument. Include contextual dependencies even if absent from tool arguments;
+the engine cannot infer hidden semantic relationships. Unrelated correctly tracked reads
+can continue when other slots change.
+
+Direct manifest `const` or singleton `enum` arguments may be literals. The controller owns
+the idempotency parameter, strips any model value before deriving operation identity, and
+injects its stable identity. A declared read-only status tool may use an actual unresolved
+write operation ID directly, regardless of its parameter name. Arbitrary operation strings
+or unrelated tools receive no such exception. Full manifest argument validation still applies.
+
+Error codes: `missing_dependency` for absent/unlisted required slots;
+`argument_dependency_mismatch` for contradictory values or extraneous mapping keys.
+These errors prevent dispatch; they are not confirmed tool effects.

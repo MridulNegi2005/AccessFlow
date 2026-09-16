@@ -64,7 +64,7 @@ async def test_confirmed_dynamic_write_and_unchanged_slots():
 
 async def test_partial_never_writes_and_revisions_replace():
     reasoner = ScriptedReasoner([proposal("Tuesday"), proposal()])
-    agent, iq, oq, task = await start([], reasoner=reasoner)
+    agent, iq, oq, task = await start([], reasoner=reasoner, partial_debounce_s=0)
     try:
         await iq.put(transcript("Book Tues", final=False))
         for _ in range(30):

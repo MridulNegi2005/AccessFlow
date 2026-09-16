@@ -1,0 +1,106 @@
+{
+  "id": "live-dev-stale-read-after-device-correction",
+  "provenance": "Mridul-authored live-development fixture for dependency-aware stale-result rejection. The correction changes the device, not the symptom, so obsolete notes stay superficially applicable. Fictional Panel-A and Panel-B support notes and mock effects only. Not held out.",
+  "event_gaps_s": [0.5, 26.0],
+  "completion_timeout_s": 85,
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "stale-device",
+      "payload": {
+        "tools": [
+          {
+            "name": "inspect_support_notes",
+            "description": "Read the fictional support instructions for one device and symptom. The remedy differs per device.",
+            "effect": "read",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {"type": "string", "description": "Device model identifier.", "enum": ["Panel-A", "Panel-B"]},
+                "symptom": {"type": "string", "description": "Canonical symptom category.", "enum": ["flicker", "no_power"]}
+              },
+              "required": ["device", "symptom"],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "file_visit_request",
+            "description": "Create a mock on-site technician visit. Use only when the support notes recommend a service visit.",
+            "effect": "write",
+            "idempotency_parameter": "request_token",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {"type": "string"},
+                "day": {"type": "string"},
+                "hour": {"type": "string", "description": "Local time in 24-hour HH:MM format, for example 09:30.", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"},
+                "request_token": {"type": "string"}
+              },
+              "required": ["device", "day", "hour", "request_token"],
+              "additionalProperties": false
+            }
+          },
+          {
+            "name": "order_replacement_part",
+            "description": "Order a mock user-replaceable part. Use only when the support notes recommend a part instead of a visit.",
+            "effect": "write",
+            "idempotency_parameter": "order_token",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {"type": "string"},
+                "part": {"type": "string", "description": "Part code exactly as printed in the support notes."},
+                "order_token": {"type": "string"}
+              },
+              "required": ["device", "part", "order_token"],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "stale-device",
+      "event_id": "notes-question",
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "final": true,
+        "text": "My Panel-A has no power at all. Look up the support notes for it and tell me what they recommend."
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "stale-device",
+      "event_id": "device-correction",
+      "payload": {
+        "utterance_id": "u2",
+        "revision": 0,
+        "final": true,
+        "text": "Sorry, I mixed up the units. It is Panel-B that has no power, not Panel-A. Go ahead and do what the notes recommend, Thursday at ten in the morning."
+      }
+    }
+  ],
+  "environment": {
+    "inspect_support_notes": {
+      "kind": "lookup",
+      "identity_fields": ["device", "symptom"],
+      "rows": [
+        {"device": "Panel-A", "symptom": "no_power", "document": "fictional-panel-a-support", "remedy": "order_part", "part": "PA-77", "recommendation": "The Panel-A power adapter is external and user replaceable. Order part PA-77. Do not book a technician visit."},
+        {"device": "Panel-B", "symptom": "no_power", "document": "fictional-panel-b-support", "remedy": "service_visit", "recommendation": "The Panel-B power supply is internal and is not user replaceable. Book an on-site technician visit. Do not order a part."}
+      ]
+    },
+    "file_visit_request": {"kind": "write", "identity_fields": ["device", "day", "hour"], "mode": "reservation"},
+    "order_replacement_part": {"kind": "write", "identity_fields": ["device", "part"], "mode": "action"}
+  },
+  "expected_slots": {"device": "Panel-B", "symptom": "no_power"},
+  "expectation": {
+    "slots": {"device": "Panel-B"},
+    "effects": [
+      {"tool": "file_visit_request", "arguments": {"device": "Panel-B", "day": "Thursday", "hour": "10:00"}}
+    ],
+    "final_basis": "confirmed_tool_effect",
+    "allowed_error_codes": ["ablation_skipped_invalidation"]
+  }
+}

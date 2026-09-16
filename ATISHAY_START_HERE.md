@@ -31,6 +31,25 @@ A fresh shallow public-clone check on 16 September 2026 checked out
 `atishay/perception`, resolved `origin` to the shared GitHub repository and included
 this guide at commit `4892c185`.
 
+## Continue from the integrated checkpoint
+
+Your d61d4dc checkpoint is integrated on `mridul/engine`. In your own checkout, commit
+or otherwise preserve your current work before merging the tested shared engine:
+
+```powershell
+git fetch origin
+git switch atishay/perception
+git merge origin/mridul/engine
+uv sync --frozen --extra dev
+uv run pytest -q
+uv run accessflow suite scenarios/dev --components local --output-dir artifacts/integration-local
+```
+
+Read [the integration report](docs/INTEGRATION_2026-09-13.md). It records A-side fixes and
+B review items for browser utterance revisions, graceful shutdown and activity timing.
+Your owned implementation was preserved unchanged during integration. GitHub Actions is
+disabled; run checks locally. The initial setup instructions below remain a reference.
+
 ## First 30 minutes
 
 1. Clone the shared GitHub repository using the commands below.
@@ -41,6 +60,7 @@ this guide at commit `4892c185`.
    git clone https://github.com/MridulNegi2005/AccessFlow.git
    cd AccessFlow
    git switch atishay/perception
+   git merge origin/main
    uv python install 3.11
    uv sync --extra dev
    uv run pytest tests/test_contract.py
@@ -55,6 +75,11 @@ this guide at commit `4892c185`.
    uv-managed Python or use a clean local Python 3.11 environment before running
    `uv sync`; the existing development environment on the handoff machine is Python
    3.12.10 and is only a fallback for local verification.
+
+   This repository is public. Atishay9828 has been invited with write permission;
+   accept https://github.com/MridulNegi2005/AccessFlow/invitations before your first push.
+   The merge command above brings the shared engine/bootstrap updates onto your local
+   work branch; it does not modify any remote branch until you push.
 
 4. Read `docs/CONTRACT.md`, `src/accessflow/interfaces.py`, `src/accessflow/fakes.py`
    and the golden event in `tests/fixtures/transcript.json`.

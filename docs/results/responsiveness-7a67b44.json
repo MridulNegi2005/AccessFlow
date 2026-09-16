@@ -1,0 +1,223 @@
+{
+  "backend": "offline-fake",
+  "counts": {
+    "failed": 0,
+    "passed": 400,
+    "total": 400
+  },
+  "counts_by_scenario": {
+    "final_ack_reasoner_blocked": {
+      "failed": 0,
+      "passed": 100,
+      "total": 100
+    },
+    "fluent_final_request": {
+      "failed": 0,
+      "passed": 100,
+      "total": 100
+    },
+    "interrupt_ack_reasoner_blocked": {
+      "failed": 0,
+      "passed": 100,
+      "total": 100
+    },
+    "tool_cancel_blocked": {
+      "failed": 0,
+      "passed": 100,
+      "total": 100
+    }
+  },
+  "latency": {
+    "acknowledgment_from_input_enqueue_s": {
+      "p50_s": 0.00034055,
+      "p95_s": 0.00047073,
+      "p99_s": 0.000650643,
+      "sample_count": 400
+    },
+    "cancellation_entry_to_emission_s": {
+      "p50_s": 0.0001068,
+      "p95_s": 0.000144025,
+      "p99_s": 0.00018131,
+      "sample_count": 100
+    },
+    "cancellation_from_input_enqueue_s": {
+      "p50_s": 0.00016525,
+      "p95_s": 0.000216585,
+      "p99_s": 0.000283342,
+      "sample_count": 100
+    }
+  },
+  "latency_by_scenario": {
+    "final_ack_reasoner_blocked": {
+      "acknowledgment_from_input_enqueue_s": {
+        "p50_s": 0.0003466,
+        "p95_s": 0.000419295,
+        "p99_s": 0.000603067,
+        "sample_count": 100
+      },
+      "cancellation_entry_to_emission_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      },
+      "cancellation_from_input_enqueue_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      },
+      "substantive_response_from_input_enqueue_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      }
+    },
+    "fluent_final_request": {
+      "acknowledgment_from_input_enqueue_s": {
+        "p50_s": 0.00040425,
+        "p95_s": 0.000629595,
+        "p99_s": 0.000750051,
+        "sample_count": 100
+      },
+      "cancellation_entry_to_emission_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      },
+      "cancellation_from_input_enqueue_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      },
+      "substantive_response_from_input_enqueue_s": {
+        "p50_s": 0.00082355,
+        "p95_s": 0.001273285,
+        "p99_s": 0.00149021,
+        "sample_count": 100
+      }
+    },
+    "interrupt_ack_reasoner_blocked": {
+      "acknowledgment_from_input_enqueue_s": {
+        "p50_s": 0.0001298,
+        "p95_s": 0.00015275,
+        "p99_s": 0.000218713,
+        "sample_count": 100
+      },
+      "cancellation_entry_to_emission_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      },
+      "cancellation_from_input_enqueue_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      },
+      "substantive_response_from_input_enqueue_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      }
+    },
+    "tool_cancel_blocked": {
+      "acknowledgment_from_input_enqueue_s": {
+        "p50_s": 0.0002798,
+        "p95_s": 0.00035625,
+        "p99_s": 0.00048649,
+        "sample_count": 100
+      },
+      "cancellation_entry_to_emission_s": {
+        "p50_s": 0.0001068,
+        "p95_s": 0.000144025,
+        "p99_s": 0.00018131,
+        "sample_count": 100
+      },
+      "cancellation_from_input_enqueue_s": {
+        "p50_s": 0.00016525,
+        "p95_s": 0.000216585,
+        "p99_s": 0.000283342,
+        "sample_count": 100
+      },
+      "substantive_response_from_input_enqueue_s": {
+        "p50_s": null,
+        "p95_s": null,
+        "p99_s": null,
+        "sample_count": 0
+      }
+    }
+  },
+  "limitation": "Synthetic offline orchestration evidence only; no clinical, accessibility-benefit, throughput, ASR, or live-model claim.",
+  "metadata": {
+    "backend": "offline-fake",
+    "benchmark_sha256": "5045e30d79ac9764f653a16224836265ba8d59c07ec4c01481e907e41760109b",
+    "clock_origin": "process-local monotonic perf_counter origin; compare timestamps within this run",
+    "clock_resolution_s": 1e-07,
+    "commit": "7a67b44a1d63f14cfa95a6729c618bac58009ae5",
+    "config": {
+      "ack_target_s": 0.3,
+      "cancel_target_s": 0.05,
+      "inference_timeout_s": 1,
+      "partial_debounce_s": 0,
+      "probe_timeout_s": 0.75,
+      "quantile_method": "linear_interpolation_inclusive",
+      "samples": 100,
+      "scenario_timeout_s": 2,
+      "scenarios": [
+        "final_ack_reasoner_blocked",
+        "interrupt_ack_reasoner_blocked",
+        "tool_cancel_blocked",
+        "fluent_final_request"
+      ]
+    },
+    "measurement_clock": "perf_counter",
+    "platform": "Windows-10-10.0.26220-SP0",
+    "provenance": "synthetic controller benchmark; scripted perception, final-flag policy, and gated workers",
+    "python": "3.11.15",
+    "runtime_s": 1.4443584,
+    "sample_count_per_scenario": 100,
+    "scenario_count": 4,
+    "schema_version": "responsiveness.v1",
+    "source_sha256": "170c1fdc3a3f0ebedd175bd8938f8fb9f825babe5aac8b0913f447ab4920d50f",
+    "type": "run_metadata",
+    "worktree_dirty": false
+  },
+  "raw_jsonl": "docs/results/responsiveness-7a67b44.jsonl",
+  "report_version": "responsiveness-report.v1",
+  "samples_per_scenario": 100,
+  "scenario_count": 4,
+  "targets": {
+    "acknowledgment_internal_300ms": {
+      "expected_count": 400,
+      "failed_or_missing_count": 0,
+      "p50_s": 0.00034055,
+      "p95_s": 0.00047073,
+      "p99_s": 0.000650643,
+      "pass_count": 400,
+      "pass_rate_over_expected": 1.0,
+      "sample_count": 400,
+      "target_passed": true,
+      "target_s": 0.3
+    },
+    "cancellation_internal_50ms": {
+      "expected_count": 100,
+      "failed_or_missing_count": 0,
+      "p50_s": 0.0001068,
+      "p95_s": 0.000144025,
+      "p99_s": 0.00018131,
+      "pass_count": 100,
+      "pass_rate_over_expected": 1.0,
+      "sample_count": 100,
+      "target_passed": true,
+      "target_s": 0.05
+    }
+  },
+  "raw_sha256": "53d0df9ed3c441328cbec582d895d4ddb0cc203d2829772beaedb328ea57af97",
+  "verification": "400 unique sessions; durations independently recomputed from raw timestamps; aggregate p95 checked with statistics.quantiles inclusive."
+}

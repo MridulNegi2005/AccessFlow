@@ -1,0 +1,130 @@
+{
+  "id": "planner-probe-corrected-24h",
+  "provenance": "Independently drafted AI development probe for AccessFlow Workstream A; mock service scheduling only, not teammate-heldout and not a clinical case.",
+  "event_spacing_s": 0.04,
+  "completion_timeout_s": 100,
+  "expected_slots": {
+    "unit_code": "LumenCradle-Q",
+    "weekday": "Wednesday",
+    "start_24h": "17:45"
+  },
+  "expectation": {
+    "slots": {
+      "unit_code": "LumenCradle-Q",
+      "weekday": "Wednesday",
+      "start_24h": "17:45"
+    },
+    "effects": [
+      {
+        "tool": "enqueue_calibration_visit",
+        "arguments": {
+          "unit_code": "LumenCradle-Q",
+          "weekday": "Wednesday",
+          "start_24h": "17:45"
+        }
+      }
+    ],
+    "final_basis": "confirmed_tool_effect"
+  },
+  "environment": {
+    "enqueue_calibration_visit": {
+      "kind": "write",
+      "mode": "reservation",
+      "identity_fields": ["unit_code", "weekday", "start_24h"]
+    }
+  },
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "corrected-24h",
+      "payload": {
+        "tools": [
+          {
+            "name": "enqueue_calibration_visit",
+            "description": "Create one fictional service appointment for a registered unit.",
+            "effect": "write",
+            "idempotency_parameter": "request_key",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "unit_code": {
+                  "type": "string",
+                  "enum": ["LumenCradle-Q", "LumenCradle-R"]
+                },
+                "weekday": {
+                  "type": "string",
+                  "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                },
+                "start_24h": {
+                  "type": "string",
+                  "description": "Local clock time in explicit 24-hour HH:MM format.",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "request_key": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{8,64}$"
+                }
+              },
+              "required": ["unit_code", "weekday", "start_24h", "request_key"],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "corrected-24h",
+      "event_id": "rough-appointment",
+      "sequence": 1,
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "text": "Schedule LumenCradle-Q for Tuesday, I am still checking the time.",
+        "final": false
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "corrected-24h",
+      "event_id": "corrected-appointment",
+      "sequence": 2,
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 1,
+        "text": "Correction: make that Wednesday at 17:45 in 24-hour HH:MM notation. Schedule LumenCradle-Q then.",
+        "final": true
+      }
+    }
+  ],
+  "proposals": [
+    {
+      "intent": "service_appointment",
+      "slot_updates": {
+        "unit_code": "LumenCradle-Q",
+        "weekday": "Tuesday"
+      }
+    },
+    {
+      "intent": "service_appointment",
+      "slot_updates": {
+        "unit_code": "LumenCradle-Q",
+        "weekday": "Wednesday",
+        "start_24h": "17:45"
+      },
+      "request_complete": true,
+      "write_requested": true,
+      "calls": [
+        {
+          "tool": "enqueue_calibration_visit",
+          "arguments": {
+            "unit_code": "LumenCradle-Q",
+            "weekday": "Wednesday",
+            "start_24h": "17:45"
+          },
+          "dependencies": ["unit_code", "weekday", "start_24h"]
+        }
+      ]
+    }
+  ]
+}

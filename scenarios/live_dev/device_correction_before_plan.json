@@ -1,0 +1,153 @@
+{
+  "id": "live-dev-device-correction-before-plan",
+  "provenance": "Codex-authored live-development variant of device_correction_during_write.json; explicit tool formats and model-sized timeout. Not held out; mock effects only. Rapid correction before the model plan; does not prove interruption of a dispatched tool.",
+  "event_spacing_s": 0.04,
+  "completion_timeout_s": 100,
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "device-change",
+      "payload": {
+        "tools": [
+          {
+            "name": "reserve_repair_window",
+            "description": "Create a mock service appointment",
+            "effect": "write",
+            "idempotency_parameter": "dedupe_key",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {
+                  "type": "string"
+                },
+                "day": {
+                  "type": "string"
+                },
+                "hour": {
+                  "type": "string",
+                  "description": "Local time in 24-hour HH:MM format, for example 09:30.",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "dedupe_key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "device",
+                "day",
+                "hour",
+                "dedupe_key"
+              ],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "device-change",
+      "event_id": "original-device",
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "final": true,
+        "text": "Book Panel-A for Wednesday at five PM."
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "device-change",
+      "event_id": "corrected-device",
+      "payload": {
+        "utterance_id": "u2",
+        "revision": 0,
+        "final": true,
+        "text": "Wait, book Panel-B instead. Keep Wednesday at five PM."
+      }
+    }
+  ],
+  "environment": {
+    "reserve_repair_window": {
+      "kind": "write",
+      "identity_fields": [
+        "device",
+        "day",
+        "hour"
+      ],
+      "commit_delay_s": 0.2
+    }
+  },
+  "proposals": [
+    {
+      "intent": "service",
+      "slot_updates": {
+        "device": "Panel-A",
+        "day": "Wednesday",
+        "hour": "17:00"
+      },
+      "request_complete": true,
+      "write_requested": true,
+      "calls": [
+        {
+          "tool": "reserve_repair_window",
+          "arguments": {
+            "device": "Panel-A",
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "dependencies": [
+            "device",
+            "day",
+            "hour"
+          ]
+        }
+      ]
+    },
+    {
+      "slot_updates": {
+        "device": "Panel-B"
+      },
+      "request_complete": true,
+      "write_requested": true,
+      "calls": [
+        {
+          "tool": "reserve_repair_window",
+          "arguments": {
+            "device": "Panel-B",
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "dependencies": [
+            "device",
+            "day",
+            "hour"
+          ]
+        }
+      ]
+    }
+  ],
+  "expected_slots": {
+    "device": "Panel-B",
+    "day": "Wednesday",
+    "hour": "17:00"
+  },
+  "expectation": {
+    "slots": {
+      "device": "Panel-B",
+      "day": "Wednesday",
+      "hour": "17:00"
+    },
+    "effects": [
+      {
+        "tool": "reserve_repair_window",
+        "arguments": {
+          "device": "Panel-B",
+          "day": "Wednesday",
+          "hour": "17:00"
+        }
+      }
+    ],
+    "final_basis": "confirmed_tool_effect"
+  }
+}
