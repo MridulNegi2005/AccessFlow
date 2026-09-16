@@ -254,7 +254,12 @@ class _PendingWork:
 
 
 class _LatestWorker:
-    """Run one provider call at a time while bounding pending work per source."""
+    """Run one provider call at a time with bounded recent source coalescing state.
+
+    The controller remains responsible for authoritative per-session revision
+    gating; this worker only suppresses stale work while its recent state is
+    retained.
+    """
 
     def __init__(self, *, max_pending_keys: int = 8, max_state_keys: int = 64) -> None:
         if max_pending_keys < 1:
