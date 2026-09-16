@@ -981,3 +981,9 @@ and reviewed in the current session, correcting the WebRTC frame slicing during 
 The final change normalizes energy RMS and converts supported PCM widths to signed 16-bit VAD input;
 tests cover equivalent amplitudes, clipping bounds and detector input size. No contracts, engine,
 adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Scoped the next Workstream B slice to the existing typed
+InterruptEvent boundary. A delegated test agent added browser translation and session-recovery coverage;
+the implementation was reviewed and extended with separate Stop speaking and Stop task controls plus
+a non-string scope regression. Full demo coverage reached 102 passed and the full suite 630 passed with
+one retained expected conflict example. No engine, contracts, adapters, lockfile or model/network behavior changed.
