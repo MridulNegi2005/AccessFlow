@@ -65,6 +65,19 @@ mock final after the follow-up text included both prior audio and image context.
 transport into the local audio backend plus continued multimodal session handling; it does not prove
 live vision quality or non-mock reasoning.
 
+## Configured vision and reasoner route
+
+The current demo also has a focused WebSocket regression,
+tests/demo/test_reasoner.py::test_websocket_environment_reasoner_receives_multimodal_context,
+with both `ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL` and
+`ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL` configured against one loopback protocol service. A PNG
+first passes through the configured vision provider and becomes the caption `screen shows the
+approval prompt`; a later spoken request is then sent through the same session. The configured
+reasoner receives both observations in its bounded prompt and returns an informational final, and
+the status payload and browser label identify the Ollama vision and reasoner backends separately.
+The service is a deterministic test stub because Ollama is unavailable on this machine, so this is
+provider and session wiring evidence rather than live vision or reasoning quality evidence.
+
 ## What this proves
 
 - A real local ASR result can enter the same multimodal session context as image evidence.
