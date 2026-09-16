@@ -12,6 +12,7 @@ import struct
 import threading
 import wave
 import zlib
+from collections import OrderedDict
 from collections.abc import AsyncIterator, Awaitable, Callable, Hashable
 from dataclasses import dataclass
 from pathlib import Path
@@ -255,18 +256,32 @@ class _PendingWork:
 class _LatestWorker:
     """Run one provider call at a time while bounding pending work per source."""
 
-    def __init__(self, *, max_pending_keys: int = 8) -> None:
+    def __init__(self, *, max_pending_keys: int = 8, max_state_keys: int = 64) -> None:
         if max_pending_keys < 1:
             raise ValueError("max_pending_keys must be positive")
+        if max_state_keys < max_pending_keys + 1:
+            raise ValueError("max_state_keys must hold active and pending work")
         self._lock = asyncio.Lock()
         self._pending: dict[Hashable, _PendingWork] = {}
         self._max_pending_keys = max_pending_keys
-        self._latest_tokens: dict[Hashable, int] = {}
-        self._latest_revisions: dict[Hashable, int] = {}
+        self._max_state_keys = max_state_keys
+        self._latest_state: OrderedDict[Hashable, tuple[int, int | None]] = OrderedDict()
         self._next_token = 0
         self._active: _PendingWork | None = None
         self._task: asyncio.Task | None = None
         self._closed = False
+
+    def _evict_state(self) -> None:
+        protected = set(self._pending)
+        if self._active is not None:
+            protected.add(self._active.key)
+        while len(self._latest_state) > self._max_state_keys:
+            for key in self._latest_state:
+                if key not in protected:
+                    del self._latest_state[key]
+                    break
+            else:
+                return
 
     async def submit(
         self,
@@ -280,17 +295,18 @@ class _LatestWorker:
         async with self._lock:
             if self._closed:
                 return _SUPERSEDED
-            if revision is not None and revision <= self._latest_revisions.get(key, -1):
+            previous_state = self._latest_state.get(key)
+            if (
+                revision is not None
+                and previous_state is not None
+                and previous_state[1] is not None
+                and revision <= previous_state[1]
+            ):
                 return _SUPERSEDED
-            had_previous_token = key in self._latest_tokens
-            previous_token = self._latest_tokens.get(key)
-            had_previous_revision = key in self._latest_revisions
-            previous_revision = self._latest_revisions.get(key)
             self._next_token += 1
             token = self._next_token
-            self._latest_tokens[key] = token
-            if revision is not None:
-                self._latest_revisions[key] = revision
+            self._latest_state[key] = (token, revision)
+            self._latest_state.move_to_end(key)
             previous = self._pending.get(key)
             if previous is not None and not previous.result.done():
                 previous.result.set_result(_SUPERSEDED)
@@ -313,16 +329,12 @@ class _LatestWorker:
                 if (
                     (pending is not None and pending.result is result)
                     or (active is not None and active.result is result)
-                ) and self._latest_tokens.get(key) == token:
-                    if had_previous_token:
-                        self._latest_tokens[key] = previous_token
+                ) and self._latest_state.get(key, (None, None))[0] == token:
+                    if previous_state is None:
+                        self._latest_state.pop(key, None)
                     else:
-                        self._latest_tokens.pop(key, None)
-                    if revision is not None:
-                        if had_previous_revision:
-                            self._latest_revisions[key] = previous_revision
-                        else:
-                            self._latest_revisions.pop(key, None)
+                        self._latest_state[key] = previous_state
+                        self._latest_state.move_to_end(key)
             raise
 
     async def _run(self) -> None:
@@ -338,20 +350,21 @@ class _LatestWorker:
                 value = await work.operation()
             except Exception as error:
                 async with self._lock:
-                    current = self._latest_tokens.get(work.key) == work.token
+                    current = self._latest_state.get(work.key, (None, None))[0] == work.token
                 if current and not work.result.done():
                     work.result.set_exception(error)
                 elif not work.result.done():
                     work.result.set_result(_SUPERSEDED)
             else:
                 async with self._lock:
-                    current = self._latest_tokens.get(work.key) == work.token
+                    current = self._latest_state.get(work.key, (None, None))[0] == work.token
                 if not work.result.done():
                     work.result.set_result(value if current else _SUPERSEDED)
             finally:
                 async with self._lock:
                     if self._active is work:
                         self._active = None
+                    self._evict_state()
 
     async def aclose(self) -> None:
         async with self._lock:
