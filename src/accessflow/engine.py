@@ -41,8 +41,10 @@ class Agent:
 
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
                  scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
-                 disabled=(), corpus_root=None):
+                 frame_debounce_s=0.4, disabled=(), corpus_root=None):
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
+            raise ValueError("Timeouts must be positive and debounce nonnegative")
+        if frame_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
         unknown = set(disabled) - self.ABLATIONS
         if unknown:
@@ -58,6 +60,14 @@ class Agent:
         self.scenario_timeout = min(scenario_timeout, 119)
         self.inference_timeout = inference_timeout
         self.partial_debounce_s = partial_debounce_s
+        # A frame that arrives with nothing spoken yet waits this long before it answers
+        # on its own. Someone who holds up a label and then asks about it produces a frame
+        # and an utterance in quick succession; answering the frame instantly talks over
+        # the question that was already coming. Speech inside the window cancels the
+        # frame-only plan, so the two fold into one answer. When speech for this request
+        # already exists the frame is answering it, so no wait applies and the
+        # clarification path keeps its latency.
+        self.frame_debounce_s = frame_debounce_s
         # Installed directory holding corpus documents. None means no corpus is wired up:
         # any session that still declares Start.corpus gets a bounded per-request refusal
         # (see _execute_corpus) instead of a crash. A session with an empty corpus never
@@ -427,10 +437,13 @@ class Agent:
             self.planner.cancel()
         view = self._view()
         generation = self.generation
+        lone_frame = source is not None and source[0] == "image" and self.active_speech is None
 
         async def plan():
             try:
-                if view.state.correction_pending and self.partial_debounce_s:
+                if lone_frame and self.frame_debounce_s:
+                    await self.clock.sleep(self.frame_debounce_s)
+                elif view.state.correction_pending and self.partial_debounce_s:
                     await self.clock.sleep(self.partial_debounce_s)
                 proposal = await self._bounded(self.reasoner.plan(view, [m.model_copy(deep=True)
                                                                         for m in self.manifests.values()]),

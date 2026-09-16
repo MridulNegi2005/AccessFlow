@@ -166,9 +166,15 @@ An image now completes as evidence and can produce an informational answer. An i
 still cannot authorize a write; that gate is unchanged and verified.
 
 "Additive image-only informational response" is therefore already the engine's behaviour, and
-it predates both branches. The open question is the opposite one: whether a lone image should
-stay silent until the person speaks. That is a contract decision for Mridul and Atishay
-together, not a test fix.
+it predates both branches. The open question was the opposite one: whether a lone image should
+stay silent until the person speaks.
+
+Decided on 16 September 2026: neither. A frame that arrives with nothing spoken yet waits
+`Agent.frame_debounce_s` (0.4 s by default) before it answers on its own. Speech inside that
+window cancels the frame-only plan, so a frame and the question that follows it fold into one
+answer. A frame that answers speech already in progress does not wait, so the clarification
+path keeps its latency. Silence would lose a described-image task; answering instantly would
+talk over a question that was already coming.
 
 "Conflicting visual evidence requires resolution" stays open. Replacement frames are handled
 by source and revision freshness, but the controller does not represent two frames that
