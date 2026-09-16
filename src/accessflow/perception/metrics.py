@@ -139,6 +139,9 @@ def modality_coverage(
     required_values = tuple(dict.fromkeys(required))
     if any(not isinstance(value, str) or not value for value in required_values):
         raise ValueError("required modalities must be non-empty strings")
-    observed_values = tuple(sorted({item.modality for item in observations}))
+    observed_modalities = tuple(getattr(item, "modality", None) for item in observations)
+    if any(not isinstance(value, str) or not value for value in observed_modalities):
+        raise ValueError("observation modalities must be non-empty strings")
+    observed_values = tuple(sorted(set(observed_modalities)))
     missing = tuple(value for value in required_values if value not in observed_values)
     return ModalityCoverage(required_values, observed_values, missing)
