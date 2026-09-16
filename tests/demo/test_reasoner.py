@@ -33,8 +33,8 @@ class FakeResponse:
     def __exit__(self, exc_type, exc, traceback):
         return False
 
-    def read(self):
-        return self._body
+    def read(self, amount=None):
+        return self._body if amount is None else self._body[:amount]
 
 
 def _view(text="Book Wednesday"):
@@ -164,6 +164,28 @@ async def test_ollama_reasoner_response_bound_is_enforced():
 
     with pytest.raises(RuntimeError, match="response is too large"):
         await reasoner.plan(_view(), [])
+
+
+@pytest.mark.asyncio
+async def test_ollama_reasoner_rejects_response_without_bounded_read():
+    class UnboundedResponse(FakeResponse):
+        def __init__(self):
+            super().__init__(b"response")
+            self.unbounded_read_called = False
+
+        def read(self, amount=None):
+            if amount is not None:
+                raise TypeError("sized reads are unsupported")
+            self.unbounded_read_called = True
+            return super().read()
+
+    response = UnboundedResponse()
+    reasoner = OllamaReasoner(opener=lambda request, timeout: response)
+
+    with pytest.raises(RuntimeError, match="response could not be read"):
+        await reasoner.plan(_view(), [])
+
+    assert response.unbounded_read_called is False
 
 
 @pytest.mark.parametrize(
