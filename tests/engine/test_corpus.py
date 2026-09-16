@@ -1,4 +1,7 @@
 import asyncio
+import os
+import time
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -6,10 +9,12 @@ from pydantic import ValidationError
 from accessflow.contracts import (
     Interrupt, InterruptEvent, PlanProposal, ProposedCall, Start, StartEvent,
 )
-from accessflow.corpus import CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage
+from accessflow.corpus import (
+    CORPUS_TOOL_NAME, MAX_DOCUMENT_BYTES, MAX_QUERY_CHARS, CorpusAccessError, CorpusStore, best_passage,
+)
 from accessflow.engine import Agent
 from accessflow.fakes import FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization, ScriptedReasoner
-from test_safety import end, manifest, transcript, wait_for
+from test_safety import end, manifest, proposal, transcript, wait_for
 
 
 async def start_with_corpus(reasoner, corpus_names, root, manifests=None, tools=None, **kwargs):
@@ -283,7 +288,11 @@ async def test_empty_corpus_leaves_behaviour_unchanged():
         await end(iq, task)
 
 
-async def test_corpus_declared_without_root_configured_fails_bounded_not_crash():
+async def test_corpus_declared_without_root_configured_fails_bounded_not_crash(monkeypatch):
+    # "No root configured" must hold even if the process environment happens to carry
+    # ACCESSFLOW_CORPUS_ROOT (see Agent.__init__'s env fallback, added for M5) -- this
+    # test is specifically about the argument-omitted, env-absent case.
+    monkeypatch.delenv("ACCESSFLOW_CORPUS_ROOT", raising=False)
     iq, oq = asyncio.Queue(), asyncio.Queue()
     agent = Agent(FakePerception(), FinalFlagPolicy(), LookupOnce("manual.txt", "reset"), FakeTools(),
                  MockOnlyAuthorization())  # no corpus_root
@@ -295,3 +304,383 @@ async def test_corpus_declared_without_root_configured_fails_bounded_not_crash()
         assert error.payload["detail"] == "corpus_unavailable"
     finally:
         await end(iq, task)
+
+
+# --- M2: corpus work is bounded/off-thread, mirrors the semantics every other tool gets --
+
+async def test_slow_corpus_read_does_not_delay_interrupt_handling(tmp_path, monkeypatch):
+    """A genuinely blocking read (not a pre-branch gate) must not stall the dispatcher.
+
+    Fixes M2. Before the fix, _execute called the synchronous corpus path directly on the
+    dispatcher; a slow read blocked EVERYTHING, including an unrelated interrupt. Now the
+    blocking work runs via asyncio.to_thread, so the interrupt is handled promptly even
+    though the underlying OS thread is still running the (unstoppable) blocking read.
+    """
+    (tmp_path / "manual.txt").write_text("Reset. Hold the button.", encoding="utf-8")
+    original_read = CorpusStore.read
+
+    def slow_read(self, name, allowlist):
+        time.sleep(0.15)
+        return original_read(self, name, allowlist)
+
+    monkeypatch.setattr(CorpusStore, "read", slow_read)
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path)
+    try:
+        await iq.put(transcript("How do I reset it?"))
+        await wait_for(oq, lambda e: e.kind == "tool_call")
+        t0 = time.monotonic()
+        await iq.put(InterruptEvent(session_id="s", payload=Interrupt(scope="task")))
+        await wait_for(oq, lambda e: e.payload.get("stop_output"))
+        elapsed = time.monotonic() - t0
+        assert elapsed < 0.08, (
+            f"interrupt handling took {elapsed * 1000:.0f}ms while a 150ms blocking "
+            "corpus read was in flight -- the dispatcher was blocked")
+    finally:
+        # The leaked background thread from slow_read keeps running for the remainder of
+        # its 150ms regardless of the interrupt (see the module docstring above); give it
+        # time to finish before the fixture removes tmp_path out from under it.
+        await asyncio.sleep(0.2)
+        await end(iq, task)
+
+
+async def test_corpus_call_honors_manifest_timeout(tmp_path, monkeypatch):
+    """The manifest's own timeout_s must bound a corpus call exactly like any other tool.
+
+    Fixes M2. Before the fix this argument was accepted but never actually applied to the
+    corpus branch, so a slow read ran to completion regardless of the configured timeout.
+    """
+    (tmp_path / "manual.txt").write_text("Reset. Hold the button.", encoding="utf-8")
+    original_read = CorpusStore.read
+
+    def slow_read(self, name, allowlist):
+        time.sleep(0.2)
+        return original_read(self, name, allowlist)
+
+    monkeypatch.setattr(CorpusStore, "read", slow_read)
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path)
+    try:
+        for _ in range(20):
+            await asyncio.sleep(0)  # let StartEvent register self.manifests[CORPUS_TOOL_NAME]
+        agent.manifests[CORPUS_TOOL_NAME].timeout_s = 0.02
+        t0 = time.monotonic()
+        await iq.put(transcript("How do I reset it?"))
+        error = await wait_for(oq, lambda e: e.payload.get("code") == "tool_failed")
+        elapsed = time.monotonic() - t0
+        assert error.payload["detail"] == "TimeoutError"
+        assert elapsed < 0.15, (
+            f"corpus call took {elapsed * 1000:.0f}ms to fail with a 20ms manifest timeout "
+            "configured -- the timeout was not honoured")
+    finally:
+        await asyncio.sleep(0.25)
+        await end(iq, task)
+
+
+async def test_corpus_filesystem_error_becomes_failed_tool_result_not_a_crash(tmp_path, monkeypatch):
+    """A PermissionError (or any other OSError) from the underlying read must not escape
+    _execute; it must become a normalized failed ToolResult, without leaking the raw
+    exception message or the absolute path. Fixes M2.
+    """
+    (tmp_path / "manual.txt").write_text("Reset. Hold the button.", encoding="utf-8")
+
+    def raise_permission(self, *args, **kwargs):
+        raise PermissionError(f"Access is denied: {self}")
+
+    monkeypatch.setattr(Path, "read_text", raise_permission)
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path)
+    try:
+        await iq.put(transcript("How do I reset it?"))
+        error = await wait_for(oq, lambda e: e.payload.get("code") == "tool_failed")
+        assert error.payload["detail"] == "document_unreadable"
+        assert not agent.results
+        # The session must still be able to shut down cleanly -- nothing crashed.
+    finally:
+        await end(iq, task)
+
+
+async def test_oversized_document_refused_before_full_read(tmp_path, monkeypatch):
+    """A document over the configured size limit is refused via a stat() check, before
+    Path.read_text is ever called -- not merely truncated after a full read. Fixes M2.
+    """
+    (tmp_path / "manual.txt").write_bytes(b"x" * (MAX_DOCUMENT_BYTES + 1))
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("read_text must not run once the size limit is already exceeded")
+
+    monkeypatch.setattr(Path, "read_text", fail_if_called)
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path)
+    try:
+        await iq.put(transcript("How do I reset it?"))
+        error = await wait_for(oq, lambda e: e.payload.get("code") == "tool_failed")
+        assert error.payload["detail"] == "document_too_large"
+    finally:
+        await end(iq, task)
+
+
+async def test_oversized_query_refused_before_any_file_access(tmp_path, monkeypatch):
+    """A query argument over the configured length limit is refused before the corpus
+    store is ever touched. Fixes M2.
+    """
+    (tmp_path / "manual.txt").write_text("Reset. Hold the button.", encoding="utf-8")
+
+    def fail_if_called(self, name, allowlist):
+        raise AssertionError("CorpusStore.read must not run for an oversized query")
+
+    monkeypatch.setattr(CorpusStore, "read", fail_if_called)
+    long_query = "a" * (MAX_QUERY_CHARS + 1)
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", long_query), ["manual.txt"], tmp_path)
+    try:
+        await iq.put(transcript("How do I reset it?"))
+        error = await wait_for(oq, lambda e: e.payload.get("code") == "tool_failed")
+        assert error.payload["detail"] == "query_too_long"
+    finally:
+        await end(iq, task)
+
+
+async def test_late_corpus_completion_after_real_cancellation_never_enters_evidence(tmp_path, monkeypatch):
+    """A blocking read that is still running when the request is interrupted must not have
+    its eventual (real, successful) result accepted into evidence once it finishes.
+
+    This delays the read itself -- not merely a gate awaited before entering the corpus
+    branch -- which is the specific distinction the M2 finding calls out: a prior test
+    (test_pending_corpus_retrieval_cancelled_on_task_interrupt) used a pre-branch gate;
+    this one proves the same property against a genuinely in-flight blocking call.
+    """
+    (tmp_path / "manual.txt").write_text("Reset. Hold the button for ten seconds.", encoding="utf-8")
+    original_read = CorpusStore.read
+
+    def slow_read(self, name, allowlist):
+        time.sleep(0.15)
+        return original_read(self, name, allowlist)
+
+    monkeypatch.setattr(CorpusStore, "read", slow_read)
+    executor = FakeTools()
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path,
+                                                  tools=executor)
+    try:
+        await iq.put(transcript("How do I reset it?"))
+        await wait_for(oq, lambda e: e.kind == "tool_call")
+        call_id = next(iter(agent.ledger))
+        await iq.put(InterruptEvent(session_id="s", payload=Interrupt(scope="task")))
+        await wait_for(oq, lambda e: e.payload.get("stop_output"))
+        # Let the (unstoppable) blocking thread actually finish and its result reach the
+        # inbox before asserting -- this is the point of the test.
+        await asyncio.sleep(0.25)
+        assert agent.ledger[call_id].status != "success"
+        assert not any(r.call_id == call_id for r in agent.results)
+        # The corpus call was never handed to the external executor, so its cancellation
+        # must not have notified it either (M3's ownership boundary, exercised here too).
+        assert call_id not in executor.cancelled
+    finally:
+        await end(iq, task)
+
+
+# --- M3: dispatch is owned by whether THIS session installed the built-in corpus, --------
+# --- never merely by a call's tool name -------------------------------------------------
+
+async def test_empty_corpus_lets_external_read_tool_named_search_corpus_execute():
+    """An ordinary external READ tool that happens to be named "search_corpus" must be
+    dispatched to the external executor when this session's corpus is empty -- it must
+    never be silently intercepted by the built-in branch. Fixes M3.
+    """
+    read_tool = manifest(effect="read", name=CORPUS_TOOL_NAME)
+    executor = FakeTools()
+
+    class OneRead:
+        async def plan(self, view, manifests):
+            if view.results:
+                return PlanProposal(response="done")
+            return PlanProposal(slot_updates={"day": "Wednesday"},
+                                calls=[ProposedCall(tool=CORPUS_TOOL_NAME, arguments={"day": "Wednesday"},
+                                                    dependencies=["day"])])
+
+    incoming, outgoing = asyncio.Queue(), asyncio.Queue()
+    agent = Agent(FakePerception(), FinalFlagPolicy(), OneRead(), executor, MockOnlyAuthorization(),
+                 partial_debounce_s=0)  # no corpus_root at all: an empty corpus never touches it
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id="s", payload=Start(tools=[read_tool], corpus=[])))
+        await incoming.put(transcript("search please"))
+        await wait_for(outgoing, lambda e: e.payload.get("basis") == "tool_evidence")
+        assert len(executor.calls) == 1
+        assert executor.calls[0].tool == CORPUS_TOOL_NAME
+    finally:
+        await end(incoming, task)
+
+
+async def test_empty_corpus_lets_external_write_tool_named_search_corpus_commit():
+    """The same ownership boundary for a WRITE tool sharing the corpus tool's name."""
+    write_tool = manifest(effect="write", name=CORPUS_TOOL_NAME)
+    executor = FakeTools()
+    incoming, outgoing = asyncio.Queue(), asyncio.Queue()
+    agent = Agent(FakePerception(), FinalFlagPolicy(), ScriptedReasoner([proposal(name=CORPUS_TOOL_NAME)]),
+                 executor, MockOnlyAuthorization(), partial_debounce_s=0)
+    task = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id="s", payload=Start(tools=[write_tool], corpus=[])))
+        await incoming.put(transcript())
+        final = await wait_for(outgoing, lambda e: e.kind == "final")
+        assert final.payload["basis"] == "confirmed_tool_effect"
+        assert len(executor.calls) == 1
+        assert executor.calls[0].tool == CORPUS_TOOL_NAME
+    finally:
+        await end(incoming, task)
+
+
+async def test_nonempty_corpus_still_dispatches_builtin_retrieval_not_external_executor(tmp_path):
+    """The inverse of the above: a nonempty corpus must still route to the built-in
+    implementation, never to a coincidentally-configured external executor, confirming
+    the ownership flag (not merely "no external executor was given") drives routing.
+    """
+    (tmp_path / "manual.txt").write_text("Reset. Hold the button.", encoding="utf-8")
+    executor = FakeTools()
+    agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path,
+                                                  tools=executor)
+    try:
+        for _ in range(20):
+            await asyncio.sleep(0)  # let the StartEvent be processed before inspecting state
+        assert agent._corpus_installed is True
+        await iq.put(transcript("How do I reset it?"))
+        evidence = await wait_for(oq, lambda e: e.payload.get("basis") == "tool_evidence")
+        assert evidence.payload["result"]["document"] == "manual.txt"
+        assert not executor.calls, "the external executor must never see the built-in corpus call"
+    finally:
+        await end(iq, task)
+
+
+# --- M5: the planner can discover allowed documents; the harness can set the root -------
+
+class CaptureManifests:
+    """Never hard-codes a document name -- the point of this fixture is that it cannot."""
+    def __init__(self):
+        self.manifests = None
+
+    async def plan(self, view, manifests):
+        if self.manifests is None:
+            self.manifests = manifests
+        return PlanProposal()
+
+
+async def test_planner_can_discover_allowed_document_without_hardcoding_name(tmp_path):
+    (tmp_path / "unique-manual-729.txt").write_text("content", encoding="utf-8")
+    reasoner = CaptureManifests()
+    agent, iq, oq, task = await start_with_corpus(reasoner, ["unique-manual-729.txt"], tmp_path)
+    try:
+        await iq.put(transcript("How do I reset the device?"))
+        for _ in range(20):
+            await asyncio.sleep(0)
+    finally:
+        await end(iq, task)
+    corpus_tool = next(m for m in reasoner.manifests if m.name == CORPUS_TOOL_NAME)
+    assert "unique-manual-729.txt" in corpus_tool.description
+    # No absolute filesystem path is ever exposed to the planner.
+    assert str(tmp_path) not in corpus_tool.description
+
+
+async def test_planner_sees_no_allowed_documents_when_corpus_is_empty():
+    agent, iq, oq, task = await start_with_corpus(ScriptedReasoner([]), [], Path("."))
+    try:
+        for _ in range(10):
+            await asyncio.sleep(0)
+        assert CORPUS_TOOL_NAME not in agent.manifests
+    finally:
+        await end(iq, task)
+
+
+async def test_session_reset_clears_previous_corpus_allowlist(tmp_path):
+    """A new session on the SAME Agent instance must not inherit the previous session's
+    corpus allowlist or its retrieved documents -- reset is a hard session boundary.
+    """
+    (tmp_path / "first.txt").write_text("first document", encoding="utf-8")
+    (tmp_path / "second.txt").write_text("second document", encoding="utf-8")
+
+    agent = Agent(FakePerception(), FinalFlagPolicy(), LookupOnce("first.txt", "q"), FakeTools(),
+                 MockOnlyAuthorization(), partial_debounce_s=0, corpus_root=str(tmp_path))
+    iq, oq = asyncio.Queue(), asyncio.Queue()
+    task = asyncio.create_task(agent.run(iq, oq))
+    await iq.put(StartEvent(session_id="s", payload=Start(tools=[], corpus=["first.txt"])))
+    await iq.put(transcript("q", utterance="u1"))
+    await wait_for(oq, lambda e: e.payload.get("basis") == "tool_evidence")
+    await end(iq, task)
+
+    agent.reasoner = LookupOnce("first.txt", "q")  # tries the OLD document name again
+    iq2, oq2 = asyncio.Queue(), asyncio.Queue()
+    task2 = asyncio.create_task(agent.run(iq2, oq2))
+    try:
+        await iq2.put(StartEvent(session_id="s", payload=Start(tools=[], corpus=["second.txt"])))
+        await iq2.put(transcript("q", utterance="u2"))
+        error = await wait_for(oq2, lambda e: e.payload.get("code") == "tool_failed")
+        assert error.payload["detail"] == "document_not_in_corpus"
+        assert agent.corpus_allowlist == frozenset({"second.txt"})
+    finally:
+        await end(iq2, task2)
+
+
+def test_agent_corpus_root_falls_back_to_env_var(tmp_path, monkeypatch):
+    """Gives the normal CLI/replay harness (which constructs Agent without a corpus_root
+    kwarg) a way to configure the trust boundary root -- see cli.py's --corpus-root.
+    """
+    monkeypatch.setenv("ACCESSFLOW_CORPUS_ROOT", str(tmp_path))
+    agent = Agent(FakePerception(), FinalFlagPolicy(), ScriptedReasoner([]), FakeTools(), MockOnlyAuthorization())
+    assert agent._corpus_root == str(tmp_path)
+
+
+def test_agent_corpus_root_explicit_argument_overrides_env_var(tmp_path, monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_CORPUS_ROOT", str(tmp_path / "wrong"))
+    agent = Agent(FakePerception(), FinalFlagPolicy(), ScriptedReasoner([]), FakeTools(), MockOnlyAuthorization(),
+                 corpus_root=str(tmp_path))
+    assert agent._corpus_root == str(tmp_path)
+
+
+async def test_corpus_root_from_env_var_enables_real_retrieval(tmp_path, monkeypatch):
+    """Exercises the exact mechanism cli.py uses: set the env var, construct Agent with
+    no explicit corpus_root, and confirm retrieval actually works end to end.
+    """
+    (tmp_path / "manual.txt").write_text("Reset via the environment-configured root.", encoding="utf-8")
+    monkeypatch.setenv("ACCESSFLOW_CORPUS_ROOT", str(tmp_path))
+    iq, oq = asyncio.Queue(), asyncio.Queue()
+    agent = Agent(FakePerception(), FinalFlagPolicy(), LookupOnce("manual.txt", "reset"), FakeTools(),
+                 MockOnlyAuthorization(), partial_debounce_s=0)  # no explicit corpus_root
+    task = asyncio.create_task(agent.run(iq, oq))
+    try:
+        await iq.put(StartEvent(session_id="s", payload=Start(tools=[], corpus=["manual.txt"])))
+        await iq.put(transcript("How do I reset it?"))
+        evidence = await wait_for(oq, lambda e: e.payload.get("basis") == "tool_evidence")
+        assert "environment-configured" in evidence.payload["result"]["passage"]
+    finally:
+        await end(iq, task)
+
+
+def test_cli_corpus_root_flows_to_replay_trace_evidence(tmp_path, monkeypatch):
+    """The normal CLI suite path: --corpus-root sets ACCESSFLOW_CORPUS_ROOT and records the
+    resolved (non-absolute-to-the-planner) root in the trace's own evidence, without
+    touching src/accessflow/evaluation/ (out of scope for this fix; component_config was
+    already a generic pass-through recorded verbatim in replay()'s metadata).
+    """
+    import sys
+
+    from accessflow import cli
+    from accessflow.evaluation.replay import load_run_metadata
+
+    monkeypatch.delenv("ACCESSFLOW_CORPUS_ROOT", raising=False)
+    out_dir = tmp_path / "out"
+    monkeypatch.setattr(sys, "argv", ["accessflow", "suite", "scenarios/dev",
+                                      "--output-dir", str(out_dir), "--corpus-root", str(tmp_path)])
+    try:
+        cli.main()
+        resolved = str(tmp_path.resolve())
+        assert os.environ["ACCESSFLOW_CORPUS_ROOT"] == resolved
+        metadata = load_run_metadata(out_dir / "scenario-001.jsonl")
+        assert metadata["config"]["component_config"]["corpus_root"] == resolved
+    finally:
+        os.environ.pop("ACCESSFLOW_CORPUS_ROOT", None)
+
+
+def test_cli_corpus_root_must_be_an_existing_directory(tmp_path, monkeypatch):
+    import sys
+
+    from accessflow import cli
+
+    monkeypatch.setattr(sys, "argv", ["accessflow", "suite", "scenarios/dev",
+                                      "--corpus-root", str(tmp_path / "does-not-exist")])
+    with pytest.raises(SystemExit):
+        cli.main()
