@@ -53,6 +53,7 @@ async def test_vision_benchmark_replays_all_image_cases_and_scores_labels():
     assert report["backend"] == "fake/replay-vision"
     assert report["model"] == "synthetic-replay"
     assert report["prompt"] == "synthetic label replay"
+    assert report["timeout_s"] is None
     assert report["cases"] == 12
     assert report["failures"] == 0
     assert report["mean_elapsed_s"] >= 0
@@ -173,3 +174,38 @@ def test_vision_benchmark_is_explicitly_opt_in(capsys):
         "reason": "live vision is opt-in; rerun with --live",
         "status": "SKIPPED",
     }
+
+
+def test_vision_benchmark_skip_ignores_invalid_timeout_environment(monkeypatch, capsys):
+    monkeypatch.setenv("ACCESSFLOW_LIVE_VISION_TIMEOUT", "not-a-number")
+
+    assert benchmark.main([]) == 0
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["status"] == "SKIPPED"
+
+
+def test_vision_benchmark_passes_explicit_timeout_to_live_provider(monkeypatch, capsys):
+    captured = {}
+
+    class FakeProvider:
+        backend_name = "ollama/fake"
+        model = "fake-model"
+        prompt = "fake-prompt"
+
+        def __init__(self, **kwargs):
+            captured["provider_kwargs"] = kwargs
+            self.timeout_s = kwargs["timeout_s"]
+
+    async def fake_run(provider, **kwargs):
+        captured["run_timeout_s"] = kwargs["timeout_s"]
+        return {"failures": 0, "status": "completed"}
+
+    monkeypatch.setattr(benchmark, "OllamaVisionProvider", FakeProvider)
+    monkeypatch.setattr(benchmark, "run_vision_benchmark", fake_run)
+
+    assert benchmark.main(["--live", "--timeout", "7.5"]) == 0
+
+    assert captured["provider_kwargs"]["timeout_s"] == 7.5
+    assert captured["run_timeout_s"] == 7.5
+    assert json.loads(capsys.readouterr().out)["status"] == "completed"
