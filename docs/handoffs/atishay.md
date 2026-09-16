@@ -426,3 +426,16 @@ fact layer; no turn completion or controller behavior changed.
 **Status:** Focused audio coverage passes 45 tests; the full suite passes 643 tests with one retained
 expected conflict example. Ruff and diff checks pass. Held-out speech quality, live acoustic hardware
 timing and live vision remain unverified. Commit: 3aec3b2.
+
+## 2026-09-16 - Browser send close-race handling
+
+**Task:** Keep browser transport errors recoverable when a WebSocket closes between readiness checking
+and sending.
+
+**Changes:** Added a small serialized-send boundary that catches send exceptions, emits a stable
+transport error and returns failure to callers. Pending messages now stop draining after a failed send
+without announcing a false connected state. Normal transcript sending was checked in a fresh browser
+smoke; no controller or event contract changed.
+
+**Status:** Full suite passes 643 tests with one retained expected conflict example; Ruff and diff checks
+pass. The browser smoke produced a final response with no console errors or warnings. Commit: a5ece4b.

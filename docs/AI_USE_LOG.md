@@ -1024,3 +1024,8 @@ timestamps as a source of invalid timing summaries. The patch was reviewed and t
 negative timestamps, non-finite values, zero-length frames, invalid RMS/activity types and decreasing
 frame order, with direct summary and pause-candidate coverage. Full suite: 643 passed, 1 xfailed,
 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Continued demo transport hardening by catching WebSocket send
+close races and avoiding a false connected announcement after queued-send failure. Normal browser
+interaction, source coverage, full tests and Ruff passed: 643 passed, 1 xfailed, 2 warnings. No engine,
+contracts, adapters, lockfile or model/network behavior changed.

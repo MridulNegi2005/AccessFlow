@@ -171,6 +171,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Live announcements also compact untrusted message and response text to a 240-character content
   bound. A browser smoke with a 1,200-character response produced a bounded announcement while the
   full trace stayed visible; no live model or device claim is made.
+- Browser sends now catch a close race after the ready-state check and report a stable transport error;
+  queued-message draining also stops without a false connected announcement. A fresh browser send
+  smoke completed with no console errors; the full branch remains at 643 passed with one xfail.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
