@@ -149,6 +149,7 @@ def validate_png(path: Path) -> PngFormat:
                 ihdr is None
                 or saw_idat
                 or palette_entries is not None
+                or ihdr[3] in {0, 4}
                 or length < 3
                 or length > 768
                 or length % 3
