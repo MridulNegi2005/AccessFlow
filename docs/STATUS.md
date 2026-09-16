@@ -545,6 +545,10 @@ Updated 16 September 2026.
   tests with one retained conflict xfail and the full repository passes 769 tests with one xfail;
   Ruff passes. The merge introduced no conflict in Workstream B files and no protected file was
   edited by this workstream.
+- A fresh 17 September live-vision preflight found no Ollama executable and a refused
+  `127.0.0.1:11434` connection. The explicit 12-case `--live` gate processed all cases, returned
+  12 classified transport failures with zero captions and zero label recall, and exited 1; the
+  gate remains fail-closed and live vision quality is still unmeasured.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
