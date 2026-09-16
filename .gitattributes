@@ -3,3 +3,9 @@
 *.sh text eol=lf
 *.md text eol=lf
 *.yml text eol=lf
+
+# Append-only logs: both sides are kept automatically instead of conflicting on every
+# integration. Only safe because every writer appends a timestamped entry at the end.
+# Do not add a file here that anyone rewrites in place, such as docs/STATUS.md.
+.ai-sync/context.md merge=union
+docs/AI_USE_LOG.md merge=union

@@ -14,6 +14,47 @@
 Append each future milestone with prompts, outputs, edits, tests and reviewer. This log
 supports the mandatory organizer form; it is not a completed or signed disclosure form.
 
+## 2026-09-13 — Codex engine continuation
+
+- User steering: Publish to GitHub for normal collaboration; public approved; invite Atishay9828.
+- Outputs: Engine safety fixes/tests, reconciliation normalization, bounded HTTP reasoning
+  adapters, replay CLI, trace summary, Docker/CI and run instructions.
+- Validation: 22 offline tests and Ruff passed; synthetic text replay ran with corrected
+  slots and one mock action. No live provider or raw-media evaluation performed.
+- Human changes/review: Not recorded yet. Originality and accessibility benefit not validated.
+
+## 2026-09-13 — Continued engine goal
+User authorized persistent Workstream A development and Luna high workers. Codex implemented controller/replay changes; gpt-5.6-luna high performed a bounded read-only controller audit and authored trace_metrics.py plus tests. Codex reviewed the metrics, requested fixes for outcome identity, causality, timing semantics and duplicate-count naming, integrated and tested. 47 tests and Ruff passed; no human validation or live-model results claimed.
+
+## 2026-09-13 — Mock workflows and outcome evaluation
+- Prompt: Continue Mridul-only implementation with optional Luna high workers; keep CI disabled.
+- Codex outputs: Scenario/schema validation, task outcome checker, suite CLI, replay evidence,
+  dependency invalidation fixes, fictional development cases, tests and evaluation/handoff docs.
+- gpt-5.6-luna high outputs: Initial mock executor and bounded cancellation/retry revisions.
+- Codex review/modifications: Requested atomic commit/cancel decision, shielded duplicate waits,
+  full semantic argument conflicts, truthful unknown outcomes, attempt ownership, distinct call
+  IDs in tests and late cleanup coverage. Integrated and tested; added crash/exit failure traces.
+- Validation: 92 local tests and Ruff pass; four scripted development cases pass. Built wheel
+  installed in isolated environment; same four cases pass. No real provider/media run performed.
+- Human modifications/review: Not recorded. These cases are developer-authored, not held out.
+
+## 2026-09-13 — Controller responsiveness and outcome conflicts
+- Prompt: Continue Workstream A with bounded Luna high workers; keep GitHub Actions disabled.
+- Codex outputs: Reproducing conflicting-write tests, controller fixes, confirmed cancellation
+  trace evidence, CLI integration, documentation and review of worker implementations.
+- gpt-5.6-luna high outputs: Responsiveness harness/tests and separate trace-outcome corrections.
+- Review changes: Required actual pending-gate snapshots at output, raw causal timestamps,
+  cleanup failure accounting, failed-sample exclusion, per-condition quantiles, strict p95
+  targets and truthful synthetic-load labels. Required successful status-read evidence and
+  within-attempt conflict detection; normal retries must not be mislabeled contradictory.
+- Validation: 108 local tests and Ruff pass, four development workflows pass; CLI smoke: 8/8.
+  Main measured results will identify the tested code commit. No real model/media benchmark.
+- Human modifications/review: Not recorded.
+
+Measured evidence: Codex ran 100 samples per condition after committing source 7a67b44;
+400/400 passed. Codex independently recomputed durations and aggregate p95 from raw timestamps,
+saved reports/raw samples in docs/results. No human validation or live-model claim added.
+
 ## 2026-09-13 - Codex Atishay audio fixture checkpoint
 
 - Feature origin: The approved AccessFlow Workstream B plan.
@@ -81,6 +122,17 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Validation: `uv run --python 3.12 --extra dev pytest tests/test_contract.py` — 4 passed.
 - Backend/dependencies: No live backend and no committed dependency changes.
 
+## 2026-09-13 — Codex Workstream A integration
+
+- Feature origin: Approved independent-workstream plan and persistent A-only user goal.
+- Tools: Codex implementation; GPT-5.6-Luna high bounded read-only integration reviews.
+- Prompt summary: Integrate Atishay checkpoint without editing his implementations; reproduce
+  source/correction/image mismatches and validate both component profiles.
+- Output: A controller fixes, replay composition/provenance, fourteen A integration tests,
+  organized README and integration report. B-authored code/history preserved with provenance.
+- Validation: 151 tests and Ruff pass; four-case fake/local suites and installed-wheel local suite pass.
+- Backend: Scripted reasoning and injected media callbacks; no live model evaluation.
+- Human modifications/review: Not recorded. No additional dependency, CI trigger or submission.
 ## 2026-09-13 - Codex Atishay PCM maintenance checkpoint
 
 - Feature origin: The approved AccessFlow Workstream B plan and the handoff requirement to replace deprecated audioop.
@@ -157,6 +209,58 @@ supports the mandatory organizer form; it is not a completed or signed disclosur
 - Validation: Demo suite 9 passed; full suite verification follows; Ruff passed for owned paths.
 - Backend/dependencies: Existing FastAPI WebSocket stack; no dependency or contract change. Microphone remains mock.
 
+
+## 2026-09-13 — Codex second B integration
+Feature origin: ongoing A integration ownership. Prompt: review and integrate 2a4372a
+without modifying B-owned code. Codex preserved B changes and checkpoint narrative,
+resolved shared documentation conflicts and verified WAV hashes/durations. 159 tests and
+Ruff pass. No independent live-model run or human review recorded. No dependency change.
+
+## 2026-09-13 — Native perception lifecycle (Workstream A)
+
+- Feature origin: approved bounded inference/session-lifecycle requirements and persistent A-only goal.
+- Tools: Codex parent implementation/review; GPT-5.6-Luna high worker drafted process adapter,
+  child protocol and nine focused subprocess tests. No B-owned implementation edits.
+- Prompts: implement persistent bounded child, cancellation/timeout/restart/close and protocol
+  failures; review startup races and Windows background launch. Parent added replay ownership,
+  CLI composition, process-ready PID checks and controller-to-worker integration.
+- Corrections to generated output: clear stale canceled-startup handle; bypass the Windows venv
+  redirector while preserving import paths; use actual provider-entry/PID gates; connect
+  controller cancellation while preserving late-result rejection; test actual packaged child.
+- Validation: final 178 tests and Ruff pass; wheel built; fresh installed-wheel local suite 4/4;
+  packaged missing-WAV failure path and no remaining worker PID verified.
+- Evidence/backend: real Python subprocesses with fake providers; no live model run. No additional
+  dependency, CI trigger, human review or submission recorded.
+
+## 2026-09-13 — Local model setup and telemetry (Workstream A)
+Feature origin: approved real-inference validation requirement. Codex parent installed verified official portable Ollama and gemma3:4b locally, wrote runtime/experiment scripts and integrated replay evidence. GPT-5.6-Luna high drafted bounded request telemetry and warm-up validation/tests; parent reviewed. 185 tests and Ruff pass. Cold real readiness returned valid JSON in 144.93 s; no completed real task reported yet. Human review pending. No hosted calls or new dependencies. Runtime/model assets are outside Git.
+
+## 2026-09-13 — Explicit live planner decisions
+Real local pilot on clean 6099497: readiness 18.32 s, valid model plan in 8.23 s,
+no calls and unresolved completion; task timed out at 30 s with zero mock effects.
+Generation schema previously allowed every top-level field to be omitted. A-side fix
+requires explicit output fields and dependencies in the model schema, explains resolved
+corrections and action planning in the system prompt; internal v0.1 defaults unchanged.
+Focused model tests 13 pass and Ruff passes. Same-fixture live retry follows; this is
+development tuning, not a held-out comparison. CI remains disabled.
+
+## 2026-09-13 — Live failure analysis and experiment review
+Codex parent preserved two failed live pilots, grounded planner schema per Ollama structured-output documentation, added completed-correction acknowledgments and fair-format/model-deadline fixture variants. Luna high reviewed scripts and implemented runner failure/reset/typed-plan diagnostics and four tests. Parent added precise phases and two cooperative cancellation tests, and hardened PowerShell listener/process lifecycle (actually stop/restart/port-refusal tested). Full suite194 passed before last2 tests; runner6 and focused model/integration28 pass, Ruff pass. No model success inferred from mocks; no B edits or dependency/CI change. Human review pending.
+
+## 2026-09-13 — First full live development run
+Actual Ollama gemma3:4b on clean79bd263: 0/4 tasks passed. Two request timeouts; two invalid semantic plans, zero effects. Typed outputs prove wrapper/format/completion errors; controller did not emit model's false success claim. All resets/cleanup succeeded. Codex added opt-in GPU-layer setting and placement/load evidence for the next isolated hardware experiment; model22 and runner6 tests pass, Ruff pass. Prompt and timeout values unchanged in this placement experiment.
+
+Final validation for local-model experiment slice:204 tests and Ruff passed. Codex preserved all failures and compared auto versus explicit35-layer placement with unchanged request/controller deadlines. Actual model outputs changed; no isolated causal/p95 claim. No real task passed, no external effects, no hosted request. Human review remains pending.
+
+## 2026-09-13 — Planner accuracy investigation
+Codex parent installed Qwen2.5:3b as an explicitly selected local reasoning comparison (same prompt,4k context,20s request limit). Original clean82a9d0c suite1/4 task criteria passed; other failures and all raw plans retained. Luna high independently drafted four new ignored development probes and validated schema/fake/local plumbing4/4 without revealing labels to parent before first live scoring. Parent copied them without reading labels. They are not teammate-heldout or clinical data. Parent clarified slot/argument/completion semantics and projected unknown operations from the ledger into explicit reconciliation guidance.24 model tests and Ruff pass. A separate Luna audit is reviewing dependency omissions; no engine guards changed. No B changes, hosted calls or CI dispatch.
+
+- 2026-09-13 18:32, Codex: answered workflow-email question using public GitHub workflow/job status and committed missing-git fix. No tests rerun, inference executed, workflow dispatched or implementation changed in this check.
+
+
+- 2026-09-13 18:40, Codex with Luna high planner worker and read-only review: generated dependency/nonce regressions and controller checks; reviewed and incorporated exact manifest model schema changes. Two A race fixtures now declare their existing dummy argument as a manifest constant. Full224 tests/Ruff pass; seven pre-fix failures observed. Human review pending; no B/CI changes.
+
+- 2026-09-13 18:47, Codex: user requested stop; preserved terminal2/4 actual model results and shut down verified local runtime. No further implementation, test runs, model calls or CI dispatch. Source3e24c06 already pushed; final stop evidence saved locally.
 ## 2026-09-13 - Codex Atishay browser microphone capture
 
 - Feature origin: The approved AccessFlow Workstream B plan.
