@@ -282,6 +282,10 @@ class _LatestWorker:
                 return _SUPERSEDED
             if revision is not None and revision <= self._latest_revisions.get(key, -1):
                 return _SUPERSEDED
+            had_previous_token = key in self._latest_tokens
+            previous_token = self._latest_tokens.get(key)
+            had_previous_revision = key in self._latest_revisions
+            previous_revision = self._latest_revisions.get(key)
             self._next_token += 1
             token = self._next_token
             self._latest_tokens[key] = token
@@ -305,6 +309,20 @@ class _LatestWorker:
                 pending = self._pending.get(key)
                 if pending is not None and pending.result is result:
                     del self._pending[key]
+                active = self._active
+                if (
+                    (pending is not None and pending.result is result)
+                    or (active is not None and active.result is result)
+                ) and self._latest_tokens.get(key) == token:
+                    if had_previous_token:
+                        self._latest_tokens[key] = previous_token
+                    else:
+                        self._latest_tokens.pop(key, None)
+                    if revision is not None:
+                        if had_previous_revision:
+                            self._latest_revisions[key] = previous_revision
+                        else:
+                            self._latest_revisions.pop(key, None)
             raise
 
     async def _run(self) -> None:
