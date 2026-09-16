@@ -1023,6 +1023,29 @@ def test_png_validation_returns_structural_metadata(tmp_path: Path):
     assert validate_png(image_path) == PngFormat(width=320, height=240, bit_depth=8, color_type=6)
 
 
+def test_png_validation_reads_only_a_bounded_payload(tmp_path: Path, monkeypatch):
+    image_path = tmp_path / "growing.png"
+    image_path.write_bytes(b"small")
+
+    class BoundedReader:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self, amount=None):
+            if amount is None:
+                return b"small"
+            assert amount == local_module.MAX_PNG_FILE_BYTES + 1
+            return b"x" * amount
+
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: BoundedReader())
+
+    with pytest.raises(ValueError, match="PNG file is too large"):
+        validate_png(image_path)
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("corruption", ["truncated", "bad-crc", "bad-idat"])
 async def test_image_input_rejects_structurally_invalid_png(tmp_path: Path, corruption: str):
