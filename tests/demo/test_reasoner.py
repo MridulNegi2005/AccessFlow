@@ -187,16 +187,22 @@ async def test_ollama_reasoner_keeps_blocking_opener_off_event_loop():
 def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch):
     class ReasonerHandler(BaseHTTPRequestHandler):
         requests = []
+        image_context_received = threading.Event()
 
         def do_POST(self):
             length = int(self.headers["Content-Length"])
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             ReasonerHandler.requests.append(payload)
-            plan = {
-                "response": "The local reasoner received the spoken request and screen evidence.",
-                "request_complete": True,
-            }
-            response = json.dumps({"response": json.dumps(plan)}).encode("utf-8")
+            if payload.get("images"):
+                response = json.dumps({"response": "screen shows the approval prompt"}).encode("utf-8")
+            else:
+                if "screen shows the approval prompt" in payload.get("prompt", ""):
+                    ReasonerHandler.image_context_received.set()
+                plan = {
+                    "response": "The local reasoner received the spoken request and screen evidence.",
+                    "request_complete": True,
+                }
+                response = json.dumps({"response": json.dumps(plan)}).encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(response)))
@@ -214,6 +220,11 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
         "ACCESSFLOW_DEMO_OLLAMA_REASONER_ENDPOINT",
         f"http://127.0.0.1:{server.server_port}/api/generate",
     )
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "gemma3:4b")
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_OLLAMA_ENDPOINT",
+        f"http://127.0.0.1:{server.server_port}/api/generate",
+    )
 
     try:
         encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
@@ -227,6 +238,7 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
                     }
                 )
                 media_status = socket.receive_json()
+                assert ReasonerHandler.image_context_received.wait(timeout=1)
                 socket.send_json(
                     {
                         "kind": "transcript",
@@ -239,6 +251,9 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
 
         final = next(item for item in outputs if item["kind"] == "final")
         assert status["kind"] == "demo_status"
+        assert status["payload"]["perception_backend"] == (
+            "demo/mock audio + local/Ollama gemma3:4b image"
+        )
         assert status["payload"]["reasoner_backend"] == "ollama/gemma3:4b"
         assert media_status["payload"] == {
             "media_received": "frame",
@@ -250,12 +265,23 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
             "backend": "reasoner",
         }
         assert len(ReasonerHandler.requests) >= 2
-        request_payload = ReasonerHandler.requests[-1]
+        vision_requests = [payload for payload in ReasonerHandler.requests if payload.get("images")]
+        reasoner_requests = [payload for payload in ReasonerHandler.requests if not payload.get("images")]
+        request_payload = next(
+            payload
+            for payload in reversed(reasoner_requests)
+            if "screen shows the approval prompt" in payload["prompt"]
+            and "What did I send you?" in payload["prompt"]
+        )
         assert request_payload["model"] == "gemma3:4b"
         assert request_payload["stream"] is False
         assert request_payload["format"] == "json"
-        assert "Mock image input received" in request_payload["prompt"]
+        assert "screen shows the approval prompt" in request_payload["prompt"]
         assert "What did I send you?" in request_payload["prompt"]
         assert len(request_payload["prompt"]) <= MAX_REASONER_CONTEXT_CHARS
+        assert vision_requests
+        assert len(reasoner_requests) >= 2
+        assert vision_requests[-1]["model"] == "gemma3:4b"
+        assert vision_requests[-1]["images"] == [encoded_image]
     finally:
         server.shutdown()
