@@ -63,6 +63,17 @@ def _encode_samples(samples: list[int], sample_width: int) -> bytes:
     return bytes(encoded)
 
 
+def _to_pcm16(pcm: bytes, sample_width: int) -> bytes:
+    """Convert signed or unsigned PCM samples to little-endian signed 16-bit PCM."""
+    samples = _decode_samples(pcm, sample_width)
+    if sample_width == 2:
+        return pcm
+
+    scale = 1 << (sample_width * 8 - 1)
+    normalized = [max(-32768, min(32767, round(sample * 32768 / scale))) for sample in samples]
+    return _encode_samples(normalized, 2)
+
+
 def _downmix_to_mono(pcm: bytes, sample_width: int, channels: int) -> bytes:
     if channels == 1:
         return pcm
@@ -94,7 +105,7 @@ def _resample_mono(pcm: bytes, sample_width: int, source_rate: int, target_rate:
 
 
 def _rms(pcm: bytes, sample_width: int) -> int:
-    samples = _decode_samples(pcm, sample_width)
+    samples = _decode_samples(_to_pcm16(pcm, sample_width), 2)
     if not samples:
         return 0
     return math.isqrt(sum(sample * sample for sample in samples) // len(samples))
