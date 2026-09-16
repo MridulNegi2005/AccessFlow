@@ -1029,3 +1029,8 @@ frame order, with direct summary and pause-candidate coverage. Full suite: 643 p
 close races and avoiding a false connected announcement after queued-send failure. Normal browser
 interaction, source coverage, full tests and Ruff passed: 643 passed, 1 xfailed, 2 warnings. No engine,
 contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Added a browser Restart session control for clean client-state
+reset and active microphone-stream discard after disconnects. Real browser smoke verified the pre-restart
+final was cleared and a new WebSocket session connected cleanly; full suite: 643 passed, 1 xfailed,
+2 warnings. No engine, contracts, adapters, lockfile or model/network behavior changed.
