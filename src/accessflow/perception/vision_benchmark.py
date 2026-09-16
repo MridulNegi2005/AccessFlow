@@ -11,7 +11,7 @@ import os
 import time
 from collections import Counter
 from collections.abc import Callable, Sequence
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from tempfile import TemporaryDirectory
 from typing import Any
 
@@ -34,6 +34,11 @@ def _image_cases(root: Path) -> list[dict[str, Any]]:
         or len(set(ids)) != len(ids)
     ):
         raise ValueError("image case IDs must be unique non-empty strings")
+    if any(
+        Path(case_id).name != case_id or PureWindowsPath(case_id).name != case_id
+        for case_id in ids
+    ):
+        raise ValueError("image case IDs must be safe filenames")
     if any(
         not isinstance(case.get("visual_label"), str)
         or not case["visual_label"].strip()
