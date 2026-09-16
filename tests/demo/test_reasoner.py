@@ -1,9 +1,15 @@
 import asyncio
+import base64
 import importlib.util
 import json
+import struct
+import threading
+import zlib
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from accessflow.contracts import Observation, SessionView, Snapshot
 
@@ -46,6 +52,25 @@ def _view(text="Book Wednesday"):
             )
         ],
         results=[],
+    )
+
+
+def _png_bytes():
+    def chunk(kind, data):
+        return (
+            struct.pack(">I", len(data))
+            + kind
+            + data
+            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+        )
+
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    pixels = b"\x00\x10\x20\x30\xff"
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(pixels))
+        + chunk(b"IEND", b"")
     )
 
 
@@ -157,3 +182,80 @@ async def test_ollama_reasoner_keeps_blocking_opener_off_event_loop():
     reasoner = OllamaReasoner(opener=opener)
     await reasoner.plan(_view(), [])
     assert started.is_set()
+
+
+def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch):
+    class ReasonerHandler(BaseHTTPRequestHandler):
+        requests = []
+
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            ReasonerHandler.requests.append(payload)
+            plan = {
+                "response": "The local reasoner received the spoken request and screen evidence.",
+                "request_complete": True,
+            }
+            response = json.dumps({"response": json.dumps(plan)}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+        def log_message(self, format, *args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), ReasonerHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL", "gemma3:4b")
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_OLLAMA_REASONER_ENDPOINT",
+        f"http://127.0.0.1:{server.server_port}/api/generate",
+    )
+
+    try:
+        encoded_image = base64.b64encode(_png_bytes()).decode("ascii")
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                status = socket.receive_json()
+                socket.send_json(
+                    {
+                        "kind": "frame",
+                        "payload": {"data_base64": encoded_image, "frame_id": "reasoner-frame"},
+                    }
+                )
+                media_status = socket.receive_json()
+                socket.send_json(
+                    {
+                        "kind": "transcript",
+                        "payload": {"text": "What did I send you?"},
+                    }
+                )
+                outputs = []
+                while not any(item["kind"] in {"final", "error"} for item in outputs):
+                    outputs.append(socket.receive_json())
+
+        final = next(item for item in outputs if item["kind"] == "final")
+        assert status["kind"] == "demo_status"
+        assert status["payload"]["reasoner_backend"] == "ollama/gemma3:4b"
+        assert media_status["payload"] == {
+            "media_received": "frame",
+            "source_id": "reasoner-frame",
+        }
+        assert final["payload"] == {
+            "text": "The local reasoner received the spoken request and screen evidence.",
+            "basis": "informational",
+            "backend": "reasoner",
+        }
+        assert len(ReasonerHandler.requests) >= 2
+        request_payload = ReasonerHandler.requests[-1]
+        assert request_payload["model"] == "gemma3:4b"
+        assert request_payload["stream"] is False
+        assert request_payload["format"] == "json"
+        assert "Mock image input received" in request_payload["prompt"]
+        assert "What did I send you?" in request_payload["prompt"]
+        assert len(request_payload["prompt"]) <= MAX_REASONER_CONTEXT_CHARS
+    finally:
+        server.shutdown()

@@ -73,7 +73,10 @@
 
     function show(event) {
       if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
-        backendLabel.textContent = event.payload.perception_backend;
+        const reasoner = event.payload.reasoner_backend;
+        backendLabel.textContent = reasoner
+          ? `${event.payload.perception_backend} | ${reasoner}`
+          : event.payload.perception_backend;
       }
       const card = document.createElement('div');
       card.className = 'event';
