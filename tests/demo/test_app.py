@@ -3442,6 +3442,61 @@ def test_browser_path_is_not_used_when_session_upload_root_exists(tmp_path: Path
     assert "private" not in str(materialized)
 
 
+@pytest.mark.parametrize(
+    ("kind", "id_key", "backend_kind", "message"),
+    [
+        ("audio", "utterance_id", "audio", "uploaded WAV bytes"),
+        ("frame", "frame_id", "vision", "uploaded PNG bytes"),
+    ],
+)
+def test_configured_media_backend_rejects_placeholder_and_session_recovers(
+    monkeypatch, kind, id_key, backend_kind, message
+):
+    calls = []
+
+    class GuardedAudio:
+        audio_backend_name = "local/guarded-audio"
+
+        async def observe(self, event):
+            calls.append(event)
+            if False:
+                yield None
+
+    class GuardedVision:
+        backend_name = "local/guarded-vision"
+
+        def __call__(self, path):
+            calls.append(path)
+            return "should not run"
+
+    audio_backend = GuardedAudio() if backend_kind == "audio" else None
+    vision_backend = GuardedVision() if backend_kind == "vision" else None
+
+    def configured_perception(cls):
+        return DemoPerception(audio_backend=audio_backend, vision_backend=vision_backend)
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            socket.receive_json()
+            socket.send_json({"kind": kind, "payload": {id_key: "missing-upload"}})
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            outputs = _receive_controller_outputs(socket)
+
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert error["kind"] == "demo_error"
+    assert error["payload"]["backend"] == "demo/input"
+    assert message in error["payload"]["message"]
+    assert calls == []
+    assert "Still connected" in final["payload"]["text"]
+
+
 def test_browser_audio_upload_is_materialized_and_validated(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
