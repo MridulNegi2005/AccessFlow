@@ -82,6 +82,8 @@
     const pendingMessages = [];
     const maxPendingMessages = 16;
     const maxAnnouncementChars = 240;
+    const maxMicrophoneWavBytes = 8 * 1024 * 1024;
+    const maxMicrophoneSamples = Math.floor((maxMicrophoneWavBytes - 44) / 2);
 
     function show(event) {
       if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
@@ -278,8 +280,26 @@
         const silentGain = context.createGain();
         silentGain.gain.value = 0;
         const chunks = [];
+        let microphoneSamples = 0;
+        let microphoneLimitReached = false;
         recorder.port.onmessage = (event) => {
-          chunks.push(new Float32Array(event.data));
+          if (microphoneLimitReached || microphone?.recorder !== recorder) return;
+          const incoming = new Float32Array(event.data);
+          const remaining = maxMicrophoneSamples - microphoneSamples;
+          if (remaining <= 0) {
+            microphoneLimitReached = true;
+            void stopMicrophone('limit');
+            return;
+          }
+          const accepted = incoming.length <= remaining ? incoming : incoming.slice(0, remaining);
+          if (accepted.length > 0) {
+            chunks.push(accepted);
+            microphoneSamples += accepted.length;
+          }
+          if (microphoneSamples >= maxMicrophoneSamples) {
+            microphoneLimitReached = true;
+            void stopMicrophone('limit');
+          }
         };
         source.connect(recorder);
         recorder.connect(silentGain);
@@ -294,7 +314,7 @@
       }
     }
 
-    async function stopMicrophone() {
+    async function stopMicrophone(reason = null) {
       if (!microphone) return;
       const current = microphone;
       microphone = null;
@@ -305,6 +325,12 @@
       current.stream.getTracks().forEach((track) => track.stop());
       await current.context.close();
       setMicrophoneButtons(false);
+      if (reason === 'limit') {
+        show({ kind: 'demo_error', payload: {
+          backend: 'browser/microphone-capture',
+          message: 'Microphone recording reached the 8 MiB limit and was stopped.'
+        } });
+      }
       const wav = encodeWav(current.chunks, current.sampleRate);
       const uploaded = await enqueueMediaAction(() => send('audio', () => ({
           data_base64: bytesToBase64(wav),
