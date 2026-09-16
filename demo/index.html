@@ -51,6 +51,13 @@
   </section>
 
   <section>
+    <h2>Interruption</h2>
+    <button type="button" id="stop-speaking">Stop speaking</button>
+    <button type="button" id="stop-task">Stop task</button>
+    <small>Stop speaking ends current output and keeps the task available. Stop task cancels pending work for this session.</small>
+  </section>
+
+  <section>
     <h2>OutputEvent stream</h2>
     <div id="events" aria-live="polite"></div>
   </section>
@@ -142,6 +149,13 @@
     function nextMediaId(prefix) {
       mediaSequence += 1;
       return prefix + '-' + mediaSequence;
+    }
+
+    function sendInterrupt(scope) {
+      return send('interrupt', () => ({
+        scope,
+        utterance_id: activeUtteranceId ?? undefined
+      }));
     }
 
     function bytesToBase64(bytes) {
@@ -297,6 +311,8 @@
     micButton.onclick = () => void startMicrophone();
     stopMicButton.onclick = () => void stopMicrophone();
     document.querySelector('#send-image').onclick = () => void sendFile('frame', '#image', 'browser-mock.png');
+    document.querySelector('#stop-speaking').onclick = () => sendInterrupt('speech');
+    document.querySelector('#stop-task').onclick = () => sendInterrupt('task');
   </script>
 </body>
 </html>
