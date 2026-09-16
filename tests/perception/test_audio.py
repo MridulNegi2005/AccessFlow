@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import ActivityFrame, ActivityWindow, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
+from accessflow.perception import ActivityFrame, ActivitySummary, ActivityWindow, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -207,6 +207,68 @@ def test_all_silence_does_not_look_like_a_pause_after_speech():
 
     assert summary.windows == ()
     assert summary.pause_detected is False
+
+
+@pytest.mark.parametrize(
+    ("active_duration_s", "leading_silence_s", "trailing_silence_s", "pause_detected", "message"),
+    [
+        (-0.1, 0.0, 0.0, False, "active_duration_s"),
+        (0.2, math.nan, 0.0, False, "leading_silence_s"),
+        (0.2, 0.0, math.inf, False, "trailing_silence_s"),
+        (0.2, 0.0, 0.0, "false", "pause_detected"),
+        (0.1, 0.0, 0.0, False, "active_duration_s"),
+    ],
+)
+def test_activity_summaries_reject_invalid_values(
+    active_duration_s, leading_silence_s, trailing_silence_s, pause_detected, message
+):
+    with pytest.raises(ValueError, match=message):
+        ActivitySummary(
+            windows=(ActivityWindow(0.0, 0.2),),
+            active_duration_s=active_duration_s,
+            leading_silence_s=leading_silence_s,
+            trailing_silence_s=trailing_silence_s,
+            pause_detected=pause_detected,
+        )
+
+
+def test_activity_summary_uses_bounded_absolute_duration_tolerance():
+    accepted = ActivitySummary(
+        windows=(ActivityWindow(0.0, 0.2),),
+        active_duration_s=0.2 + 5e-10,
+        leading_silence_s=0.0,
+        trailing_silence_s=0.0,
+        pause_detected=False,
+    )
+
+    assert accepted.active_duration_s == pytest.approx(0.2, abs=1e-9)
+
+    with pytest.raises(ValueError, match="active_duration_s"):
+        ActivitySummary(
+            windows=(ActivityWindow(0.0, 1e9),),
+            active_duration_s=1e9 + 0.5,
+            leading_silence_s=0.0,
+            trailing_silence_s=0.0,
+            pause_detected=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "windows",
+    [
+        (ActivityWindow(0.0, 1.0), ActivityWindow(0.5, 1.5)),
+        (ActivityWindow(1.0, 2.0), ActivityWindow(0.0, 0.5)),
+    ],
+)
+def test_activity_summary_rejects_overlapping_or_out_of_order_windows(windows):
+    with pytest.raises(ValueError, match="chronological and non-overlapping"):
+        ActivitySummary(
+            windows=windows,
+            active_duration_s=sum(window.end_s - window.start_s for window in windows),
+            leading_silence_s=0.0,
+            trailing_silence_s=0.0,
+            pause_detected=False,
+        )
 
 
 def test_activity_summary_rejects_empty_frames_and_invalid_threshold():

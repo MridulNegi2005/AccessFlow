@@ -69,6 +69,26 @@ class ActivitySummary:
     trailing_silence_s: float
     pause_detected: bool
 
+    def __post_init__(self) -> None:
+        for field_name, value in (
+            ("active_duration_s", self.active_duration_s),
+            ("leading_silence_s", self.leading_silence_s),
+            ("trailing_silence_s", self.trailing_silence_s),
+        ):
+            _validate_finite_nonnegative(value, field_name)
+        if not isinstance(self.pause_detected, bool):
+            raise ValueError("pause_detected must be a boolean")
+        previous: ActivityWindow | None = None
+        for window in self.windows:
+            if not isinstance(window, ActivityWindow):
+                raise ValueError("windows must contain ActivityWindow values")
+            if previous is not None and window.start_s < previous.end_s:
+                raise ValueError("activity windows must be chronological and non-overlapping")
+            previous = window
+        active_duration = sum(window.end_s - window.start_s for window in self.windows)
+        if not math.isclose(self.active_duration_s, active_duration, rel_tol=0.0, abs_tol=1e-9):
+            raise ValueError("active_duration_s must match the activity windows")
+
 
 def _active_windows(frames: tuple[ActivityFrame, ...]) -> tuple[ActivityWindow, ...]:
     windows: list[ActivityWindow] = []
