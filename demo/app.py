@@ -22,6 +22,8 @@ from accessflow.contracts import (
     EndEvent,
     Frame,
     FrameEvent,
+    Interrupt,
+    InterruptEvent,
     Observation,
     OutputEvent,
     PlanProposal,
@@ -339,6 +341,22 @@ def _text(payload: dict[str, Any]) -> str:
     return value
 
 
+def _interrupt_scope(payload: dict[str, Any]) -> str:
+    value = payload.get("scope", "speech")
+    if not isinstance(value, str) or value not in {"speech", "task"}:
+        raise ValueError("browser interrupt scope must be 'speech' or 'task'")
+    return value
+
+
+def _optional_source_id(payload: dict[str, Any], key: str) -> str | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"browser {key} must be a non-empty string when provided")
+    return value
+
+
 def event_from_message(
     session_id: str,
     message: dict[str, Any],
@@ -356,6 +374,16 @@ def event_from_message(
         message.get("timestamp", payload.get("timestamp", 0)), "timestamp"
     )
     sequence = _sequence(message)
+    if kind == "interrupt":
+        return InterruptEvent(
+            session_id=session_id,
+            timestamp=timestamp,
+            sequence=sequence,
+            payload=Interrupt(
+                scope=_interrupt_scope(payload),
+                utterance_id=_optional_source_id(payload, "utterance_id"),
+            ),
+        )
     if kind == "transcript":
         speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
         speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
