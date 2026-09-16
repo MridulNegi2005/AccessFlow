@@ -987,3 +987,9 @@ InterruptEvent boundary. A delegated test agent added browser translation and se
 the implementation was reviewed and extended with separate Stop speaking and Stop task controls plus
 a non-string scope regression. Full demo coverage reached 102 passed and the full suite 630 passed with
 one retained expected conflict example. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Scoped the next Workstream B slice to server-side browser media
+budgets and pending-input backpressure. A delegated test agent returned no patch; the implementation
+and regressions were authored and reviewed in the current session. The final route enforces an 8 MiB
+per-file and 16 MiB per-session aggregate cap, releases failed reservations, and bounds the incoming
+queue at 16. No engine, contracts, adapters, lockfile or model/network behavior changed.
