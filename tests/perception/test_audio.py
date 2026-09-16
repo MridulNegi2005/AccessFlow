@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
+from accessflow.perception import ActivityFrame, ActivityWindow, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -180,6 +180,23 @@ def test_activity_summary_reports_windows_and_trailing_pause_without_completion(
     assert summary.pause_detected is True
 
 
+@pytest.mark.parametrize(
+    ("start_s", "end_s", "message"),
+    [
+        (-0.1, 0.1, "start_s"),
+        (0.0, -0.1, "end_s"),
+        (0.5, 0.5, "end_s"),
+        (0.5, 0.4, "end_s"),
+        (0.0, math.inf, "end_s"),
+        (math.nan, 0.1, "start_s"),
+        ("0.0", 0.1, "start_s"),
+    ],
+)
+def test_activity_windows_reject_invalid_values(start_s, end_s, message):
+    with pytest.raises(ValueError, match=message):
+        ActivityWindow(start_s, end_s)
+
+
 def test_all_silence_does_not_look_like_a_pause_after_speech():
     frames = (
         ActivityFrame(0.0, 0.02, 0, False),
@@ -309,11 +326,30 @@ def test_pause_candidates_keep_internal_and_trailing_gaps_separate():
     candidates = pause_candidates(frames, min_pause_s=0.4)
 
     assert len(candidates) == 2
-    assert candidates[0] == PauseCandidate(0.02, 0.62, pytest.approx(0.6), trailing=False)
+    assert candidates[0] == PauseCandidate(0.02, 0.62, 0.6, trailing=False)
+    assert candidates[0].duration_s == pytest.approx(0.6)
     assert candidates[1].start_s == 0.64
     assert candidates[1].end_s == pytest.approx(1.14)
     assert candidates[1].duration_s == pytest.approx(0.5)
     assert candidates[1].trailing is True
+
+
+@pytest.mark.parametrize(
+    ("start_s", "end_s", "duration_s", "message"),
+    [
+        (-0.1, 0.2, 0.3, "start_s"),
+        (0.2, 0.1, 0.1, "end_s"),
+        (0.0, 0.2, -0.1, "duration_s"),
+        (0.0, math.inf, 1.0, "end_s"),
+        (0.0, 0.2, math.nan, "duration_s"),
+        (0.0, 0.2, 0.1, "duration_s"),
+        (0.0, 0.2, "0.2", "duration_s"),
+        (0.0, 0.2, 0.2, "trailing"),
+    ],
+)
+def test_pause_candidates_reject_invalid_values(start_s, end_s, duration_s, message):
+    with pytest.raises(ValueError, match=message):
+        PauseCandidate(start_s, end_s, duration_s, trailing="false" if message == "trailing" else False)
 
 
 def test_pause_candidates_ignore_short_gaps_and_all_silence():
