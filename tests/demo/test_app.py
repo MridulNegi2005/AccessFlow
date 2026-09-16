@@ -432,6 +432,12 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="events" aria-live="off"' in html
     assert 'id="restart-session"' in html
     assert 'const maxAnnouncementChars = 240' in html
+    assert 'const maxMicrophoneWavBytes = 8 * 1024 * 1024' in html
+    assert 'const maxMicrophoneSamples = Math.floor((maxMicrophoneWavBytes - 44) / 2)' in html
+    assert 'const accepted = incoming.length <= remaining ? incoming : incoming.slice(0, remaining)' in html
+    assert 'void stopMicrophone(\'limit\')' in html
+    assert 'Microphone recording reached the 8 MiB limit and was stopped.' in html
+    assert 'async function stopMicrophone(reason = null)' in html
     assert 'function sendSerialized(message)' in html
     assert 'The session closed before the event could be sent.' in html
     assert "sendInterrupt('speech')" in html
@@ -464,6 +470,24 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "nextMediaId('upload-audio')" in html
     assert "nextMediaId('upload-frame')" in html
     assert 'Date.now()' not in html
+
+
+def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
+    html = Path("demo/index.html").read_text(encoding="utf-8")
+
+    recorder_handler = html.index("recorder.port.onmessage")
+    stop_function = html.index("async function stopMicrophone")
+    stop_body = html[stop_function:]
+
+    assert "const maxMicrophoneWavBytes = 8 * 1024 * 1024" in html
+    assert "const maxMicrophoneSamples = Math.floor((maxMicrophoneWavBytes - 44) / 2)" in html
+    assert "const remaining = maxMicrophoneSamples - microphoneSamples" in html[recorder_handler:stop_function]
+    assert "incoming.slice(0, remaining)" in html[recorder_handler:stop_function]
+    assert "microphoneLimitReached = true" in html[recorder_handler:stop_function]
+    assert "void stopMicrophone('limit')" in html[recorder_handler:stop_function]
+    assert stop_body.index("if (!microphone) return;") < stop_body.index("microphone = null;")
+    assert "await enqueueMediaAction(() => send('audio'" in stop_body
+    assert "Microphone recording reached the 8 MiB limit and was stopped." in stop_body
     assert 'card.innerHTML' not in html
     assert "function announce(event)" in html
     assert "function compactAnnouncement(value)" in html
