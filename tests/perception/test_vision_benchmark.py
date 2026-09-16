@@ -58,6 +58,7 @@ async def test_vision_benchmark_replays_all_image_cases_and_scores_labels():
     assert report["mean_elapsed_s"] >= 0
     assert report["mean_label_token_recall"] == 1.0
     assert all(item["status"] == "completed" for item in report["results"])
+    assert all(item["backend"] == provider.backend_name for item in report["results"])
     assert all(item["source_id"] == item["id"] for item in report["results"])
     assert all(item["sha256"] for item in report["results"])
     assert all(item["label_token_recall"] == 1.0 for item in report["results"])
@@ -95,6 +96,7 @@ async def test_vision_benchmark_records_provider_failures_without_caption():
     assert report["failures"] == 1
     assert report["mean_label_token_recall"] == 0.916667
     assert failed["status"] == "error"
+    assert failed["backend"] is None
     assert failed["caption"] is None
     assert failed["label_token_recall"] == 0.0
     assert failed["failure"] == {
@@ -102,6 +104,15 @@ async def test_vision_benchmark_records_provider_failures_without_caption():
         "message": "vision service unavailable",
     }
     assert sum(item["status"] == "completed" for item in report["results"]) == 11
+
+
+def test_vision_benchmark_report_writer_preserves_json(tmp_path: Path):
+    report_path = tmp_path / "vision-report.json"
+    report = {"status": "failed", "failures": 1, "results": [{"id": "image-01"}]}
+
+    benchmark._write_report(report_path, report)
+
+    assert json.loads(report_path.read_text(encoding="utf-8")) == report
 
 
 @pytest.mark.asyncio
