@@ -202,6 +202,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - A demo startup failure in reasoner configuration now closes any perception backend that was already
   initialized before reporting the configuration error. The full branch passes 675 tests with one
   retained conflict example and two dependency deprecation warnings; Ruff passes.
+- Direct PNG validation now rejects `PLTE` chunks for grayscale and grayscale-with-alpha images before
+  a vision provider can receive the malformed input. Focused local-perception coverage passes 49 tests;
+  the full branch passes 677 tests with one retained conflict example and Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
