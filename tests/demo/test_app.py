@@ -3395,6 +3395,101 @@ def test_browser_png_upload_is_materialized_and_validated(tmp_path: Path):
     assert event.payload.frame_id == "upload-frame"
 
 
+def test_browser_media_uploads_share_a_session_budget(tmp_path: Path):
+    audio = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    audio_bytes = audio.read_bytes()
+    png = _png_bytes(width=2, height=3)
+    budget = demo_app._SessionMediaBudget(limit=len(audio_bytes) + len(png))
+
+    audio_event = event_from_message(
+        "session-1",
+        {
+            "kind": "audio",
+            "payload": {
+                "data_base64": base64.b64encode(audio_bytes).decode("ascii"),
+                "utterance_id": "audio-1",
+            },
+        },
+        media_root=tmp_path,
+        media_budget=budget,
+    )
+    frame_event = event_from_message(
+        "session-1",
+        {
+            "kind": "frame",
+            "payload": {
+                "data_base64": base64.b64encode(png).decode("ascii"),
+                "frame_id": "frame-1",
+            },
+        },
+        media_root=tmp_path,
+        media_budget=budget,
+    )
+
+    assert budget.used == len(audio_bytes) + len(png)
+    assert Path(audio_event.payload.path).read_bytes() == audio_bytes
+    assert Path(frame_event.payload.path).read_bytes() == png
+
+
+def test_browser_media_budget_rejects_overflow_without_materializing(tmp_path: Path):
+    audio = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    audio_bytes = audio.read_bytes()
+    png = _png_bytes(width=2, height=3)
+    budget = demo_app._SessionMediaBudget(limit=len(audio_bytes))
+
+    event_from_message(
+        "session-1",
+        {
+            "kind": "audio",
+            "payload": {
+                "data_base64": base64.b64encode(audio_bytes).decode("ascii"),
+                "utterance_id": "audio-1",
+            },
+        },
+        media_root=tmp_path,
+        media_budget=budget,
+    )
+
+    with pytest.raises(ValueError, match="16 MiB aggregate limit"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "frame",
+                "payload": {
+                    "data_base64": base64.b64encode(png).decode("ascii"),
+                    "frame_id": "frame-1",
+                },
+            },
+            media_root=tmp_path,
+            media_budget=budget,
+        )
+
+    assert budget.used == len(audio_bytes)
+    assert len(list(tmp_path.iterdir())) == 1
+
+
+def test_browser_media_budget_releases_failed_validation_reservation(tmp_path: Path):
+    invalid_wav = b"RIFF" + b"\x00\x00\x00\x00" + b"WAVE"
+    budget = demo_app._SessionMediaBudget(limit=len(invalid_wav))
+
+    with pytest.raises(ValueError, match="valid PCM WAV"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "audio",
+                "payload": {
+                    "data_base64": base64.b64encode(invalid_wav).decode("ascii"),
+                    "utterance_id": "audio-1",
+                },
+            },
+            media_root=tmp_path,
+            media_budget=budget,
+        )
+
+    assert budget.used == 0
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_browser_media_upload_rejects_oversized_encoded_payload(tmp_path: Path):
     oversized = "A" * (demo_app.MAX_BASE64_CHARS + 1)
 
