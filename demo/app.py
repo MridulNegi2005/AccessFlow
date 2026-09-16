@@ -190,6 +190,10 @@ class DemoPerception:
 class DemoReasoner:
     """Return a visible mock response while the real reasoner is developed separately."""
 
+    @property
+    def backend_name(self):
+        return "demo/mock-reasoner"
+
     @classmethod
     def from_environment(cls):
         model = os.environ.get("ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL", "").strip()
@@ -455,7 +459,13 @@ async def websocket(websocket: WebSocket) -> None:
         await websocket.close(code=1008)
         return
     await outgoing.put(
-        {"kind": "demo_status", "payload": {"perception_backend": perception.backend_label}}
+        {
+            "kind": "demo_status",
+            "payload": {
+                "perception_backend": perception.backend_label,
+                "reasoner_backend": getattr(reasoner, "backend_name", "demo/unknown-reasoner"),
+            },
+        }
     )
     agent = Agent(
         perception,

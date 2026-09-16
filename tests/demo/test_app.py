@@ -365,6 +365,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="mic"' in html
     assert 'id="stop-mic"' in html
     assert 'id="backend-label"' in html
+    assert 'event.payload.reasoner_backend' in html
     assert 'getUserMedia' in html
     assert 'encodeWav' in html
     assert 'AudioWorkletNode' in html
