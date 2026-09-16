@@ -8,6 +8,7 @@ from urllib.error import HTTPError
 import pytest
 
 from accessflow.perception import OllamaVisionProvider
+from accessflow.perception import vision as vision_module
 
 
 class FakeResponse:
@@ -71,6 +72,39 @@ def test_ollama_provider_normalizes_timeout(tmp_path: Path):
 
     with pytest.raises(RuntimeError, match="Ollama vision request failed"):
         OllamaVisionProvider(opener=opener)(image)
+
+
+def test_ollama_provider_rejects_oversized_image_before_request(tmp_path: Path):
+    image = tmp_path / "large.png"
+    image.write_bytes(b"x" * (vision_module.MAX_VISION_IMAGE_BYTES + 1))
+    called = False
+
+    def opener(request, *, timeout):
+        nonlocal called
+        called = True
+        return FakeResponse({"response": "unexpected"})
+
+    with pytest.raises(RuntimeError, match="image is too large"):
+        OllamaVisionProvider(opener=opener)(image)
+
+    assert called is False
+
+
+def test_ollama_provider_rejects_oversized_response(tmp_path: Path):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    with pytest.raises(RuntimeError, match="response is too large"):
+        OllamaVisionProvider(
+            opener=lambda request, timeout: FakeResponse(
+                b"x" * (vision_module.MAX_VISION_RESPONSE_BYTES + 1)
+            )
+        )(image)
+
+
+def test_ollama_provider_classifies_missing_image(tmp_path: Path):
+    with pytest.raises(RuntimeError, match="image could not be read"):
+        OllamaVisionProvider()(tmp_path / "missing.png")
 
 
 @pytest.mark.parametrize("body", [[], None])
