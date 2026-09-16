@@ -42,6 +42,8 @@ MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_SESSION_UPLOAD_BYTES = 16 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
+MAX_BROWSER_TEXT_CHARS = MAX_CONTEXT_CHARS
+MAX_BROWSER_SOURCE_ID_CHARS = 256
 MAX_PENDING_INPUTS = 16
 MAX_PENDING_OUTPUTS = 16
 
@@ -349,6 +351,10 @@ def _source_id(payload: dict[str, Any], key: str) -> str:
     value = payload[key]
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"browser {key} must be a non-empty string")
+    if len(value) > MAX_BROWSER_SOURCE_ID_CHARS:
+        raise ValueError(
+            f"browser {key} exceeds the {MAX_BROWSER_SOURCE_ID_CHARS}-character limit"
+        )
     return value
 
 
@@ -388,6 +394,10 @@ def _text(payload: dict[str, Any]) -> str:
     value = payload.get("text", "")
     if not isinstance(value, str):
         raise ValueError("browser text must be a string")
+    if len(value) > MAX_BROWSER_TEXT_CHARS:
+        raise ValueError(
+            f"browser text exceeds the {MAX_BROWSER_TEXT_CHARS}-character limit"
+        )
     return value
 
 
@@ -404,6 +414,10 @@ def _optional_source_id(payload: dict[str, Any], key: str) -> str | None:
     value = payload[key]
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"browser {key} must be a non-empty string when provided")
+    if len(value) > MAX_BROWSER_SOURCE_ID_CHARS:
+        raise ValueError(
+            f"browser {key} exceeds the {MAX_BROWSER_SOURCE_ID_CHARS}-character limit"
+        )
     return value
 
 

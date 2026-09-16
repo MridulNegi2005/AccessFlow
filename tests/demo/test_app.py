@@ -219,6 +219,60 @@ def test_browser_message_rejects_coerced_or_inconsistent_timing_values(field, va
         event_from_message("session-1", browser_message)
 
 
+@pytest.mark.parametrize(
+    ("kind", "field", "value", "message"),
+    [
+        (
+            "transcript",
+            "text",
+            "x" * (demo_app.MAX_BROWSER_TEXT_CHARS + 1),
+            "browser text exceeds the 16384-character limit",
+        ),
+        (
+            "transcript",
+            "utterance_id",
+            "x" * (demo_app.MAX_BROWSER_SOURCE_ID_CHARS + 1),
+            "browser utterance_id exceeds the 256-character limit",
+        ),
+        (
+            "frame",
+            "frame_id",
+            "x" * (demo_app.MAX_BROWSER_SOURCE_ID_CHARS + 1),
+            "browser frame_id exceeds the 256-character limit",
+        ),
+    ],
+)
+def test_browser_message_rejects_oversized_text_and_source_identity(
+    kind, field, value, message
+):
+    with pytest.raises(ValueError, match=re.escape(message)):
+        event_from_message("session-1", {"kind": kind, "payload": {field: value}})
+
+
+def test_browser_message_accepts_text_and_source_identity_at_limits():
+    transcript = event_from_message(
+        "session-1",
+        {
+            "kind": "transcript",
+            "payload": {
+                "text": "x" * demo_app.MAX_BROWSER_TEXT_CHARS,
+                "utterance_id": "u" * demo_app.MAX_BROWSER_SOURCE_ID_CHARS,
+            },
+        },
+    )
+    frame = event_from_message(
+        "session-1",
+        {
+            "kind": "frame",
+            "payload": {"frame_id": "f" * demo_app.MAX_BROWSER_SOURCE_ID_CHARS},
+        },
+    )
+
+    assert len(transcript.payload.text) == demo_app.MAX_BROWSER_TEXT_CHARS
+    assert len(transcript.payload.utterance_id) == demo_app.MAX_BROWSER_SOURCE_ID_CHARS
+    assert len(frame.payload.frame_id) == demo_app.MAX_BROWSER_SOURCE_ID_CHARS
+
+
 def test_rejected_audio_metadata_does_not_materialize_upload(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     with pytest.raises(ValueError, match="browser revision"):
