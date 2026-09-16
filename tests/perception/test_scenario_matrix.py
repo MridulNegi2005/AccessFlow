@@ -48,6 +48,16 @@ def test_scenario_matrix_case_metadata_is_unique_and_complete():
         and case["provenance"]["expected_outcome"]
         for case in manifest["cases"]
     )
+    assert all(
+        "reference_text" in case
+        for case in manifest["cases"]
+        if case["modality"] == "audio"
+    )
+    assert all(
+        "visual_label" in case
+        for case in manifest["cases"]
+        if case["modality"] == "image"
+    )
 
 
 def test_matrix_assets_are_present_and_hash_recorded():
@@ -77,3 +87,21 @@ def test_matrix_audio_and_image_assets_are_structurally_valid(tmp_path: Path):
             fixture.write_bytes(base64.b64decode(asset["payload_base64"], validate=True))
             image = validate_png(fixture)
             assert image.width > 0 and image.height > 0
+
+
+def test_live_audio_result_covers_every_audio_case():
+    root, manifest = _manifest()
+    result = json.loads(
+        (root / "docs" / "feedback" / "ASR_SCENARIO_RESULTS.json").read_text(encoding="utf-8")
+    )
+    audio_cases = {case["id"] for case in manifest["cases"] if case["modality"] == "audio"}
+    result_cases = {item["id"] for item in result["results"]}
+    assert result["mode"] == "live_local_asr"
+    assert result["cases"] == 18
+    assert result_cases == audio_cases
+    assert all(item["backend"] == "faster-whisper/cpu-int8" for item in result["results"])
+    assert all(
+        item["live_evidence_status"] == "live_local_asr_scored"
+        for item in manifest["cases"]
+        if item["modality"] == "audio"
+    )
