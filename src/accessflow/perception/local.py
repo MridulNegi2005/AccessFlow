@@ -30,8 +30,14 @@ class WavFormat:
     frames: int
 
 
+MAX_WAV_FILE_BYTES = 8 * 1024 * 1024
+MAX_WAV_DECODED_BYTES = 64 * 1024 * 1024
+
+
 def validate_wav(path: Path) -> WavFormat:
     try:
+        if path.stat().st_size > MAX_WAV_FILE_BYTES:
+            raise ValueError(f"WAV file is too large: {path}")
         with wave.open(str(path), "rb") as handle:
             if handle.getcomptype() != "NONE":
                 raise ValueError("WAV must contain uncompressed PCM audio")
@@ -41,7 +47,13 @@ def validate_wav(path: Path) -> WavFormat:
                 sample_rate=handle.getframerate(),
                 frames=handle.getnframes(),
             )
+            if metadata.channels < 1 or metadata.sample_width < 1 or metadata.sample_rate < 1:
+                raise ValueError(f"WAV has invalid format metadata: {path}")
+            if metadata.frames < 1:
+                raise ValueError(f"WAV contains no audio frames: {path}")
             frame_width = metadata.channels * metadata.sample_width
+            if metadata.frames * frame_width > MAX_WAV_DECODED_BYTES:
+                raise ValueError(f"WAV decoded payload is too large: {path}")
             remaining = metadata.frames
             while remaining:
                 chunk_frames = min(remaining, 8192)
@@ -51,11 +63,6 @@ def validate_wav(path: Path) -> WavFormat:
                 remaining -= chunk_frames
     except (OSError, EOFError, wave.Error) as error:
         raise ValueError(f"Invalid WAV file: {path}") from error
-
-    if metadata.channels < 1 or metadata.sample_width < 1 or metadata.sample_rate < 1:
-        raise ValueError(f"WAV has invalid format metadata: {path}")
-    if metadata.frames < 1:
-        raise ValueError(f"WAV contains no audio frames: {path}")
     return metadata
 
 
@@ -71,6 +78,7 @@ class PngFormat:
 
 MAX_PNG_FILE_BYTES = 8 * 1024 * 1024
 MAX_PNG_DECODED_BYTES = 64 * 1024 * 1024
+_PNG_CRITICAL_CHUNKS = frozenset({b"IHDR", b"PLTE", b"IDAT", b"IEND"})
 
 
 def validate_png(path: Path) -> PngFormat:
@@ -105,7 +113,18 @@ def validate_png(path: Path) -> PngFormat:
         chunk_type = data[offset + 4 : offset + 8]
         chunk_data = data[offset + 8 : offset + 8 + length]
         chunk_crc = struct.unpack(">I", data[offset + 8 + length : chunk_end])[0]
+        if (
+            len(chunk_type) != 4
+            or any(
+                not (65 <= value <= 90 or 97 <= value <= 122)
+                for value in chunk_type
+            )
+            or 97 <= chunk_type[2] <= 122
+        ):
+            raise ValueError(f"Invalid PNG chunk type: {path}")
         if zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF != chunk_crc:
+            raise ValueError(f"Invalid PNG file: {path}")
+        if chunk_type not in _PNG_CRITICAL_CHUNKS and 65 <= chunk_type[0] <= 90:
             raise ValueError(f"Invalid PNG file: {path}")
 
         if ihdr is None:
@@ -139,6 +158,7 @@ def validate_png(path: Path) -> PngFormat:
                 ihdr is None
                 or saw_idat
                 or palette_entries is not None
+                or ihdr[3] in {0, 4}
                 or length < 3
                 or length > 768
                 or length % 3

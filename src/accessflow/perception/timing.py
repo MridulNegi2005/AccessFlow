@@ -8,12 +8,29 @@ from dataclasses import dataclass
 from .audio import ActivityFrame
 
 
+def _validate_finite_nonnegative(value: float, field_name: str) -> None:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+    ):
+        raise ValueError(f"{field_name} must be a finite number")
+    if value < 0:
+        raise ValueError(f"{field_name} cannot be negative")
+
+
 @dataclass(frozen=True)
 class ActivityWindow:
     """A contiguous region containing active audio frames."""
 
     start_s: float
     end_s: float
+
+    def __post_init__(self) -> None:
+        _validate_finite_nonnegative(self.start_s, "start_s")
+        _validate_finite_nonnegative(self.end_s, "end_s")
+        if self.end_s <= self.start_s:
+            raise ValueError("end_s must be greater than start_s")
 
 
 @dataclass(frozen=True)
@@ -25,6 +42,22 @@ class PauseCandidate:
     duration_s: float
     trailing: bool
 
+    def __post_init__(self) -> None:
+        _validate_finite_nonnegative(self.start_s, "start_s")
+        _validate_finite_nonnegative(self.end_s, "end_s")
+        _validate_finite_nonnegative(self.duration_s, "duration_s")
+        if self.end_s < self.start_s:
+            raise ValueError("end_s must be greater than or equal to start_s")
+        if not math.isclose(
+            self.duration_s,
+            self.end_s - self.start_s,
+            rel_tol=1e-9,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("duration_s must match the interval between start_s and end_s")
+        if not isinstance(self.trailing, bool):
+            raise ValueError("trailing must be a boolean")
+
 
 @dataclass(frozen=True)
 class ActivitySummary:
@@ -35,6 +68,26 @@ class ActivitySummary:
     leading_silence_s: float
     trailing_silence_s: float
     pause_detected: bool
+
+    def __post_init__(self) -> None:
+        for field_name, value in (
+            ("active_duration_s", self.active_duration_s),
+            ("leading_silence_s", self.leading_silence_s),
+            ("trailing_silence_s", self.trailing_silence_s),
+        ):
+            _validate_finite_nonnegative(value, field_name)
+        if not isinstance(self.pause_detected, bool):
+            raise ValueError("pause_detected must be a boolean")
+        previous: ActivityWindow | None = None
+        for window in self.windows:
+            if not isinstance(window, ActivityWindow):
+                raise ValueError("windows must contain ActivityWindow values")
+            if previous is not None and window.start_s < previous.end_s:
+                raise ValueError("activity windows must be chronological and non-overlapping")
+            previous = window
+        active_duration = sum(window.end_s - window.start_s for window in self.windows)
+        if not math.isclose(self.active_duration_s, active_duration, rel_tol=0.0, abs_tol=1e-9):
+            raise ValueError("active_duration_s must match the activity windows")
 
 
 def _active_windows(frames: tuple[ActivityFrame, ...]) -> tuple[ActivityWindow, ...]:
@@ -48,6 +101,16 @@ def _active_windows(frames: tuple[ActivityFrame, ...]) -> tuple[ActivityWindow, 
         else:
             windows.append(ActivityWindow(frame.start_s, frame.end_s))
     return tuple(windows)
+
+
+def _validate_frame_order(frames: tuple[ActivityFrame, ...]) -> None:
+    previous: ActivityFrame | None = None
+    for frame in frames:
+        if previous is not None and (
+            frame.start_s < previous.start_s or frame.end_s < previous.end_s
+        ):
+            raise ValueError("activity frames must be in chronological order")
+        previous = frame
 
 
 def summarize_activity(
@@ -66,6 +129,7 @@ def summarize_activity(
     ):
         raise ValueError("pause_after_s cannot be negative")
 
+    _validate_frame_order(frames)
     windows = _active_windows(frames)
     recording_start = frames[0].start_s
     recording_end = frames[-1].end_s

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
+from accessflow.perception import ActivityFrame, ActivitySummary, ActivityWindow, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -56,6 +56,37 @@ def test_energy_activity_exposes_frame_timing_without_claiming_vad():
     assert frames[0].end_s == pytest.approx(0.02)
     assert frames[1].active is True
     assert frames[1].rms == 10_000
+
+
+@pytest.mark.parametrize(
+    ("sample_width", "sample"),
+    [(1, 64), (2, 16_384), (3, 4_194_304), (4, 1_073_741_824)],
+)
+def test_energy_activity_normalizes_equivalent_pcm_amplitudes(sample_width: int, sample: int):
+    if sample_width == 1:
+        encoded = bytes([sample + 128])
+    else:
+        encoded = sample.to_bytes(sample_width, "little", signed=True)
+
+    frames = energy_activity(AudioBuffer(encoded * 320, 16_000, sample_width), rms_threshold=12_000)
+
+    assert len(frames) == 1
+    assert frames[0].rms == 16_384
+    assert frames[0].active is True
+
+
+def test_energy_activity_uses_canonical_full_scale_for_clipped_samples():
+    values = {
+        1: bytes([255]),
+        2: struct.pack("<h", 32_767),
+        3: ((1 << 23) - 1).to_bytes(3, "little", signed=True),
+        4: ((1 << 31) - 1).to_bytes(4, "little", signed=True),
+    }
+
+    for sample_width, encoded in values.items():
+        frames = energy_activity(AudioBuffer(encoded * 320, 16_000, sample_width))
+        assert frames[0].rms <= 32_767
+        assert frames[0].active is True
 
 
 def test_energy_activity_rejects_invalid_configuration():
@@ -149,6 +180,23 @@ def test_activity_summary_reports_windows_and_trailing_pause_without_completion(
     assert summary.pause_detected is True
 
 
+@pytest.mark.parametrize(
+    ("start_s", "end_s", "message"),
+    [
+        (-0.1, 0.1, "start_s"),
+        (0.0, -0.1, "end_s"),
+        (0.5, 0.5, "end_s"),
+        (0.5, 0.4, "end_s"),
+        (0.0, math.inf, "end_s"),
+        (math.nan, 0.1, "start_s"),
+        ("0.0", 0.1, "start_s"),
+    ],
+)
+def test_activity_windows_reject_invalid_values(start_s, end_s, message):
+    with pytest.raises(ValueError, match=message):
+        ActivityWindow(start_s, end_s)
+
+
 def test_all_silence_does_not_look_like_a_pause_after_speech():
     frames = (
         ActivityFrame(0.0, 0.02, 0, False),
@@ -161,12 +209,102 @@ def test_all_silence_does_not_look_like_a_pause_after_speech():
     assert summary.pause_detected is False
 
 
+@pytest.mark.parametrize(
+    ("active_duration_s", "leading_silence_s", "trailing_silence_s", "pause_detected", "message"),
+    [
+        (-0.1, 0.0, 0.0, False, "active_duration_s"),
+        (0.2, math.nan, 0.0, False, "leading_silence_s"),
+        (0.2, 0.0, math.inf, False, "trailing_silence_s"),
+        (0.2, 0.0, 0.0, "false", "pause_detected"),
+        (0.1, 0.0, 0.0, False, "active_duration_s"),
+    ],
+)
+def test_activity_summaries_reject_invalid_values(
+    active_duration_s, leading_silence_s, trailing_silence_s, pause_detected, message
+):
+    with pytest.raises(ValueError, match=message):
+        ActivitySummary(
+            windows=(ActivityWindow(0.0, 0.2),),
+            active_duration_s=active_duration_s,
+            leading_silence_s=leading_silence_s,
+            trailing_silence_s=trailing_silence_s,
+            pause_detected=pause_detected,
+        )
+
+
+def test_activity_summary_uses_bounded_absolute_duration_tolerance():
+    accepted = ActivitySummary(
+        windows=(ActivityWindow(0.0, 0.2),),
+        active_duration_s=0.2 + 5e-10,
+        leading_silence_s=0.0,
+        trailing_silence_s=0.0,
+        pause_detected=False,
+    )
+
+    assert accepted.active_duration_s == pytest.approx(0.2, abs=1e-9)
+
+    with pytest.raises(ValueError, match="active_duration_s"):
+        ActivitySummary(
+            windows=(ActivityWindow(0.0, 1e9),),
+            active_duration_s=1e9 + 0.5,
+            leading_silence_s=0.0,
+            trailing_silence_s=0.0,
+            pause_detected=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "windows",
+    [
+        (ActivityWindow(0.0, 1.0), ActivityWindow(0.5, 1.5)),
+        (ActivityWindow(1.0, 2.0), ActivityWindow(0.0, 0.5)),
+    ],
+)
+def test_activity_summary_rejects_overlapping_or_out_of_order_windows(windows):
+    with pytest.raises(ValueError, match="chronological and non-overlapping"):
+        ActivitySummary(
+            windows=windows,
+            active_duration_s=sum(window.end_s - window.start_s for window in windows),
+            leading_silence_s=0.0,
+            trailing_silence_s=0.0,
+            pause_detected=False,
+        )
+
+
 def test_activity_summary_rejects_empty_frames_and_invalid_threshold():
     with pytest.raises(ValueError, match="at least one"):
         summarize_activity(())
 
     with pytest.raises(ValueError, match="pause_after_s"):
         summarize_activity((ActivityFrame(0.0, 0.02, 0, False),), pause_after_s=-1)
+
+
+@pytest.mark.parametrize(
+    ("start_s", "end_s", "rms", "active", "message"),
+    [
+        (0.2, 0.2, 0, False, "end_s"),
+        (0.3, 0.2, 0, False, "end_s"),
+        (-0.1, 0.1, 0, False, "start_s"),
+        (0.0, math.inf, 0, False, "end_s"),
+        (0.0, math.nan, 0, False, "end_s"),
+        (0.0, 0.1, -1, False, "rms"),
+    ],
+)
+def test_activity_frames_reject_invalid_values(start_s, end_s, rms, active, message):
+    with pytest.raises(ValueError, match=message):
+        ActivityFrame(start_s, end_s, rms, active)
+
+
+def test_activity_summary_rejects_out_of_order_frames():
+    frames = (
+        ActivityFrame(0.5, 0.6, 1_000, True),
+        ActivityFrame(0.0, 0.1, 0, False),
+    )
+
+    with pytest.raises(ValueError, match="chronological"):
+        summarize_activity(frames)
+    with pytest.raises(ValueError, match="chronological"):
+        pause_candidates(frames)
 
 
 def test_webrtc_activity_uses_injected_detector_without_optional_import():
@@ -189,9 +327,34 @@ def test_webrtc_activity_uses_injected_detector_without_optional_import():
     assert calls == [(640, 16_000), (640, 16_000)]
 
 
+@pytest.mark.parametrize("sample_width", [1, 3, 4])
+def test_webrtc_activity_converts_supported_pcm_widths_to_16_bit(sample_width: int):
+    if sample_width == 1:
+        sample = bytes([192])
+    else:
+        sample = (1 << (sample_width * 8 - 2)).to_bytes(sample_width, "little", signed=True)
+    observed = []
+
+    class Detector:
+        def __init__(self, aggressiveness: int):
+            assert aggressiveness == 2
+
+        def is_speech(self, chunk: bytes, sample_rate: int) -> bool:
+            observed.append((len(chunk), sample_rate, chunk[:2]))
+            return True
+
+    frames = webrtc_activity(
+        AudioBuffer(sample * 320, 16_000, sample_width),
+        vad_factory=Detector,
+    )
+
+    assert len(frames) == 1
+    assert observed == [(640, 16_000, struct.pack("<h", 16_384))]
+
+
 def test_webrtc_activity_rejects_unsupported_format():
-    with pytest.raises(ValueError, match="requires 16-bit"):
-        webrtc_activity(AudioBuffer(b"\x00" * 640, 16_000, 1))
+    with pytest.raises(ValueError, match="sample widths"):
+        webrtc_activity(AudioBuffer(b"\x00" * 640, 16_000, 5))
 
     with pytest.raises(ValueError, match="frame_ms"):
         webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), frame_ms=25)
@@ -225,11 +388,30 @@ def test_pause_candidates_keep_internal_and_trailing_gaps_separate():
     candidates = pause_candidates(frames, min_pause_s=0.4)
 
     assert len(candidates) == 2
-    assert candidates[0] == PauseCandidate(0.02, 0.62, pytest.approx(0.6), trailing=False)
+    assert candidates[0] == PauseCandidate(0.02, 0.62, 0.6, trailing=False)
+    assert candidates[0].duration_s == pytest.approx(0.6)
     assert candidates[1].start_s == 0.64
     assert candidates[1].end_s == pytest.approx(1.14)
     assert candidates[1].duration_s == pytest.approx(0.5)
     assert candidates[1].trailing is True
+
+
+@pytest.mark.parametrize(
+    ("start_s", "end_s", "duration_s", "message"),
+    [
+        (-0.1, 0.2, 0.3, "start_s"),
+        (0.2, 0.1, 0.1, "end_s"),
+        (0.0, 0.2, -0.1, "duration_s"),
+        (0.0, math.inf, 1.0, "end_s"),
+        (0.0, 0.2, math.nan, "duration_s"),
+        (0.0, 0.2, 0.1, "duration_s"),
+        (0.0, 0.2, "0.2", "duration_s"),
+        (0.0, 0.2, 0.2, "trailing"),
+    ],
+)
+def test_pause_candidates_reject_invalid_values(start_s, end_s, duration_s, message):
+    with pytest.raises(ValueError, match=message):
+        PauseCandidate(start_s, end_s, duration_s, trailing="false" if message == "trailing" else False)
 
 
 def test_pause_candidates_ignore_short_gaps_and_all_silence():

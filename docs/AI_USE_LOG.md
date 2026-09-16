@@ -945,6 +945,7 @@ hypothesis. Focused demo tests and JavaScript syntax validation passed; no prote
 2026-09-16 verification: Added explicit labels for the transcript, WAV and PNG browser controls. A refreshed current-head 1280x1600 headless Chrome capture remained legible with no visible clipping or overlap. No protected files changed.
 2026-09-16 verification: Energy activity now rejects PCM buffers with trailing partial samples instead of silently dropping bytes. Added focused coverage; full suite: 189 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Current-head Chrome CDP interaction drove text partial/final submission, checked-in WAV upload and generated PNG upload. The page showed connected/media acknowledgments and retained both prior modalities with zero console or page exceptions. No source or protected files changed.
+
 2026-09-16 verification: Browser event translation now rejects explicit blank or non-string utterance and frame identities while preserving generated IDs for omitted fields. Added focused demo coverage; full suite: 196 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Browser event translation now rejects coerced revision/final/text values, non-finite or boolean timestamps, and inverted speech bounds before typed events are built. Added focused demo coverage; full suite: 202 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Audio and frame browser metadata is now validated before base64 media materialization, preventing rejected events from leaving orphaned session files. Added direct cleanup regressions; full suite: 204 passed, 4 strict xfailed. No protected files changed.
@@ -972,3 +973,69 @@ hypothesis. Focused demo tests and JavaScript syntax validation passed; no prote
 2026-09-16 verification: Corrected the browser status heading to describe the combined perception and reasoning backend labels. Existing page-source coverage was extended; no protected files changed.
 2026-09-16 verification: Reworked Ollama reasoner context truncation to preserve valid JSON, remove oldest evidence first and retain the newest observation within the 16,384-character bound. Added the invariant regression; full suite target is 253 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Added a provider-completion guard that rejects explicit incomplete Ollama responses before plan parsing. Boolean and coerced-string markers are covered; full suite target is 255 passed, 4 strict xfailed. No protected files changed.
+2026-09-16 verification: Applied the explicit completion guard to Ollama vision responses as well, so partial captions cannot enter the session. Added boolean and coerced-string coverage; full suite target is 257 passed, 4 strict xfailed. No protected files changed.
+
+2026-09-16 AI-assisted implementation: Scoped Workstream B finding B7 to the perception audio
+helpers and their tests. A delegated review supplied no patch; the implementation was then authored
+and reviewed in the current session, correcting the WebRTC frame slicing during focused verification.
+The final change normalizes energy RMS and converts supported PCM widths to signed 16-bit VAD input;
+tests cover equivalent amplitudes, clipping bounds and detector input size. No contracts, engine,
+adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Scoped the next Workstream B slice to the existing typed
+InterruptEvent boundary. A delegated test agent added browser translation and session-recovery coverage;
+the implementation was reviewed and extended with separate Stop speaking and Stop task controls plus
+a non-string scope regression. Full demo coverage reached 102 passed and the full suite 630 passed with
+one retained expected conflict example. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Scoped the next Workstream B slice to server-side browser media
+budgets and pending-input backpressure. A delegated test agent returned no patch; the implementation
+and regressions were authored and reviewed in the current session. The final route enforces an 8 MiB
+per-file and 16 MiB per-session aggregate cap, releases failed reservations, and bounds the incoming
+queue at 16. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: A delegated demo review found malformed WebSocket JSON could
+terminate the recoverable input path; added structured error recovery and a same-session regression.
+A separate delegated perception review found unknown critical PNG chunks were accepted before vision
+inference; added parser rejection and a provider-not-called regression. Focused checks passed, with
+full-suite verification recorded at 635 passed and one retained expected conflict example. No engine,
+contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Added failure-safe cleanup for browser media materialization after
+unexpected validator or write exceptions, with a regression covering partial-file removal and aggregate
+budget release. Focused demo coverage reached 107 passed and the full suite reached 636 passed with one
+retained expected conflict example. No engine, contracts, adapters, lockfile or model/network behavior
+changed.
+
+2026-09-16 AI-assisted implementation: Added a separate concise screen-reader announcement region for the
+demo while disabling live announcements on the detailed JSON trace. Source tests and a real local browser
+smoke covered rendering, final-response announcement, width invariants and console errors. Full suite:
+636 passed, 1 xfailed, 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior
+changed.
+
+2026-09-16 AI-assisted implementation: Bounded the demo's separate screen-reader announcement text to
+240 content characters while retaining the full visible JSON trace. A delegated timing review ran in
+parallel; no overlapping demo patch was used. Source tests, full tests and a real browser smoke passed:
+636 passed, 1 xfailed, 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior
+changed.
+
+2026-09-16 AI-assisted implementation: A delegated perception review identified malformed activity frame
+timestamps as a source of invalid timing summaries. The patch was reviewed and tightened to reject
+negative timestamps, non-finite values, zero-length frames, invalid RMS/activity types and decreasing
+frame order, with direct summary and pause-candidate coverage. Full suite: 643 passed, 1 xfailed,
+2 warnings. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Continued demo transport hardening by catching WebSocket send
+close races and avoiding a false connected announcement after queued-send failure. Normal browser
+interaction, source coverage, full tests and Ruff passed: 643 passed, 1 xfailed, 2 warnings. No engine,
+contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Added a browser Restart session control for clean client-state
+reset and active microphone-stream discard after disconnects. Real browser smoke verified the pre-restart
+final was cleared and a new WebSocket session connected cleanly; full suite: 643 passed, 1 xfailed,
+2 warnings. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Bounded the demo WebSocket outgoing event queue at 16 items to
+match the existing incoming bound. Added a focused regression and ran the full suite: 644 passed,
+1 xfailed, 2 warnings; Ruff passed. No engine, contracts, adapters, lockfile or model/network behavior
+changed.

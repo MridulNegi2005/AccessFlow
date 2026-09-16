@@ -74,3 +74,10 @@ def test_modality_coverage_reports_missing_and_complete_modalities():
     assert coverage.missing == ("audio",)
     assert coverage.complete is False
     assert modality_coverage(observations, required=("image",)).complete is True
+
+
+def test_modality_coverage_rejects_invalid_observation_modalities():
+    observations = [type("Observation", (), {"modality": None})()]
+
+    with pytest.raises(ValueError, match="observation modalities"):
+        modality_coverage(observations)

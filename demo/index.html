@@ -16,6 +16,7 @@
     code { color: #9ee6b3; } small { color: #aab4c8; }
     pre { white-space: pre-wrap; margin: 0; }
     .event { margin-top: .75rem; padding: .75rem; border-left: 3px solid #7aa2f7; background: #0d1118; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   </style>
 </head>
 <body>
@@ -51,8 +52,18 @@
   </section>
 
   <section>
+    <h2>Interruption</h2>
+    <button type="button" id="stop-speaking">Stop speaking</button>
+    <button type="button" id="stop-task">Stop task</button>
+    <small>Stop speaking ends current output and keeps the task available. Stop task cancels pending work for this session.</small>
+  </section>
+
+  <section>
     <h2>OutputEvent stream</h2>
-    <div id="events" aria-live="polite"></div>
+    <button type="button" id="restart-session">Restart session</button>
+    <small>Starts a fresh browser session and clears the current event trace.</small>
+    <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <div id="events" aria-live="off"></div>
   </section>
 
   <script>
@@ -70,6 +81,9 @@
     let mediaSendChain = Promise.resolve();
     const pendingMessages = [];
     const maxPendingMessages = 16;
+    const maxAnnouncementChars = 240;
+    const maxMediaBytes = 8 * 1024 * 1024;
+    const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2);
 
     function show(event) {
       if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
@@ -78,6 +92,7 @@
           ? `${event.payload.perception_backend} | ${reasoner}`
           : event.payload.perception_backend;
       }
+      document.querySelector('#announcements').textContent = announce(event);
       const card = document.createElement('div');
       card.className = 'event';
       const heading = document.createElement('strong');
@@ -86,6 +101,33 @@
       details.textContent = JSON.stringify(event, null, 2);
       card.append(heading, details);
       events.prepend(card);
+    }
+
+    function announce(event) {
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+      if (typeof payload.message === 'string' && payload.message) {
+        return `${event.kind}: ${compactAnnouncement(payload.message)}`;
+      }
+      if (event.kind === 'final' && typeof payload.text === 'string' && payload.text) {
+        return `Final response: ${compactAnnouncement(payload.text)}`;
+      }
+      if (event.kind === 'clarify' && typeof payload.text === 'string' && payload.text) {
+        return `Clarification requested: ${compactAnnouncement(payload.text)}`;
+      }
+      if (event.kind === 'demo_status' && payload.connected === true) {
+        return 'Session connected.';
+      }
+      if (event.kind === 'demo_status' && payload.connected === false) {
+        return 'Session disconnected.';
+      }
+      return `${String(event.kind || 'event').replaceAll('_', ' ')} received.`;
+    }
+
+    function compactAnnouncement(value) {
+      const normalized = value.replace(/\s+/g, ' ').trim();
+      return normalized.length > maxAnnouncementChars
+        ? normalized.slice(0, maxAnnouncementChars - 3) + '...'
+        : normalized;
     }
 
     function messageFor(kind, payload) {
@@ -114,8 +156,17 @@
       }
       const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
       const message = messageFor(kind, payload);
-      socket.send(message);
-      return true;
+      return sendSerialized(message);
+    }
+
+    function sendSerialized(message) {
+      try {
+        socket.send(message);
+        return true;
+      } catch {
+        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session closed before the event could be sent.' } });
+        return false;
+      }
     }
 
     function transcript(final) {
@@ -142,6 +193,13 @@
     function nextMediaId(prefix) {
       mediaSequence += 1;
       return prefix + '-' + mediaSequence;
+    }
+
+    function sendInterrupt(scope) {
+      return send('interrupt', () => ({
+        scope,
+        utterance_id: activeUtteranceId ?? undefined
+      }));
     }
 
     function bytesToBase64(bytes) {
@@ -195,6 +253,14 @@
       stopMicButton.disabled = !recording;
     }
 
+    function restartSession() {
+      if (microphone) {
+        microphone.stream.getTracks().forEach((track) => track.stop());
+        microphone = null;
+      }
+      window.location.reload();
+    }
+
     async function startMicrophone() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: 'This browser does not expose microphone capture.' } });
@@ -214,8 +280,26 @@
         const silentGain = context.createGain();
         silentGain.gain.value = 0;
         const chunks = [];
+        let microphoneSamples = 0;
+        let microphoneLimitReached = false;
         recorder.port.onmessage = (event) => {
-          chunks.push(new Float32Array(event.data));
+          if (microphoneLimitReached || microphone?.recorder !== recorder) return;
+          const incoming = new Float32Array(event.data);
+          const remaining = maxMicrophoneSamples - microphoneSamples;
+          if (remaining <= 0) {
+            microphoneLimitReached = true;
+            void stopMicrophone('limit');
+            return;
+          }
+          const accepted = incoming.length <= remaining ? incoming : incoming.slice(0, remaining);
+          if (accepted.length > 0) {
+            chunks.push(accepted);
+            microphoneSamples += accepted.length;
+          }
+          if (microphoneSamples >= maxMicrophoneSamples) {
+            microphoneLimitReached = true;
+            void stopMicrophone('limit');
+          }
         };
         source.connect(recorder);
         recorder.connect(silentGain);
@@ -230,7 +314,7 @@
       }
     }
 
-    async function stopMicrophone() {
+    async function stopMicrophone(reason = null) {
       if (!microphone) return;
       const current = microphone;
       microphone = null;
@@ -241,6 +325,12 @@
       current.stream.getTracks().forEach((track) => track.stop());
       await current.context.close();
       setMicrophoneButtons(false);
+      if (reason === 'limit') {
+        show({ kind: 'demo_error', payload: {
+          backend: 'browser/microphone-capture',
+          message: 'Microphone recording reached the 8 MiB limit and was stopped.'
+        } });
+      }
       const wav = encodeWav(current.chunks, current.sampleRate);
       const uploaded = await enqueueMediaAction(() => send('audio', () => ({
           data_base64: bytesToBase64(wav),
@@ -262,6 +352,13 @@
           send(kind, { path: fallback });
           return;
         }
+        if (file.size > maxMediaBytes) {
+          show({ kind: 'demo_error', payload: {
+            backend: 'browser/media',
+            message: 'Selected media file exceeds the 8 MiB limit.'
+          } });
+          return;
+        }
         try {
           const dataBase64 = await fileToBase64(file);
           send(kind, () => ({
@@ -279,8 +376,16 @@
 
     socket.onmessage = (message) => show(JSON.parse(message.data));
     socket.onopen = () => {
-      while (pendingMessages.length) socket.send(pendingMessages.shift());
-      show({ kind: 'demo_status', payload: { connected: true } });
+      let drained = true;
+      while (pendingMessages.length && socket.readyState === WebSocket.OPEN) {
+        if (!sendSerialized(pendingMessages.shift())) {
+          pendingMessages.length = 0;
+          drained = false;
+        }
+      }
+      if (drained) {
+        show({ kind: 'demo_status', payload: { connected: true } });
+      }
     };
     socket.onclose = () => {
       pendingMessages.length = 0;
@@ -297,6 +402,9 @@
     micButton.onclick = () => void startMicrophone();
     stopMicButton.onclick = () => void stopMicrophone();
     document.querySelector('#send-image').onclick = () => void sendFile('frame', '#image', 'browser-mock.png');
+    document.querySelector('#stop-speaking').onclick = () => sendInterrupt('speech');
+    document.querySelector('#stop-task').onclick = () => sendInterrupt('task');
+    document.querySelector('#restart-session').onclick = restartSession;
   </script>
 </body>
 </html>
