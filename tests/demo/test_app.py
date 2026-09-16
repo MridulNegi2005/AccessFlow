@@ -1683,6 +1683,88 @@ def test_websocket_cleans_valid_session_media_after_disconnect(monkeypatch):
     assert not created_paths[0].exists()
 
 
+@pytest.mark.asyncio
+async def test_websocket_disconnect_does_not_block_on_full_agent_queue(monkeypatch):
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class TrackingReasoner:
+        pass
+
+    class StalledAgent:
+        def __init__(self, *args):
+            self.running = True
+            self.cancelled = asyncio.Event()
+
+        async def run(self, incoming, outgoing):
+            while not incoming.full():
+                await asyncio.sleep(0)
+            queue_full.set()
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+
+    class DisconnectingPeer:
+        def __init__(self, queue_full):
+            self.inputs_seen = 0
+            self.queue_full = queue_full
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            await self.queue_full.wait()
+            raise RuntimeError("peer disconnected")
+
+        async def receive_json(self):
+            self.inputs_seen += 1
+            if self.inputs_seen <= demo_app.MAX_PENDING_INPUTS - 1:
+                return {"kind": "transcript", "payload": {"text": "queued"}}
+            await asyncio.Future()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+    agent_holder = {}
+    queue_full = asyncio.Event()
+
+    def make_agent(*args):
+        agent = StalledAgent(*args)
+        agent_holder["agent"] = agent
+        return agent
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(
+        demo_app.DemoReasoner,
+        "from_environment",
+        staticmethod(lambda: TrackingReasoner()),
+    )
+    monkeypatch.setattr(demo_app, "Agent", make_agent)
+    peer = DisconnectingPeer(queue_full)
+
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=1)
+
+    assert peer.inputs_seen >= demo_app.MAX_PENDING_INPUTS - 1
+    assert agent_holder["agent"].cancelled.is_set()
+    assert perception.closed is True
+
+
 def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeypatch):
     class FailingAudio:
         async def observe(self, event):
