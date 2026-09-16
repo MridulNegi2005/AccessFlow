@@ -109,6 +109,9 @@ Updated 16 September 2026.
 - Reusable perception metrics now provide punctuation-insensitive word error counts/rates, realtime
   factor, interval IoU and required-modality coverage; the multimodal context regression uses the
   coverage result to verify that audio and image evidence are retained together.
+- A provenance-labeled 60-case scenario inventory now records the planned weighted split of 30 text,
+  18 audio and 12 image cases across 40 development and 20 held-out entries; catalog validation checks
+  identity, metadata and existing fixture references without claiming execution results.
 - Browser base64 decoding and WAV/PNG materialization validation now run in a worker from the WebSocket
   receive path, keeping upload handling off the event loop.
 - The browser demo renders untrusted multimodal event kinds and payloads through text nodes, so model or
@@ -155,8 +158,8 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 225 tests passed with 4 strict expected failures, including 89 passing demo
-  tests and 120 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 228 tests passed with 4 strict expected failures, including 89 passing demo
+  tests and 123 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before

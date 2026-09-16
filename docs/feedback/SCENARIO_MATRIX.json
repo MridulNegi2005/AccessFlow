@@ -1,0 +1,623 @@
+{
+  "created": "2026-09-16",
+  "author": "AccessFlow Workstream B",
+  "purpose": "Local development inventory for weighted multimodal scenarios",
+  "status": "catalog_only",
+  "evidence_note": "Catalog membership is not execution, accuracy, latency, or user-benefit evidence.",
+  "provenance": {
+    "text": "Team-authored scripts; no participant data.",
+    "audio": "Existing generated fixtures where listed; remaining assets require provenance before creation.",
+    "image": "Synthetic or injected-provider stimuli; no participant screenshots or recordings."
+  },
+  "target_split": {
+    "development": 40,
+    "held_out": 20
+  },
+  "target_modality_counts": {
+    "text": 30,
+    "audio": 18,
+    "image": 12
+  },
+  "cases": [
+    {
+      "id": "text-01",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book a screen repair for Friday at ten.",
+      "expected_boundary": "complete only when the request is sufficiently specified",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-02",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tuesday ... actually Wednesday at five.",
+      "expected_boundary": "retain Wednesday and five as the latest corrected values",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-03",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "I want two tickets, two tickets.",
+      "expected_boundary": "preserve repetition while interpreting the intended quantity",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-04",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "I tried restarting already, then the screen still flickers.",
+      "expected_boundary": "keep the two clauses in the same request context",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-05",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Wait, use the other device.",
+      "expected_boundary": "treat wait/use-other-device as a possible correction",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-06",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "No, keep the original device.",
+      "expected_boundary": "supersede the device slot while retaining unrelated state",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-07",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Stop speaking while a read-only lookup is running.",
+      "expected_boundary": "stop or supersede speech output without canceling the task automatically",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-08",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Stop the whole task before any write.",
+      "expected_boundary": "block state-changing dispatch after explicit task cancellation",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-09",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "mm-hmm",
+      "expected_boundary": "classify as a backchannel without completing a task",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-10",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Background noise arrives during a partial request.",
+      "expected_boundary": "avoid treating noise as a completed spoken request",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-11",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tues",
+      "expected_boundary": "keep the partial hypothesis open",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-12",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tuesday actually Wed",
+      "expected_boundary": "replace the earlier hypothesis for the same utterance",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-13",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Book Tuesday actually Wednesday at five",
+      "expected_boundary": "allow completion only after the final revision",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-14",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Change only the appointment time to six.",
+      "expected_boundary": "invalidate dependent time work while preserving other slots",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-15",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Change the day but preserve the existing device.",
+      "expected_boundary": "invalidate dependent day work while preserving device evidence",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-16",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Ask for the missing appointment day.",
+      "expected_boundary": "clarify the missing required slot",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-17",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "Read the repair policy before the request ends.",
+      "expected_boundary": "permit reversible read-only work when intent is stable",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-18",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "A late result returns for an old day.",
+      "expected_boundary": "reject the stale result as outdated evidence",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-19",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "A duplicate result returns for the current call.",
+      "expected_boundary": "prevent duplicate acceptance of the same logical result",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-20",
+      "modality": "text",
+      "split": "development",
+      "stimulus": "A write times out with a status tool available.",
+      "expected_boundary": "reconcile unknown outcome before retrying",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-21",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Repeat the same intentional booking after completion.",
+      "expected_boundary": "distinguish an intentional repeat from a duplicate delivery",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-22",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Cancel after the write is confirmed.",
+      "expected_boundary": "report cancellation without claiming rollback of a confirmed effect",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-23",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "The response is lost after a write attempt.",
+      "expected_boundary": "separate attempted from confirmed effect",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-24",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Use an unfamiliar tool manifest for the same request.",
+      "expected_boundary": "resolve capability from the supplied manifest",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-25",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Correct the time twice before completion.",
+      "expected_boundary": "retain only the newest correction for the affected slot",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-26",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Keep unrelated device details across a correction.",
+      "expected_boundary": "preserve unrelated useful session details",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-27",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "A final transcript arrives after a partial revision.",
+      "expected_boundary": "prevent the older revision from becoming a new command",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-28",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Ask for clarification rather than guessing a location.",
+      "expected_boundary": "ask rather than inventing a location",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-29",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Finish a fluent request without an unnecessary long wait.",
+      "expected_boundary": "avoid adding delay beyond the evidence needed for completion",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "text-30",
+      "modality": "text",
+      "split": "held_out",
+      "stimulus": "Restart the session and submit a new request.",
+      "expected_boundary": "clear session-scoped state before the new request",
+      "evidence_status": "catalog_only"
+    },
+    {
+      "id": "audio-01",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "My screen keeps flickering after the update. Book Wednesday at five.",
+      "expected_boundary": "carry audio speech through one session with a final source revision",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "tests/fixtures/audio/synthetic_speech.wav",
+        "status": "existing_generated"
+      }
+    },
+    {
+      "id": "audio-02",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Book Tuesday ... actually, Wednesday at five.",
+      "expected_boundary": "preserve correction wording and the latest day",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "tests/fixtures/audio/synthetic_pause_correction.wav",
+        "status": "existing_generated"
+      }
+    },
+    {
+      "id": "audio-03",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Please book a screen repair for Friday at ten.",
+      "expected_boundary": "measure fluent ASR and completion without an internal pause",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
+        "status": "existing_held_out_generated"
+      }
+    },
+    {
+      "id": "audio-04",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "I want Tuesday, Tuesday, actually Wednesday at five.",
+      "expected_boundary": "preserve repetition and correction instead of deleting words",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
+        "status": "existing_held_out_generated"
+      }
+    },
+    {
+      "id": "audio-05",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "I tried restarting already. [pause] The screen still flickers.",
+      "expected_boundary": "expose an internal pause candidate without forcing completion",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
+        "status": "existing_held_out_generated"
+      }
+    },
+    {
+      "id": "audio-06",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "The screen flickers ... after the update.",
+      "expected_boundary": "keep the utterance open across the pause",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-07",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Book Tues ... Tuesday ... actually Wednesday.",
+      "expected_boundary": "replace earlier audio hypotheses for one utterance",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-08",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Use this device ... wait, the other one.",
+      "expected_boundary": "retain the latest device correction",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-09",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Stop speaking, but keep the repair task ready.",
+      "expected_boundary": "separate stop-speaking from stop-task",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-10",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Stop the task before it books anything.",
+      "expected_boundary": "block state-changing work after stop-task",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-11",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "A backchannel follows a partial spoken request.",
+      "expected_boundary": "classify the backchannel without losing the active utterance",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-12",
+      "modality": "audio",
+      "split": "development",
+      "stimulus": "Background noise follows a spoken correction.",
+      "expected_boundary": "avoid a false completion from non-speech audio",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-13",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Two tickets ... two tickets.",
+      "expected_boundary": "preserve repeated quantity words for downstream interpretation",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-14",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Change the appointment time from five to six.",
+      "expected_boundary": "update only the dependent time slot",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-15",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Correct the date twice before the final hypothesis.",
+      "expected_boundary": "accept only the newest audio revision",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-16",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Continue after a long internal pause.",
+      "expected_boundary": "keep timing as evidence rather than a semantic completion decision",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-17",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Speak a fluent request without a correction.",
+      "expected_boundary": "avoid treating ordinary fluency as a correction",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "audio-18",
+      "modality": "audio",
+      "split": "held_out",
+      "stimulus": "Submit a new request after session reset.",
+      "expected_boundary": "avoid inheriting prior audio observations after reset",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": null,
+        "status": "to_author_with_provenance"
+      }
+    },
+    {
+      "id": "image-01",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A clear repair appointment screen showing Wednesday at five.",
+      "expected_boundary": "retain frame identity and timing as informational evidence",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-02",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A clear screen showing Tuesday while speech requests Wednesday.",
+      "expected_boundary": "keep visual evidence separate from the spoken correction until resolved",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-03",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "An ambiguous date card with two possible days.",
+      "expected_boundary": "surface uncertainty rather than choosing a date silently",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-04",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A changed device frame showing a different device identifier.",
+      "expected_boundary": "replace stale active-frame evidence when controller support is present",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-05",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A stale frame arriving after a newer frame.",
+      "expected_boundary": "suppress the stale result and keep the current frame",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-06",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A frame whose caption resembles a booking command.",
+      "expected_boundary": "never authorize a write from image text alone",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-07",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A frame with an approval prompt and no spoken request.",
+      "expected_boundary": "require a spoken request before any state-changing action",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-08",
+      "modality": "image",
+      "split": "development",
+      "stimulus": "A frame arriving while audio inference is still running.",
+      "expected_boundary": "retain independent audio and image observations together",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-09",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "Two contradictory frames showing Tuesday and Wednesday.",
+      "expected_boundary": "represent conflict before a write is planned",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-10",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "A malformed PNG upload.",
+      "expected_boundary": "return a recoverable input error and keep the session usable",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-11",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "A valid PNG followed by a corrected spoken request.",
+      "expected_boundary": "retain the frame beside the corrected audio/text evidence",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    },
+    {
+      "id": "image-12",
+      "modality": "image",
+      "split": "held_out",
+      "stimulus": "An image-only request with uncertain visible text.",
+      "expected_boundary": "respond informationally without overclaiming visual certainty",
+      "evidence_status": "catalog_only",
+      "asset": {
+        "fixture": "generated_inline_png",
+        "status": "synthetic_or_injected_provider"
+      }
+    }
+  ]
+}
