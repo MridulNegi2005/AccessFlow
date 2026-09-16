@@ -238,6 +238,23 @@ def test_wav_validation_returns_metadata_for_backend_checks(tmp_path: Path):
     assert metadata == WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=320)
 
 
+def test_wav_validation_rejects_oversized_file_before_parsing(tmp_path: Path):
+    wav_path = tmp_path / "oversized.wav"
+    wav_path.write_bytes(b"\0" * (local_module.MAX_WAV_FILE_BYTES + 1))
+
+    with pytest.raises(ValueError, match="WAV file is too large"):
+        validate_wav(wav_path)
+
+
+def test_wav_validation_rejects_oversized_decoded_payload(tmp_path: Path, monkeypatch):
+    wav_path = tmp_path / "oversized-pcm.wav"
+    _write_wav(wav_path, frames=80)
+    monkeypatch.setattr(local_module, "MAX_WAV_DECODED_BYTES", 100)
+
+    with pytest.raises(ValueError, match="WAV decoded payload is too large"):
+        validate_wav(wav_path)
+
+
 @pytest.mark.asyncio
 async def test_audio_rejects_malformed_wav(tmp_path: Path):
     wav_path = tmp_path / "broken.wav"

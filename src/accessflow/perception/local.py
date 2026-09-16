@@ -30,8 +30,14 @@ class WavFormat:
     frames: int
 
 
+MAX_WAV_FILE_BYTES = 8 * 1024 * 1024
+MAX_WAV_DECODED_BYTES = 64 * 1024 * 1024
+
+
 def validate_wav(path: Path) -> WavFormat:
     try:
+        if path.stat().st_size > MAX_WAV_FILE_BYTES:
+            raise ValueError(f"WAV file is too large: {path}")
         with wave.open(str(path), "rb") as handle:
             if handle.getcomptype() != "NONE":
                 raise ValueError("WAV must contain uncompressed PCM audio")
@@ -41,7 +47,13 @@ def validate_wav(path: Path) -> WavFormat:
                 sample_rate=handle.getframerate(),
                 frames=handle.getnframes(),
             )
+            if metadata.channels < 1 or metadata.sample_width < 1 or metadata.sample_rate < 1:
+                raise ValueError(f"WAV has invalid format metadata: {path}")
+            if metadata.frames < 1:
+                raise ValueError(f"WAV contains no audio frames: {path}")
             frame_width = metadata.channels * metadata.sample_width
+            if metadata.frames * frame_width > MAX_WAV_DECODED_BYTES:
+                raise ValueError(f"WAV decoded payload is too large: {path}")
             remaining = metadata.frames
             while remaining:
                 chunk_frames = min(remaining, 8192)
@@ -51,11 +63,6 @@ def validate_wav(path: Path) -> WavFormat:
                 remaining -= chunk_frames
     except (OSError, EOFError, wave.Error) as error:
         raise ValueError(f"Invalid WAV file: {path}") from error
-
-    if metadata.channels < 1 or metadata.sample_width < 1 or metadata.sample_rate < 1:
-        raise ValueError(f"WAV has invalid format metadata: {path}")
-    if metadata.frames < 1:
-        raise ValueError(f"WAV contains no audio frames: {path}")
     return metadata
 
 
