@@ -345,3 +345,17 @@ field types return recoverable adapter errors. The engine and shared contracts w
 **Status:** Demo interruption coverage and the full suite pass: 102 demo tests with one retained expected
 conflict example, 630 full tests with one retained expected conflict example; Ruff passes. No live browser
 device or human feedback session was used. Commits: `cddcfc1`, `3f603a6`.
+
+## 2026-09-16 - Bounded browser media intake
+
+**Task:** Close the demo-side aggregate upload and pending-input gap from Workstream B finding B5.
+
+**Changes:** The WebSocket session now owns a thread-safe 16 MiB aggregate media budget in addition to
+the existing 8 MiB per-file bound. Reservations are made after base64 decoding and released when media
+validation or materialization fails, so invalid input cannot consume the session budget. The incoming
+event queue is bounded at 16 items; validation and disk work remain in the worker thread.
+
+**Status:** Demo coverage is 105 passed with one retained expected conflict example; the full suite is
+633 passed with one retained expected conflict example, and Ruff passes. Tests cover cross-modality budget
+accounting, overflow without a new file and reservation release. No engine, contracts, adapters, lockfile
+or live device behavior changed. Commits: `31fc5b7`, `660088a`.
