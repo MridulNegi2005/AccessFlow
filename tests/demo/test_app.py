@@ -624,6 +624,44 @@ def test_websocket_reports_invalid_local_model_configuration(monkeypatch, tmp_pa
     assert "existing local model directory" in error["payload"]["message"]
 
 
+def test_websocket_closes_perception_when_reasoner_configuration_fails(monkeypatch):
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        async def aclose(self):
+            self.closed = True
+
+    perception = TrackingPerception()
+
+    def invalid_reasoner_configuration():
+        raise ValueError("invalid reasoner config")
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(
+        demo_app.DemoReasoner,
+        "from_environment",
+        staticmethod(invalid_reasoner_configuration),
+    )
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            error = socket.receive_json()
+
+    assert error["kind"] == "demo_error"
+    assert error["payload"] == {
+        "backend": "demo/config",
+        "message": "invalid reasoner config",
+    }
+    assert perception.closed is True
+
+
 def test_websocket_returns_controller_output_event():
     with TestClient(demo_app.app) as client:
         with client.websocket_connect("/ws") as socket:
