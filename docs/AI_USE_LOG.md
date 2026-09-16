@@ -1012,3 +1012,9 @@ demo while disabling live announcements on the detailed JSON trace. Source tests
 smoke covered rendering, final-response announcement, width invariants and console errors. Full suite:
 636 passed, 1 xfailed, 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior
 changed.
+
+2026-09-16 AI-assisted implementation: Bounded the demo's separate screen-reader announcement text to
+240 content characters while retaining the full visible JSON trace. A delegated timing review ran in
+parallel; no overlapping demo patch was used. Source tests, full tests and a real browser smoke passed:
+636 passed, 1 xfailed, 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior
+changed.
