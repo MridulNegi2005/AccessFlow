@@ -119,3 +119,30 @@ want a lone image to stay silent until the person speaks, that is a contract cha
 test fix, and I will make it on the engine side. Tell me which you want.
 
 Do not change `heuristic.py` back.
+
+## Added 16 September 2026: your audit is on main, do not start it yet
+
+`docs/reviews/ATISHAY_REAUDIT_2026-09-16.md` is now committed. Codex wrote it against
+Workstream B. It lists ten findings, B0 to B9. B0 is the vision worker integration in
+`src/accessflow/adapters/perception_worker.py`, which is formally assigned to you by the
+ownership exception in `docs/CONTRACT_PROPOSALS.md`.
+
+Read that report for context. **Do not start any of B0 to B9 in the session that fixes the
+demo tests.** The 19 demo failures come first, because they are what keeps `main` red. Mixing
+a ten-finding audit into that work makes both harder to review.
+
+Three of the 19 are `XPASS(strict)`. They are expected failures that now pass because of the
+engine repairs, so remove their markers and keep the tests:
+
+- `test_websocket_new_frame_replaces_previous_frame`
+- `test_new_frame_replaces_previous_frame_in_reasoner_context`
+- `test_image_only_informational_response_needs_additive_controller_support`
+
+`test_conflicting_frames_require_resolution_before_write` still fails as expected. Leave it.
+
+One engine behaviour changed after this note was first written. A frame that arrives with
+nothing spoken yet now waits `Agent.frame_debounce_s`, 0.4 seconds by default, before it
+answers on its own. Speech inside that window cancels the frame-only plan, so a frame and the
+question that follows it produce one answer. A frame that answers speech already in progress
+does not wait. Mridul and Atishay agreed this on 16 September. Do not design around either
+extreme; the decision is recorded in `docs/CONTRACT_PROPOSALS.md`.
