@@ -554,6 +554,45 @@ async def test_latest_worker_bounds_completed_source_state():
 
 
 @pytest.mark.asyncio
+async def test_local_perception_bounds_session_worker_registry(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(local_module, "MAX_SESSION_WORKERS", 2)
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    adapter = LocalPerception(transcriber=lambda _: "transcript")
+
+    try:
+        for index in range(2):
+            await _one(
+                adapter,
+                AudioEvent(
+                    session_id=f"session-{index}",
+                    payload=Audio(
+                        path=str(wav_path),
+                        utterance_id=f"utterance-{index}",
+                        revision=0,
+                    ),
+                ),
+            )
+
+        with pytest.raises(RuntimeError, match="session worker limit"):
+            await _one(
+                adapter,
+                AudioEvent(
+                    session_id="session-over-cap",
+                    payload=Audio(
+                        path=str(wav_path),
+                        utterance_id="utterance-over-cap",
+                        revision=0,
+                    ),
+                ),
+            )
+    finally:
+        await adapter.aclose()
+
+    assert len(adapter._audio_workers) == 0
+
+
+@pytest.mark.asyncio
 async def test_audio_revision_does_not_supersede_different_utterance(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)
