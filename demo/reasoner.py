@@ -97,12 +97,35 @@ class OllamaReasoner:
             "results": [item.model_dump(mode="json") for item in view.results[-12:]],
             "tools": [item.model_dump(mode="json") for item in manifests],
         }
-        encoded = json.dumps(context, ensure_ascii=False, separators=(",", ":"))
         prefix = f"{self.prompt}\n"
-        if len(prefix) >= MAX_REASONER_CONTEXT_CHARS:
+        available = max(0, MAX_REASONER_CONTEXT_CHARS - len(prefix))
+
+        while True:
+            encoded = json.dumps(context, ensure_ascii=False, separators=(",", ":"))
+            if len(encoded) <= available:
+                return prefix + encoded
+            if len(context["observations"]) > 1:
+                context["observations"].pop(0)
+                continue
+            if context["results"]:
+                context["results"].pop(0)
+                continue
+            if context["tools"]:
+                context["tools"].pop(0)
+                continue
+            if context["state"].get("slots"):
+                context["state"] = {
+                    "revision": context["state"].get("revision", 0),
+                    "status": context["state"].get("status", "listening"),
+                }
+                continue
+            if context["observations"] and len(context["observations"][0]["text"]) > 256:
+                context["observations"][0]["text"] = context["observations"][0]["text"][:256]
+                continue
+            if len(context["session_id"]) > 256:
+                context["session_id"] = context["session_id"][:256]
+                continue
             return prefix[:MAX_REASONER_CONTEXT_CHARS]
-        available = MAX_REASONER_CONTEXT_CHARS - len(prefix)
-        return prefix + encoded[:available]
 
     def _request_plan(self, payload: dict[str, Any]) -> PlanProposal:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")

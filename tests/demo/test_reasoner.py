@@ -115,6 +115,29 @@ async def test_ollama_reasoner_posts_bounded_context_and_parses_plan():
     assert len(seen["body"]["prompt"]) <= MAX_REASONER_CONTEXT_CHARS
 
 
+def test_ollama_reasoner_keeps_bounded_context_valid_and_recent():
+    observations = [
+        Observation(
+            event_id=f"event-{index}",
+            source_id=f"source-{index}",
+            modality="text",
+            text=f"history-{index} " + ("x" * 2000),
+            final=True,
+            backend="test",
+        )
+        for index in range(24)
+    ]
+    view = SessionView(session_id="reasoner-session", state=Snapshot(), observations=observations, results=[])
+    reasoner = OllamaReasoner()
+
+    prompt = reasoner._prompt_for(view, [])
+    context = json.loads(prompt.split("\n", 1)[1])
+
+    assert len(prompt) <= MAX_REASONER_CONTEXT_CHARS
+    assert context["observations"][-1]["source_id"] == "source-23"
+    assert context["observations"][0]["source_id"] != "source-0"
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("body", "message"),
