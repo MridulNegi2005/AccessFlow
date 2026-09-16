@@ -48,6 +48,9 @@ def main():
                                           "Everything else stays identical.")
         deadline_parser.add_argument("--inference-timeout", type=float,
                                      help="Controller deadline per planning step; defaults to the Agent value")
+        deadline_parser.add_argument("--corpus-root", type=Path, default=None,
+                                     help="Trusted directory of installable corpus documents, for scenarios "
+                                          "that declare Start.corpus; sets ACCESSFLOW_CORPUS_ROOT for the run")
     responsiveness = commands.add_parser("responsiveness", help="Measure synthetic controller responsiveness")
     responsiveness.add_argument("--samples", type=int, default=100, help="Independent samples per condition")
     responsiveness.add_argument("--output-dir", default="artifacts/responsiveness")
@@ -66,7 +69,20 @@ def main():
             parser.error("--asr-model-path requires --components local")
         if args.vision_provider != "none" and args.components != "local":
             parser.error("--vision-provider requires --components local")
-        component_config = {"profile": args.components}
+        if args.corpus_root is not None and not args.corpus_root.is_dir():
+            parser.error("--corpus-root must be an existing directory")
+        # Threaded to Agent through ACCESSFLOW_CORPUS_ROOT (see engine.Agent.__init__)
+        # rather than a new constructor path here: this is the only normal-harness route
+        # into replay()/run_suite(), which construct Agent themselves and are not part of
+        # this fix's owned files. Recorded in component_config (already plumbed verbatim
+        # into replay's trace metadata) so the resolved root is visible in evidence
+        # without ever being sent to the planner itself -- see corpus.corpus_manifest,
+        # which only ever exposes logical document names, never a filesystem path.
+        resolved_corpus_root = str(args.corpus_root.resolve()) if args.corpus_root is not None else None
+        if resolved_corpus_root is not None:
+            os.environ["ACCESSFLOW_CORPUS_ROOT"] = resolved_corpus_root
+        component_config = {"profile": args.components,
+                            "corpus_root": resolved_corpus_root or os.environ.get("ACCESSFLOW_CORPUS_ROOT")}
         if args.components == "local":
             from .adapters.process_perception import ProcessPerception
             from .turn_policy import HeuristicTurnPolicy

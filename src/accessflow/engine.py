@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -15,7 +16,9 @@ from .contracts import (
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
     ToolResult, TranscriptEvent,
 )
-from .corpus import CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest
+from .corpus import (
+    CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
+)
 
 
 class DenyWrites:
@@ -70,9 +73,16 @@ class Agent:
         self.frame_debounce_s = frame_debounce_s
         # Installed directory holding corpus documents. None means no corpus is wired up:
         # any session that still declares Start.corpus gets a bounded per-request refusal
-        # (see _execute_corpus) instead of a crash. A session with an empty corpus never
+        # (see _corpus_lookup) instead of a crash. A session with an empty corpus never
         # touches this at all -- see the StartEvent handling in run().
-        self._corpus_root = corpus_root
+        #
+        # Falls back to ACCESSFLOW_CORPUS_ROOT so the normal CLI/replay harness (which
+        # constructs Agent without ever importing accessflow.corpus itself) has a way to
+        # configure this trust boundary -- see cli.py's --corpus-root. An explicit
+        # corpus_root=None argument is indistinguishable from "not given" here by design;
+        # nothing in this codebase ever needs to force "no env fallback" while also
+        # passing None explicitly.
+        self._corpus_root = corpus_root if corpus_root is not None else os.getenv("ACCESSFLOW_CORPUS_ROOT")
         self.running = False
 
     async def run(self, input_queue, output_queue, clock=None):
@@ -161,6 +171,13 @@ class Agent:
         self.corpus_root = Path(self._corpus_root) if self._corpus_root else None
         self.corpus_allowlist = frozenset()
         self.corpus_store = None
+        # True only once THIS session's StartEvent actually installed the built-in
+        # corpus capability (a non-empty Start.corpus). Dispatch and cancellation route
+        # to the internal implementation on this flag, never merely on a call's tool
+        # name -- see _execute/_cancel. Fixes M3: an empty corpus plus an external
+        # manifest that happens to be named "search_corpus" must reach that external
+        # executor unchanged, not be silently intercepted here.
+        self._corpus_installed = False
 
         async def pump():
             while True:
@@ -203,9 +220,10 @@ class Agent:
                         if CORPUS_TOOL_NAME in self.manifests:
                             await self._emit("error", code="duplicate_manifest_names")
                             break
-                        self.manifests[CORPUS_TOOL_NAME] = corpus_manifest()
+                        self.manifests[CORPUS_TOOL_NAME] = corpus_manifest(event.payload.corpus)
                         self.corpus_allowlist = frozenset(event.payload.corpus)
                         self.corpus_store = CorpusStore(self.corpus_root) if self.corpus_root else None
+                        self._corpus_installed = True
                     self.seen.add(event.event_id)
                     self.last_sequence = event.sequence
                     continue
@@ -854,8 +872,14 @@ class Agent:
                 call.status = "stale"
                 self.results = [result for result in self.results if result.call_id != call.call_id]
 
-    def _execute_corpus(self, call):
-        """Deterministic local lookup; never forwarded to the external executor.
+    def _corpus_lookup(self, call):
+        """Blocking file I/O and lexical retrieval; never forwarded to the external executor.
+
+        This runs OFF the event loop -- see _execute, which only ever calls it inside
+        asyncio.to_thread -- so a slow disk or a large document cannot block input
+        processing, acknowledgment or cancellation of anything else in the session (M2).
+        Cheap argument-shape checks (query length) happen here too, before the
+        potentially expensive read, rather than in the dispatcher.
 
         The "document" argument is model-supplied and untrusted: CorpusStore.read enforces
         the allowlist and refuses traversal/absolute names regardless of Start.corpus's own
@@ -864,22 +888,40 @@ class Agent:
         """
         document = call.arguments.get("document")
         query = call.arguments.get("query", "")
-        if self.corpus_store is None:
-            return ToolResult(call_id=call.call_id, status="failed", error="corpus_unavailable")
-        try:
-            text = self.corpus_store.read(document, self.corpus_allowlist)
-        except CorpusAccessError as exc:
-            return ToolResult(call_id=call.call_id, status="failed", error=exc.code)
+        if not is_safe_query(query):
+            raise CorpusAccessError("query_too_long")
+        text = self.corpus_store.read(document, self.corpus_allowlist)
         passage = best_passage(text, query)
         return ToolResult(call_id=call.call_id, status="success",
                           result={"document": document, "query": query, "passage": passage})
 
     async def _execute(self, call, timeout):
-        if call.tool == CORPUS_TOOL_NAME:
+        if self._corpus_installed and call.tool == CORPUS_TOOL_NAME:
             if call.status != "pending":
                 await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
                 return
-            await self.inbox.put(WorkerMessage("tool", 0, self._execute_corpus(call)))
+            if self.corpus_store is None:
+                await self.inbox.put(WorkerMessage("tool", 0,
+                    ToolResult(call_id=call.call_id, status="failed", error="corpus_unavailable")))
+                return
+            # Bounded exactly like any external tool call below (same _bounded/timeout,
+            # same exception-to-ToolResult conversion). Cancelling this await cannot stop
+            # the underlying OS thread once asyncio.to_thread has started it -- Python
+            # cannot preempt a running thread. What it DOES guarantee: the controller
+            # stops waiting for that thread at the manifest's own timeout, and stale
+            # cancellation/dependency-change is still enforced downstream in _result via
+            # self.invalidated (matching every other tool call), so a passage the thread
+            # eventually computes after the fact is dropped from evidence, never dispatched
+            # a second time, and never blocks a later call for the same request.
+            try:
+                result = await self._bounded(asyncio.to_thread(self._corpus_lookup, call), timeout)
+                if result.call_id != call.call_id:
+                    raise ValueError("Corpus lookup returned wrong call ID")
+            except CorpusAccessError as exc:
+                result = ToolResult(call_id=call.call_id, status="failed", error=exc.code)
+            except Exception as exc:
+                result = ToolResult(call_id=call.call_id, status="failed", error=type(exc).__name__)
+            await self.inbox.put(WorkerMessage("tool", 0, result))
             return
         if self.executor is not None and call.status != "pending":
             await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
@@ -900,7 +942,10 @@ class Agent:
         call.status = "cancelled"
         self.invalidated.add(call.call_id)
         await self._emit("cancel_call", call_id=call.call_id, operation_id=call.operation_id, reason=reason)
-        if self.executor:
+        # A call this controller services internally (the built-in corpus lookup) was
+        # never given to self.executor and must never trigger ITS cancel() -- that would
+        # notify an unrelated external tool about a call it never received (M3).
+        if self.executor and not (self._corpus_installed and call.tool == CORPUS_TOOL_NAME):
             async def cancel():
                 try:
                     status = await self._bounded(self.executor.cancel(call.call_id), 1)
