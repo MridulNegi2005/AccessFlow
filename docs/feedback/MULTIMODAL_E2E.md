@@ -85,6 +85,8 @@ informational final in the same session.
 
 The reasoner context regression also confirms that a full bounded prompt remains valid JSON after
 oldest observations are removed, while the newest observation is retained.
+Provider responses explicitly marked incomplete are rejected before their partial plan can reach the
+Agent; boolean and string forms are covered by the focused reasoner tests.
 
 ## What this proves
 

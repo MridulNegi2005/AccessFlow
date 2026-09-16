@@ -161,6 +161,8 @@ class OllamaReasoner:
             raise RuntimeError("Ollama reasoner returned invalid JSON shape")
         if provider_payload.get("error"):
             raise RuntimeError(f"Ollama reasoner error: {provider_payload['error']}")
+        if "done" in provider_payload and provider_payload["done"] is not True:
+            raise RuntimeError("Ollama reasoner returned an incomplete response")
 
         raw_plan = provider_payload.get("response")
         if not isinstance(raw_plan, str) or not raw_plan.strip():

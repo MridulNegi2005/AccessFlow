@@ -146,6 +146,8 @@ def test_ollama_reasoner_keeps_bounded_context_valid_and_recent():
         ({"response": "not-json"}, "invalid plan JSON"),
         ({"response": json.dumps([])}, "invalid plan shape"),
         ({"response": json.dumps({"request_complete": "yes"})}, "invalid plan proposal"),
+        ({"done": False, "response": json.dumps({})}, "incomplete response"),
+        ({"done": "true", "response": json.dumps({})}, "incomplete response"),
     ],
 )
 async def test_ollama_reasoner_classifies_malformed_plans(body, message):
