@@ -33,6 +33,7 @@ class WavFormat:
 
 MAX_WAV_FILE_BYTES = 8 * 1024 * 1024
 MAX_WAV_DECODED_BYTES = 64 * 1024 * 1024
+MAX_SESSION_WORKERS = 64
 
 
 def validate_wav(path: Path) -> WavFormat:
@@ -442,6 +443,8 @@ class LocalPerception:
     def _worker_for_open(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
         worker = workers.get(session_id)
         if worker is None:
+            if len(workers) >= MAX_SESSION_WORKERS:
+                raise RuntimeError("perception session worker limit reached")
             worker = _LatestWorker()
             workers[session_id] = worker
         return worker
