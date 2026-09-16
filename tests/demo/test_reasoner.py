@@ -288,6 +288,7 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
             "text": "The local reasoner received the spoken request and screen evidence.",
             "basis": "informational",
             "backend": "reasoner",
+            "caused_by_event_id": final["payload"]["caused_by_event_id"],
         }
         assert len(ReasonerHandler.requests) >= 2
         vision_requests = [payload for payload in ReasonerHandler.requests if payload.get("images")]
@@ -364,11 +365,16 @@ def test_websocket_reasoner_failure_is_recoverable(monkeypatch):
 
         error = next(item for item in failed if item["kind"] == "error")
         final = next(item for item in recovered if item["kind"] == "final")
-        assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+        assert error["payload"] == {
+            "code": "backend_failure",
+            "detail": "RuntimeError",
+            "caused_by_event_id": error["payload"]["caused_by_event_id"],
+        }
         assert final["payload"] == {
             "text": "The recovered local reasoner answered.",
             "basis": "informational",
             "backend": "reasoner",
+            "caused_by_event_id": final["payload"]["caused_by_event_id"],
         }
         assert len(ReasonerHandler.requests) == 2
     finally:
