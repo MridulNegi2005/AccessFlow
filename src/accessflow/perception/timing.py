@@ -50,6 +50,16 @@ def _active_windows(frames: tuple[ActivityFrame, ...]) -> tuple[ActivityWindow, 
     return tuple(windows)
 
 
+def _validate_frame_order(frames: tuple[ActivityFrame, ...]) -> None:
+    previous: ActivityFrame | None = None
+    for frame in frames:
+        if previous is not None and (
+            frame.start_s < previous.start_s or frame.end_s < previous.end_s
+        ):
+            raise ValueError("activity frames must be in chronological order")
+        previous = frame
+
+
 def summarize_activity(
     frames: tuple[ActivityFrame, ...],
     *,
@@ -66,6 +76,7 @@ def summarize_activity(
     ):
         raise ValueError("pause_after_s cannot be negative")
 
+    _validate_frame_order(frames)
     windows = _active_windows(frames)
     recording_start = frames[0].start_s
     recording_end = frames[-1].end_s

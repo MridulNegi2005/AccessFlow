@@ -27,6 +27,23 @@ class ActivityFrame:
     rms: int
     active: bool
 
+    def __post_init__(self) -> None:
+        for name, value in (("start_s", self.start_s), ("end_s", self.end_s)):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+            ):
+                raise ValueError(f"activity frame {name} must be finite")
+        if self.start_s < 0:
+            raise ValueError("activity frame start_s must be non-negative")
+        if self.end_s <= self.start_s:
+            raise ValueError("activity frame end_s must be greater than start_s")
+        if isinstance(self.rms, bool) or not isinstance(self.rms, int) or self.rms < 0:
+            raise ValueError("activity frame rms must be a non-negative integer")
+        if not isinstance(self.active, bool):
+            raise ValueError("activity frame active must be a boolean")
+
 
 def _decode_samples(pcm: bytes, sample_width: int) -> list[int]:
     if sample_width not in (1, 2, 3, 4):

@@ -200,6 +200,34 @@ def test_activity_summary_rejects_empty_frames_and_invalid_threshold():
         summarize_activity((ActivityFrame(0.0, 0.02, 0, False),), pause_after_s=-1)
 
 
+@pytest.mark.parametrize(
+    ("start_s", "end_s", "rms", "active", "message"),
+    [
+        (0.2, 0.2, 0, False, "end_s"),
+        (0.3, 0.2, 0, False, "end_s"),
+        (-0.1, 0.1, 0, False, "start_s"),
+        (0.0, math.inf, 0, False, "end_s"),
+        (0.0, math.nan, 0, False, "end_s"),
+        (0.0, 0.1, -1, False, "rms"),
+    ],
+)
+def test_activity_frames_reject_invalid_values(start_s, end_s, rms, active, message):
+    with pytest.raises(ValueError, match=message):
+        ActivityFrame(start_s, end_s, rms, active)
+
+
+def test_activity_summary_rejects_out_of_order_frames():
+    frames = (
+        ActivityFrame(0.5, 0.6, 1_000, True),
+        ActivityFrame(0.0, 0.1, 0, False),
+    )
+
+    with pytest.raises(ValueError, match="chronological"):
+        summarize_activity(frames)
+    with pytest.raises(ValueError, match="chronological"):
+        pause_candidates(frames)
+
+
 def test_webrtc_activity_uses_injected_detector_without_optional_import():
     calls = []
 
