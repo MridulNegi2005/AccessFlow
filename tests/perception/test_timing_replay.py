@@ -103,6 +103,24 @@ def test_combined_replay_waits_for_final_revision_before_emitting_candidate():
     assert report.added_wait_after_speech_end_s == pytest.approx(0.6)
 
 
+def test_replay_uses_revision_available_at_each_pause():
+    frames = _heldout_pause_frames()
+    revisions = (
+        TranscriptRevision("utterance-1", 1, True, 1.9, 1.88),
+        TranscriptRevision("utterance-1", 2, False, 4.0, 5.32),
+    )
+
+    report = replay_endpoint_candidates(
+        frames, revisions, source_id="utterance-1", require_final=True
+    )
+
+    assert len(report.candidates) == 1
+    assert report.candidates[0].revision == 1
+    assert report.candidates[0].pause_start_s == pytest.approx(1.88)
+    assert report.candidates[0].pause_end_s == pytest.approx(3.86)
+    assert report.missed_final_count == 0
+
+
 def test_stale_or_mismatched_revisions_cannot_gate_a_candidate():
     frames = _heldout_pause_frames()
     stale = (
