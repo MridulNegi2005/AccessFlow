@@ -12,6 +12,9 @@ from urllib import error as url_error
 from urllib import request
 from urllib.parse import urlparse
 
+MAX_VISION_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_VISION_RESPONSE_BYTES = 1 * 1024 * 1024
+
 
 class OllamaVisionProvider:
     """Send one PNG to an already-running local Ollama generate endpoint.
@@ -57,12 +60,40 @@ class OllamaVisionProvider:
     def backend_name(self) -> str:
         return f"ollama/{self.model}"
 
+    @staticmethod
+    def _read_bounded_response(response: Any) -> bytes:
+        try:
+            try:
+                body = response.read(MAX_VISION_RESPONSE_BYTES + 1)
+            except TypeError:
+                body = response.read()
+        except OSError as exc:
+            raise RuntimeError("Ollama vision response could not be read") from exc
+        if not isinstance(body, bytes):
+            raise RuntimeError("Ollama vision response was not bytes")
+        if len(body) > MAX_VISION_RESPONSE_BYTES:
+            raise RuntimeError("Ollama vision response is too large")
+        return body
+
+    @staticmethod
+    def _read_image(path: Path) -> bytes:
+        try:
+            if path.stat().st_size > MAX_VISION_IMAGE_BYTES:
+                raise RuntimeError("Ollama vision image is too large")
+            image = path.read_bytes()
+        except OSError as exc:
+            raise RuntimeError("Ollama vision image could not be read") from exc
+        if len(image) > MAX_VISION_IMAGE_BYTES:
+            raise RuntimeError("Ollama vision image is too large")
+        return image
+
     def __call__(self, path: Path) -> str:
+        image = self._read_image(path)
         body = json.dumps(
             {
                 "model": self.model,
                 "prompt": self.prompt,
-                "images": [base64.b64encode(path.read_bytes()).decode("ascii")],
+                "images": [base64.b64encode(image).decode("ascii")],
                 "stream": False,
             }
         ).encode("utf-8")
@@ -74,11 +105,11 @@ class OllamaVisionProvider:
         )
         try:
             with self._opener(req, timeout=self.timeout_s) as response:
-                response_body = response.read()
+                response_body = self._read_bounded_response(response)
         except url_error.HTTPError as exc:
             try:
-                response_body = exc.read()
-            except OSError:
+                response_body = self._read_bounded_response(exc)
+            except (OSError, RuntimeError):
                 response_body = b""
             try:
                 error_payload = json.loads(response_body.decode("utf-8"))
