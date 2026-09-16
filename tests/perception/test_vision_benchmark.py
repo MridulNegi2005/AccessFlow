@@ -115,6 +115,18 @@ def test_vision_benchmark_report_writer_preserves_json(tmp_path: Path):
     assert json.loads(report_path.read_text(encoding="utf-8")) == report
 
 
+def test_vision_benchmark_rejects_duplicate_image_case_ids(tmp_path: Path):
+    _, manifest = _manifest()
+    image_indexes = [
+        index for index, case in enumerate(manifest["cases"]) if case["modality"] == "image"
+    ]
+    manifest["cases"][image_indexes[1]]["id"] = manifest["cases"][image_indexes[0]]["id"]
+    _write_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="unique non-empty strings"):
+        benchmark._image_cases(tmp_path)
+
+
 @pytest.mark.asyncio
 async def test_vision_benchmark_rejects_manifest_hash_mismatch_before_provider_call(tmp_path: Path):
     root, manifest = _manifest()
