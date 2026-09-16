@@ -1,6 +1,6 @@
 {
   "id": "live-dev-audio-correction-clarify-01",
-  "provenance": "This fixture uses the same committed WAV file as scenarios/live_dev/audio_correction.json: tests/fixtures/audio/synthetic_pause_correction.wav. The script is: 'Book Tuesday. [1.5 s pause] Actually, Wednesday at five.' The script does not state AM or PM. The 24-hour reserve_service_slot tool requires an explicit hour, so five is not enough information to write. The correct controller behavior is to ask for the hour, not to guess it. This fixture scores that behavior. Its oracle asserts zero committed effects, so a premature write fails it, and it asserts the corrected day slot, so the correction path must still work. It does not assert a final response, because the correct behavior here ends in a clarifying question, not a final answer. See scenarios/live_dev/audio_correction.json for the companion ASR/turn-correction smoke check and docs/feedback/PROVENANCE.md for the WAV provenance. A live run requires --components local and --asr-model-path <installed Faster Whisper base.en directory>. Offline-fake mode has no scripted proposals for this file, by design, for the same reason as audio_correction.json: it fails loudly instead of silently substituting a transcript for ASR or a scripted answer for the model's clarification decision.",
+  "provenance": "This fixture uses the same committed WAV file as scenarios/live_dev/audio_correction.json: tests/fixtures/audio/synthetic_pause_correction.wav. The script is: 'Book Tuesday. [1.5 s pause] Actually, Wednesday at five.' The script does not state AM or PM. The 24-hour reserve_service_slot tool requires an explicit hour, so five is not enough information to write. The correct controller behavior is to ask for the hour, not to guess it. This fixture scores that behavior. Its oracle asserts zero committed effects, so a premature write fails it, and it asserts the corrected day slot, so the correction path must still work. It does not assert a final response, because the correct behavior here ends in a clarifying question, not a final answer. terminal_output declares that clarifying question as the scenario's own terminal condition, so replay waits for it instead of a final, and the oracle reads slots from that clarify event, not from a final that never comes. See scenarios/live_dev/audio_correction.json for the companion ASR/turn-correction smoke check and docs/feedback/PROVENANCE.md for the WAV provenance. A live run requires --components local and --asr-model-path <installed Faster Whisper base.en directory>. Offline-fake mode has no scripted proposals for this file, by design, for the same reason as audio_correction.json: it fails loudly instead of silently substituting a transcript for ASR or a scripted answer for the model's clarification decision.",
   "completion_timeout_s": 100,
   "environment": {
     "reserve_service_slot": {
@@ -57,5 +57,8 @@
     },
     "effects": [],
     "require_final": false
+  },
+  "terminal_output": {
+    "kind": "clarify"
   }
 }

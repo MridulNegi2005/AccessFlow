@@ -150,3 +150,98 @@ def test_correctly_confirmed_single_effect_passes():
          "final_basis": "confirmed_tool_effect"},
         [final(basis="confirmed_tool_effect")], {"op": booking("Wednesday", "17:00")})
     assert result["passed"] is True
+
+
+# M1: a scenario whose declared terminal condition is a clarification (never a
+# final) must be scored from that clarification's own state, not from an empty
+# dictionary and not from any final that happens to exist.
+
+
+def clarify(caused_by="ev1", slots=None, text="Do you mean five AM or PM?"):
+    return {"type": "output", "event": {"kind": "clarify",
+            "payload": {"caused_by_event_id": caused_by, "text": text},
+            "state": {"slots": slots or {"day": {"value": "Wednesday", "confirmed": True}}}}}
+
+
+CLARIFY_EXPECTATION = {"slots": {"day": "Wednesday"}, "effects": [], "require_final": False}
+
+
+def test_correct_clarification_passes_via_terminal_output_selection():
+    result = evaluate_task(CLARIFY_EXPECTATION, [clarify()], {},
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is True
+
+
+def test_clarify_expectation_without_terminal_output_reads_empty_slots_not_success():
+    # This is the original defect: no terminal_output means the selector still only
+    # knows how to look at finals, so a real clarify snapshot is invisible to it.
+    result = evaluate_task(CLARIFY_EXPECTATION, [clarify()], {})
+    assert result["passed"] is False
+    assert next(c for c in result["checks"] if c["name"] == "slot:day")["passed"] is False
+
+
+def test_clarification_from_a_different_causing_event_is_not_selected():
+    # A stale/irrelevant clarification left over from an earlier, unrelated turn
+    # must not be picked just because it is a clarify event that exists somewhere
+    # in the trace. Only one caused by the scenario's declared event counts.
+    result = evaluate_task(CLARIFY_EXPECTATION, [clarify(caused_by="stale-ev")], {},
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is False
+    check = next(c for c in result["checks"] if c["name"] == "slot:day")
+    assert check["passed"] is False
+    assert check["actual"]["present"] is False
+
+
+def test_clarification_with_wrong_day_fails():
+    result = evaluate_task(CLARIFY_EXPECTATION,
+                           [clarify(slots={"day": {"value": "Tuesday", "confirmed": True}})], {},
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is False
+    assert next(c for c in result["checks"] if c["name"] == "slot:day")["passed"] is False
+
+
+def test_unconfirmed_day_in_clarification_fails():
+    result = evaluate_task(CLARIFY_EXPECTATION,
+                           [clarify(slots={"day": {"value": "Wednesday", "confirmed": False}})], {},
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is False
+    assert next(c for c in result["checks"] if c["name"] == "slot:day")["passed"] is False
+
+
+def test_a_final_cannot_stand_in_for_the_declared_clarification_outcome():
+    # A final claiming a booking never happened must not pass just because it is
+    # the last output in the trace: the declared terminal kind is "clarify", so a
+    # final is never eligible to be selected as the outcome snapshot.
+    result = evaluate_task(CLARIFY_EXPECTATION, [final()], {},
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is False
+    check = next(c for c in result["checks"] if c["name"] == "slot:day")
+    assert check["passed"] is False and check["actual"]["present"] is False
+
+
+def test_premature_write_still_fails_a_clarification_scenario():
+    result = evaluate_task(CLARIFY_EXPECTATION, [clarify()], {"op": booking()},
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is False
+    assert next(c for c in result["checks"] if c["name"] == "committed_effects")["passed"] is False
+
+
+def test_silence_is_not_success_for_a_clarification_scenario():
+    result = evaluate_task(CLARIFY_EXPECTATION, [], {}, completion_status="timeout",
+                           terminal_output={"kind": "clarify"}, terminal_cause="ev1")
+    assert result["passed"] is False
+    assert next(c for c in result["checks"] if c["name"] == "run_completed")["passed"] is False
+
+
+def test_final_kind_selection_is_unchanged_when_multiple_finals_exist():
+    # Existing final-result scenarios must keep exactly their historical selection:
+    # the last final event, regardless of which event caused it. This guards that
+    # adding terminal-condition selection for clarify never touches this path.
+    early = final(slots={"day": {"value": "Tuesday", "confirmed": True}})
+    early["event"]["payload"] = {"caused_by_event_id": "irrelevant"}
+    late = final(slots={"day": {"value": "Wednesday", "confirmed": True}})
+    late["event"]["payload"] = {"caused_by_event_id": "ev1"}
+    expectation = {"slots": {"day": "Wednesday"}, "effects": []}
+    assert evaluate_task(expectation, [early, late], {})["passed"] is True
+    assert evaluate_task(expectation, [early, late], {},
+                         terminal_output={"kind": "final"}, terminal_cause="ev1")["passed"] is True
