@@ -557,6 +557,9 @@ Updated 16 September 2026.
   persist its stable JSON report through an explicit `--output` path. A writer regression passes,
   and the integrated branch now passes 771 tests with one retained conflict xfail; live model
   quality remains unmeasured.
+- The benchmark also rejects duplicate or blank image case IDs and blank visual labels before a
+  run can produce misleading provenance or vacuous recall. The focused benchmark coverage passes
+  six tests; the full integrated branch passes 772 tests with one retained conflict xfail.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
