@@ -569,6 +569,9 @@ Updated 16 September 2026.
 - Vision benchmark case IDs now have to be safe filenames on both POSIX and Windows before any
   temporary asset is materialized. The focused benchmark coverage passes nine tests; full
   verification passes 776 tests with one retained conflict xfail and Ruff.
+- Vision benchmark asset payloads are now bounded before base64 decoding, using the same 8 MiB
+  image limit enforced by the provider. The focused benchmark coverage passes ten tests; full
+  verification passes 777 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
