@@ -60,6 +60,8 @@
 
   <section>
     <h2>OutputEvent stream</h2>
+    <button type="button" id="restart-session">Restart session</button>
+    <small>Starts a fresh browser session and clears the current event trace.</small>
     <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
     <div id="events" aria-live="off"></div>
   </section>
@@ -249,6 +251,14 @@
       stopMicButton.disabled = !recording;
     }
 
+    function restartSession() {
+      if (microphone) {
+        microphone.stream.getTracks().forEach((track) => track.stop());
+        microphone = null;
+      }
+      window.location.reload();
+    }
+
     async function startMicrophone() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: 'This browser does not expose microphone capture.' } });
@@ -361,6 +371,7 @@
     document.querySelector('#send-image').onclick = () => void sendFile('frame', '#image', 'browser-mock.png');
     document.querySelector('#stop-speaking').onclick = () => sendInterrupt('speech');
     document.querySelector('#stop-task').onclick = () => sendInterrupt('task');
+    document.querySelector('#restart-session').onclick = restartSession;
   </script>
 </body>
 </html>
