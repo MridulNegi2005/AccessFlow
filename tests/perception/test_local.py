@@ -988,6 +988,30 @@ async def test_image_input_rejects_unknown_critical_png_chunk_before_provider(tm
     assert provider_calls == []
 
 
+@pytest.mark.parametrize("chunk_type", [b"abcd", b"ab1d"])
+def test_png_validation_rejects_invalid_chunk_type_code(tmp_path: Path, chunk_type: bytes):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "invalid-chunk-type.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(chunk_type, b"ignored metadata")
+        + chunk(b"IDAT", zlib.compress(b"\x00\x40\x80\xff\xff"))
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG chunk type"):
+        validate_png(image_path)
+
+
 def test_png_validation_rejects_oversized_decoded_payload(tmp_path: Path):
     def chunk(kind: bytes, payload: bytes) -> bytes:
         return (

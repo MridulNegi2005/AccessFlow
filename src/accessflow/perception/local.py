@@ -113,6 +113,15 @@ def validate_png(path: Path) -> PngFormat:
         chunk_type = data[offset + 4 : offset + 8]
         chunk_data = data[offset + 8 : offset + 8 + length]
         chunk_crc = struct.unpack(">I", data[offset + 8 + length : chunk_end])[0]
+        if (
+            len(chunk_type) != 4
+            or any(
+                not (65 <= value <= 90 or 97 <= value <= 122)
+                for value in chunk_type
+            )
+            or 97 <= chunk_type[2] <= 122
+        ):
+            raise ValueError(f"Invalid PNG chunk type: {path}")
         if zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF != chunk_crc:
             raise ValueError(f"Invalid PNG file: {path}")
         if chunk_type not in _PNG_CRITICAL_CHUNKS and 65 <= chunk_type[0] <= 90:
