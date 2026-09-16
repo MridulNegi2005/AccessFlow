@@ -128,6 +128,9 @@ Updated 16 September 2026.
   informational finals were produced, with real local ASR for 18 audio cases, injected vision for 12 images
   and mock text/reasoning for the remaining boundaries. Per-case context and backend identity are recorded
   in docs/feedback/MULTIMODAL_SCENARIO_REPLAY.md and its JSON result.
+- WebRTC VAD timing was also run over all 18 audio cases at 16 kHz, 20 ms frames and aggressiveness 2:
+  3,764 frames were classified, internal pause candidates appeared in 10 cases and trailing candidates
+  in all 18. The result is acoustic timing evidence only and is recorded per case with the matrix.
 - Browser base64 decoding and WAV/PNG materialization validation now run in a worker from the WebSocket
   receive path, keeping upload handling off the event loop.
 - The browser demo renders untrusted multimodal event kinds and payloads through text nodes, so model or
@@ -174,8 +177,8 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 232 tests passed with 4 strict expected failures, including 89 passing demo
-  tests and 127 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 233 tests passed with 4 strict expected failures, including 89 passing demo
+  tests and 128 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before

@@ -126,3 +126,26 @@ def test_mixed_e2e_result_covers_entire_inventory():
     }
     assert all(item["controller_output_kind"] == "final" for item in result["results"])
     assert all(case["e2e_evidence_status"] == "mixed_e2e_replayed" for case in manifest["cases"])
+
+
+def test_live_vad_result_covers_every_audio_case():
+    root, manifest = _manifest()
+    result = json.loads(
+        (root / "docs" / "feedback" / "VAD_SCENARIO_RESULTS.json").read_text(encoding="utf-8")
+    )
+    audio_cases = {case["id"] for case in manifest["cases"] if case["modality"] == "audio"}
+    assert result["mode"] == "live_local_webrtc_activity"
+    assert result["backend"] == "webrtcvad-wheels 2.0.14"
+    assert result["cases"] == 18
+    assert {item["id"] for item in result["results"]} == audio_cases
+    assert result["settings"] == {
+        "sample_rate": 16_000,
+        "frame_ms": 20,
+        "aggressiveness": 2,
+        "pause_threshold_s": 0.4,
+    }
+    assert all(
+        case["timing_evidence_status"] == "live_local_vad_scored"
+        for case in manifest["cases"]
+        if case["modality"] == "audio"
+    )

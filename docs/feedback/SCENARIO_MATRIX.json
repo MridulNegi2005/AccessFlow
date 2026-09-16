@@ -33,7 +33,8 @@
         "expected_outcome": "complete only when the request is sufficiently specified"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-02",
@@ -49,7 +50,8 @@
         "expected_outcome": "retain Wednesday and five as the latest corrected values"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-03",
@@ -65,7 +67,8 @@
         "expected_outcome": "preserve repetition while interpreting the intended quantity"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-04",
@@ -81,7 +84,8 @@
         "expected_outcome": "keep the two clauses in the same request context"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-05",
@@ -97,7 +101,8 @@
         "expected_outcome": "treat wait/use-other-device as a possible correction"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-06",
@@ -113,7 +118,8 @@
         "expected_outcome": "supersede the device slot while retaining unrelated state"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-07",
@@ -129,7 +135,8 @@
         "expected_outcome": "stop or supersede speech output without canceling the task automatically"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-08",
@@ -145,7 +152,8 @@
         "expected_outcome": "block state-changing dispatch after explicit task cancellation"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-09",
@@ -161,7 +169,8 @@
         "expected_outcome": "classify as a backchannel without completing a task"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-10",
@@ -177,7 +186,8 @@
         "expected_outcome": "avoid treating noise as a completed spoken request"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-11",
@@ -193,7 +203,8 @@
         "expected_outcome": "keep the partial hypothesis open"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-12",
@@ -209,7 +220,8 @@
         "expected_outcome": "replace the earlier hypothesis for the same utterance"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-13",
@@ -225,7 +237,8 @@
         "expected_outcome": "allow completion only after the final revision"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-14",
@@ -241,7 +254,8 @@
         "expected_outcome": "invalidate dependent time work while preserving other slots"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-15",
@@ -257,7 +271,8 @@
         "expected_outcome": "invalidate dependent day work while preserving device evidence"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-16",
@@ -273,7 +288,8 @@
         "expected_outcome": "clarify the missing required slot"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-17",
@@ -289,7 +305,8 @@
         "expected_outcome": "permit reversible read-only work when intent is stable"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-18",
@@ -305,7 +322,8 @@
         "expected_outcome": "reject the stale result as outdated evidence"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-19",
@@ -321,7 +339,8 @@
         "expected_outcome": "prevent duplicate acceptance of the same logical result"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-20",
@@ -337,7 +356,8 @@
         "expected_outcome": "reconcile unknown outcome before retrying"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-21",
@@ -353,7 +373,8 @@
         "expected_outcome": "distinguish an intentional repeat from a duplicate delivery"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-22",
@@ -369,7 +390,8 @@
         "expected_outcome": "report cancellation without claiming rollback of a confirmed effect"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-23",
@@ -385,7 +407,8 @@
         "expected_outcome": "separate attempted from confirmed effect"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-24",
@@ -401,7 +424,8 @@
         "expected_outcome": "resolve capability from the supplied manifest"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-25",
@@ -417,7 +441,8 @@
         "expected_outcome": "retain only the newest correction for the affected slot"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-26",
@@ -433,7 +458,8 @@
         "expected_outcome": "preserve unrelated useful session details"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-27",
@@ -449,7 +475,8 @@
         "expected_outcome": "prevent the older revision from becoming a new command"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-28",
@@ -465,7 +492,8 @@
         "expected_outcome": "ask rather than inventing a location"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-29",
@@ -481,7 +509,8 @@
         "expected_outcome": "avoid adding delay beyond the evidence needed for completion"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "text-30",
@@ -497,7 +526,8 @@
         "expected_outcome": "clear session-scoped state before the new request"
       },
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "audio-01",
@@ -521,7 +551,8 @@
       },
       "reference_text": "My screen keeps flickering after the update. Book Wednesday at five.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-02",
@@ -545,7 +576,8 @@
       },
       "reference_text": "Book Tuesday. Actually, Wednesday at five.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-03",
@@ -569,7 +601,8 @@
       },
       "reference_text": "Please book a screen repair for Friday at ten.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-04",
@@ -593,7 +626,8 @@
       },
       "reference_text": "I want Tuesday, Tuesday, actually Wednesday at five.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-05",
@@ -617,7 +651,8 @@
       },
       "reference_text": "I tried restarting already. The screen still flickers.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-06",
@@ -641,7 +676,8 @@
       },
       "reference_text": "The screen flickers ... after the update.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-07",
@@ -665,7 +701,8 @@
       },
       "reference_text": "Book Tuesday. Tuesday. Actually Wednesday.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-08",
@@ -689,7 +726,8 @@
       },
       "reference_text": "Use this device. Wait, the other one.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-09",
@@ -713,7 +751,8 @@
       },
       "reference_text": "Stop speaking, but keep the repair task ready.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-10",
@@ -737,7 +776,8 @@
       },
       "reference_text": "Stop the task before it books anything.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-11",
@@ -761,7 +801,8 @@
       },
       "reference_text": "I need a repair for Friday. Mm-hmm.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-12",
@@ -785,7 +826,8 @@
       },
       "reference_text": "The screen flickers after the update.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-13",
@@ -809,7 +851,8 @@
       },
       "reference_text": "Two tickets. Two tickets.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-14",
@@ -833,7 +876,8 @@
       },
       "reference_text": "Change the appointment time from five to six.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-15",
@@ -857,7 +901,8 @@
       },
       "reference_text": "Correct the date twice. Tuesday, Wednesday, Thursday.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-16",
@@ -881,7 +926,8 @@
       },
       "reference_text": "I tried restarting already ... The screen still flickers.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-17",
@@ -905,7 +951,8 @@
       },
       "reference_text": "Please book a screen repair for Friday at ten.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "audio-18",
@@ -929,7 +976,8 @@
       },
       "reference_text": "Submit a new request after session reset.",
       "live_evidence_status": "live_local_asr_scored",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "live_local_vad_scored"
     },
     {
       "id": "image-01",
@@ -954,7 +1002,8 @@
       },
       "visual_label": "WED 5",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-02",
@@ -979,7 +1028,8 @@
       },
       "visual_label": "TUE / WED",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-03",
@@ -1004,7 +1054,8 @@
       },
       "visual_label": "DATE ?",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-04",
@@ -1029,7 +1080,8 @@
       },
       "visual_label": "DEVICE B",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-05",
@@ -1054,7 +1106,8 @@
       },
       "visual_label": "FRAME 2",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-06",
@@ -1079,7 +1132,8 @@
       },
       "visual_label": "BOOK 5",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-07",
@@ -1104,7 +1158,8 @@
       },
       "visual_label": "APPROVE ?",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-08",
@@ -1129,7 +1184,8 @@
       },
       "visual_label": "AUDIO + IMG",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-09",
@@ -1154,7 +1210,8 @@
       },
       "visual_label": "OLD FRAME",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-10",
@@ -1179,7 +1236,8 @@
       },
       "visual_label": "QUOTA",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-11",
@@ -1204,7 +1262,8 @@
       },
       "visual_label": "UNCERTAIN",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     },
     {
       "id": "image-12",
@@ -1229,7 +1288,8 @@
       },
       "visual_label": "RESET",
       "live_evidence_status": "not_run",
-      "e2e_evidence_status": "mixed_e2e_replayed"
+      "e2e_evidence_status": "mixed_e2e_replayed",
+      "timing_evidence_status": "not_run"
     }
   ],
   "execution": {
@@ -1297,5 +1357,28 @@
       "reasoning": "mock/capturing-reasoner"
     },
     "evidence_note": "Mixed end-to-end routing and context evidence; injected vision and mock reasoning do not establish live model quality."
+  },
+  "live_timing_scoring": {
+    "recorded": "2026-09-16",
+    "mode": "live_local_webrtc_activity",
+    "result_file": "docs/feedback/VAD_SCENARIO_RESULTS.json",
+    "backend": "webrtcvad-wheels 2.0.14",
+    "device": "CPU Intel(R) Core(TM) Ultra 5 125H",
+    "python": "3.12.10",
+    "settings": {
+      "sample_rate": 16000,
+      "frame_ms": 20,
+      "aggressiveness": 2,
+      "pause_threshold_s": 0.4
+    },
+    "cases_scored": 18,
+    "summary": {
+      "active_frames": 2463,
+      "total_frames": 3764,
+      "cases_with_internal_pause_candidate": 10,
+      "cases_with_trailing_pause_candidate": 18,
+      "max_analysis_elapsed_s": 0.0916
+    },
+    "evidence_note": "Acoustic activity and endpoint candidates only; this does not establish speech boundaries, semantic completion or user benefit."
   }
 }
