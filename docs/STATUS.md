@@ -148,7 +148,10 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 
 ### Workstream B — Atishay
 
-- Held-out speech-quality ASR measurement and validated acoustic VAD integration.
+- PCM activity measurements now normalize 8/16/24/32-bit input to signed 16-bit full-scale units,
+  and the WebRTC path converts those widths before calling the detector. Focused audio coverage
+  passes 38 tests and the full branch passes 620 tests with one retained conflict example; held-out
+  speech-quality measurement and hardware timing validation remain open.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the

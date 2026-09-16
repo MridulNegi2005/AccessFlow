@@ -945,6 +945,7 @@ hypothesis. Focused demo tests and JavaScript syntax validation passed; no prote
 2026-09-16 verification: Added explicit labels for the transcript, WAV and PNG browser controls. A refreshed current-head 1280x1600 headless Chrome capture remained legible with no visible clipping or overlap. No protected files changed.
 2026-09-16 verification: Energy activity now rejects PCM buffers with trailing partial samples instead of silently dropping bytes. Added focused coverage; full suite: 189 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Current-head Chrome CDP interaction drove text partial/final submission, checked-in WAV upload and generated PNG upload. The page showed connected/media acknowledgments and retained both prior modalities with zero console or page exceptions. No source or protected files changed.
+
 2026-09-16 verification: Browser event translation now rejects explicit blank or non-string utterance and frame identities while preserving generated IDs for omitted fields. Added focused demo coverage; full suite: 196 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Browser event translation now rejects coerced revision/final/text values, non-finite or boolean timestamps, and inverted speech bounds before typed events are built. Added focused demo coverage; full suite: 202 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Audio and frame browser metadata is now validated before base64 media materialization, preventing rejected events from leaving orphaned session files. Added direct cleanup regressions; full suite: 204 passed, 4 strict xfailed. No protected files changed.
@@ -973,3 +974,10 @@ hypothesis. Focused demo tests and JavaScript syntax validation passed; no prote
 2026-09-16 verification: Reworked Ollama reasoner context truncation to preserve valid JSON, remove oldest evidence first and retain the newest observation within the 16,384-character bound. Added the invariant regression; full suite target is 253 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Added a provider-completion guard that rejects explicit incomplete Ollama responses before plan parsing. Boolean and coerced-string markers are covered; full suite target is 255 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Applied the explicit completion guard to Ollama vision responses as well, so partial captions cannot enter the session. Added boolean and coerced-string coverage; full suite target is 257 passed, 4 strict xfailed. No protected files changed.
+
+2026-09-16 AI-assisted implementation: Scoped Workstream B finding B7 to the perception audio
+helpers and their tests. A delegated review supplied no patch; the implementation was then authored
+and reviewed in the current session, correcting the WebRTC frame slicing during focused verification.
+The final change normalizes energy RMS and converts supported PCM widths to signed 16-bit VAD input;
+tests cover equivalent amplitudes, clipping bounds and detector input size. No contracts, engine,
+adapters, lockfile or model/network behavior changed.

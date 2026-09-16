@@ -318,3 +318,17 @@ hypothesis. Focused demo tests and JavaScript syntax validation passed; no prote
 2026-09-16 verification: Added explicit labels for the transcript, WAV and PNG browser controls. A refreshed current-head 1280x1600 headless Chrome capture remained legible with no visible clipping or overlap. No protected files changed.
 2026-09-16 verification: Energy activity now rejects PCM buffers with trailing partial samples instead of silently dropping bytes. Added focused coverage; full suite: 189 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Current-head Chrome CDP interaction drove text partial/final submission, checked-in WAV upload and generated PNG upload. The page showed connected/media acknowledgments and retained both prior modalities with zero console or page exceptions. No source or protected files changed.
+
+## 2026-09-16 - PCM width normalization for activity and VAD
+
+**Task:** Close the audio normalization gap identified in Workstream B finding B7 while preserving
+the existing width-preserving `load_pcm` API.
+
+**Changes:** Energy RMS values now use signed 16-bit full-scale units for 8-, 16-, 24- and 32-bit
+PCM. The WebRTC adapter converts supported PCM widths to bounded little-endian signed 16-bit frames
+before invoking its detector. Unsupported widths and malformed partial samples remain rejected.
+
+**Status:** `tests/perception/test_audio.py` passes 38 tests; full suite passes 620 tests with one
+retained expected conflict example; Ruff passes. This is deterministic offline evidence with an
+injected detector. Held-out speech quality, live acoustic timing validation and live vision remain
+unverified. Commits: `051f5f2`, `e021882`.
