@@ -304,6 +304,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   per-file upload limit remains available with JSON overhead. Malformed and oversized frames remain
   recoverable `demo/input` errors; the full demo suite passes 143 tests with one retained xfail and full
   verification passes 798 tests with one retained conflict xfail and Ruff.
+- PNG validation now requires all compressed image data chunks to be consecutive, rejecting ancillary
+  data between `IDAT` chunks before a vision provider is called. The focused regression passes; full
+  verification passes 799 tests with one retained conflict xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
