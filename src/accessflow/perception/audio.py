@@ -8,7 +8,7 @@ import wave
 from dataclasses import dataclass
 from pathlib import Path
 
-from .local import WavFormat, validate_wav
+from .local import MAX_WAV_DECODED_BYTES, WavFormat, validate_wav
 
 
 @dataclass(frozen=True)
@@ -111,6 +111,8 @@ def _resample_mono(pcm: bytes, sample_width: int, source_rate: int, target_rate:
         return pcm
 
     output_count = max(1, (len(samples) * target_rate + source_rate // 2) // source_rate)
+    if output_count > MAX_WAV_DECODED_BYTES // sample_width:
+        raise ValueError("resampled PCM payload is too large")
     output = []
     for index in range(output_count):
         position = index * source_rate / target_rate
