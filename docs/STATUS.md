@@ -197,6 +197,11 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Configured local audio and vision backends now reject browser placeholder paths before backend
   invocation, emit a recoverable `demo/input` error and keep the WebSocket session usable. Mock mode
   retains its explicitly labeled placeholder behavior; the full branch passes 673 tests with one xfail.
+- Modality coverage metrics now reject observations with missing, blank or non-string modality labels
+  before constructing a typed result, instead of leaking invalid values or failing during sorting.
+- A demo startup failure in reasoner configuration now closes any perception backend that was already
+  initialized before reporting the configuration error. The full branch passes 675 tests with one
+  retained conflict example and two dependency deprecation warnings; Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
