@@ -239,12 +239,17 @@
       await current.context.close();
       setMicrophoneButtons(false);
       const wav = encodeWav(current.chunks, current.sampleRate);
-      const uploaded = send('audio', () => ({
-        data_base64: bytesToBase64(wav),
-        filename: 'browser-microphone.wav',
-        utterance_id: nextMediaId('mic-audio')
-      }));
+      const uploaded = await enqueueMediaAction(() => send('audio', () => ({
+          data_base64: bytesToBase64(wav),
+          filename: 'browser-microphone.wav',
+          utterance_id: nextMediaId('mic-audio')
+        })));
       show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: false, uploaded } });
+    }
+
+    function enqueueMediaAction(action) {
+      mediaSendChain = mediaSendChain.then(action, action);
+      return mediaSendChain;
     }
 
     function sendFile(kind, selector, fallback) {
@@ -266,8 +271,7 @@
           show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
         }
       };
-      mediaSendChain = mediaSendChain.then(action, action);
-      return mediaSendChain;
+      return enqueueMediaAction(action);
     }
 
     socket.onmessage = (message) => show(JSON.parse(message.data));
