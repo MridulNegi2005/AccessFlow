@@ -441,6 +441,11 @@ Updated 16 September 2026.
   live interactive device behavior remains open.
 - origin/mridul/engine was fetched at 919ed27 for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
+- An offline timing-policy replay now compares 0.4-second acoustic candidates with a 2.0-second
+  baseline over the recorded held-out pause and fluent VAD timelines. It reports the short
+  baseline's internal premature candidate, the long baseline's missed endpoint, and a final-
+  revision-gated trailing candidate with 0.62/0.66 seconds of added wait; six focused tests and
+  the full branch pass. This is prerecorded timing-policy evidence only, not live endpointing.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
