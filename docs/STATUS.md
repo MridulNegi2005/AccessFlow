@@ -290,6 +290,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Activity timing summaries now reject overlapping or duplicate frames before deriving pause evidence,
   while preserving adjacent frame boundaries. Focused overlap regressions pass; full verification
   passes 789 tests with one retained conflict xfail and Ruff.
+- PCM resampling now applies the shared 64 MiB decoded-payload ceiling before allocating its output
+  list, preventing a caller-controlled target rate from causing an oversized expansion. The focused
+  regression passes; full verification passes 790 tests with one retained conflict xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
