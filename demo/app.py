@@ -556,6 +556,13 @@ async def websocket(websocket: WebSocket) -> None:
             },
         }
     )
+
+    def enqueue_output(event: Any) -> None:
+        try:
+            outgoing.put_nowait(event)
+        except asyncio.QueueFull as error:
+            raise RuntimeError("demo output queue is full") from error
+
     agent = Agent(
         perception,
         FinalFlagPolicy(),
@@ -576,7 +583,7 @@ async def websocket(websocket: WebSocket) -> None:
                 try:
                     message = await websocket.receive_json()
                 except ValueError:
-                    await outgoing.put(
+                    enqueue_output(
                         {
                             "kind": "demo_error",
                             "payload": {
@@ -596,7 +603,7 @@ async def websocket(websocket: WebSocket) -> None:
                     )
                     perception.validate_media_source(event)
                 except (TypeError, ValueError) as error:
-                    await outgoing.put(
+                    enqueue_output(
                         {
                             "kind": "demo_error",
                             "payload": {"backend": "demo/input", "message": str(error)},
@@ -610,7 +617,7 @@ async def websocket(websocket: WebSocket) -> None:
                 else:
                     source_id = None
                 if source_id is not None:
-                    await outgoing.put(
+                    enqueue_output(
                         {
                             "kind": "demo_status",
                             "payload": {"media_received": event.kind, "source_id": source_id},
