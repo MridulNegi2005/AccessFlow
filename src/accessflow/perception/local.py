@@ -102,6 +102,7 @@ def validate_png(path: Path) -> PngFormat:
     interlace: int | None = None
     palette_entries: int | None = None
     saw_idat = False
+    idat_closed = False
     idat_data = bytearray()
     saw_iend = False
     while offset < len(data):
@@ -169,10 +170,14 @@ def validate_png(path: Path) -> PngFormat:
             if ihdr[3] == 3 and palette_entries > (1 << ihdr[2]):
                 raise ValueError(f"Invalid PNG palette: {path}")
         if chunk_type == b"IDAT":
+            if idat_closed:
+                raise ValueError(f"Invalid PNG chunk order: {path}")
             if ihdr is not None and ihdr[3] == 3 and palette_entries is None:
                 raise ValueError(f"Invalid PNG palette: {path}")
             saw_idat = True
             idat_data.extend(chunk_data)
+        elif saw_idat and chunk_type != b"IEND":
+            idat_closed = True
         if chunk_type == b"IEND":
             if length != 0 or chunk_end != len(data):
                 raise ValueError(f"Invalid PNG file: {path}")
