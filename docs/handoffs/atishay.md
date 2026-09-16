@@ -462,3 +462,20 @@ accumulation. Added a focused implementation regression; normal client behavior 
 
 **Status:** Full suite passes 644 tests with one retained expected conflict example, Ruff and diff checks
 pass. No engine, contract, adapter, lockfile or model/network behavior changed. Commit: 10d2069.
+
+## 2026-09-16 - Offline timing-policy replay
+
+**Task:** Advance the acoustic timing milestone without treating prerecorded activity as live turn
+completion or changing the controller.
+
+**Changes:** Added `turn_policy.timing_replay`, which replays the recorded held-out fluent and pause
+VAD timelines against timestamped transcript revisions. The 0.4-second acoustic baseline exposes an
+internal premature candidate, the 2.0-second baseline misses the held-out endpoints, and the combined
+replay emits a trailing candidate only after the matching final revision is available. Stale and
+mismatched revisions and all-silence input cannot emit candidates. The result contains endpoint
+measurements only; it does not construct a `TurnDecision`, authorize tools or mutate session state.
+
+**Status:** Focused timing/audio/policy coverage passes 87 tests; all perception coverage passes 190
+tests; demo coverage passes 132 tests with one retained conflict xfail; the full suite passes 690 tests
+with one retained xfail and two dependency deprecation warnings. Ruff passes. Commits: `378d178`,
+`5fd2f91`, `fce7e62`. Live endpoint quality and live vision quality remain unverified.
