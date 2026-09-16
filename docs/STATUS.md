@@ -216,6 +216,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - An explicit `--live` probe against `ollama/gemma3:4b` processed all 12 image cases and returned 12
   classified loopback transport failures with exit code 1, zero captions and zero recall; this confirms
   the gate fails closed without fabricating live vision quality evidence.
+- Direct PNG validation now rejects non-alphabetic chunk codes and lowercase reserved bytes before
+  unknown data can be treated as metadata. Focused local-perception coverage passes 51 tests; the full
+  branch passes 684 tests with one retained conflict example and Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
