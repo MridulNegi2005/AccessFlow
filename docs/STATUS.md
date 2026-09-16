@@ -149,9 +149,10 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 ### Workstream B — Atishay
 
 - PCM activity measurements now normalize 8/16/24/32-bit input to signed 16-bit full-scale units,
-  and the WebRTC path converts those widths before calling the detector. Focused audio coverage
-  passes 38 tests and the full branch passes 630 tests with one retained conflict example; held-out
-  speech-quality measurement and hardware timing validation remain open.
+  and the WebRTC path converts those widths before calling the detector. Activity frames now reject
+  non-finite, negative, zero-length and out-of-order timelines. Focused audio coverage passes 45
+  tests and the full branch passes 643 tests with one retained conflict example; held-out speech-quality
+  measurement and hardware timing validation remain open.
 - The browser adapter now translates typed `speech` and `task` interruption events, and the demo
   exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
   usability after a speech interruption; no engine or shared-contract change was needed.
