@@ -137,6 +137,21 @@ class DemoPerception:
                 labels.append("local/unknown-vision image")
         return " + ".join(labels)
 
+    def validate_media_source(self, event: Any) -> None:
+        """Reject placeholder paths before a configured local backend sees them."""
+        if (
+            isinstance(event, AudioEvent)
+            and self._audio_backend is not None
+            and not Path(event.payload.path).is_file()
+        ):
+            raise ValueError("configured audio backend requires uploaded WAV bytes")
+        if (
+            isinstance(event, FrameEvent)
+            and self._vision_backend is not None
+            and not Path(event.payload.path).is_file()
+        ):
+            raise ValueError("configured vision backend requires uploaded PNG bytes")
+
     async def observe(self, event):
         if self._closed:
             return
@@ -576,6 +591,7 @@ async def websocket(websocket: WebSocket) -> None:
                         materialization_tasks,
                         media_budget,
                     )
+                    perception.validate_media_source(event)
                 except (TypeError, ValueError) as error:
                     await outgoing.put(
                         {
