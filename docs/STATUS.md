@@ -121,6 +121,9 @@ Updated 16 September 2026.
   transcripts, word edits and realtime factors recorded. Across 132 reference words, micro-WER was 0.098,
   mean realtime factor 0.158 and maximum realtime factor 0.251 on the declared Intel Core Ultra 5 125H;
   the generated fixtures do not establish human speech accuracy or task completion.
+- A live vision availability preflight found no Ollama executable or running loopback service, no configured
+  vision model and no hosted API key on this machine; the 12 image cases therefore remain unscored for live
+  grounding. The exact preflight and activation boundary are recorded in docs/feedback/VISION_MEASUREMENTS.md.
 - Browser base64 decoding and WAV/PNG materialization validation now run in a worker from the WebSocket
   receive path, keeping upload handling off the event loop.
 - The browser demo renders untrusted multimodal event kinds and payloads through text nodes, so model or
