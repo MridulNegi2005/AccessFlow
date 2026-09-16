@@ -273,6 +273,21 @@ def test_browser_message_accepts_text_and_source_identity_at_limits():
     assert len(frame.payload.frame_id) == demo_app.MAX_BROWSER_SOURCE_ID_CHARS
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", ["text", "bytes"])
+async def test_browser_frame_size_is_checked_before_json_parsing(field):
+    class OversizedSocket:
+        async def receive(self):
+            raw = "{" + ("x" * demo_app.MAX_BROWSER_MESSAGE_BYTES)
+            return {
+                "type": "websocket.receive",
+                field: raw if field == "text" else raw.encode(),
+            }
+
+    with pytest.raises(ValueError, match="browser event exceeds the 12582912-byte limit"):
+        await demo_app._receive_browser_message(OversizedSocket())
+
+
 def test_rejected_audio_metadata_does_not_materialize_upload(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     with pytest.raises(ValueError, match="browser revision"):
