@@ -1006,3 +1006,9 @@ unexpected validator or write exceptions, with a regression covering partial-fil
 budget release. Focused demo coverage reached 107 passed and the full suite reached 636 passed with one
 retained expected conflict example. No engine, contracts, adapters, lockfile or model/network behavior
 changed.
+
+2026-09-16 AI-assisted implementation: Added a separate concise screen-reader announcement region for the
+demo while disabling live announcements on the detailed JSON trace. Source tests and a real local browser
+smoke covered rendering, final-response announcement, width invariants and console errors. Full suite:
+636 passed, 1 xfailed, 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior
+changed.

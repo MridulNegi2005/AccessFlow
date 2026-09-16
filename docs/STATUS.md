@@ -164,6 +164,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Failed browser media writes and unexpected validation errors now remove partial session files while
   releasing their aggregate budget reservation. The full branch passes 636 tests with one retained
   conflict example; live vision and device behavior remain unverified.
+- The demo now keeps the detailed event trace out of live announcements and exposes a concise
+  screen-reader status region. A fresh local browser smoke confirmed the page rendered without
+  horizontal overflow or console errors; the full branch remains at 636 passed with one xfail.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the

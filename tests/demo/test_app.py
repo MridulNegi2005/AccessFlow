@@ -427,6 +427,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="stop-mic"' in html
     assert 'id="stop-speaking"' in html
     assert 'id="stop-task"' in html
+    assert 'id="announcements" class="sr-only" aria-live="polite"' in html
+    assert 'id="events" aria-live="off"' in html
     assert "sendInterrupt('speech')" in html
     assert "sendInterrupt('task')" in html
     assert 'id="backend-label"' in html
@@ -458,6 +460,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "nextMediaId('upload-frame')" in html
     assert 'Date.now()' not in html
     assert 'card.innerHTML' not in html
+    assert "function announce(event)" in html
+    assert "textContent = announce(event)" in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
 

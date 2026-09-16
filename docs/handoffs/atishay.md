@@ -386,3 +386,18 @@ budget release.
 **Status:** Demo coverage passes 107 tests with one retained expected conflict example; the full suite
 passes 636 tests with one retained expected conflict example, and Ruff plus diff checks pass. Live vision,
 device behavior and human feedback remain unverified. Commit: 9477b1b.
+
+## 2026-09-16 - Accessible demo event announcements
+
+**Task:** Close the remaining demo accessibility issue where the detailed JSON trace was also a live
+screen-reader region.
+
+**Changes:** The visible event stream now uses ria-live="off", while a visually hidden polite region
+announces concise connection, error, clarification and final-response messages. The existing 	extContent
+rendering and controller behavior remain unchanged. Source coverage checks the live-region split and
+announcement helper.
+
+**Status:** Full suite passes 636 tests with one retained expected conflict example; Ruff passes. A fresh
+local browser smoke at 850px width rendered the page with body scroll width 835px, no horizontal overflow,
+and no browser console errors or warnings. The temporary server and tab were stopped after inspection.
+Commit pending after the evidence-only documentation update.

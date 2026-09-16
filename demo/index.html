@@ -16,6 +16,7 @@
     code { color: #9ee6b3; } small { color: #aab4c8; }
     pre { white-space: pre-wrap; margin: 0; }
     .event { margin-top: .75rem; padding: .75rem; border-left: 3px solid #7aa2f7; background: #0d1118; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   </style>
 </head>
 <body>
@@ -59,7 +60,8 @@
 
   <section>
     <h2>OutputEvent stream</h2>
-    <div id="events" aria-live="polite"></div>
+    <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <div id="events" aria-live="off"></div>
   </section>
 
   <script>
@@ -85,6 +87,7 @@
           ? `${event.payload.perception_backend} | ${reasoner}`
           : event.payload.perception_backend;
       }
+      document.querySelector('#announcements').textContent = announce(event);
       const card = document.createElement('div');
       card.className = 'event';
       const heading = document.createElement('strong');
@@ -93,6 +96,26 @@
       details.textContent = JSON.stringify(event, null, 2);
       card.append(heading, details);
       events.prepend(card);
+    }
+
+    function announce(event) {
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+      if (typeof payload.message === 'string' && payload.message) {
+        return `${event.kind}: ${payload.message}`;
+      }
+      if (event.kind === 'final' && typeof payload.text === 'string' && payload.text) {
+        return `Final response: ${payload.text}`;
+      }
+      if (event.kind === 'clarify' && typeof payload.text === 'string' && payload.text) {
+        return `Clarification requested: ${payload.text}`;
+      }
+      if (event.kind === 'demo_status' && payload.connected === true) {
+        return 'Session connected.';
+      }
+      if (event.kind === 'demo_status' && payload.connected === false) {
+        return 'Session disconnected.';
+      }
+      return `${String(event.kind || 'event').replaceAll('_', ' ')} received.`;
     }
 
     function messageFor(kind, payload) {
