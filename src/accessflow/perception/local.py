@@ -86,9 +86,8 @@ _PNG_CRITICAL_CHUNKS = frozenset({b"IHDR", b"PLTE", b"IDAT", b"IEND"})
 def validate_png(path: Path) -> PngFormat:
     """Validate PNG chunks, CRCs, compressed data and termination without decoding pixels."""
     try:
-        if path.stat().st_size > MAX_PNG_FILE_BYTES:
-            raise ValueError(f"PNG file is too large: {path}")
-        data = path.read_bytes()
+        with path.open("rb") as handle:
+            data = handle.read(MAX_PNG_FILE_BYTES + 1)
     except OSError as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
     if len(data) > MAX_PNG_FILE_BYTES:

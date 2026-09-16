@@ -77,9 +77,8 @@ class OllamaVisionProvider:
     @staticmethod
     def _read_image(path: Path) -> bytes:
         try:
-            if path.stat().st_size > MAX_VISION_IMAGE_BYTES:
-                raise RuntimeError("Ollama vision image is too large")
-            image = path.read_bytes()
+            with path.open("rb") as handle:
+                image = handle.read(MAX_VISION_IMAGE_BYTES + 1)
         except OSError as exc:
             raise RuntimeError("Ollama vision image could not be read") from exc
         if len(image) > MAX_VISION_IMAGE_BYTES:
