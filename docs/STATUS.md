@@ -566,6 +566,9 @@ Updated 16 September 2026.
 - Timing replay now selects the newest transcript revision available when each acoustic pause ends,
   so a later provisional revision cannot suppress an earlier eligible final revision. The regression
   and full verification pass 775 tests with one retained conflict xfail and Ruff.
+- Vision benchmark case IDs now have to be safe filenames on both POSIX and Windows before any
+  temporary asset is materialized. The focused benchmark coverage passes nine tests; full
+  verification passes 776 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
