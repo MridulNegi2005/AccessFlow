@@ -476,6 +476,53 @@ async def test_newer_audio_revision_replaces_pending_work(tmp_path: Path):
 
 
 @pytest.mark.asyncio
+async def test_cancelled_pending_audio_revision_restores_retry_state(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def transcriber(path: Path) -> str:
+        call_number = len(calls)
+        calls.append(path)
+        if call_number == 0:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"revision {call_number}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(transcriber=transcriber)
+    first_event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="utterance-1", revision=0),
+    )
+    revised_event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="utterance-1", revision=1),
+    )
+
+    first_task = asyncio.create_task(collect(adapter, first_event))
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    cancelled_task = asyncio.create_task(collect(adapter, revised_event))
+    await asyncio.sleep(0.05)
+    cancelled_task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await cancelled_task
+
+    release_first.set()
+    first_result = await first_task
+    retry_result = await collect(adapter, revised_event)
+    await adapter.aclose()
+
+    assert [item.revision for item in first_result] == [0]
+    assert [item.revision for item in retry_result] == [1]
+    assert calls == [wav_path, wav_path]
+
+
+@pytest.mark.asyncio
 async def test_audio_revision_does_not_supersede_different_utterance(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)
