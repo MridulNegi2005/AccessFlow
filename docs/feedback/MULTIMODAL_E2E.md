@@ -83,6 +83,9 @@ returns malformed provider JSON for the first configured reasoning request and a
 second. The route emits one `backend_failure`, then accepts the later spoken request and returns its
 informational final in the same session.
 
+The reasoner context regression also confirms that a full bounded prompt remains valid JSON after
+oldest observations are removed, while the newest observation is retained.
+
 ## What this proves
 
 - A real local ASR result can enter the same multimodal session context as image evidence.
