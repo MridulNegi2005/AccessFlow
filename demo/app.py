@@ -655,7 +655,14 @@ async def websocket(websocket: WebSocket) -> None:
                     agent_task.cancel()
             await asyncio.gather(agent_task, return_exceptions=True)
             if not sender.done():
-                await outgoing.put(None)
+                try:
+                    outgoing.put_nowait(None)
+                except asyncio.QueueFull:
+                    pass
+                try:
+                    await asyncio.wait_for(asyncio.shield(sender), timeout=1)
+                except (asyncio.TimeoutError, RuntimeError):
+                    sender.cancel()
             await asyncio.gather(sender, return_exceptions=True)
             await perception.aclose()
 
