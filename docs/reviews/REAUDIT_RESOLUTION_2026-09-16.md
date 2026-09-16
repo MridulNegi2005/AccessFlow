@@ -73,3 +73,54 @@ from offline execution.
 `Start.corpus` has a consumer and a security boundary. It does not have semantic ranking,
 multi-passage citation, document size limits, or a real installed document directory wired
 into the process and demonstration adapters. Those remain unimplemented by intent.
+
+## Addendum: resolution of the second audit's M-series findings
+
+The rows above answer
+[MRIDUL_REAUDIT_2026-09-15.md](MRIDUL_REAUDIT_2026-09-15.md) as claimed at `3354085`. A
+second audit, [MRIDUL_SECOND_REAUDIT_2026-09-16.md](MRIDUL_SECOND_REAUDIT_2026-09-16.md),
+reviewed the repaired tree at `919ed27`, reassessed several rows above, and recorded seven
+new findings, M1 through M7. This addendum records their resolution without changing the
+table or the measured state above; those stay as they were at `3354085`.
+
+Measured at `71b1bb5`, on branch `main`:
+
+- `uv run --offline --frozen --extra dev pytest tests/engine tests/perception
+  tests/test_contract.py -q` reports 543 passed.
+- `uv run --offline --frozen --extra dev pytest -q` reports 635 passed, 19 failed,
+  1 xfailed. All 19 failures are in `tests/demo/`, owned by Workstream B, and are tracked in
+  `docs/INTEGRATION_NOTE_2026-09-16.md`. Three are `XPASS(strict)`: engine gaps that these
+  repairs closed.
+- `uv run --offline --frozen accessflow suite scenarios/dev` reports 4 passed, 0 failed.
+- `uv run --offline --frozen --extra dev ruff check .` reports all checks passed.
+- The evidence bundle's quality denominator is 43 of 49, not 43 of 46. A 429 no longer
+  excuses a run whose model already generated output; three runs moved into the
+  denominator. 57 attempted runs total.
+- The four held-out planner probes ran once, on 16 September 2026, and passed 4 of 4 on
+  `groq/qwen/qwen3.8-27b`. They are spent: development data now, not unseen evidence.
+
+| ID | State | Evidence |
+|---|---|---|
+| M1 clarification fixture times out / rejects correct clarification | Fixed | `7b0d373`. |
+| M2, M3, M5 corpus dispatch, unbounded I/O, external manifest-name collision | Fixed | `71b1bb5`. |
+| M4 retrieved text can create write authority under the mock policy | Fixed | `6caa889`. |
+| M6 success-then-429 misclassified as no-output | Fixed | `86655f0`. Evidence bundle is now 43 of 49. |
+| M7 resolution record and current documents disagree | Fixed | This task. `docs/STATUS.md` and `.ai-sync/handoff.md` now carry one current snapshot each, sourced to commit `71b1bb5`, and no longer say the held-out probes have never run or that `Start.corpus` has zero consumers. Both documents now state the actual `SessionView` interface: it exposes `write_pending`; `write_intent_retained` and `clarification_outstanding` are controller-only attributes on the engine's session object, not view fields. |
+
+Still open, named by owner and reason:
+
+- A2 / B0, vision worker wiring — assigned to Atishay by Mridul's decision.
+- The 19 `tests/demo/` failures — Atishay's.
+- Matched-timing baseline and end-of-speech latency — needs Atishay's calibrated signal.
+- Wrong-action-rate metric — not implemented.
+- Security review over `corpus.py` — never run. That code, including the `71b1bb5` corpus
+  work, is on the remote unreviewed.
+- Official kit adapter — blocked on the organizer.
+- Docker — not installed on this machine; the container gate is unmeasured, not passing.
+- Submission materials: deck, video, AI disclosure, tag — untouched.
+
+`corpus.py`'s file-access security assessment in the second audit (traversal/allowlist
+boundary, resource limits, root-integrity assumptions, the untested symlink case and the
+trailing-newline filename edge) is a separate, still-open item from M2/M3/M5. Fixing
+dispatch, I/O bounding and discovery does not by itself constitute the security review that
+item calls for.

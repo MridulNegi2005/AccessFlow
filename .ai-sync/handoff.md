@@ -2,15 +2,21 @@
 
 > Last updated by: Claude Code
 > Timestamp: 2026-09-16
-> Branch: `mridul/engine`. Current status, measured by the orchestrator on 16 September 2026
-> at commit `fd53aca`: 384 tests passed, 0 xfailed, two unrelated deprecation warnings, Ruff
-> clean, offline dev suite 4/4. See `docs/STATUS.md` "Current status" for the full, sourced
-> fact list; do not quote the numbers in this header past that section.
+> Branch: `main`. Current status, measured by the orchestrator on 16 September 2026 at
+> commit `71b1bb5`: 543 passed in `tests/engine tests/perception tests/test_contract.py`;
+> full suite 635 passed, 19 failed, 1 xfailed. All 19 failures are in `tests/demo/`,
+> Atishay's, tracked in `docs/INTEGRATION_NOTE_2026-09-16.md` (three are `XPASS(strict)`:
+> engine gaps the repairs closed). Ruff clean, offline dev suite 4/4. An earlier snapshot at
+> commit `fd53aca` recorded 384 tests passed; that number is superseded, see
+> `docs/STATUS.md` "Current status" for the full, sourced fact list and its own historical
+> `fd53aca` section. Do not quote numbers in this header past that section.
 > Pushed to `origin/mridul/engine` at `2f91d6a` on 16 September 2026 without a security
-> review. Mridul waived the review for that push. The range adds a file access boundary
+> review. Mridul waived the review for that push. That range added a file access boundary
 > in `src/accessflow/corpus.py`: an allowlist, a document name check and a resolved-path
-> containment check. That code is on the remote unreviewed. Review it before the
-> submission tag.
+> containment check. Corpus work has continued since that push, through commit `71b1bb5`
+> (dispatch, I/O bounding and discovery fixes). None of `corpus.py`, at either commit, has
+> had a security review. Whether the range through `71b1bb5` has been pushed is not recorded
+> here. Run the security review before any push and before the submission tag.
 
 > Before starting: read `docs/STATUS.md` "Still required" and update it before you finish.
 
@@ -19,24 +25,31 @@
 The Codex review (`docs/reviews/CLAUDE_REVIEW_2026-09-15.md`, audited baseline `92ead42`)
 recorded its twelve findings, R1 to R12, as closed on 15 September. The later
 `docs/reviews/MRIDUL_REAUDIT_2026-09-15.md` re-examined the codebase against that claim and
-found several R-items still partial or open, re-numbered A1 through A9. **The re-audit is the
-correct, current statement. "All twelve findings closed" is superseded and must not be
-repeated.**
+found several R-items still partial or open, re-numbered A1 through A9.
+`docs/reviews/REAUDIT_RESOLUTION_2026-09-16.md` recorded evidence against that list. A second
+audit, `docs/reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md`, then re-examined the repaired tree
+and reassessed several A-numbers, adding its own findings M1 through M7. **The second audit
+is the correct, current statement for anything it reassessed. Do not cite the resolution
+record's verdict where the second audit narrowed or reopened it, and do not repeat "all
+twelve findings closed."**
 
 | ID | Finding | Current position |
 |---|---|---|
-| A1 | Clarify-then-image deadlock (was part of R2/R3/R11) | **Addressed.** `write_intent_retained` and `clarification_outstanding` replace the old `speech_write_requested` flag. See "Open work" below. |
+| A1 | Clarify-then-image deadlock (was part of R2/R3/R11) | **Addressed**, confirmed by the second audit. See "Open work" below for what `SessionView` actually carries. |
 | A2 | Vision options rejected by the perception worker (was R11) | **Open, blocked on Workstream B.** See "Cautions". |
-| A3 | Audio task-effect oracle (was part of R11) | **Addressed.** |
-| A4 | Evidence eligibility (was part of R4/R8) | **Addressed.** |
+| A3 | Audio task-effect oracle (was part of R11) | **Partial.** The relabeled smoke check is fine; the new clarification fixture had its own defect, tracked as M1 and fixed at commit `7b0d373`. |
+| A4 | Evidence eligibility (was part of R4/R8) | **Partial, then fixed.** The 57-run cohort matched policy, but a success-then-429 sequence was misclassified: M6, fixed at commit `86655f0`. See `docs/STATUS.md` for the corrected 43-of-49 figure. |
 | A5 | Portable evidence ordering (was part of R8) | **Addressed.** |
 | A6 | Profile verification (was R7) | **Addressed.** |
-| A7 | Contradictory current documents (was R12) | This file and `docs/STATUS.md`, both dated 16 September, are the repair. |
+| A7 | Contradictory current documents (was R12) | **Reopened by the second audit as M7**, because this file and `docs/STATUS.md` still disagreed after the first repair. **M7 is fixed by this update.** |
 | A8a-c | Test command, malformed JSONL, relative inventory path | **Addressed.** |
-| A9 | Corpus integration, scenario independence, baseline timing, release gates | **Open, remaining scope.** |
+| A9 | Corpus integration, scenario independence, baseline timing, release gates | **Partial.** `src/accessflow/corpus.py` has a real consumer now (M2, M3, M5 fixed at commit `71b1bb5`); action-trust and read-then-write boundaries were also fixed (M4, commit `6caa889`). It has never had a security review. Scenario independence, baseline timing and release gates remain open; see "Open work" below. |
 
-Full evidence for each row is in `docs/reviews/MRIDUL_REAUDIT_2026-09-15.md`. This table is a
-pointer, not a substitute for reading it.
+Full evidence for the A-numbered findings is in `docs/reviews/MRIDUL_REAUDIT_2026-09-15.md`
+and its reassessment in `docs/reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md`. Full evidence for
+the M-numbered findings, including the unresolved `corpus.py` security-boundary items no
+commit above closes, is in the second audit. This table is a pointer, not a substitute for
+reading either document.
 
 ## Open work
 
@@ -51,18 +64,33 @@ pointer, not a substitute for reading it.
    from this checkout.
 2. **Corpus is 17 files, 10 distinct tool sets, 2 audio, 1 visual.** See
    `docs/SCENARIO_INVENTORY.md`, which is generated from the files and lists which files
-   repeat the same underlying workflow.
-3. Held-out probes have still never run. Run them only after the request contract settles.
-4. Docker execution on a Docker-capable host. Official kit adapter. Submission assembly.
+   repeat the same underlying workflow. `src/accessflow/corpus.py` now has a real consumer
+   (`src/accessflow/engine.py` wires manifest dispatch, allowlist enforcement and bounded
+   `CorpusStore` reads), fixed at commit `71b1bb5` (findings M2, M3, M5). Retrieval stays
+   lexical only, with no semantic ranking, citation, size limit or installed document
+   directory; see `docs/reviews/REAUDIT_RESOLUTION_2026-09-16.md`, "Scope limit of the corpus
+   implementation". **`corpus.py` has never had a security review; that code is on the
+   remote unreviewed.**
+3. Docker execution on a Docker-capable host. Official kit adapter. Submission assembly.
    Docker is not installed on this machine, so this cannot be checked here at all.
+4. Run a security review over `src/accessflow/corpus.py`. It has never been reviewed.
 
 **Resolved, removed from this list:** the clarify-then-image deadlock (previously item 2
 here). A spoken write request, a clarifying question, then the answering image now completes.
 The stall was gated on `speech_write_requested` and `latest_complete`; that field no longer
-exists. `SessionView` now carries `write_intent_retained` and `clarification_outstanding`
-(`src/accessflow/engine.py`), and the former strict-xfail reproduction is a passing acceptance
-test in `tests/engine/test_component_integration.py` (`tests/engine/test_known_defects.py` is
-now empty by design; see its module docstring). This is finding A1 in the re-audit.
+exists. The controller session object now carries `write_intent_retained` and
+`clarification_outstanding` as its own attributes (`src/accessflow/engine.py`) — these are
+**not** `SessionView` fields. `SessionView` (`src/accessflow/contracts.py`) exposes only
+`write_pending`, which the controller sets from `write_intent_retained` inside `_view()`;
+`clarification_outstanding` does not reach the view at all. The former strict-xfail
+reproduction is a passing acceptance test in `tests/engine/test_component_integration.py`
+(`tests/engine/test_known_defects.py` is now empty by design; see its module docstring). This
+is finding A1 in the re-audit.
+
+**Also resolved, removed from this list:** the four held-out planner probes (previously item
+3 here). They ran once, on 16 September 2026, and passed 4 of 4 on `groq/qwen/qwen3.8-27b`;
+see `docs/STATUS.md` "Current status". They are now spent: development data, not unseen
+evidence. Do not run them again expecting a fresh, unseen measurement.
 
 ## Cautions
 
@@ -120,8 +148,10 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
 
 ## In Progress
 
-- **Held-out probes unused.** Four independently authored planner probes exist, have never been
-  run, and their labels have never been read. This is the only unseen data available.
+- **Held-out probes are done, not in progress.** They ran once, on 16 September 2026, and
+  passed 4 of 4; see "Open work" above and `docs/STATUS.md` "Current status". They were the
+  only unseen data available and are now spent development data. Do not run them again and
+  call the result unseen.
 - **Scenario corpus is 17 files, 10 distinct tool sets** (2 audio, 1 visual, 15 transcript).
   See `docs/SCENARIO_INVENTORY.md` for the full breakdown. The plan calls for 30 text, 18
   audio, 12 visual, split 40 development and 20 held out; the corpus is well short of that on
@@ -136,12 +166,15 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
    write-continuation constraint never starts locally. See "Known Defects" below. This is a
    local-model planning gap, separate from the clarify-then-image deadlock (A1), which is
    fixed. It blocks every local multi-step result.
-3. Run the four held-out probes once, after the engine stops changing.
+3. ~~Run the four held-out probes once, after the engine stops changing.~~ Done: they ran
+   once on 16 September 2026 and passed 4 of 4. They are spent; do not run them again.
 4. Verify Docker container execution on a Docker-capable host. Not possible on this machine:
    Docker is not installed here.
 5. Official kit adapter once the organizer publishes the schema. Do not invent wire compatibility.
 6. Submission assembly: deck, video of five minutes or less, AI disclosure, release tag
    `PRISM_GENAI_HACKATHON_Y2026`. Do not create the tag during ordinary development.
+7. Run a security review over `src/accessflow/corpus.py`. It has never been reviewed, and
+   corpus work landed again at commit `71b1bb5` after the unreviewed push at `2f91d6a`.
 
 ## Known Defects and Cautions
 
