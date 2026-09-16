@@ -385,6 +385,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'mediaSequence += 1' in html
     assert 'let mediaSendChain = Promise.resolve()' in html
     assert 'mediaSendChain = mediaSendChain.then(action, action)' in html
+    assert 'await enqueueMediaAction(() => send(\'audio\'' in html
     assert "nextMediaId('mic-audio')" in html
     assert "nextMediaId('upload-audio')" in html
     assert "nextMediaId('upload-frame')" in html
