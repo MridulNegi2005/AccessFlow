@@ -179,6 +179,8 @@ def test_ollama_provider_surfaces_http_quota_exhaustion(tmp_path: Path):
         ({"timeout_s": True}, "timeout_s must be positive"),
         ({"model": None}, "model cannot be empty"),
         ({"endpoint": None}, "endpoint cannot be empty"),
+        ({"prompt": " "}, "prompt cannot be empty"),
+        ({"prompt": None}, "prompt cannot be empty"),
     ],
 )
 def test_ollama_provider_rejects_invalid_configuration(kwargs, message):

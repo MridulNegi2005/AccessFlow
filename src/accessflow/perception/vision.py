@@ -36,6 +36,8 @@ class OllamaVisionProvider:
             raise ValueError("Ollama vision model cannot be empty")
         if not isinstance(endpoint, str) or not endpoint.strip():
             raise ValueError("Ollama vision endpoint cannot be empty")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("Ollama vision prompt cannot be empty")
         parsed_endpoint = urlparse(endpoint.strip())
         if parsed_endpoint.scheme not in {"http", "https"} or parsed_endpoint.hostname not in {
             "127.0.0.1",
@@ -52,7 +54,7 @@ class OllamaVisionProvider:
             raise ValueError("Ollama vision timeout_s must be positive")
         self.model = model.strip()
         self.endpoint = endpoint.strip()
-        self.prompt = prompt
+        self.prompt = prompt.strip()
         self.timeout_s = timeout_s
         self._opener = opener or request.urlopen
 
