@@ -2,6 +2,7 @@ import io
 import asyncio
 import base64
 import importlib.util
+import inspect
 import json
 import re
 import struct
@@ -472,6 +473,13 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "textContent = announce(event)" in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
+
+
+def test_websocket_output_queue_is_bounded():
+    source = inspect.getsource(demo_app.websocket)
+
+    assert demo_app.MAX_PENDING_OUTPUTS == 16
+    assert "asyncio.Queue(maxsize=MAX_PENDING_OUTPUTS)" in source
 
 
 @pytest.mark.asyncio
