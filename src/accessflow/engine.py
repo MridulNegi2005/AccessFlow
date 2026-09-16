@@ -100,6 +100,11 @@ class Agent:
         self.observations = {}
         self.sources = {}
         self.results = []
+        # Monotonic count of every append ever made to self.results, across the whole
+        # session. Unlike len(self.results), never decreases: _invalidate_dependencies
+        # removes stale entries FROM self.results (so a dependent slot update can drop
+        # its own read's evidence), but must not be able to rewind this counter (H1).
+        self._results_admitted = 0
         self.ledger = {}
         self.seen = set()
         self.dispatched = {}
@@ -109,6 +114,16 @@ class Agent:
         self.output_sequence = 0
         self.latest_complete = False
         self.planner = None
+        # Metadata for whichever planner task self.planner currently refers to, so that
+        # cancelling it (below, and in _start_plan) can tell whether the task it just
+        # pre-empted was a fresh-evidence one that never got to deliver its proposal (H2).
+        self._planner_fresh = False
+        self._planner_key = None
+        # (request_id, request_input_epoch) -> True when a fresh-evidence planner task
+        # for that key was cancelled before it delivered a proposal. Consumed (popped) the
+        # one time it is used to grant write authority to a subsequent non-fresh replan --
+        # see the speech_origin block in _apply.
+        self._fresh_plan_cancelled = {}
         self.repeated_completed_call = False
         self.no_progress = False
         self.repeat_recoveries = {}
@@ -133,17 +148,22 @@ class Agent:
         # authorize a write. Cleared on interrupt, explicit stop, and request
         # completion/rotation.
         self.write_intent_retained = False
-        # Snapshot of len(self.results) taken every time a fresh-evidence speech
+        # Snapshot of self._results_admitted taken every time a fresh-evidence speech
         # proposal is processed (see _apply). A later non-fresh (tool-result-
         # triggered) replan may only newly grant write authority -- as opposed to
         # merely retaining authority a fresh proposal already gave it -- while this
-        # mark still matches len(self.results): i.e. no tool result has entered
-        # evidence since the user's own utterance was last considered. This is what
-        # lets a fresh plan that gets pre-empted/cancelled by an unrelated internal
-        # retry (e.g. a stale write's own cancellation confirmation) hand off to its
-        # non-fresh replacement without losing the authority that utterance would
-        # have granted, while still refusing a replan that only reaches its
-        # write_requested=True decision after seeing a NEW read/tool result (M4).
+        # mark still EQUALS self._results_admitted: i.e. no tool result has entered
+        # evidence since the user's own utterance was last considered. self.results
+        # itself is not usable for this: _invalidate_dependencies removes entries from
+        # it (a slot update can invalidate its own read's result), so its length can
+        # fall back to or below an earlier mark even though new evidence was admitted
+        # in between -- that let a planner re-open write authority M4 was meant to
+        # close (H1). _results_admitted only ever grows, so it cannot be rewound this
+        # way. This mark alone is not sufficient to grant authority; _apply also
+        # requires _fresh_plan_cancelled to record that a fresh-evidence plan for this
+        # exact (request_id, request_input_epoch) was cancelled before delivering, so
+        # only that pre-emption -- not an arbitrary non-fresh replan -- can hand off
+        # authority a genuinely spoken request already earned (H2).
         self._write_authority_evidence_mark = 0
         # Whether the current request still has an unanswered clarifying question.
         # Blocks write dispatch independently of write_intent_retained so a resolved
@@ -465,9 +485,19 @@ class Agent:
         source = self.planning_source
         if self.planner and not self.planner.done():
             self.planner.cancel()
+            if self._planner_fresh:
+                # The task being pre-empted here was reasoning on fresh user evidence
+                # and never got to deliver a proposal. Record that for its
+                # (request_id, request_input_epoch) so a legitimate hand-off to this
+                # replacement plan can retain (not create) the authority that
+                # evidence would have granted -- see the speech_origin block in
+                # _apply (H2). Consumed there the one time it is used.
+                self._fresh_plan_cancelled[self._planner_key] = True
         view = self._view()
         generation = self.generation
         lone_frame = source is not None and source[0] == "image" and self.active_speech is None
+        self._planner_fresh = fresh_evidence
+        self._planner_key = (self.request_id, self.request_input_epoch)
 
         async def plan():
             try:
@@ -575,18 +605,30 @@ class Agent:
             # result must not be able to set write_intent_retained here just because
             # it prompted this replan.
             #
-            # "New tool result" is checked, not merely "non-fresh", because the
-            # engine can also produce a non-fresh replan when an unrelated internal
-            # retry (e.g. a stale write's own cancellation confirmation) pre-empts
-            # and cancels the genuine fresh-evidence plan for the current utterance
-            # before it finishes. That replan sees no evidence the pending fresh
-            # plan would not also have seen, so refusing it here would strand a
-            # legitimate, already-spoken request rather than block an injected one.
+            # "New tool result" is enforced two ways, both required. First,
+            # _results_admitted -- a counter incremented on every append to
+            # self.results and NEVER decremented -- must still equal the mark taken
+            # when fresh evidence was last considered: self.results itself is not
+            # monotonic (_invalidate_dependencies drops entries from it when a slot
+            # update invalidates their read), so a planner that updates a slot its own
+            # read declared as a dependency could otherwise wind the mark back and
+            # smuggle a later replan past this guard (H1). Second, this exact
+            # (request_id, request_input_epoch) must be recorded in
+            # _fresh_plan_cancelled: the only legitimate non-fresh grant is a fresh
+            # plan that got pre-empted and cancelled before delivering (e.g. by an
+            # unrelated internal retry, such as a stale write's own cancellation
+            # confirmation) and handed off to this replacement, which then sees no
+            # evidence the pending fresh plan would not also have seen. An ordinary
+            # non-fresh replan -- e.g. one produced by _offer_recovery after
+            # no_progress -- is not such a hand-off and must not qualify merely for
+            # being non-fresh (H2). The flag is popped (consumed) so a single
+            # cancelled fresh plan cannot authorize more than one later replan.
             if fresh_evidence:
                 self.write_intent_retained = bool(self.speech_ready and proposal.write_requested)
-                self._write_authority_evidence_mark = len(self.results)
+                self._write_authority_evidence_mark = self._results_admitted
             elif (proposal.write_requested and self.speech_ready and not proposal.clarification
-                    and len(self.results) <= self._write_authority_evidence_mark):
+                    and self._results_admitted == self._write_authority_evidence_mark
+                    and self._fresh_plan_cancelled.pop((self.request_id, self.request_input_epoch), False)):
                 self.write_intent_retained = True
         changed = set()
         for name, value in proposal.slot_updates.items():
@@ -973,6 +1015,7 @@ class Agent:
             # request or undoing an explicit stop.
             call.status = "success"
             self.results.append(result.model_copy(update={"status": "success"}))
+            self._results_admitted += 1
             await self._emit("error", code="effect_committed_after_invalidation"
                              if call.call_id in self.invalidated else "conflicting_write_outcome",
                              call_id=call.call_id, operation_id=call.operation_id,
@@ -994,6 +1037,7 @@ class Agent:
             if call.effect == "write" and result.committed:
                 call.status = "success"
                 self.results.append(result)
+                self._results_admitted += 1
                 await self._emit("error", code="effect_committed_after_invalidation", call_id=call.call_id,
                                  operation_id=call.operation_id, result=result.result,
                                  message="Cancellation did not roll back this effect.")
@@ -1021,9 +1065,11 @@ class Agent:
             # Status schema is dynamic; expose operation identity to the reasoner, which
             # can propose the declared read-only status tool. Never repeat the write.
             self.results.append(result)
+            self._results_admitted += 1
             self._start_plan()
         elif result.status == "success":
             self.results.append(result)
+            self._results_admitted += 1
             if call.effect == "write":
                 self.state.status = "completed"
                 self.last_request_finished = True
@@ -1062,6 +1108,7 @@ class Agent:
                 confirmed = ToolResult(call_id=original.call_id, status="success", committed=True,
                                        result=result.result)
                 self.results.append(confirmed)
+                self._results_admitted += 1
                 if original.call_id in self.invalidated:
                     await self._emit("error", code="effect_committed_after_invalidation",
                                      call_id=original.call_id, result=result.result)
