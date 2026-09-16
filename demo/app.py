@@ -553,7 +553,19 @@ async def websocket(websocket: WebSocket) -> None:
 
         async def receive_inputs():
             while True:
-                message = await websocket.receive_json()
+                try:
+                    message = await websocket.receive_json()
+                except ValueError:
+                    await outgoing.put(
+                        {
+                            "kind": "demo_error",
+                            "payload": {
+                                "backend": "demo/input",
+                                "message": "browser event must be valid JSON",
+                            },
+                        }
+                    )
+                    continue
                 try:
                     event = await _materialize_event(
                         session_id,
