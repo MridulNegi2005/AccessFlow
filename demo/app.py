@@ -616,7 +616,10 @@ async def websocket(websocket: WebSocket) -> None:
                             "payload": {"media_received": event.kind, "source_id": source_id},
                         }
                     )
-                await incoming.put(event)
+                try:
+                    incoming.put_nowait(event)
+                except asyncio.QueueFull as error:
+                    raise RuntimeError("agent input queue is full") from error
 
         receiver = asyncio.create_task(receive_inputs())
         try:
