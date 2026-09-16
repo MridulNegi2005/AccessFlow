@@ -285,3 +285,66 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
         assert vision_requests[-1]["images"] == [encoded_image]
     finally:
         server.shutdown()
+
+
+def test_websocket_reasoner_failure_is_recoverable(monkeypatch):
+    class ReasonerHandler(BaseHTTPRequestHandler):
+        requests = []
+
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            ReasonerHandler.requests.append(json.loads(self.rfile.read(length).decode("utf-8")))
+            if len(ReasonerHandler.requests) == 1:
+                response = b"{not-json"
+            else:
+                plan = {"response": "The recovered local reasoner answered.", "request_complete": True}
+                response = json.dumps({"response": json.dumps(plan)}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            self.wfile.write(response)
+
+        def log_message(self, format, *args):
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), ReasonerHandler)
+    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+    server_thread.start()
+    monkeypatch.setenv("ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL", "gemma3:4b")
+    monkeypatch.setenv(
+        "ACCESSFLOW_DEMO_OLLAMA_REASONER_ENDPOINT",
+        f"http://127.0.0.1:{server.server_port}/api/generate",
+    )
+    monkeypatch.delenv("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", raising=False)
+
+    def receive_until(socket, terminal_kind):
+        outputs = []
+        while not any(item["kind"] == terminal_kind for item in outputs):
+            outputs.append(socket.receive_json())
+        return outputs
+
+    try:
+        with TestClient(demo_app.app) as client:
+            with client.websocket_connect("/ws") as socket:
+                socket.receive_json()
+                socket.send_json(
+                    {"kind": "transcript", "payload": {"text": "First request"}}
+                )
+                failed = receive_until(socket, "error")
+                socket.send_json(
+                    {"kind": "transcript", "payload": {"text": "Second request"}}
+                )
+                recovered = receive_until(socket, "final")
+
+        error = next(item for item in failed if item["kind"] == "error")
+        final = next(item for item in recovered if item["kind"] == "final")
+        assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+        assert final["payload"] == {
+            "text": "The recovered local reasoner answered.",
+            "basis": "informational",
+            "backend": "reasoner",
+        }
+        assert len(ReasonerHandler.requests) == 2
+    finally:
+        server.shutdown()
