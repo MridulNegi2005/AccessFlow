@@ -1834,6 +1834,70 @@ async def test_websocket_stalled_agent_queue_fails_closed(monkeypatch):
     assert perception.closed is True
 
 
+@pytest.mark.asyncio
+async def test_websocket_sender_cleanup_is_bounded_after_disconnect(monkeypatch):
+    agent_started = asyncio.Event()
+
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class TrackingAgent:
+        def __init__(self, *args):
+            self.running = True
+
+        async def run(self, incoming, outgoing):
+            await incoming.get()
+            agent_started.set()
+            event = await incoming.get()
+            assert isinstance(event, EndEvent)
+            self.running = False
+
+    class HungSenderPeer:
+        def __init__(self):
+            self.send_cancelled = False
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.send_cancelled = True
+                raise
+
+        async def receive_json(self):
+            await agent_started.wait()
+            raise demo_app.WebSocketDisconnect()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(demo_app, "Agent", TrackingAgent)
+
+    peer = HungSenderPeer()
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=2)
+
+    assert peer.send_cancelled is True
+    assert perception.closed is True
+
+
 def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeypatch):
     class FailingAudio:
         async def observe(self, event):
