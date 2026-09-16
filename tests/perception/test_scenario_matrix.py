@@ -19,8 +19,11 @@ def test_scenario_matrix_matches_weighted_inventory():
     assert len(cases) == 60
     assert Counter(case["modality"] for case in cases) == {"text": 30, "audio": 18, "image": 12}
     assert Counter(case["split"] for case in cases) == {"development": 40, "held_out": 20}
-    assert manifest["status"] == "authored_provenance_tracked"
-    assert all(case["evidence_status"] == "catalog_only" for case in cases)
+    assert manifest["status"] == "authored_provenance_tracked_fake_replay"
+    assert manifest["execution"]["mode"] == "offline_fake_mode"
+    assert manifest["execution"]["cases_replayed"] == 60
+    assert manifest["execution"]["observations_emitted"] == 60
+    assert all(case["evidence_status"] == "fake_mode_replayed" for case in cases)
 
 
 def test_scenario_matrix_case_metadata_is_unique_and_complete():
