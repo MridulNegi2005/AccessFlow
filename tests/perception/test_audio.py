@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from accessflow.perception import ActivityFrame, ActivitySummary, ActivityWindow, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
+from accessflow.perception import audio as audio_module
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -34,6 +35,20 @@ def test_stereo_input_is_downmixed_and_resampled(tmp_path: Path):
 
     assert buffer.sample_rate == 16_000
     assert len(buffer.pcm) / 2 == pytest.approx(160, abs=1)
+
+
+def test_loader_rejects_oversized_resampled_payload(tmp_path: Path, monkeypatch):
+    wav_path = tmp_path / "resampled-too-large.wav"
+    with wave.open(str(wav_path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(8_000)
+        handle.writeframes(b"\x00\x00" * 4)
+
+    monkeypatch.setattr(audio_module, "MAX_WAV_DECODED_BYTES", 8)
+
+    with pytest.raises(ValueError, match="resampled PCM payload"):
+        load_pcm(wav_path, target_rate=16_000)
 
 
 @pytest.mark.parametrize("target_rate", [True, 0, -1, 16_000.0, "16000"])
