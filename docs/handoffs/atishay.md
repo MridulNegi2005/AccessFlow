@@ -401,3 +401,15 @@ announcement helper.
 local browser smoke at 850px width rendered the page with body scroll width 835px, no horizontal overflow,
 and no browser console errors or warnings. The temporary server and tab were stopped after inspection.
 Commit pending after the evidence-only documentation update.
+
+## 2026-09-16 - Bounded live announcements
+
+**Task:** Keep the new screen-reader announcement region concise for untrusted model or input text.
+
+**Changes:** Added a 240-character content bound with whitespace compaction for final responses,
+clarifications and input errors. The complete event JSON remains in the visible trace for inspection.
+A browser smoke sent a 1,200-character transcript and read back a 256-character announcement including
+its prefix and ellipsis; the console remained clean.
+
+**Status:** Full suite passes 636 tests with one retained expected conflict example, Ruff passes, and
+git diff --check passes. Commit: b60f32a.

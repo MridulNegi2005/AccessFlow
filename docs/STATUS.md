@@ -167,6 +167,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - The demo now keeps the detailed event trace out of live announcements and exposes a concise
   screen-reader status region. A fresh local browser smoke confirmed the page rendered without
   horizontal overflow or console errors; the full branch remains at 636 passed with one xfail.
+- Live announcements also compact untrusted message and response text to a 240-character content
+  bound. A browser smoke with a 1,200-character response produced a bounded announcement while the
+  full trace stayed visible; no live model or device claim is made.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
