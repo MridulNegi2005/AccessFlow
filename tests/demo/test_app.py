@@ -432,8 +432,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="events" aria-live="off"' in html
     assert 'id="restart-session"' in html
     assert 'const maxAnnouncementChars = 240' in html
-    assert 'const maxMicrophoneWavBytes = 8 * 1024 * 1024' in html
-    assert 'const maxMicrophoneSamples = Math.floor((maxMicrophoneWavBytes - 44) / 2)' in html
+    assert 'const maxMediaBytes = 8 * 1024 * 1024' in html
+    assert 'const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2)' in html
     assert 'const accepted = incoming.length <= remaining ? incoming : incoming.slice(0, remaining)' in html
     assert 'void stopMicrophone(\'limit\')' in html
     assert 'Microphone recording reached the 8 MiB limit and was stopped.' in html
@@ -479,8 +479,8 @@ def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
     stop_function = html.index("async function stopMicrophone")
     stop_body = html[stop_function:]
 
-    assert "const maxMicrophoneWavBytes = 8 * 1024 * 1024" in html
-    assert "const maxMicrophoneSamples = Math.floor((maxMicrophoneWavBytes - 44) / 2)" in html
+    assert "const maxMediaBytes = 8 * 1024 * 1024" in html
+    assert "const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2)" in html
     assert "const remaining = maxMicrophoneSamples - microphoneSamples" in html[recorder_handler:stop_function]
     assert "incoming.slice(0, remaining)" in html[recorder_handler:stop_function]
     assert "microphoneLimitReached = true" in html[recorder_handler:stop_function]
@@ -497,6 +497,22 @@ def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
     assert "textContent = announce(event)" in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
+
+
+def test_demo_selected_media_size_preflight_rejects_before_reading_or_sending():
+    html = Path("demo/index.html").read_text(encoding="utf-8")
+
+    send_file_start = html.index("function sendFile(kind, selector, fallback)")
+    send_file_body = html[send_file_start:]
+    preflight = send_file_body.index("if (file.size > maxMediaBytes)")
+    file_read = send_file_body.index("const dataBase64 = await fileToBase64(file)")
+    file_send = send_file_body.index("send(kind, () => ({", file_read)
+
+    assert preflight < file_read
+    assert file_read < file_send
+    assert "backend: 'browser/media'" in send_file_body[preflight:file_read]
+    assert "Selected media file exceeds the 8 MiB limit." in send_file_body[preflight:file_read]
+    assert "return;" in send_file_body[preflight:file_read]
 
 
 def test_websocket_output_queue_is_bounded():

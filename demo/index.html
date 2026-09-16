@@ -82,8 +82,8 @@
     const pendingMessages = [];
     const maxPendingMessages = 16;
     const maxAnnouncementChars = 240;
-    const maxMicrophoneWavBytes = 8 * 1024 * 1024;
-    const maxMicrophoneSamples = Math.floor((maxMicrophoneWavBytes - 44) / 2);
+    const maxMediaBytes = 8 * 1024 * 1024;
+    const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2);
 
     function show(event) {
       if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
@@ -350,6 +350,13 @@
       const action = async () => {
         if (!file) {
           send(kind, { path: fallback });
+          return;
+        }
+        if (file.size > maxMediaBytes) {
+          show({ kind: 'demo_error', payload: {
+            backend: 'browser/media',
+            message: 'Selected media file exceeds the 8 MiB limit.'
+          } });
           return;
         }
         try {
