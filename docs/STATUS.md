@@ -300,6 +300,10 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   utterance and frame identities are capped at 256 characters before they enter session state. Boundary
   regressions preserve exact-limit inputs and reject oversized values; full verification passes 796 tests
   with one retained conflict xfail and Ruff.
+- Browser WebSocket frames are size-checked at 12 MiB before JSON parsing, while the existing 8 MiB
+  per-file upload limit remains available with JSON overhead. Malformed and oversized frames remain
+  recoverable `demo/input` errors; the full demo suite passes 143 tests with one retained xfail and full
+  verification passes 798 tests with one retained conflict xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
