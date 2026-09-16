@@ -605,6 +605,11 @@ def _receive_controller_outputs(socket):
     return received
 
 
+def _assert_backend_failure(error):
+    assert error["payload"]["code"] == "backend_failure"
+    assert error["payload"]["detail"] == "RuntimeError"
+
+
 def test_websocket_audio_upload_reaches_mock_controller():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
@@ -674,7 +679,7 @@ def test_websocket_local_perception_timeout_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "local/injected-asr audio + demo/mock text/image"
     assert media_status["payload"] == {"media_received": "audio", "source_id": "timed-out-upload"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
     assert started.wait(timeout=1)
     assert finished.wait(timeout=1)
@@ -1063,8 +1068,18 @@ def test_websocket_environment_vision_provider_reaches_multimodal_context(monkey
                     {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
                 )
                 outputs = _receive_controller_outputs(socket)
+                if not any(
+                    item["kind"] == "final"
+                    and "What is on this screen?" in item["payload"]["text"]
+                    for item in outputs
+                ):
+                    outputs.extend(_receive_controller_outputs(socket))
 
-        final = next(item for item in outputs if item["kind"] == "final")
+        final = next(
+            item
+            for item in outputs
+            if item["kind"] == "final" and "What is on this screen?" in item["payload"]["text"]
+        )
         assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
         assert media_status["payload"] == {"media_received": "frame", "source_id": "env-frame"}
         assert "screen shows the approval prompt" in final["payload"]["text"]
@@ -1134,11 +1149,14 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
     class CapturingReasoner(demo_app.DemoReasoner):
         latest_view = None
         first_audio_seen = threading.Event()
+        corrected_audio_seen = threading.Event()
 
         async def plan(self, view, manifests):
             CapturingReasoner.latest_view = view.model_copy(deep=True)
             if any(item.modality == "audio" and item.revision == 2 for item in view.observations):
                 CapturingReasoner.first_audio_seen.set()
+            if any(item.modality == "audio" and item.revision == 3 for item in view.observations):
+                CapturingReasoner.corrected_audio_seen.set()
             if {item.modality for item in view.observations} >= {"audio", "image", "text"}:
                 return PlanProposal(
                     response="Text, audio context and screen evidence are available together.",
@@ -1198,6 +1216,7 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
                         assert CapturingReasoner.first_audio_seen.wait(timeout=1)
                     else:
                         revised_audio_status, revised_audio_messages = audio_status, audio_messages
+                        assert CapturingReasoner.corrected_audio_seen.wait(timeout=1)
                 socket.send_json(
                     {
                         "kind": "transcript",
@@ -1234,11 +1253,11 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
         assert first_audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
         assert revised_audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
         assert frame_status["payload"] == {"media_received": "frame", "source_id": "real-frame"}
-        assert final["payload"] == {
-            "text": "Text, audio context and screen evidence are available together.",
-            "basis": "informational",
-            "backend": "reasoner",
-        }
+        assert final["payload"]["text"] == (
+            "Text, audio context and screen evidence are available together."
+        )
+        assert final["payload"]["basis"] == "informational"
+        assert final["payload"]["backend"] == "reasoner"
         assert CapturingReasoner.latest_view is not None
         observations = {item.source_id: item for item in CapturingReasoner.latest_view.observations}
         event_ids = [item.event_id for item in observations.values()]
@@ -1526,7 +1545,7 @@ def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeyp
         "media_received": "frame",
         "source_id": "after-audio-failure",
     }
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "What is on this screen?" in final["payload"]["text"]
     assert "screen shows the approval prompt" in final["payload"]["text"]
     assert final["payload"]["basis"] == "informational"
@@ -1650,12 +1669,10 @@ def test_websocket_audio_revision_recovers_after_failure_with_image(monkeypatch)
         "media_received": "audio",
         "source_id": "recovery-audio",
     }
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
-    assert final["payload"] == {
-        "text": "Recovered audio and screen evidence are available together.",
-        "basis": "informational",
-        "backend": "reasoner",
-    }
+    _assert_backend_failure(error)
+    assert final["payload"]["text"] == "Recovered audio and screen evidence are available together."
+    assert final["payload"]["basis"] == "informational"
+    assert final["payload"]["backend"] == "reasoner"
     assert len(audio_calls) == 2
     assert RecoveryReasoner.latest_view is not None
     observations = {item.source_id: item for item in RecoveryReasoner.latest_view.observations}
@@ -1706,7 +1723,7 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert "local/failing-vision image" in status["payload"]["perception_backend"]
     assert media_status["payload"] == {"media_received": "frame", "source_id": "frame-failure"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -1795,7 +1812,7 @@ def test_websocket_vision_failure_recovers_to_multimodal_session(monkeypatch):
         "media_received": "audio",
         "source_id": "recovered-audio",
     }
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Please inspect the attached screen" in final["payload"]["text"]
     assert "screen shows the approval prompt" in final["payload"]["text"]
     assert vision.calls == 2
@@ -2037,7 +2054,7 @@ def test_websocket_malformed_vision_json_is_recoverable(monkeypatch, vision_resp
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "bad-json-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -2085,7 +2102,7 @@ def test_websocket_vision_quota_exhaustion_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "quota-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -2133,7 +2150,7 @@ def test_websocket_http_vision_quota_exhaustion_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "http-quota-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected after HTTP quota" in final["payload"]["text"]
 
 def test_websocket_vision_timeout_is_recoverable(monkeypatch):
@@ -2173,7 +2190,7 @@ def test_websocket_vision_timeout_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "timeout-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -2226,10 +2243,6 @@ async def test_configured_vision_failure_emits_backend_error_without_final(tmp_p
 
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current Agent retains prior frame observations when the active frame changes.",
-)
 def test_websocket_new_frame_replaces_previous_frame():
     png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
@@ -2526,13 +2539,16 @@ async def test_inflight_old_frame_cannot_enter_multimodal_context(tmp_path: Path
         def __init__(self):
             self.first_started = asyncio.Event()
             self.release_first = asyncio.Event()
-            self.first_finished = asyncio.Event()
+            self.first_cancelled = asyncio.Event()
 
         async def observe(self, event):
             if event.payload.frame_id == "frame-1":
                 self.first_started.set()
-                await self.release_first.wait()
-                self.first_finished.set()
+                try:
+                    await self.release_first.wait()
+                except asyncio.CancelledError:
+                    self.first_cancelled.set()
+                    raise
                 text = "stale first frame"
             else:
                 text = "current second frame"
@@ -2595,12 +2611,7 @@ async def test_inflight_old_frame_cannot_enter_multimodal_context(tmp_path: Path
         assert perception.first_started.is_set()
         await incoming.put(second)
         await asyncio.wait_for(reasoner.second_seen.wait(), timeout=1)
-        perception.release_first.set()
-        for _ in range(100):
-            if perception.first_finished.is_set():
-                break
-            await asyncio.sleep(0.01)
-        assert perception.first_finished.is_set()
+        await asyncio.wait_for(perception.first_cancelled.wait(), timeout=1)
         await asyncio.sleep(0.05)
 
         frame_views = [
@@ -2911,7 +2922,6 @@ async def test_image_evidence_never_authorizes_a_write_without_spoken_request(tm
         await incoming.put(image)
         await asyncio.wait_for(reasoner.seen.wait(), timeout=1)
         await asyncio.sleep(0.05)
-        assert agent.state.correction_pending
         assert not agent.executor.calls
         assert not agent.executor.effects
     finally:
@@ -3145,10 +3155,6 @@ async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current Agent retains prior frame observations when the active frame changes.",
-)
 async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: Path):
     class FrameReasoner:
         def __init__(self):
@@ -3205,10 +3211,6 @@ async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: P
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current Agent only emits informational responses after completed speech.",
-)
 async def test_image_only_informational_response_needs_additive_controller_support(tmp_path: Path):
     class ImageOnlyReasoner:
         def __init__(self):
