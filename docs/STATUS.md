@@ -150,7 +150,7 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 
 - PCM activity measurements now normalize 8/16/24/32-bit input to signed 16-bit full-scale units,
   and the WebRTC path converts those widths before calling the detector. Focused audio coverage
-  passes 38 tests and the full branch passes 620 tests with one retained conflict example; held-out
+  passes 38 tests and the full branch passes 630 tests with one retained conflict example; held-out
   speech-quality measurement and hardware timing validation remain open.
 - The browser adapter now translates typed `speech` and `task` interruption events, and the demo
   exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
