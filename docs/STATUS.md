@@ -541,6 +541,10 @@ Updated 16 September 2026.
   baseline's internal premature candidate, the long baseline's missed endpoint, and a final-
   revision-gated trailing candidate with 0.62/0.66 seconds of added wait; six focused tests and
   the full branch pass. This is prerecorded timing-policy evidence only, not live endpointing.
+- After merging `origin/main` at `3c1619f`, the integrated branch passes 322 owned perception/demo
+  tests with one retained conflict xfail and the full repository passes 769 tests with one xfail;
+  Ruff passes. The merge introduced no conflict in Workstream B files and no protected file was
+  edited by this workstream.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
