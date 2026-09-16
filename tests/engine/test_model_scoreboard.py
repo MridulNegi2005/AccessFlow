@@ -5,7 +5,8 @@ import os
 from pathlib import Path
 
 from accessflow.evaluation.replay import replay
-from scripts.evidence_bundle import (INFRA_ADMISSION_FAILURE, SCORED_FAIL_GENERATED_OUTPUT,
+from scripts.evidence_bundle import (GENERATION_THEN_INFRA_FAILURE, INFRA_ADMISSION_FAILURE,
+                                     QUALITY_EXCLUDED_LABELS, SCORED_FAIL_GENERATED_OUTPUT,
                                      SCORED_PASS, TIMEOUT_UNDETERMINED_CAUSE, UNDETERMINED_FAILURE,
                                      classify_eligibility)
 from scripts.model_scoreboard import collect_records, main, matrix, per_model, table, summarize
@@ -342,6 +343,82 @@ def test_classify_eligibility_timeout_is_undetermined_cause():
            "reasoner_evidence": {"requests": [{"outcome": "success", "elapsed_seconds": 1.0}]}}
     label, _ = classify_eligibility(row)
     assert label == TIMEOUT_UNDETERMINED_CAUSE
+
+
+# --- M6: a 429 after generation already happened must not read as admission control ---
+
+def test_classify_eligibility_success_then_429_is_not_infra_admission_failure():
+    # The exact misclassification M6 reports: one request succeeded (the model
+    # generated output), a later request on the same run hit a 429. The old rule
+    # scanned only the failed requests and returned infra_admission_failure on the
+    # first 429 it found, discarding the earlier success. This must not exclude
+    # the run from quality the way a pure admission refusal does.
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [
+               {"outcome": "success", "elapsed_seconds": 2.1, "status_code": 200},
+               {"outcome": "failure", "status_code": 429, "error_detail": "rate_limit_exceeded"},
+           ]}}
+    label, basis = classify_eligibility(row)
+    assert label == GENERATION_THEN_INFRA_FAILURE
+    assert label not in QUALITY_EXCLUDED_LABELS
+    assert "success" in basis
+    assert "429" in basis
+
+
+def test_classify_eligibility_all_refused_with_no_generation_stays_infra_admission_failure():
+    # Pure admission refusal: nothing in the row ever succeeded or generated content.
+    # A cancelled companion request carries no output either, so it must not count
+    # as generation evidence.
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [
+               {"outcome": "cancelled"},
+               {"outcome": "failure", "status_code": 429, "error_detail": "rate_limit_exceeded"},
+           ]}}
+    label, _ = classify_eligibility(row)
+    assert label == INFRA_ADMISSION_FAILURE
+    assert label in QUALITY_EXCLUDED_LABELS
+
+
+def test_classify_eligibility_generated_output_failure_then_429_keeps_generated_output_label():
+    # A known generated-output rejection must not be hidden by a later 429 on a
+    # retry. The rejection is itself positive evidence the model was invoked.
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [
+               {"outcome": "failure", "status_code": 400, "error_detail": '{"failed_generation": ""}'},
+               {"outcome": "failure", "status_code": 429, "error_detail": "rate_limit_exceeded"},
+           ]}}
+    label, _ = classify_eligibility(row)
+    assert label == SCORED_FAIL_GENERATED_OUTPUT
+    assert label not in QUALITY_EXCLUDED_LABELS
+
+
+def test_classify_eligibility_timeout_after_success_is_still_undetermined_not_infra():
+    # A successful request followed by a scenario-level timeout is a different
+    # shape from a 429: timeout_undetermined_cause was never excluded from
+    # quality, so a prior success changes nothing about its label here. This
+    # locks that down explicitly rather than leaving it as an implicit side
+    # effect of the 429-specific fix above.
+    row = {"completion_status": "timeout", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [
+               {"outcome": "success", "elapsed_seconds": 1.0, "status_code": 200},
+           ]}}
+    label, _ = classify_eligibility(row)
+    assert label == TIMEOUT_UNDETERMINED_CAUSE
+    assert label not in QUALITY_EXCLUDED_LABELS
+
+
+def test_classify_eligibility_absent_telemetry_with_prior_success_stays_undetermined():
+    # A success followed by a failure with no captured status/body: still not
+    # infrastructure (no 429 was ever recorded), and the prior success does not
+    # change that -- it was already inside the quality denominator either way.
+    row = {"completion_status": "backend_failure", "task_oracle": {"passed": False},
+           "reasoner_evidence": {"requests": [
+               {"outcome": "success", "elapsed_seconds": 1.0, "status_code": 200},
+               {"outcome": "failure", "exception_type": "HTTPStatusError", "elapsed_seconds": 0.2},
+           ]}}
+    label, _ = classify_eligibility(row)
+    assert label == UNDETERMINED_FAILURE
+    assert label not in QUALITY_EXCLUDED_LABELS
 
 
 def test_infra_admission_failure_counts_in_reliability_but_not_quality(tmp_path):

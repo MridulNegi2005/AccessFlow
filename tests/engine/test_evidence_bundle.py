@@ -60,13 +60,18 @@ def test_every_traced_file_is_indexed_in_the_manifest():
     assert on_disk == indexed
 
 
-def test_sanitized_runs_are_the_ones_flagged_infra_admission_failure():
+def test_sanitized_runs_carry_a_429_admission_control_body():
+    # A sanitized run is one whose raw 429 body carried the Groq organization id.
+    # It is either a pure admission refusal (infra_admission_failure) or a run
+    # that already generated output before that same 429 arrived
+    # (generation_then_infra_failure, M6): both are HTTP 429 bodies, just with
+    # different generation evidence recorded earlier in the same trace.
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     sanitized = {run["bundle_path"] for run in manifest["runs"] if run["sanitized"]}
     assert len(sanitized) == manifest["sanitization"]["files_sanitized_in_bundle"]
     for run in manifest["runs"]:
         if run["sanitized"]:
-            assert run["eligibility"] == "infra_admission_failure"
+            assert run["eligibility"] in ("infra_admission_failure", "generation_then_infra_failure")
 
 
 def test_scoreboard_reads_the_bundle_with_no_exclusions():
@@ -139,25 +144,52 @@ def test_legacy_infra_failure_unspecified_label_is_gone():
 
 
 def test_eligibility_counts_sum_to_run_count_and_every_label_is_placed_in_exactly_one_denominator():
+    # M6: a 429 after a request already succeeded is not an admission refusal. Three
+    # of the previously-11 infra_admission_failure runs recorded a successful request
+    # before their 429 and are now generation_then_infra_failure, which stays in the
+    # quality denominator. That raises quality_total from 46 to 49; quality_pass (43)
+    # is unchanged because all three reclassified runs failed their task oracle anyway.
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     counts = manifest["eligibility_counts"]
     assert sum(counts.values()) == manifest["run_count"]
     quality_total = sum(n for label, n in counts.items() if label not in QUALITY_EXCLUDED_LABELS)
     quality_pass = counts.get("scored_pass", 0)
-    assert quality_total == 46
+    assert quality_total == 49
     assert quality_pass == 43
     # generated-output failures and unresolved timeouts must stay counted, not dropped
     assert counts.get("scored_fail_generated_output", 0) == 1
     assert counts.get("timeout_undetermined_cause", 0) == 1
     assert counts.get("undetermined_failure", 0) == 1
+    assert counts.get("infra_admission_failure", 0) == 8
+    assert counts.get("generation_then_infra_failure", 0) == 3
 
 
-def test_scoreboard_quality_pass_rate_over_the_bundle_is_43_of_46_not_43_of_57():
+def test_scoreboard_quality_pass_rate_over_the_bundle_is_43_of_49_not_43_of_57():
     records, exclusions = collect_records(TRACES)
     assert exclusions == []
     non_ablated = [r for r in records if not r["ablated"]]
     assert len(non_ablated) == 57
     quality_scored = [r for r in non_ablated
                       if r["oracle"] is not None and r["eligibility"] not in QUALITY_EXCLUDED_LABELS]
-    assert len(quality_scored) == 46
+    assert len(quality_scored) == 49
     assert sum(1 for r in quality_scored if r["oracle"]) == 43
+
+
+def test_generation_then_429_runs_stay_in_quality_not_excluded():
+    # M6 regression: these three committed traces record a successful request
+    # before the HTTP 429 that ended the run. They must not be excluded from
+    # quality the way a pure admission refusal is.
+    records, exclusions = collect_records(TRACES)
+    assert exclusions == []
+    changed_names = {
+        "groq-gptoss120b/scenario-003.jsonl",
+        "groq-qwen36-27b_redo_lost_response_reconcile.jsonl",
+        "groq-qwen3-8-27b-run2/scenario-003.jsonl",
+    }
+    found = {name: r for r in records
+             for name in changed_names if r["path"].endswith(name)}
+    assert set(found) == changed_names
+    for name, record in found.items():
+        assert record["eligibility"] == "generation_then_infra_failure", name
+        assert record["eligibility"] not in QUALITY_EXCLUDED_LABELS, name
+        assert record["oracle"] is not None, name

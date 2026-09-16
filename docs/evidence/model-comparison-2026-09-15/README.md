@@ -73,19 +73,36 @@ with no captured status code or body does not prove the model was never
 invoked, so it stays inside the quality denominator, counted as a failure,
 rather than being excused from it.
 
+A 429 is positive evidence of admission control only when nothing else in the
+same run shows the model was invoked. A run that also recorded a successful
+request (`outcome: "success"`), anywhere in its request list, was invoked
+regardless of where that 429 falls; it keeps `generation_then_infra_failure`
+and stays counted. The same applies to a failed request whose body already
+shows the provider generated and then rejected output
+(`scored_fail_generated_output`): a later 429 does not erase that evidence
+either.
+
 | Label | Meaning | Count | In quality denominator |
 |---|---|---|---|
 | `scored_pass` | Run completed; task oracle passed. | 43 | yes |
 | `scored_fail_generated_output` | HTTP 4xx (not 429) carrying a `failed_generation` body: the provider rejected the model's own generated output. A genuine failure, not infrastructure. | 1 | yes |
+| `generation_then_infra_failure` | A request in this run already succeeded (the model generated output) before a later HTTP 429 stopped the run from completing. Partial progress, not an admission refusal. | 3 | yes |
 | `timeout_undetermined_cause` | Scenario-level timeout after one successful, fast model request and no further activity. The cause is not established by this trace alone, so it is reported as unresolved, and counted as a failure rather than excused. | 1 | yes |
 | `undetermined_failure` | `HTTPStatusError` with no captured status code or body, failing in 0.17 s with zero tokens recorded anywhere. This is consistent with a connection failure before generation started, but it does not prove one: zero recorded tokens can also mean missing telemetry. Earlier drafts of this bundle called this label `infra_failure_unspecified` and excluded it from quality; that overstated the evidence, so it now counts as a quality failure like the other two undetermined-cause rows. | 1 | yes |
-| `infra_admission_failure` | HTTP 429 from Groq (rate limit or request-too-large) before any model output existed. This is the only label with positive evidence the request never reached the model. | 11 | no |
+| `infra_admission_failure` | HTTP 429 from Groq (rate limit or request-too-large), with no request anywhere in the same run showing the model was ever invoked. The only label with positive evidence the request never reached the model. | 8 | no |
 
-Quality pass rate: **43/46** (`scored_pass` over every label except
-`infra_admission_failure`). This bundle has no `unscored` runs (a completed
-run with no oracle verdict); if one exists elsewhere, it is excluded from the
-quality denominator too, for the different reason that no verdict was ever
-recorded to count.
+Quality pass rate: **43/49** (`scored_pass` over every label except
+`infra_admission_failure`). This is a lower rate than the earlier published
+43/46: three runs previously counted as `infra_admission_failure` had already
+recorded a successful request before their 429 and are now
+`generation_then_infra_failure` instead (see M6 in
+`docs/reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md`). Nothing about the models'
+behaviour changed; the earlier rule was excusing three attempts that the
+evidence does not support excusing. Counting them drops the rate from 93.5%
+to 87.8%. This bundle has no `unscored` runs (a completed run with no oracle
+verdict); if one exists elsewhere, it is excluded from the quality
+denominator too, for the different reason that no verdict was ever recorded
+to count.
 
 ## Sanitisation
 
@@ -100,9 +117,12 @@ single value. No API key or bearer token was found in any file considered for
 this bundle.
 
 All 11 contaminated `*.jsonl` runs fall inside this cohort's selection rule.
-They were **sanitised, not excluded**. Each is a genuine
-`infra_admission_failure` (HTTP 429). The review asked to keep this kind of
-failed-but-relevant run, not discard it. The organization id is replaced with
+They were **sanitised, not excluded**. Each carries a genuine HTTP 429 body
+from Groq: 8 are `infra_admission_failure` (no earlier request in that run
+shows the model was invoked) and 3 are `generation_then_infra_failure` (a
+request in that same run already succeeded before the 429). Both are the
+review's target: a failed-but-relevant run, kept rather than discarded. The
+organization id is replaced with
 `[REDACTED_ORG_ID]` wherever it appears. The substitution checks every JSON
 line of every copied file, not only the 11 known files. This is a second
 check, in case manual review missed something. The 2 contaminated
