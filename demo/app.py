@@ -532,6 +532,7 @@ async def websocket(websocket: WebSocket) -> None:
                 return
 
     sender = asyncio.create_task(send_outputs())
+    perception = None
     try:
         perception = DemoPerception.from_environment()
         reasoner_factory = getattr(DemoReasoner, "from_environment", None)
@@ -542,6 +543,8 @@ async def websocket(websocket: WebSocket) -> None:
         )
         await outgoing.put(None)
         await asyncio.gather(sender, return_exceptions=True)
+        if perception is not None:
+            await perception.aclose()
         await websocket.close(code=1008)
         return
     await outgoing.put(
