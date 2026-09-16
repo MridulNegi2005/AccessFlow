@@ -7,6 +7,7 @@ import base64
 import os
 import binascii
 import importlib.util
+import json
 import math
 import tempfile
 import threading
@@ -44,6 +45,7 @@ MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
 MAX_BROWSER_TEXT_CHARS = MAX_CONTEXT_CHARS
 MAX_BROWSER_SOURCE_ID_CHARS = 256
+MAX_BROWSER_MESSAGE_BYTES = 12 * 1024 * 1024
 MAX_PENDING_INPUTS = 16
 MAX_PENDING_OUTPUTS = 16
 
@@ -525,6 +527,43 @@ async def _materialize_event(
             active_tasks.discard(task)
 
 
+async def _receive_browser_message(websocket: WebSocket) -> dict[str, Any]:
+    """Decode one bounded browser frame without parsing oversized JSON."""
+    receive = getattr(websocket, "receive", None)
+    if not callable(receive):
+        # Keep lightweight in-process peer doubles compatible with the route tests.
+        receive_json = getattr(websocket, "receive_json", None)
+        if not callable(receive_json):
+            raise RuntimeError("WebSocket does not support receiving browser events")
+        parsed = await receive_json()
+        if not isinstance(parsed, dict):
+            raise ValueError("browser event must be a JSON object")
+        return parsed
+    message = await receive()
+    if message["type"] == "websocket.disconnect":
+        raise WebSocketDisconnect(message["code"], message.get("reason"))
+    raw = message.get("text")
+    if raw is None:
+        raw = message.get("bytes")
+    if isinstance(raw, str):
+        size = len(raw.encode("utf-8"))
+    elif isinstance(raw, bytes):
+        size = len(raw)
+    else:
+        raise ValueError("browser event must be a JSON text or bytes frame")
+    if size > MAX_BROWSER_MESSAGE_BYTES:
+        raise ValueError(
+            f"browser event exceeds the {MAX_BROWSER_MESSAGE_BYTES}-byte limit"
+        )
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise ValueError("browser event must be valid JSON") from error
+    if not isinstance(parsed, dict):
+        raise ValueError("browser event must be a JSON object")
+    return parsed
+
+
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -595,14 +634,14 @@ async def websocket(websocket: WebSocket) -> None:
         async def receive_inputs():
             while True:
                 try:
-                    message = await websocket.receive_json()
-                except ValueError:
+                    message = await _receive_browser_message(websocket)
+                except ValueError as error:
                     enqueue_output(
                         {
                             "kind": "demo_error",
                             "payload": {
                                 "backend": "demo/input",
-                                "message": "browser event must be valid JSON",
+                                "message": str(error),
                             },
                         }
                     )
