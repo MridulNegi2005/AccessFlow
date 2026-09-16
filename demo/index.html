@@ -79,6 +79,7 @@
     let mediaSendChain = Promise.resolve();
     const pendingMessages = [];
     const maxPendingMessages = 16;
+    const maxAnnouncementChars = 240;
 
     function show(event) {
       if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
@@ -101,13 +102,13 @@
     function announce(event) {
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       if (typeof payload.message === 'string' && payload.message) {
-        return `${event.kind}: ${payload.message}`;
+        return `${event.kind}: ${compactAnnouncement(payload.message)}`;
       }
       if (event.kind === 'final' && typeof payload.text === 'string' && payload.text) {
-        return `Final response: ${payload.text}`;
+        return `Final response: ${compactAnnouncement(payload.text)}`;
       }
       if (event.kind === 'clarify' && typeof payload.text === 'string' && payload.text) {
-        return `Clarification requested: ${payload.text}`;
+        return `Clarification requested: ${compactAnnouncement(payload.text)}`;
       }
       if (event.kind === 'demo_status' && payload.connected === true) {
         return 'Session connected.';
@@ -116,6 +117,13 @@
         return 'Session disconnected.';
       }
       return `${String(event.kind || 'event').replaceAll('_', ' ')} received.`;
+    }
+
+    function compactAnnouncement(value) {
+      const normalized = value.replace(/\s+/g, ' ').trim();
+      return normalized.length > maxAnnouncementChars
+        ? normalized.slice(0, maxAnnouncementChars - 3) + '...'
+        : normalized;
     }
 
     function messageFor(kind, payload) {
