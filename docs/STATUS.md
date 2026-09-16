@@ -213,6 +213,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   failures and token-level label recall. Offline execution reports `SKIPPED` without fabricating live
   evidence; deterministic benchmark coverage passes 3 tests and the full branch passes 682 tests with
   one retained conflict example. The live backend remains unavailable on this machine.
+- An explicit `--live` probe against `ollama/gemma3:4b` processed all 12 image cases and returned 12
+  classified loopback transport failures with exit code 1, zero captions and zero recall; this confirms
+  the gate fails closed without fabricating live vision quality evidence.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
