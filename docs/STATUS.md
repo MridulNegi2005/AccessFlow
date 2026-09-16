@@ -549,6 +549,10 @@ Updated 16 September 2026.
   `127.0.0.1:11434` connection. The explicit 12-case `--live` gate processed all cases, returned
   12 classified transport failures with zero captions and zero label recall, and exited 1; the
   gate remains fail-closed and live vision quality is still unmeasured.
+- The vision benchmark now verifies each manifest asset's declared byte count and SHA-256 before
+  materialization or provider invocation. A tampered case is recorded as one per-case failure while
+  the other 11 cases continue; the regression and full integrated suite pass with 770 tests and one
+  retained conflict xfail.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
