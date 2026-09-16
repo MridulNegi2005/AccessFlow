@@ -123,6 +123,18 @@ class Agent:
         # authorize a write. Cleared on interrupt, explicit stop, and request
         # completion/rotation.
         self.write_intent_retained = False
+        # Snapshot of len(self.results) taken every time a fresh-evidence speech
+        # proposal is processed (see _apply). A later non-fresh (tool-result-
+        # triggered) replan may only newly grant write authority -- as opposed to
+        # merely retaining authority a fresh proposal already gave it -- while this
+        # mark still matches len(self.results): i.e. no tool result has entered
+        # evidence since the user's own utterance was last considered. This is what
+        # lets a fresh plan that gets pre-empted/cancelled by an unrelated internal
+        # retry (e.g. a stale write's own cancellation confirmation) hand off to its
+        # non-fresh replacement without losing the authority that utterance would
+        # have granted, while still refusing a replan that only reaches its
+        # write_requested=True decision after seeing a NEW read/tool result (M4).
+        self._write_authority_evidence_mark = 0
         # Whether the current request still has an unanswered clarifying question.
         # Blocks write dispatch independently of write_intent_retained so a resolved
         # or still-open information gap is never conflated with the user's underlying
@@ -519,10 +531,11 @@ class Agent:
             self.state.correction_pending = False
             self.semantic_correction_event = None
         if speech_origin:
-            # Only the current spoken request can supply write intent. A genuinely
-            # new utterance/hypothesis (fresh_evidence) is authoritative either way,
-            # matching prior behaviour: it can newly recognise intent or retract it
-            # (an explicit correction/cancellation is new user evidence).
+            # Write authority is user-origin authority: only a proposal made on
+            # fresh user speech evidence (fresh_evidence=True) may ESTABLISH or
+            # RETRACT it, in either direction, matching prior behaviour -- it can
+            # newly recognise intent or retract it (an explicit correction/
+            # cancellation is new user evidence).
             #
             # A clarifying question is unresolved information, not a retraction: a
             # completed utterance that both requests a write AND asks a clarification
@@ -533,16 +546,29 @@ class Agent:
             # intent here.
             #
             # A plan triggered by a tool result for this same request
-            # (fresh_evidence=False) may still newly RECOGNISE intent it had not
-            # seen before (e.g. deciding to book only after reading support notes),
-            # which is why read-then-write continuations work. What it must not do
-            # is ERASE already-recognised intent just because this follow-up omits
-            # or flips the flag -- that is not new user evidence, only a change of
-            # mind by the same model on the same evidence. See the request
-            # lifecycle note on ToolCall.request_id.
+            # (fresh_evidence=False) is an evidence-derived planning decision, not
+            # user evidence. It may RETAIN authority the user's own utterance already
+            # established, and a legitimate "read the support notes, then book if
+            # appropriate" request still works because its authority comes from the
+            # first speech-origin proposal -- the one that saw the user's own
+            # utterance -- carrying write_requested=True from the start. What a
+            # tool-result replan must never do is CREATE authority from evidence no
+            # user utterance gave: retrieved document text or any other NEW tool
+            # result must not be able to set write_intent_retained here just because
+            # it prompted this replan.
+            #
+            # "New tool result" is checked, not merely "non-fresh", because the
+            # engine can also produce a non-fresh replan when an unrelated internal
+            # retry (e.g. a stale write's own cancellation confirmation) pre-empts
+            # and cancels the genuine fresh-evidence plan for the current utterance
+            # before it finishes. That replan sees no evidence the pending fresh
+            # plan would not also have seen, so refusing it here would strand a
+            # legitimate, already-spoken request rather than block an injected one.
             if fresh_evidence:
                 self.write_intent_retained = bool(self.speech_ready and proposal.write_requested)
-            elif proposal.write_requested and self.speech_ready and not proposal.clarification:
+                self._write_authority_evidence_mark = len(self.results)
+            elif (proposal.write_requested and self.speech_ready and not proposal.clarification
+                    and len(self.results) <= self._write_authority_evidence_mark):
                 self.write_intent_retained = True
         changed = set()
         for name, value in proposal.slot_updates.items():
