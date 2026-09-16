@@ -429,6 +429,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="stop-task"' in html
     assert 'id="announcements" class="sr-only" aria-live="polite"' in html
     assert 'id="events" aria-live="off"' in html
+    assert 'id="restart-session"' in html
     assert 'const maxAnnouncementChars = 240' in html
     assert 'function sendSerialized(message)' in html
     assert 'The session closed before the event could be sent.' in html
@@ -465,6 +466,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'card.innerHTML' not in html
     assert "function announce(event)" in html
     assert "function compactAnnouncement(value)" in html
+    assert "function restartSession()" in html
+    assert "window.location.reload()" in html
     assert "compactAnnouncement(payload.text)" in html
     assert "textContent = announce(event)" in html
     assert 'heading.textContent = event.kind' in html
