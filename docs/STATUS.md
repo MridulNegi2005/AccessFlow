@@ -151,7 +151,7 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - PCM activity measurements now normalize 8/16/24/32-bit input to signed 16-bit full-scale units,
   and the WebRTC path converts those widths before calling the detector. Activity frames now reject
   non-finite, negative, zero-length and out-of-order timelines. Focused audio coverage passes 45
-  tests and the full branch passes 663 tests with one retained conflict example; held-out speech-quality
+  tests and the full branch passes 671 tests with one retained conflict example; held-out speech-quality
   measurement and hardware timing validation remain open.
 - The browser adapter now translates typed `speech` and `task` interruption events, and the demo
   exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
@@ -160,39 +160,40 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   per-file bound, releases reservations after failed validation, and applies backpressure with a
   16-item incoming queue. Focused and full checks pass; live device behavior remains unverified.
 - Browser input now reports malformed JSON as a recoverable `demo/input` error, and PNG validation
-  rejects unknown critical chunks before a vision provider is called. The full branch passes 663
+  rejects unknown critical chunks before a vision provider is called. The full branch passes 671
   tests with one retained conflict example; Ruff and diff checks pass.
 - Failed browser media writes and unexpected validation errors now remove partial session files while
-  releasing their aggregate budget reservation. The full branch passes 663 tests with one retained
+  releasing their aggregate budget reservation. The full branch passes 671 tests with one retained
   conflict example; live vision and device behavior remain unverified.
 - The demo now keeps the detailed event trace out of live announcements and exposes a concise
   screen-reader status region. A fresh local browser smoke confirmed the page rendered without
-  horizontal overflow or console errors; the full branch remains at 663 passed with one xfail.
+  horizontal overflow or console errors; the full branch remains at 671 passed with one xfail.
 - Live announcements also compact untrusted message and response text to a 240-character content
   bound. A browser smoke with a 1,200-character response produced a bounded announcement while the
   full trace stayed visible; no live model or device claim is made.
 - Browser sends now catch a close race after the ready-state check and report a stable transport error;
   queued-message draining also stops without a false connected announcement. A fresh browser send
-  smoke completed with no console errors; the full branch remains at 663 passed with one xfail.
+  smoke completed with no console errors; the full branch remains at 671 passed with one xfail.
 - The demo now exposes an explicit Restart session control that discards an active microphone stream,
   reloads client state and establishes a fresh WebSocket session. Browser smoke cleared the prior
   event trace and reconnected cleanly; no live model or device claim is made.
 - The demo WebSocket now bounds both incoming and outgoing event queues at 16 items, applying
-  backpressure when a browser stops reading responses. The full branch passes 663 tests with one
+  backpressure when a browser stops reading responses. The full branch passes 671 tests with one
   retained conflict example; live model and device behavior remain unverified.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
-  the existing small fixtures; the full branch passes 663 tests with one retained conflict example.
+  the existing small fixtures; the full branch passes 671 tests with one retained conflict example.
 - Browser microphone capture now caps accumulated samples so the generated WAV stays within the 8 MiB
   media boundary; reaching the cap stops capture once, reports a labeled status and uploads only the
-  bounded recording. Browser layout smoke remained clean; the full branch passes 663 tests with one
+  bounded recording. Browser layout smoke remained clean; the full branch passes 671 tests with one
   retained conflict example.
 - Selected WAV and PNG files are rejected in the browser before `arrayBuffer()` when they exceed the
   8 MiB media boundary, avoiding an unnecessary client-side read while preserving the existing
   serialized send path. Browser smoke remained free of layout overflow and console errors.
-- Derived timing facts now validate finite nonnegative timestamps, positive activity windows, matching
-  pause durations and boolean trailing labels before timing-policy experiments consume them. Focused
-  timing coverage and the full branch pass with one retained conflict example.
+- Derived timing facts now validate finite nonnegative timestamps, positive and non-overlapping activity
+  windows, matching pause and active durations, and boolean timing labels before policy experiments
+  consume them. Duration comparison uses a bounded absolute tolerance. Focused timing coverage and the
+  full branch pass with one retained conflict example.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
