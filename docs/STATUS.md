@@ -287,6 +287,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   closed when a new session would exceed that bound, avoiding unbounded worker-object retention.
   A session-capacity regression passes; full verification passes 787 tests with one retained conflict
   xfail and Ruff.
+- Activity timing summaries now reject overlapping or duplicate frames before deriving pause evidence,
+  while preserving adjacent frame boundaries. Focused overlap regressions pass; full verification
+  passes 789 tests with one retained conflict xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
