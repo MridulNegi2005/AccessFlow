@@ -93,6 +93,7 @@ async def run_vision_benchmark(
                     "sha256": None,
                     "elapsed_s": 0.0,
                     "status": "error",
+                    "backend": None,
                     "caption": None,
                     "label_token_recall": 0.0,
                 }
@@ -156,6 +157,11 @@ async def run_vision_benchmark(
     }
 
 
+def _write_report(path: Path, report: dict[str, Any]) -> None:
+    """Persist one explicitly requested benchmark report with stable formatting."""
+    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -180,6 +186,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "ACCESSFLOW_LIVE_VISION_PROMPT",
             "Describe only the visible device evidence and state uncertainty.",
         ),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="optionally persist the live report as JSON at this path",
     )
     args = parser.parse_args(argv)
     if not args.live:
@@ -209,6 +220,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             prompt=provider.prompt,
         )
     )
+    if args.output is not None:
+        _write_report(args.output, report)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["failures"] == 0 else 1
 
