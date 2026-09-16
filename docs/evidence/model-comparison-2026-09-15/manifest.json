@@ -3,15 +3,16 @@
   "cohort_selection_rule": "All non-ablated runs in artifacts/ whose backend is one of groq/qwen/qwen3.8-27b, groq/openai/gpt-oss-120b, groq/openai/gpt-oss-20b, groq/qwen/qwen3.6-27b (the four Groq-hosted models named in the 'Current recommendation' and 'Known provider limits' sections of MODEL_COMPARISON.md), on one of the six live-dev-* text fixtures that back the per-scenario matrix: development-text-correction-01, device-correction-before-plan, lost-response-status-reconciliation, support-read-then-service, stale-read-after-correction, stale-read-after-device-correction. Audio and vision live-dev fixtures (live-dev-audio-correction-01, live-dev-frame-device-panel-01) are excluded: that evidence belongs to the separate audio/vision E2E slice this task must not touch. Local (Ollama/NVIDIA) models are excluded: they are documented separately in LOCAL_MODEL_2026-09-13.md and INFERENCE_TUNING_2026-09-14.md and run on different hardware.",
   "run_count": 57,
   "eligibility_counts": {
-    "infra_admission_failure": 11,
-    "scored_fail_generated_output": 1,
     "scored_pass": 43,
+    "infra_admission_failure": 8,
+    "generation_then_infra_failure": 3,
     "timeout_undetermined_cause": 1,
-    "undetermined_failure": 1
+    "undetermined_failure": 1,
+    "scored_fail_generated_output": 1
   },
   "sanitization": {
     "issue": "16 traces were reported by the orchestrator to contain the Groq organization id in reasoner_evidence.requests[].error_detail (raw provider error bodies from the pre-R5 diagnostics path). An independent repo-wide grep for the pattern org_[0-9a-zA-Z]{10,}, excluding .git and .venv, found the identifier in 13 files under artifacts/ (11 *.jsonl run traces and 2 report.json summaries), all sharing the same single organization id value (not reproduced here). No API keys or bearer tokens were found in any file considered for this bundle.",
-    "action": "Sanitised, not excluded. Every copied trace passes through a regex substitution (org_[0-9a-zA-Z]{10,} -> [REDACTED_ORG_ID]) applied to every JSON line, not only the known-contaminated ones, as defence in depth. All 11 contaminated *.jsonl runs fall inside this cohort and are included, sanitised, because they are genuine 429 admission-control failures relevant to attempted-run reliability (see eligibility 'infra_admission_failure'). The 2 contaminated report.json files are hand-written summaries, not run_metadata traces the scoreboard reads; they were not copied into this bundle and were not modified in artifacts/.",
+    "action": "Sanitised, not excluded. Every copied trace passes through a regex substitution (org_[0-9a-zA-Z]{10,} -> [REDACTED_ORG_ID]) applied to every JSON line, not only the known-contaminated ones, as defence in depth. All 11 contaminated *.jsonl runs fall inside this cohort and are included, sanitised: each carries a genuine HTTP 429 body from Groq. 8 are infra_admission_failure (no request in that run shows the model was ever invoked); 3 recorded a successful request before their 429 and are generation_then_infra_failure instead (M6, docs/reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md). The 2 contaminated report.json files are hand-written summaries, not run_metadata traces the scoreboard reads; they were not copied into this bundle and were not modified in artifacts/.",
     "files_sanitized_in_bundle": 11
   },
   "known_gaps": [
@@ -819,8 +820,8 @@
         "failure": 1,
         "cancelled": 0
       },
-      "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7618, Requested 2319. ...(truncated)",
+      "eligibility": "generation_then_infra_failure",
+      "eligibility_basis": "A request in this run recorded outcome=success (the model already generated output) before this HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7618, Requested 2319. ...(truncated). Partial progress existed, so this is not an admission refusal.",
       "sanitized": true,
       "trace_sha256_in_bundle": "8d52e88505c154259fd10ab53c360cac643e85d5e8981b898ddedbe3133d0344"
     },
@@ -1511,8 +1512,8 @@
         "failure": 1,
         "cancelled": 0
       },
-      "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Used 998, Requested 66...(truncated)",
+      "eligibility": "generation_then_infra_failure",
+      "eligibility_basis": "A request in this run recorded outcome=success (the model already generated output) before this HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.6-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Used 998, Requested 66...(truncated). Partial progress existed, so this is not an admission refusal.",
       "sanitized": true,
       "trace_sha256_in_bundle": "fbecafe04a64b6d48bd7a527b019a618edbe93cebd6a11fa5d206ed2e11b02af"
     },
@@ -3126,8 +3127,8 @@
         "failure": 1,
         "cancelled": 0
       },
-      "eligibility": "infra_admission_failure",
-      "eligibility_basis": "HTTP 429 before any output existed: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 6757, Requested 16...(truncated)",
+      "eligibility": "generation_then_infra_failure",
+      "eligibility_basis": "A request in this run recorded outcome=success (the model already generated output) before this HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `[REDACTED_ORG_ID]` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 6757, Requested 16...(truncated). Partial progress existed, so this is not an admission refusal.",
       "sanitized": true,
       "trace_sha256_in_bundle": "d76bfe9a709f353b1c0d55eaaea9bfaadf9805e41fbc6e3a85bb77876ddcec98"
     },

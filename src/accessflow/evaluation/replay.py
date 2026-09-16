@@ -227,7 +227,8 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
     metadata.update(source_evidence(path))
     reasoner_evidence = getattr(reasoner, "evidence", None)
     metadata["reasoner_evidence"] = reasoner_evidence() if callable(reasoner_evidence) else None
-    outcome = evaluate_task(definition.expectation, events, tools.effects, inputs[0].payload.tools, completion_status)
+    outcome = evaluate_task(definition.expectation, events, tools.effects, inputs[0].payload.tools, completion_status,
+                            terminal_output=criterion.model_dump(mode="json"), terminal_cause=terminal_cause)
     metadata["task_oracle"] = outcome
     destination = Path(output)
     destination.parent.mkdir(parents=True, exist_ok=True)

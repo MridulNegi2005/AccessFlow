@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -15,7 +16,9 @@ from .contracts import (
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
     ToolResult, TranscriptEvent,
 )
-from .corpus import CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest
+from .corpus import (
+    CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
+)
 
 
 class DenyWrites:
@@ -70,9 +73,16 @@ class Agent:
         self.frame_debounce_s = frame_debounce_s
         # Installed directory holding corpus documents. None means no corpus is wired up:
         # any session that still declares Start.corpus gets a bounded per-request refusal
-        # (see _execute_corpus) instead of a crash. A session with an empty corpus never
+        # (see _corpus_lookup) instead of a crash. A session with an empty corpus never
         # touches this at all -- see the StartEvent handling in run().
-        self._corpus_root = corpus_root
+        #
+        # Falls back to ACCESSFLOW_CORPUS_ROOT so the normal CLI/replay harness (which
+        # constructs Agent without ever importing accessflow.corpus itself) has a way to
+        # configure this trust boundary -- see cli.py's --corpus-root. An explicit
+        # corpus_root=None argument is indistinguishable from "not given" here by design;
+        # nothing in this codebase ever needs to force "no env fallback" while also
+        # passing None explicitly.
+        self._corpus_root = corpus_root if corpus_root is not None else os.getenv("ACCESSFLOW_CORPUS_ROOT")
         self.running = False
 
     async def run(self, input_queue, output_queue, clock=None):
@@ -90,6 +100,11 @@ class Agent:
         self.observations = {}
         self.sources = {}
         self.results = []
+        # Monotonic count of every append ever made to self.results, across the whole
+        # session. Unlike len(self.results), never decreases: _invalidate_dependencies
+        # removes stale entries FROM self.results (so a dependent slot update can drop
+        # its own read's evidence), but must not be able to rewind this counter (H1).
+        self._results_admitted = 0
         self.ledger = {}
         self.seen = set()
         self.dispatched = {}
@@ -99,6 +114,16 @@ class Agent:
         self.output_sequence = 0
         self.latest_complete = False
         self.planner = None
+        # Metadata for whichever planner task self.planner currently refers to, so that
+        # cancelling it (below, and in _start_plan) can tell whether the task it just
+        # pre-empted was a fresh-evidence one that never got to deliver its proposal (H2).
+        self._planner_fresh = False
+        self._planner_key = None
+        # (request_id, request_input_epoch) -> True when a fresh-evidence planner task
+        # for that key was cancelled before it delivered a proposal. Consumed (popped) the
+        # one time it is used to grant write authority to a subsequent non-fresh replan --
+        # see the speech_origin block in _apply.
+        self._fresh_plan_cancelled = {}
         self.repeated_completed_call = False
         self.no_progress = False
         self.repeat_recoveries = {}
@@ -123,6 +148,23 @@ class Agent:
         # authorize a write. Cleared on interrupt, explicit stop, and request
         # completion/rotation.
         self.write_intent_retained = False
+        # Snapshot of self._results_admitted taken every time a fresh-evidence speech
+        # proposal is processed (see _apply). A later non-fresh (tool-result-
+        # triggered) replan may only newly grant write authority -- as opposed to
+        # merely retaining authority a fresh proposal already gave it -- while this
+        # mark still EQUALS self._results_admitted: i.e. no tool result has entered
+        # evidence since the user's own utterance was last considered. self.results
+        # itself is not usable for this: _invalidate_dependencies removes entries from
+        # it (a slot update can invalidate its own read's result), so its length can
+        # fall back to or below an earlier mark even though new evidence was admitted
+        # in between -- that let a planner re-open write authority M4 was meant to
+        # close (H1). _results_admitted only ever grows, so it cannot be rewound this
+        # way. This mark alone is not sufficient to grant authority; _apply also
+        # requires _fresh_plan_cancelled to record that a fresh-evidence plan for this
+        # exact (request_id, request_input_epoch) was cancelled before delivering, so
+        # only that pre-emption -- not an arbitrary non-fresh replan -- can hand off
+        # authority a genuinely spoken request already earned (H2).
+        self._write_authority_evidence_mark = 0
         # Whether the current request still has an unanswered clarifying question.
         # Blocks write dispatch independently of write_intent_retained so a resolved
         # or still-open information gap is never conflated with the user's underlying
@@ -149,6 +191,13 @@ class Agent:
         self.corpus_root = Path(self._corpus_root) if self._corpus_root else None
         self.corpus_allowlist = frozenset()
         self.corpus_store = None
+        # True only once THIS session's StartEvent actually installed the built-in
+        # corpus capability (a non-empty Start.corpus). Dispatch and cancellation route
+        # to the internal implementation on this flag, never merely on a call's tool
+        # name -- see _execute/_cancel. Fixes M3: an empty corpus plus an external
+        # manifest that happens to be named "search_corpus" must reach that external
+        # executor unchanged, not be silently intercepted here.
+        self._corpus_installed = False
 
         async def pump():
             while True:
@@ -191,9 +240,10 @@ class Agent:
                         if CORPUS_TOOL_NAME in self.manifests:
                             await self._emit("error", code="duplicate_manifest_names")
                             break
-                        self.manifests[CORPUS_TOOL_NAME] = corpus_manifest()
+                        self.manifests[CORPUS_TOOL_NAME] = corpus_manifest(event.payload.corpus)
                         self.corpus_allowlist = frozenset(event.payload.corpus)
                         self.corpus_store = CorpusStore(self.corpus_root) if self.corpus_root else None
+                        self._corpus_installed = True
                     self.seen.add(event.event_id)
                     self.last_sequence = event.sequence
                     continue
@@ -432,12 +482,39 @@ class Agent:
             # bounded recovery budget instead of inheriting an exhausted one from
             # an earlier, unrelated stall on the same request_id.
             self.request_input_epoch += 1
+            # request_input_epoch only ever grows (never resets, even across
+            # request_id rotation -- see run()), and _apply only ever pops a
+            # _fresh_plan_cancelled entry keyed to the CURRENT epoch. So the instant
+            # epoch advances past an entry's own epoch, that entry can never again be
+            # popped: it is dead the moment this bump makes it stale, not merely old.
+            # Drop it now instead of keeping a live-forever, never-consumable record
+            # for the rest of the session (security review LOW 1).
+            if self._fresh_plan_cancelled:
+                self._fresh_plan_cancelled = {key: v for key, v in self._fresh_plan_cancelled.items()
+                                              if key[1] >= self.request_input_epoch}
         source = self.planning_source
         if self.planner and not self.planner.done():
             self.planner.cancel()
+            # self._planner_key[1] can only be < self.request_input_epoch here when
+            # THIS call just bumped the epoch above (a new-evidence pre-emption of an
+            # in-flight fresh plan): that key is already stale by the pruning rule
+            # above and recording it would just recreate what was pruned two lines
+            # up. It equals the current epoch when this call did not bump it (a
+            # same-epoch, non-fresh pre-emption, e.g. an internal retry) -- the one
+            # case that is still legitimately consumable below.
+            if self._planner_fresh and self._planner_key[1] == self.request_input_epoch:
+                # The task being pre-empted here was reasoning on fresh user evidence
+                # and never got to deliver a proposal. Record that for its
+                # (request_id, request_input_epoch) so a legitimate hand-off to this
+                # replacement plan can retain (not create) the authority that
+                # evidence would have granted -- see the speech_origin block in
+                # _apply (H2). Consumed there the one time it is used.
+                self._fresh_plan_cancelled[self._planner_key] = True
         view = self._view()
         generation = self.generation
         lone_frame = source is not None and source[0] == "image" and self.active_speech is None
+        self._planner_fresh = fresh_evidence
+        self._planner_key = (self.request_id, self.request_input_epoch)
 
         async def plan():
             try:
@@ -519,10 +596,11 @@ class Agent:
             self.state.correction_pending = False
             self.semantic_correction_event = None
         if speech_origin:
-            # Only the current spoken request can supply write intent. A genuinely
-            # new utterance/hypothesis (fresh_evidence) is authoritative either way,
-            # matching prior behaviour: it can newly recognise intent or retract it
-            # (an explicit correction/cancellation is new user evidence).
+            # Write authority is user-origin authority: only a proposal made on
+            # fresh user speech evidence (fresh_evidence=True) may ESTABLISH or
+            # RETRACT it, in either direction, matching prior behaviour -- it can
+            # newly recognise intent or retract it (an explicit correction/
+            # cancellation is new user evidence).
             #
             # A clarifying question is unresolved information, not a retraction: a
             # completed utterance that both requests a write AND asks a clarification
@@ -533,16 +611,41 @@ class Agent:
             # intent here.
             #
             # A plan triggered by a tool result for this same request
-            # (fresh_evidence=False) may still newly RECOGNISE intent it had not
-            # seen before (e.g. deciding to book only after reading support notes),
-            # which is why read-then-write continuations work. What it must not do
-            # is ERASE already-recognised intent just because this follow-up omits
-            # or flips the flag -- that is not new user evidence, only a change of
-            # mind by the same model on the same evidence. See the request
-            # lifecycle note on ToolCall.request_id.
+            # (fresh_evidence=False) is an evidence-derived planning decision, not
+            # user evidence. It may RETAIN authority the user's own utterance already
+            # established, and a legitimate "read the support notes, then book if
+            # appropriate" request still works because its authority comes from the
+            # first speech-origin proposal -- the one that saw the user's own
+            # utterance -- carrying write_requested=True from the start. What a
+            # tool-result replan must never do is CREATE authority from evidence no
+            # user utterance gave: retrieved document text or any other NEW tool
+            # result must not be able to set write_intent_retained here just because
+            # it prompted this replan.
+            #
+            # "New tool result" is enforced two ways, both required. First,
+            # _results_admitted -- a counter incremented on every append to
+            # self.results and NEVER decremented -- must still equal the mark taken
+            # when fresh evidence was last considered: self.results itself is not
+            # monotonic (_invalidate_dependencies drops entries from it when a slot
+            # update invalidates their read), so a planner that updates a slot its own
+            # read declared as a dependency could otherwise wind the mark back and
+            # smuggle a later replan past this guard (H1). Second, this exact
+            # (request_id, request_input_epoch) must be recorded in
+            # _fresh_plan_cancelled: the only legitimate non-fresh grant is a fresh
+            # plan that got pre-empted and cancelled before delivering (e.g. by an
+            # unrelated internal retry, such as a stale write's own cancellation
+            # confirmation) and handed off to this replacement, which then sees no
+            # evidence the pending fresh plan would not also have seen. An ordinary
+            # non-fresh replan -- e.g. one produced by _offer_recovery after
+            # no_progress -- is not such a hand-off and must not qualify merely for
+            # being non-fresh (H2). The flag is popped (consumed) so a single
+            # cancelled fresh plan cannot authorize more than one later replan.
             if fresh_evidence:
                 self.write_intent_retained = bool(self.speech_ready and proposal.write_requested)
-            elif proposal.write_requested and self.speech_ready and not proposal.clarification:
+                self._write_authority_evidence_mark = self._results_admitted
+            elif (proposal.write_requested and self.speech_ready and not proposal.clarification
+                    and self._results_admitted == self._write_authority_evidence_mark
+                    and self._fresh_plan_cancelled.pop((self.request_id, self.request_input_epoch), False)):
                 self.write_intent_retained = True
         changed = set()
         for name, value in proposal.slot_updates.items():
@@ -828,8 +931,14 @@ class Agent:
                 call.status = "stale"
                 self.results = [result for result in self.results if result.call_id != call.call_id]
 
-    def _execute_corpus(self, call):
-        """Deterministic local lookup; never forwarded to the external executor.
+    def _corpus_lookup(self, call):
+        """Blocking file I/O and lexical retrieval; never forwarded to the external executor.
+
+        This runs OFF the event loop -- see _execute, which only ever calls it inside
+        asyncio.to_thread -- so a slow disk or a large document cannot block input
+        processing, acknowledgment or cancellation of anything else in the session (M2).
+        Cheap argument-shape checks (query length) happen here too, before the
+        potentially expensive read, rather than in the dispatcher.
 
         The "document" argument is model-supplied and untrusted: CorpusStore.read enforces
         the allowlist and refuses traversal/absolute names regardless of Start.corpus's own
@@ -838,22 +947,40 @@ class Agent:
         """
         document = call.arguments.get("document")
         query = call.arguments.get("query", "")
-        if self.corpus_store is None:
-            return ToolResult(call_id=call.call_id, status="failed", error="corpus_unavailable")
-        try:
-            text = self.corpus_store.read(document, self.corpus_allowlist)
-        except CorpusAccessError as exc:
-            return ToolResult(call_id=call.call_id, status="failed", error=exc.code)
+        if not is_safe_query(query):
+            raise CorpusAccessError("query_too_long")
+        text = self.corpus_store.read(document, self.corpus_allowlist)
         passage = best_passage(text, query)
         return ToolResult(call_id=call.call_id, status="success",
                           result={"document": document, "query": query, "passage": passage})
 
     async def _execute(self, call, timeout):
-        if call.tool == CORPUS_TOOL_NAME:
+        if self._corpus_installed and call.tool == CORPUS_TOOL_NAME:
             if call.status != "pending":
                 await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
                 return
-            await self.inbox.put(WorkerMessage("tool", 0, self._execute_corpus(call)))
+            if self.corpus_store is None:
+                await self.inbox.put(WorkerMessage("tool", 0,
+                    ToolResult(call_id=call.call_id, status="failed", error="corpus_unavailable")))
+                return
+            # Bounded exactly like any external tool call below (same _bounded/timeout,
+            # same exception-to-ToolResult conversion). Cancelling this await cannot stop
+            # the underlying OS thread once asyncio.to_thread has started it -- Python
+            # cannot preempt a running thread. What it DOES guarantee: the controller
+            # stops waiting for that thread at the manifest's own timeout, and stale
+            # cancellation/dependency-change is still enforced downstream in _result via
+            # self.invalidated (matching every other tool call), so a passage the thread
+            # eventually computes after the fact is dropped from evidence, never dispatched
+            # a second time, and never blocks a later call for the same request.
+            try:
+                result = await self._bounded(asyncio.to_thread(self._corpus_lookup, call), timeout)
+                if result.call_id != call.call_id:
+                    raise ValueError("Corpus lookup returned wrong call ID")
+            except CorpusAccessError as exc:
+                result = ToolResult(call_id=call.call_id, status="failed", error=exc.code)
+            except Exception as exc:
+                result = ToolResult(call_id=call.call_id, status="failed", error=type(exc).__name__)
+            await self.inbox.put(WorkerMessage("tool", 0, result))
             return
         if self.executor is not None and call.status != "pending":
             await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
@@ -874,7 +1001,10 @@ class Agent:
         call.status = "cancelled"
         self.invalidated.add(call.call_id)
         await self._emit("cancel_call", call_id=call.call_id, operation_id=call.operation_id, reason=reason)
-        if self.executor:
+        # A call this controller services internally (the built-in corpus lookup) was
+        # never given to self.executor and must never trigger ITS cancel() -- that would
+        # notify an unrelated external tool about a call it never received (M3).
+        if self.executor and not (self._corpus_installed and call.tool == CORPUS_TOOL_NAME):
             async def cancel():
                 try:
                     status = await self._bounded(self.executor.cancel(call.call_id), 1)
@@ -902,6 +1032,7 @@ class Agent:
             # request or undoing an explicit stop.
             call.status = "success"
             self.results.append(result.model_copy(update={"status": "success"}))
+            self._results_admitted += 1
             await self._emit("error", code="effect_committed_after_invalidation"
                              if call.call_id in self.invalidated else "conflicting_write_outcome",
                              call_id=call.call_id, operation_id=call.operation_id,
@@ -923,6 +1054,7 @@ class Agent:
             if call.effect == "write" and result.committed:
                 call.status = "success"
                 self.results.append(result)
+                self._results_admitted += 1
                 await self._emit("error", code="effect_committed_after_invalidation", call_id=call.call_id,
                                  operation_id=call.operation_id, result=result.result,
                                  message="Cancellation did not roll back this effect.")
@@ -950,9 +1082,11 @@ class Agent:
             # Status schema is dynamic; expose operation identity to the reasoner, which
             # can propose the declared read-only status tool. Never repeat the write.
             self.results.append(result)
+            self._results_admitted += 1
             self._start_plan()
         elif result.status == "success":
             self.results.append(result)
+            self._results_admitted += 1
             if call.effect == "write":
                 self.state.status = "completed"
                 self.last_request_finished = True
@@ -991,6 +1125,7 @@ class Agent:
                 confirmed = ToolResult(call_id=original.call_id, status="success", committed=True,
                                        result=result.result)
                 self.results.append(confirmed)
+                self._results_admitted += 1
                 if original.call_id in self.invalidated:
                     await self._emit("error", code="effect_committed_after_invalidation",
                                      call_id=original.call_id, result=result.result)

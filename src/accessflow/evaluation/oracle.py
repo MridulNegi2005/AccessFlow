@@ -26,19 +26,51 @@ class TaskExpectation(Model):
         return self
 
 
-def evaluate_task(expectation, rows, effects, manifests=(), completion_status="completed"):
+def _select_outcome(outputs, terminal_kind, terminal_code, terminal_cause):
+    """Pick the one output event that is this scenario's declared terminal condition.
+
+    A scenario declares what its correct endpoint looks like via `terminal_output`:
+    a final answer by default, or something else, such as an unanswered
+    clarification. This selects the matching event for that declared kind, so a
+    clarification scenario can be scored at all, and so an unrelated turn, a
+    stale earlier clarification, or a spurious final response can never be
+    selected in its place merely for being the last output. There is no
+    fallback to "whatever output came last" and no fallback to a session-end
+    snapshot: if nothing matches, there is no outcome, and slot checks read an
+    empty dictionary, the same as a stalled or abandoned request.
+    """
+    if terminal_kind == "final":
+        # Existing final-result scenarios keep exactly their original selection:
+        # the last final event, regardless of which event caused it.
+        finals = [event for event in outputs if event["kind"] == "final"]
+        return finals[-1] if finals else None
+    matches = [event for event in outputs if event["kind"] == terminal_kind
+               and event.get("payload", {}).get("caused_by_event_id") == terminal_cause
+               and (terminal_code is None or event.get("payload", {}).get("code") == terminal_code)]
+    return matches[-1] if matches else None
+
+
+def evaluate_task(expectation, rows, effects, manifests=(), completion_status="completed",
+                  terminal_output=None, terminal_cause=None):
     """Compare against independent executor state, never attempted tool_call count.
 
     Effects are matched as an unordered multiset with exact semantic arguments. Only
     the manifest-declared idempotency argument may be omitted by the human oracle.
     This is a labeled mock task outcome, not an official or clinical score.
+
+    `terminal_output` and `terminal_cause` mirror the scenario's own declared terminal
+    condition (`Scenario.terminal_output`, and the same predicate `replay.py` uses to
+    decide the run is done) and drive which output event's state is read for `slots`
+    and `final_basis` -- see `_select_outcome`. Omitting them reproduces the historical
+    final-only selection, which existing final-result scenarios keep unchanged.
     """
     if expectation is None:
         return {"passed": None, "checks": [], "reason": "No task expectation supplied"}
     expected = TaskExpectation.model_validate(expectation)
     outputs = [row["event"] for row in rows if row.get("type") == "output"]
-    finals = [event for event in outputs if event["kind"] == "final"]
-    last = finals[-1] if finals else None
+    terminal_kind = (terminal_output or {}).get("kind", "final")
+    terminal_code = (terminal_output or {}).get("code")
+    outcome = _select_outcome(outputs, terminal_kind, terminal_code, terminal_cause)
     checks = []
 
     def check(name, passed, wanted, actual):
@@ -46,12 +78,13 @@ def evaluate_task(expectation, rows, effects, manifests=(), completion_status="c
 
     check("run_completed", completion_status == "completed", "completed", completion_status)
     if expected.require_final:
-        check("final_response", bool(last), True, bool(last))
+        check("final_response", bool(outcome), True, bool(outcome))
     if expected.final_basis is not None:
-        actual = last.get("payload", {}).get("basis") if last else None
+        actual = outcome.get("payload", {}).get("basis") if outcome else None
         check("final_basis", actual == expected.final_basis, expected.final_basis, actual)
-    # A terminal session-end snapshot is not evidence that the intended task completed.
-    slots = last.get("state", {}).get("slots", {}) if last else {}
+    # The outcome snapshot is the declared terminal event's own state, never a
+    # session-end snapshot and never "whatever output happened to come last".
+    slots = outcome.get("state", {}).get("slots", {}) if outcome else {}
     for name, value in expected.slots.items():
         slot = slots.get(name)
         actual = slot.get("value") if isinstance(slot, dict) else None

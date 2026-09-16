@@ -28,11 +28,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.evidence_bundle import (INFRA_ADMISSION_FAILURE, LABEL_MEANINGS,  # noqa: E402
-                                     QUALITY_EXCLUDED_LABELS, SCORED_FAIL_GENERATED_OUTPUT,
-                                     SCORED_FAIL_OUTPUT_MISMATCH, SCORED_PASS,
-                                     TIMEOUT_UNDETERMINED_CAUSE, UNDETERMINED_FAILURE, UNSCORED,
-                                     classify_eligibility, load_frozen_times)
+from scripts.evidence_bundle import (GENERATION_THEN_INFRA_FAILURE, INFRA_ADMISSION_FAILURE,  # noqa: E402
+                                     LABEL_MEANINGS, QUALITY_EXCLUDED_LABELS,
+                                     SCORED_FAIL_GENERATED_OUTPUT, SCORED_FAIL_OUTPUT_MISMATCH,
+                                     SCORED_PASS, TIMEOUT_UNDETERMINED_CAUSE, UNDETERMINED_FAILURE,
+                                     UNSCORED, classify_eligibility, load_frozen_times)
 
 DIAG_LIMIT = 200
 
@@ -40,6 +40,7 @@ VERDICT_TEXT = {
     SCORED_PASS: "pass",
     SCORED_FAIL_OUTPUT_MISMATCH: "fail",
     SCORED_FAIL_GENERATED_OUTPUT: "fail (generated output rejected by provider)",
+    GENERATION_THEN_INFRA_FAILURE: "fail (generated output, then infra failure)",
     TIMEOUT_UNDETERMINED_CAUSE: "fail (timeout, undetermined cause)",
     UNDETERMINED_FAILURE: "fail (undetermined cause)",
     INFRA_ADMISSION_FAILURE: "excluded (infra admission failure)",

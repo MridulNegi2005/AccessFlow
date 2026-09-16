@@ -11,8 +11,21 @@ VERSION = "0.1"
 
 # Plain, single-level filenames only: no path separators, no leading dot (also excludes
 # "." and ".."), no drive/scheme markers. Mirrors accessflow.corpus.is_safe_document_name;
-# kept independent (no cross-import) so contracts.py has no dependency on corpus.py.
-_SAFE_CORPUS_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$")
+# kept independent (no cross-import) so contracts.py has no dependency on corpus.py. \Z
+# (not $) so a trailing newline cannot slip through -- Python's $ matches immediately
+# before a final "\n" as well as at the true end of string.
+_SAFE_CORPUS_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,119}\Z")
+
+# Windows reserved device names, mirroring accessflow.corpus._RESERVED_STEMS. Any of
+# these as a name's stem (the part before its first ".") addresses the device, not a
+# file, regardless of extension. Checked case-insensitively.
+_RESERVED_STEMS = frozenset(
+    {"CON", "PRN", "AUX", "NUL"} | {f"COM{n}" for n in range(1, 10)} | {f"LPT{n}" for n in range(1, 10)}
+)
+
+
+def _is_reserved_stem(name):
+    return name.split(".", 1)[0].upper() in _RESERVED_STEMS
 
 
 class Model(BaseModel):
@@ -46,7 +59,7 @@ class Start(Model):
     def valid_corpus(self):
         if len(self.corpus) != len(set(self.corpus)):
             raise ValueError("Corpus document names must be unique")
-        if any(not _SAFE_CORPUS_NAME.match(name) for name in self.corpus):
+        if any(not _SAFE_CORPUS_NAME.match(name) or _is_reserved_stem(name) for name in self.corpus):
             raise ValueError("Corpus document names must be plain filenames with no path separators")
         return self
 

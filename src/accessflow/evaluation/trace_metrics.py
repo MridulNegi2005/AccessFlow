@@ -290,6 +290,154 @@ def _final_slot_accuracy(
     return correct / labeled, {"correct": correct, "labeled": labeled, "sample_count": 1}
 
 
+def _expected_effects(metadata: Mapping[str, Any]) -> list[Any] | None:
+    """Read the oracle's effect expectation from run metadata, never from a model.
+
+    Follows the `_expected_slots` lookup pattern. A committed trace does not carry
+    a flat `expected_effects` field today; the developer-authored expectation lives
+    inside `task_oracle`, the same evidence `oracle.py` recorded when it graded the
+    run. A `None` result means the oracle supplied no effect expectation at all, so
+    the run cannot produce a wrong-action verdict. An empty list is a real
+    expectation -- it means the oracle expected zero effects -- and is returned as is.
+    """
+
+    for candidate in (
+        metadata.get("expected_effects"),
+        _as_mapping(metadata.get("labels")) and _as_mapping(metadata["labels"]).get("expected_effects"),
+    ):
+        if isinstance(candidate, list):
+            return candidate
+    oracle = _as_mapping(metadata.get("task_oracle"))
+    checks = oracle.get("checks") if oracle is not None else None
+    if isinstance(checks, list):
+        for check in checks:
+            if isinstance(check, Mapping) and check.get("name") == "committed_effects":
+                expected = check.get("expected")
+                if isinstance(expected, list):
+                    return expected
+    return None
+
+
+def _session_tool_manifests(
+    records: list[tuple[str, Mapping[str, Any], float | None, Mapping[str, Any]]]
+) -> dict[str | None, dict[str, Mapping[str, Any]]]:
+    manifests: defaultdict[str | None, dict[str, Mapping[str, Any]]] = defaultdict(dict)
+    for typ, event, _, _ in records:
+        if typ != "input" or _event_kind(event) != "session_start":
+            continue
+        for tool in _payload(event).get("tools", []):
+            if isinstance(tool, Mapping) and isinstance(tool.get("name"), str):
+                manifests[event.get("session_id")][tool["name"]] = tool
+    return manifests
+
+
+def _idempotency_parameter(manifests: dict[str | None, dict[str, Mapping[str, Any]]], tool: str) -> str | None:
+    # The idempotency key is a property of the tool, not the session; a trace has
+    # one scenario session in practice, so a tool-name lookup across manifests is
+    # sufficient and keeps this independent of which session recorded the call.
+    for session_manifests in manifests.values():
+        manifest = session_manifests.get(tool)
+        if isinstance(manifest, Mapping) and isinstance(manifest.get("idempotency_parameter"), str):
+            return manifest["idempotency_parameter"]
+    return None
+
+
+def _normalized_effect(
+    tool: Any, arguments: Any, manifests: dict[str | None, dict[str, Mapping[str, Any]]]
+) -> tuple[str, dict[str, Any]] | None:
+    if not isinstance(tool, str) or not tool:
+        return None
+    normalized = dict(arguments) if isinstance(arguments, Mapping) else {}
+    idempotency_parameter = _idempotency_parameter(manifests, tool)
+    if idempotency_parameter is not None:
+        normalized.pop(idempotency_parameter, None)
+    return tool, normalized
+
+
+def _effect_key(tool: str, arguments: Mapping[str, Any]) -> tuple[str, str]:
+    return tool, json.dumps(arguments, sort_keys=True, default=str)
+
+
+def _wrong_action_rate(
+    committed_effects: list[tuple[str, dict[str, Any]]],
+    metadata: Mapping[str, Any],
+    manifests: dict[str | None, dict[str, Mapping[str, Any]]],
+) -> dict[str, Any]:
+    """Rate of committed effects the developer-authored oracle did not expect.
+
+    A wrong action is a state-changing effect the controller actually committed
+    that does not match the oracle's expectation. It counts what the system did,
+    never what it attempted and never what it claimed in a final response.
+    `committed_effects` must already carry only independently confirmed writes --
+    resolved the same way `committed_effect_outcomes` resolves them, including a
+    status read that reconciles an otherwise unknown write -- so this function only
+    classifies, it never decides what committed. Matching is multiset equality on
+    (tool, arguments), the same discipline `oracle.py` uses, so an extra delivery of
+    a correct effect cannot silently cover a different missing one. A miss -- an
+    expected effect never committed -- is tracked separately and never added to the
+    wrong-action count. A run whose oracle supplied no effect expectation is
+    unscored: it produces no rate and is not folded into any other run's numerator
+    or denominator.
+    """
+
+    expected_effects = _expected_effects(metadata)
+    if expected_effects is None:
+        return {
+            "scored": False,
+            "rate": None,
+            "wrong_actions": None,
+            "committed_effects": None,
+            "sample_count": 0,
+            "expected_effects": None,
+            "missed_expected": None,
+            "unexpected": None,
+            "wrong_arguments": None,
+            "duplicate_expected": None,
+        }
+
+    expected_pairs = [
+        pair for pair in (_normalized_effect(entry.get("tool") if isinstance(entry, Mapping) else None,
+                                              entry.get("arguments") if isinstance(entry, Mapping) else None,
+                                              manifests)
+                           for entry in expected_effects)
+        if pair is not None
+    ]
+    committed_pairs = committed_effects
+
+    expected_counts = Counter(_effect_key(tool, arguments) for tool, arguments in expected_pairs)
+    expected_tools = {tool for tool, _ in expected_pairs}
+    satisfied: Counter = Counter()
+    unexpected = wrong_arguments = duplicate_expected = 0
+    for tool, arguments in committed_pairs:
+        key = _effect_key(tool, arguments)
+        if satisfied[key] < expected_counts.get(key, 0):
+            satisfied[key] += 1
+            continue
+        if expected_counts.get(key, 0) > 0:
+            duplicate_expected += 1
+        elif tool in expected_tools:
+            wrong_arguments += 1
+        else:
+            unexpected += 1
+    missed_expected = sum(count - satisfied.get(key, 0) for key, count in expected_counts.items())
+
+    wrong_actions = unexpected + wrong_arguments + duplicate_expected
+    committed_total = len(committed_pairs)
+    rate = wrong_actions / committed_total if committed_total else None
+    return {
+        "scored": True,
+        "rate": rate,
+        "wrong_actions": wrong_actions,
+        "committed_effects": committed_total,
+        "sample_count": committed_total,
+        "expected_effects": len(expected_pairs),
+        "missed_expected": missed_expected,
+        "unexpected": unexpected,
+        "wrong_arguments": wrong_arguments,
+        "duplicate_expected": duplicate_expected,
+    }
+
+
 def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     """Compute evidence-aware metrics from a typed trace or JSONL path.
 
@@ -324,6 +472,10 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
     operation_display: dict[tuple[str | None, str], str] = {}
     operation_sessions: defaultdict[str, set[str | None]] = defaultdict(set)
     manifest_effects: defaultdict[str | None, dict[str, str]] = defaultdict(dict)
+    # Latest declared tool/arguments/effect per operation, used only to name and
+    # classify a committed effect once its commitment is independently confirmed
+    # below -- never used by itself as evidence that anything committed.
+    operation_identity: dict[tuple[str | None, str], tuple[str, Any, str | None]] = {}
     for typ, event, _, _ in records:
         if typ != "input" or _event_kind(event) != "session_start":
             continue
@@ -355,6 +507,11 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
             call_to_effect[(event.get("session_id"), call_id)] = effect
         operation_display[operation_key] = operation_id
         operation_sessions[operation_id].add(event.get("session_id"))
+        tool_name = _event_value(event, "tool")
+        if isinstance(tool_name, str) and tool_name:
+            operation_identity[operation_key] = (
+                tool_name, _event_value(event, "arguments"), effect if effect in {"read", "write"} else None,
+            )
 
     def display_operation(operation_key: tuple[str | None, str]) -> str:
         operation_id = operation_display[operation_key]
@@ -462,6 +619,27 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
             "sample_count": len(logical_resolved),
             "counts": {key: outcome_counts.get(key, 0) for key in ("committed", "not_committed", "unknown")},
         }
+
+    # A committed write effect, named from the operation's own tool_call and gated
+    # on the same operation-level "committed" resolution used for
+    # committed_effect_outcomes -- so a write reconciled only through a later
+    # status read still counts, exactly as it does there.
+    tool_manifests = _session_tool_manifests(records)
+    committed_write_effects: list[tuple[str, dict[str, Any]]] = []
+    for operation_key, resolved in logical_resolved.items():
+        if resolved != "committed":
+            continue
+        tool_name, arguments, effect = operation_identity.get(operation_key, (None, None, None))
+        if not isinstance(tool_name, str) or not tool_name:
+            continue
+        if effect is None:
+            effect = manifest_effects.get(operation_key[0], {}).get(tool_name)
+        if effect != "write":
+            continue
+        normalized = _normalized_effect(tool_name, arguments, tool_manifests)
+        if normalized is not None:
+            committed_write_effects.append(normalized)
+    wrong_action_rate = _wrong_action_rate(committed_write_effects, metadata, tool_manifests)
     attempt_outcome_counts = Counter(attempt_resolved.values())
     attempt_outcomes = None
     if attempt_resolved:
@@ -513,6 +691,7 @@ def evaluate_trace(source: str | Path | Iterable[Mapping[str, Any]]) -> dict[str
         "conflicting_terminal_evidence": conflicts or None,
         "slot_accuracy": slot_accuracy,
         "slot_accuracy_detail": slot_detail,
+        "wrong_action_rate": wrong_action_rate,
         "latency": {
             "correction_to_cancellation_s": correction_latency,
             "acknowledgment_from_input_receipt_s": acknowledgement_receipt_latency,

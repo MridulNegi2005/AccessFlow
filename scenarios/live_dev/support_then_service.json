@@ -122,7 +122,8 @@
               "device"
             ]
           }
-        ]
+        ],
+        "write_requested": true
       }
     },
     {
