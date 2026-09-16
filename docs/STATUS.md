@@ -283,6 +283,10 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   protecting active and pending work from eviction. A regression confirms twelve completed unique
   audio sources stay bounded, retained stale revisions remain suppressed, and an evicted source is
   reprocessed as new; full verification passes 786 tests with one retained conflict xfail and Ruff.
+- Local perception now caps retained session worker registries at 64 entries per modality and fails
+  closed when a new session would exceed that bound, avoiding unbounded worker-object retention.
+  A session-capacity regression passes; full verification passes 787 tests with one retained conflict
+  xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
