@@ -332,3 +332,16 @@ before invoking its detector. Unsupported widths and malformed partial samples r
 retained expected conflict example; Ruff passes. This is deterministic offline evidence with an
 injected detector. Held-out speech quality, live acoustic timing validation and live vision remain
 unverified. Commits: `051f5f2`, `e021882`.
+
+## 2026-09-16 - Browser interruption route
+
+**Task:** Close the owned demo interruption gap using the existing typed `InterruptEvent` contract.
+
+**Changes:** `event_from_message` now validates and translates `speech` and `task` interruption messages,
+including optional utterance IDs, timestamps and envelope sequence. The browser now exposes separate Stop
+speaking and Stop task controls, with the active utterance ID attached when available. Invalid scope and
+field types return recoverable adapter errors. The engine and shared contracts were unchanged.
+
+**Status:** Demo interruption coverage and the full suite pass: 102 demo tests with one retained expected
+conflict example, 630 full tests with one retained expected conflict example; Ruff passes. No live browser
+device or human feedback session was used. Commits: `cddcfc1`, `3f603a6`.

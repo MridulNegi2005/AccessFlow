@@ -152,13 +152,16 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   and the WebRTC path converts those widths before calling the detector. Focused audio coverage
   passes 38 tests and the full branch passes 620 tests with one retained conflict example; held-out
   speech-quality measurement and hardware timing validation remain open.
+- The browser adapter now translates typed `speech` and `task` interruption events, and the demo
+  exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
+  usability after a speech interruption; no engine or shared-contract change was needed.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
   default `none` so audio-only behaviour is unchanged. This is finding A2; see the ownership
   note in `CONTRACT_PROPOSALS.md` for why this file stays with Atishay despite the general
   directory rule.
-- Microphone capture and voluntary feedback notes.
+- Voluntary feedback notes and live microphone/device validation.
 - Demo video and presentation draft.
 
 ### Completed since this list was last written (as of 15 September 2026)
