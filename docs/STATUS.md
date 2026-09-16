@@ -205,6 +205,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Direct PNG validation now rejects `PLTE` chunks for grayscale and grayscale-with-alpha images before
   a vision provider can receive the malformed input. Focused local-perception coverage passes 49 tests;
   the full branch passes 677 tests with one retained conflict example and Ruff passes.
+- Ollama vision configuration now rejects blank and non-string grounding prompts and normalizes valid
+  prompt whitespace before a request can reach the local model. The full branch passes 679 tests with
+  one retained conflict example and two dependency deprecation warnings; Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
