@@ -563,6 +563,9 @@ Updated 16 September 2026.
 - The live benchmark now records the configured per-request timeout in its report and exposes an
   explicit `--timeout` option. Invalid timeout environment values no longer break the offline
   opt-in skip path; full verification passes 774 tests with one retained conflict xfail and Ruff.
+- Timing replay now selects the newest transcript revision available when each acoustic pause ends,
+  so a later provisional revision cannot suppress an earlier eligible final revision. The regression
+  and full verification pass 775 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
