@@ -105,3 +105,24 @@ def test_live_audio_result_covers_every_audio_case():
         for item in manifest["cases"]
         if item["modality"] == "audio"
     )
+
+
+def test_mixed_e2e_result_covers_entire_inventory():
+    root, manifest = _manifest()
+    result = json.loads(
+        (root / "docs" / "feedback" / "MULTIMODAL_SCENARIO_RESULTS.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    case_ids = {case["id"] for case in manifest["cases"]}
+    result_ids = {item["id"] for item in result["results"]}
+    assert result["mode"] == "mixed_local_audio_injected_vision_mock_reasoning"
+    assert result["cases"] == result["observations"] == 60
+    assert result_ids == case_ids
+    assert Counter(item["backend"] for item in result["results"]) == {
+        "demo/mock-text": 30,
+        "faster-whisper/cpu-int8": 18,
+        "fake/replay-vision": 12,
+    }
+    assert all(item["controller_output_kind"] == "final" for item in result["results"])
+    assert all(case["e2e_evidence_status"] == "mixed_e2e_replayed" for case in manifest["cases"])

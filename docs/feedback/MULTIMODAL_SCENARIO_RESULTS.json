@@ -1,0 +1,1089 @@
+{
+  "recorded": "2026-09-16",
+  "mode": "mixed_local_audio_injected_vision_mock_reasoning",
+  "model": "Systran/faster-whisper-base.en",
+  "model_snapshot": "3d3d5dee26484f91867d81cb899cfcf72b96be6c",
+  "audio_backend": "faster-whisper/cpu-int8",
+  "vision_backend": "fake/replay-vision",
+  "reasoning_backend": "mock/capturing-reasoner",
+  "session_id": "live-mixed-inventory",
+  "cases": 60,
+  "observations": 60,
+  "total_elapsed_s": 12.38,
+  "by_modality": {
+    "text": {
+      "cases": 30,
+      "finals": 30
+    },
+    "audio": {
+      "cases": 18,
+      "finals": 18
+    },
+    "image": {
+      "cases": 12,
+      "finals": 12
+    }
+  },
+  "results": [
+    {
+      "id": "text-01",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-01",
+      "source_id": "text-01",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.002,
+      "transcript_or_caption": "Book a screen repair for Friday at ten."
+    },
+    {
+      "id": "text-02",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-02",
+      "source_id": "text-02",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Book Tuesday ... actually Wednesday at five."
+    },
+    {
+      "id": "text-03",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-03",
+      "source_id": "text-03",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "I want two tickets, two tickets."
+    },
+    {
+      "id": "text-04",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-04",
+      "source_id": "text-04",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "I tried restarting already, then the screen still flickers."
+    },
+    {
+      "id": "text-05",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-05",
+      "source_id": "text-05",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Wait, use the other device."
+    },
+    {
+      "id": "text-06",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-06",
+      "source_id": "text-06",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "No, keep the original device."
+    },
+    {
+      "id": "text-07",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-07",
+      "source_id": "text-07",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Stop speaking while a read-only lookup is running."
+    },
+    {
+      "id": "text-08",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-08",
+      "source_id": "text-08",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Stop the whole task before any write."
+    },
+    {
+      "id": "text-09",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-09",
+      "source_id": "text-09",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "mm-hmm"
+    },
+    {
+      "id": "text-10",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-10",
+      "source_id": "text-10",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Background noise arrives during a partial request."
+    },
+    {
+      "id": "text-11",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-11",
+      "source_id": "text-11",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Book Tues"
+    },
+    {
+      "id": "text-12",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-12",
+      "source_id": "text-12",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Book Tuesday actually Wed"
+    },
+    {
+      "id": "text-13",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-13",
+      "source_id": "text-13",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Book Tuesday actually Wednesday at five"
+    },
+    {
+      "id": "text-14",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-14",
+      "source_id": "text-14",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Change only the appointment time to six."
+    },
+    {
+      "id": "text-15",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-15",
+      "source_id": "text-15",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Change the day but preserve the existing device."
+    },
+    {
+      "id": "text-16",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-16",
+      "source_id": "text-16",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Ask for the missing appointment day."
+    },
+    {
+      "id": "text-17",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-17",
+      "source_id": "text-17",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Read the repair policy before the request ends."
+    },
+    {
+      "id": "text-18",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-18",
+      "source_id": "text-18",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "A late result returns for an old day."
+    },
+    {
+      "id": "text-19",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-19",
+      "source_id": "text-19",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "A duplicate result returns for the current call."
+    },
+    {
+      "id": "text-20",
+      "modality": "text",
+      "split": "development",
+      "event_id": "e2e-text-20",
+      "source_id": "text-20",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "A write times out with a status tool available."
+    },
+    {
+      "id": "text-21",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-21",
+      "source_id": "text-21",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Repeat the same intentional booking after completion."
+    },
+    {
+      "id": "text-22",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-22",
+      "source_id": "text-22",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Cancel after the write is confirmed."
+    },
+    {
+      "id": "text-23",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-23",
+      "source_id": "text-23",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "The response is lost after a write attempt."
+    },
+    {
+      "id": "text-24",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-24",
+      "source_id": "text-24",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Use an unfamiliar tool manifest for the same request."
+    },
+    {
+      "id": "text-25",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-25",
+      "source_id": "text-25",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.001,
+      "transcript_or_caption": "Correct the time twice before completion."
+    },
+    {
+      "id": "text-26",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-26",
+      "source_id": "text-26",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Keep unrelated device details across a correction."
+    },
+    {
+      "id": "text-27",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-27",
+      "source_id": "text-27",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "A final transcript arrives after a partial revision."
+    },
+    {
+      "id": "text-28",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-28",
+      "source_id": "text-28",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Ask for clarification rather than guessing a location."
+    },
+    {
+      "id": "text-29",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-29",
+      "source_id": "text-29",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Finish a fluent request without an unnecessary long wait."
+    },
+    {
+      "id": "text-30",
+      "modality": "text",
+      "split": "held_out",
+      "event_id": "e2e-text-30",
+      "source_id": "text-30",
+      "revision": 0,
+      "backend": "demo/mock-text",
+      "final": true,
+      "context_modalities": [
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.0,
+      "transcript_or_caption": "Restart the session and submit a new request."
+    },
+    {
+      "id": "audio-01",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-01",
+      "source_id": "audio-01",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 2.029,
+      "transcript_or_caption": "My screen keeps flickering after the update. Book Wednesday at 5."
+    },
+    {
+      "id": "audio-02",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-02",
+      "source_id": "audio-02",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.626,
+      "transcript_or_caption": "Book Tuesday. Actually, Wednesday at 5."
+    },
+    {
+      "id": "audio-03",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-03",
+      "source_id": "audio-03",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.596,
+      "transcript_or_caption": "Please book a screen repair for Friday at 10."
+    },
+    {
+      "id": "audio-04",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-04",
+      "source_id": "audio-04",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.598,
+      "transcript_or_caption": "I want Tuesday, Tuesday, actually Wednesday at 5."
+    },
+    {
+      "id": "audio-05",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-05",
+      "source_id": "audio-05",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.645,
+      "transcript_or_caption": "I tried restarting already. The screen still flickers."
+    },
+    {
+      "id": "audio-06",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-06",
+      "source_id": "audio-06",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.628,
+      "transcript_or_caption": "The screen flickers, after the update."
+    },
+    {
+      "id": "audio-07",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-07",
+      "source_id": "audio-07",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.565,
+      "transcript_or_caption": "Book Tuesday. Tuesday. Actually Wednesday."
+    },
+    {
+      "id": "audio-08",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-08",
+      "source_id": "audio-08",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.646,
+      "transcript_or_caption": "Use this device. Wait, the other one."
+    },
+    {
+      "id": "audio-09",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-09",
+      "source_id": "audio-09",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.552,
+      "transcript_or_caption": "Stop speaking, but keep the repair task ready."
+    },
+    {
+      "id": "audio-10",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-10",
+      "source_id": "audio-10",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.599,
+      "transcript_or_caption": "Stop the task before it books anything."
+    },
+    {
+      "id": "audio-11",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-11",
+      "source_id": "audio-11",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.683,
+      "transcript_or_caption": "I need a repair for Friday. M.M.H.M."
+    },
+    {
+      "id": "audio-12",
+      "modality": "audio",
+      "split": "development",
+      "event_id": "e2e-audio-12",
+      "source_id": "audio-12",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.571,
+      "transcript_or_caption": "The screen flickers after the update."
+    },
+    {
+      "id": "audio-13",
+      "modality": "audio",
+      "split": "held_out",
+      "event_id": "e2e-audio-13",
+      "source_id": "audio-13",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.561,
+      "transcript_or_caption": "2 tickets, 2 tickets"
+    },
+    {
+      "id": "audio-14",
+      "modality": "audio",
+      "split": "held_out",
+      "event_id": "e2e-audio-14",
+      "source_id": "audio-14",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.553,
+      "transcript_or_caption": "Change the appointment time from 5 to 6."
+    },
+    {
+      "id": "audio-15",
+      "modality": "audio",
+      "split": "held_out",
+      "event_id": "e2e-audio-15",
+      "source_id": "audio-15",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.653,
+      "transcript_or_caption": "Correct the date twice. Tuesday, Wednesday, Thursday."
+    },
+    {
+      "id": "audio-16",
+      "modality": "audio",
+      "split": "held_out",
+      "event_id": "e2e-audio-16",
+      "source_id": "audio-16",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.601,
+      "transcript_or_caption": "I tried restarting already. The screen still flickers."
+    },
+    {
+      "id": "audio-17",
+      "modality": "audio",
+      "split": "held_out",
+      "event_id": "e2e-audio-17",
+      "source_id": "audio-17",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.585,
+      "transcript_or_caption": "Please book a screen repair for Friday at 10."
+    },
+    {
+      "id": "audio-18",
+      "modality": "audio",
+      "split": "held_out",
+      "event_id": "e2e-audio-18",
+      "source_id": "audio-18",
+      "revision": 0,
+      "backend": "faster-whisper/cpu-int8",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.618,
+      "transcript_or_caption": "Submit a new request after session reset."
+    },
+    {
+      "id": "image-01",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-01",
+      "source_id": "image-01",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "WED 5"
+    },
+    {
+      "id": "image-02",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-02",
+      "source_id": "image-02",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.003,
+      "transcript_or_caption": "TUE / WED"
+    },
+    {
+      "id": "image-03",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-03",
+      "source_id": "image-03",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.005,
+      "transcript_or_caption": "DATE ?"
+    },
+    {
+      "id": "image-04",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-04",
+      "source_id": "image-04",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.005,
+      "transcript_or_caption": "DEVICE B"
+    },
+    {
+      "id": "image-05",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-05",
+      "source_id": "image-05",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image",
+        "text"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "FRAME 2"
+    },
+    {
+      "id": "image-06",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-06",
+      "source_id": "image-06",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "BOOK 5"
+    },
+    {
+      "id": "image-07",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-07",
+      "source_id": "image-07",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "APPROVE ?"
+    },
+    {
+      "id": "image-08",
+      "modality": "image",
+      "split": "development",
+      "event_id": "e2e-image-08",
+      "source_id": "image-08",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.005,
+      "transcript_or_caption": "AUDIO + IMG"
+    },
+    {
+      "id": "image-09",
+      "modality": "image",
+      "split": "held_out",
+      "event_id": "e2e-image-09",
+      "source_id": "image-09",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "OLD FRAME"
+    },
+    {
+      "id": "image-10",
+      "modality": "image",
+      "split": "held_out",
+      "event_id": "e2e-image-10",
+      "source_id": "image-10",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "QUOTA"
+    },
+    {
+      "id": "image-11",
+      "modality": "image",
+      "split": "held_out",
+      "event_id": "e2e-image-11",
+      "source_id": "image-11",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.004,
+      "transcript_or_caption": "UNCERTAIN"
+    },
+    {
+      "id": "image-12",
+      "modality": "image",
+      "split": "held_out",
+      "event_id": "e2e-image-12",
+      "source_id": "image-12",
+      "revision": 0,
+      "backend": "fake/replay-vision",
+      "final": true,
+      "context_modalities": [
+        "audio",
+        "image"
+      ],
+      "controller_output_kind": "final",
+      "controller_basis": "informational",
+      "elapsed_s": 0.005,
+      "transcript_or_caption": "RESET"
+    }
+  ],
+  "limitations": [
+    "Vision responses are injected labels for the authored inline PNGs because no live vision service was available.",
+    "Reasoning is a mock capture and no state-changing tools were provided or invoked.",
+    "Audio fixtures are generated local material; this run does not establish human speech quality or user benefit."
+  ]
+}
