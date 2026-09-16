@@ -589,6 +589,9 @@ Updated 16 September 2026.
 - Demo input admission now fails closed when the bounded agent queue is full, allowing the existing
   shutdown path to cancel a stalled agent instead of waiting forever. Two queue-lifecycle regressions
   pass; full verification passes 783 tests with one retained conflict xfail and Ruff.
+- Demo sender cleanup now bounds the wait for a peer send that never returns, cancelling and gathering
+  the sender before perception teardown. The sender-lifecycle regression passes; full verification
+  passes 784 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
