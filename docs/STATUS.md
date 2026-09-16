@@ -279,6 +279,10 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   allowing the existing cleanup path to cancel stalled sessions instead of waiting forever. The
   output-queue saturation regression passes; full verification passes 785 tests with one retained
   conflict xfail and Ruff.
+- Perception workers now bound retained source token and revision state to 64 recent keys while
+  protecting active and pending work from eviction. A regression confirms twelve completed unique
+  audio sources stay bounded and retained stale revisions remain suppressed; full verification
+  passes 786 tests with one retained conflict xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
