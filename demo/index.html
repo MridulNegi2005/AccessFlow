@@ -4,11 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AccessFlow mock demo</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <style>
     :root { color-scheme: dark; font: 16px system-ui, sans-serif; }
     body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #10131a; color: #eef1f7; }
     section { margin: 1rem 0; padding: 1rem; border: 1px solid #303747; border-radius: 12px; background: #171c26; }
     button { margin: .35rem .25rem .35rem 0; padding: .55rem .8rem; border: 0; border-radius: 8px; cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    label { display: block; margin: .35rem 0; color: #c7d0e3; }
     input[type=text] { width: min(100%, 620px); padding: .6rem; border-radius: 8px; border: 1px solid #586277; background: #0c0f15; color: inherit; }
     code { color: #9ee6b3; } small { color: #aab4c8; }
     pre { white-space: pre-wrap; margin: 0; }
@@ -17,11 +20,12 @@
 </head>
 <body>
   <h1>AccessFlow</h1>
-  <p>Minimal queue-driven browser demo. <strong>Perception backend: demo/mock</strong>. Inputs and responses are illustrative mock evidence.</p>
+  <p>Minimal queue-driven browser demo. <strong>Perception and reasoning backends: <span id="backend-label">connecting</span></strong>. Inputs and responses are labeled evidence.</p>
 
   <section>
     <h2>Text</h2>
     <form id="text-form">
+      <label for="text">Transcript</label>
       <input id="text" type="text" placeholder="Try: Book Tues... actually Wednesday" required>
       <button>Send final transcript</button>
       <button type="button" id="partial">Send partial</button>
@@ -30,17 +34,20 @@
 
   <section>
     <h2>Audio</h2>
+    <label for="audio">WAV audio file</label>
     <input id="audio" type="file" accept="audio/wav,.wav">
-    <button type="button" id="send-audio">Upload WAV to mock route</button>
-    <button type="button" id="mic">Use microphone mock input</button>
-    <small>Selected WAV bytes are uploaded for this session and validated. The perception response remains demo/mock.</small>
+    <button type="button" id="send-audio">Upload WAV to selected backend</button>
+    <button type="button" id="mic">Start microphone capture</button>
+    <button type="button" id="stop-mic" disabled>Stop and upload microphone</button>
+    <small>Selected WAV bytes and microphone PCM are uploaded for this session and validated. Audio uses demo/mock by default; an existing local Faster Whisper model can be enabled by configuration.</small>
   </section>
 
   <section>
     <h2>Image</h2>
+    <label for="image">PNG image file</label>
     <input id="image" type="file" accept="image/png,.png">
-    <button type="button" id="send-image">Upload PNG to mock route</button>
-    <small>Selected PNG bytes are uploaded for this session and validated. The perception response remains demo/mock.</small>
+    <button type="button" id="send-image">Upload PNG to selected backend</button>
+    <small>Selected PNG bytes are uploaded for this session and validated. Image uses demo/mock by default; an existing local Ollama vision model can be enabled by configuration.</small>
   </section>
 
   <section>
@@ -51,34 +58,93 @@
   <script>
     const socket = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws');
     const events = document.querySelector('#events');
+    const backendLabel = document.querySelector('#backend-label');
+    const micButton = document.querySelector('#mic');
+    const stopMicButton = document.querySelector('#stop-mic');
     let revision = 0;
     let utterance = 0;
+    let activeUtteranceId = null;
+    let mediaSequence = 0;
+    let eventSequence = 0;
+    let microphone = null;
+    let mediaSendChain = Promise.resolve();
+    const pendingMessages = [];
+    const maxPendingMessages = 16;
 
     function show(event) {
+      if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
+        const reasoner = event.payload.reasoner_backend;
+        backendLabel.textContent = reasoner
+          ? `${event.payload.perception_backend} | ${reasoner}`
+          : event.payload.perception_backend;
+      }
       const card = document.createElement('div');
       card.className = 'event';
-      card.innerHTML = '<strong>' + event.kind + '</strong><pre>' +
-        JSON.stringify(event, null, 2) + '</pre>';
+      const heading = document.createElement('strong');
+      heading.textContent = event.kind;
+      const details = document.createElement('pre');
+      details.textContent = JSON.stringify(event, null, 2);
+      card.append(heading, details);
       events.prepend(card);
     }
 
-    function send(kind, payload) {
-      socket.send(JSON.stringify({ kind, payload }));
+    function messageFor(kind, payload) {
+      const sourceTimestamp = payload.timestamp ?? (
+        performance.timeOrigin / 1000 + performance.now() / 1000
+      );
+      const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
+      return JSON.stringify({ kind, timestamp: sourceTimestamp, sequence: ++eventSequence, payload: eventPayload });
+    }
+
+    function send(kind, payloadOrFactory) {
+      if (socket.readyState === WebSocket.CONNECTING) {
+        if (pendingMessages.length >= maxPendingMessages) {
+          show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The connection queue is full.' } });
+          return false;
+        }
+        const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
+        const message = messageFor(kind, payload);
+        pendingMessages.push(message);
+        show({ kind: 'demo_status', payload: { backend: 'browser/transport', queued: true } });
+        return true;
+      }
+      if (socket.readyState !== WebSocket.OPEN) {
+        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session is closed.' } });
+        return false;
+      }
+      const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
+      const message = messageFor(kind, payload);
+      socket.send(message);
+      return true;
     }
 
     function transcript(final) {
-      utterance += 1;
-      revision = 0;
-      return {
-        utterance_id: 'browser-' + utterance,
+      if (activeUtteranceId === null) {
+        utterance += 1;
+        activeUtteranceId = 'browser-' + utterance;
+        revision = 0;
+      } else {
+        revision += 1;
+      }
+      const result = {
+        utterance_id: activeUtteranceId,
         revision,
         text: document.querySelector('#text').value,
         final
       };
+      if (final) {
+        activeUtteranceId = null;
+        revision = 0;
+      }
+      return result;
     }
 
-    async function fileToBase64(file) {
-      const bytes = new Uint8Array(await file.arrayBuffer());
+    function nextMediaId(prefix) {
+      mediaSequence += 1;
+      return prefix + '-' + mediaSequence;
+    }
+
+    function bytesToBase64(bytes) {
       let binary = '';
       const chunkSize = 0x8000;
       for (let offset = 0; offset < bytes.length; offset += chunkSize) {
@@ -87,37 +153,149 @@
       return btoa(binary);
     }
 
-    async function sendFile(kind, selector, fallback) {
-      const file = document.querySelector(selector).files[0];
-      if (!file) {
-        send(kind, { path: fallback });
+    async function fileToBase64(file) {
+      return bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+    }
+
+    function encodeWav(chunks, sampleRate) {
+      const sampleCount = chunks.reduce((total, chunk) => total + chunk.length, 0);
+      const buffer = new ArrayBuffer(44 + sampleCount * 2);
+      const view = new DataView(buffer);
+      const writeText = (offset, value) => {
+        for (let index = 0; index < value.length; index += 1) {
+          view.setUint8(offset + index, value.charCodeAt(index));
+        }
+      };
+      writeText(0, 'RIFF');
+      view.setUint32(4, 36 + sampleCount * 2, true);
+      writeText(8, 'WAVE');
+      writeText(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeText(36, 'data');
+      view.setUint32(40, sampleCount * 2, true);
+      let offset = 44;
+      for (const chunk of chunks) {
+        for (const sample of chunk) {
+          const clipped = Math.max(-1, Math.min(1, sample));
+          view.setInt16(offset, clipped < 0 ? clipped * 0x8000 : clipped * 0x7fff, true);
+          offset += 2;
+        }
+      }
+      return new Uint8Array(buffer);
+    }
+
+    function setMicrophoneButtons(recording) {
+      micButton.disabled = recording;
+      stopMicButton.disabled = !recording;
+    }
+
+    async function startMicrophone() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: 'This browser does not expose microphone capture.' } });
         return;
       }
+      let stream;
+      let context;
       try {
-        send(kind, {
-          data_base64: await fileToBase64(file),
-          filename: file.name,
-          utterance_id: kind === 'audio' ? 'upload-' + Date.now() : undefined,
-          frame_id: kind === 'frame' ? 'upload-' + Date.now() : undefined
-        });
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        context = new AudioContext();
+        if (!context.audioWorklet) {
+          throw new Error('This browser does not support AudioWorklet microphone capture.');
+        }
+        await context.audioWorklet.addModule('/recorder-worklet.js');
+        const source = context.createMediaStreamSource(stream);
+        const recorder = new AudioWorkletNode(context, 'accessflow-recorder');
+        const silentGain = context.createGain();
+        silentGain.gain.value = 0;
+        const chunks = [];
+        recorder.port.onmessage = (event) => {
+          chunks.push(new Float32Array(event.data));
+        };
+        source.connect(recorder);
+        recorder.connect(silentGain);
+        silentGain.connect(context.destination);
+        microphone = { stream, context, source, recorder, silentGain, chunks, sampleRate: context.sampleRate };
+        setMicrophoneButtons(true);
+        show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: true } });
       } catch (error) {
-        show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
+        stream?.getTracks().forEach((track) => track.stop());
+        await context?.close();
+        show({ kind: 'demo_error', payload: { backend: 'browser/microphone-capture', message: error.message } });
       }
     }
 
+    async function stopMicrophone() {
+      if (!microphone) return;
+      const current = microphone;
+      microphone = null;
+      current.recorder.port.close();
+      current.recorder.disconnect();
+      current.source.disconnect();
+      current.silentGain.disconnect();
+      current.stream.getTracks().forEach((track) => track.stop());
+      await current.context.close();
+      setMicrophoneButtons(false);
+      const wav = encodeWav(current.chunks, current.sampleRate);
+      const uploaded = await enqueueMediaAction(() => send('audio', () => ({
+          data_base64: bytesToBase64(wav),
+          filename: 'browser-microphone.wav',
+          utterance_id: nextMediaId('mic-audio')
+        })));
+      show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: false, uploaded } });
+    }
+
+    function enqueueMediaAction(action) {
+      mediaSendChain = mediaSendChain.then(action, action);
+      return mediaSendChain;
+    }
+
+    function sendFile(kind, selector, fallback) {
+      const file = document.querySelector(selector).files[0];
+      const action = async () => {
+        if (!file) {
+          send(kind, { path: fallback });
+          return;
+        }
+        try {
+          const dataBase64 = await fileToBase64(file);
+          send(kind, () => ({
+            data_base64: dataBase64,
+            filename: file.name,
+            utterance_id: kind === 'audio' ? nextMediaId('upload-audio') : undefined,
+            frame_id: kind === 'frame' ? nextMediaId('upload-frame') : undefined
+          }));
+        } catch (error) {
+          show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
+        }
+      };
+      return enqueueMediaAction(action);
+    }
+
     socket.onmessage = (message) => show(JSON.parse(message.data));
-    socket.onopen = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: true } });
+    socket.onopen = () => {
+      while (pendingMessages.length) socket.send(pendingMessages.shift());
+      show({ kind: 'demo_status', payload: { connected: true } });
+    };
+    socket.onclose = () => {
+      pendingMessages.length = 0;
+      show({ kind: 'demo_status', payload: { connected: false } });
+    };
     socket.onerror = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: false } });
 
     document.querySelector('#text-form').onsubmit = (event) => {
       event.preventDefault();
-      send('transcript', transcript(true));
+      send('transcript', () => transcript(true));
     };
-    document.querySelector('#partial').onclick = () => send('transcript', transcript(false));
+    document.querySelector('#partial').onclick = () => send('transcript', () => transcript(false));
     document.querySelector('#send-audio').onclick = () => void sendFile('audio', '#audio', 'browser-mock.wav');
-    document.querySelector('#mic').onclick = () => {
-      send('audio', { path: 'browser-microphone-' + Date.now() + '.wav', utterance_id: 'mic-' + Date.now() });
-    };
+    micButton.onclick = () => void startMicrophone();
+    stopMicButton.onclick = () => void stopMicrophone();
     document.querySelector('#send-image').onclick = () => void sendFile('frame', '#image', 'browser-mock.png');
   </script>
 </body>

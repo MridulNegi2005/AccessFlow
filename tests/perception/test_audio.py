@@ -1,10 +1,11 @@
+import math
 import struct
 import wave
 from pathlib import Path
 
 import pytest
 
-from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, summarize_activity, validate_wav, webrtc_activity
+from accessflow.perception import ActivityFrame, AudioBuffer, WavFormat, energy_activity, load_pcm, PauseCandidate, pause_candidates, summarize_activity, validate_wav, webrtc_activity
 
 
 def _write_stereo_wav(path: Path) -> None:
@@ -35,6 +36,14 @@ def test_stereo_input_is_downmixed_and_resampled(tmp_path: Path):
     assert len(buffer.pcm) / 2 == pytest.approx(160, abs=1)
 
 
+@pytest.mark.parametrize("target_rate", [True, 0, -1, 16_000.0, "16000"])
+def test_loader_rejects_invalid_target_rate(target_rate):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+
+    with pytest.raises(ValueError, match="target_rate"):
+        load_pcm(fixture, target_rate=target_rate)
+
+
 def test_energy_activity_exposes_frame_timing_without_claiming_vad():
     silence = b"\x00\x00" * 320
     tone = b"".join(struct.pack("<h", 10_000) for _ in range(320))
@@ -52,6 +61,23 @@ def test_energy_activity_exposes_frame_timing_without_claiming_vad():
 def test_energy_activity_rejects_invalid_configuration():
     with pytest.raises(ValueError, match="frame_ms"):
         energy_activity(AudioBuffer(b"\x00\x00", 16_000, 2), frame_ms=0)
+    with pytest.raises(ValueError, match="frame_ms"):
+        energy_activity(AudioBuffer(b"\x00\x00", 16_000, 2), frame_ms=20.0)
+    with pytest.raises(ValueError, match="rms_threshold"):
+        energy_activity(AudioBuffer(b"\x00\x00", 16_000, 2), rms_threshold=500.0)
+
+
+def test_energy_activity_rejects_invalid_buffer_metadata():
+    for sample_rate in (0, 16_000.0, True):
+        with pytest.raises(ValueError, match="sample_rate"):
+            energy_activity(AudioBuffer(b"\x00\x00", sample_rate, 2))
+    with pytest.raises(ValueError, match="sample widths"):
+        energy_activity(AudioBuffer(b"\x00\x00", 16_000, True))
+
+
+def test_energy_activity_rejects_partial_sample():
+    with pytest.raises(ValueError, match="partial sample"):
+        energy_activity(AudioBuffer(b"\x00", 16_000, 2))
 
 
 def test_audio_buffer_metadata_is_explicit():
@@ -89,6 +115,20 @@ def test_checked_in_speech_fixture_has_declared_format():
         sample_rate=22_050,
         frames=116_949,
     )
+
+
+def test_wav_validation_rejects_truncated_pcm_payload(tmp_path: Path):
+    wav_path = tmp_path / "truncated.wav"
+    with wave.open(str(wav_path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(16_000)
+        handle.writeframes(b"\x00\x00" * 8)
+
+    wav_path.write_bytes(wav_path.read_bytes()[:-2])
+
+    with pytest.raises(ValueError, match="truncated"):
+        validate_wav(wav_path)
 
 
 def test_activity_summary_reports_windows_and_trailing_pause_without_completion():
@@ -155,6 +195,12 @@ def test_webrtc_activity_rejects_unsupported_format():
 
     with pytest.raises(ValueError, match="frame_ms"):
         webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), frame_ms=25)
+    with pytest.raises(ValueError, match="frame_ms"):
+        webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), frame_ms=20.0)
+    with pytest.raises(ValueError, match="aggressiveness"):
+        webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), aggressiveness=2.0)
+    with pytest.raises(ValueError, match="sample rate"):
+        webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000.0, 2))
 
 
 def test_checked_in_pause_fixture_has_declared_format():
@@ -166,3 +212,45 @@ def test_checked_in_pause_fixture_has_declared_format():
         sample_rate=22_050,
         frames=132_830,
     )
+
+
+def test_pause_candidates_keep_internal_and_trailing_gaps_separate():
+    frames = (
+        ActivityFrame(0.00, 0.02, 1_000, True),
+        ActivityFrame(0.02, 0.62, 0, False),
+        ActivityFrame(0.62, 0.64, 1_000, True),
+        ActivityFrame(0.64, 1.14, 0, False),
+    )
+
+    candidates = pause_candidates(frames, min_pause_s=0.4)
+
+    assert len(candidates) == 2
+    assert candidates[0] == PauseCandidate(0.02, 0.62, pytest.approx(0.6), trailing=False)
+    assert candidates[1].start_s == 0.64
+    assert candidates[1].end_s == pytest.approx(1.14)
+    assert candidates[1].duration_s == pytest.approx(0.5)
+    assert candidates[1].trailing is True
+
+
+def test_pause_candidates_ignore_short_gaps_and_all_silence():
+    frames = (
+        ActivityFrame(0.00, 0.02, 1_000, True),
+        ActivityFrame(0.02, 0.12, 0, False),
+        ActivityFrame(0.12, 0.14, 1_000, True),
+    )
+
+    assert pause_candidates(frames, min_pause_s=0.4) == ()
+    assert pause_candidates(
+        (ActivityFrame(0.0, 0.5, 0, False),),
+        min_pause_s=0.1,
+    ) == ()
+
+
+@pytest.mark.parametrize("threshold", [True, math.nan, math.inf, "0.4"])
+def test_pause_thresholds_reject_nonfinite_or_wrong_types(threshold):
+    frame = (ActivityFrame(0.0, 0.5, 1_000, True),)
+
+    with pytest.raises(ValueError, match="pause_after_s"):
+        summarize_activity(frame, pause_after_s=threshold)
+    with pytest.raises(ValueError, match="min_pause_s"):
+        pause_candidates(frame, min_pause_s=threshold)

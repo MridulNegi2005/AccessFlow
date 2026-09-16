@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import os
 import binascii
-import struct
+import importlib.util
+import math
 import tempfile
 import uuid
 from pathlib import Path
@@ -21,6 +23,7 @@ from accessflow.contracts import (
     Frame,
     FrameEvent,
     Observation,
+    OutputEvent,
     PlanProposal,
     Start,
     StartEvent,
@@ -29,17 +32,108 @@ from accessflow.contracts import (
 )
 from accessflow.engine import Agent
 from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
-from accessflow.perception import validate_wav
+from accessflow.perception import LocalPerception, OllamaVisionProvider, validate_png, validate_wav
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
+MAX_CONTEXT_CHARS = 16_384
+
+_reasoner_spec = importlib.util.spec_from_file_location(
+    "accessflow_demo_reasoner", ROOT / "reasoner.py"
+)
+if _reasoner_spec is None or _reasoner_spec.loader is None:
+    raise ImportError("Unable to load the demo reasoner")
+_reasoner_module = importlib.util.module_from_spec(_reasoner_spec)
+_reasoner_spec.loader.exec_module(_reasoner_module)
+MAX_REASONER_CONTEXT_CHARS = _reasoner_module.MAX_REASONER_CONTEXT_CHARS
+MAX_REASONER_RESPONSE_BYTES = _reasoner_module.MAX_REASONER_RESPONSE_BYTES
+OllamaReasoner = _reasoner_module.OllamaReasoner
+
 app = FastAPI(title="AccessFlow mock demo")
 
 
 class DemoPerception:
-    """Explicitly labeled mock input adapter for the browser demo."""
+    """Demo adapter with an explicit mock default and optional local audio."""
+
+    def __init__(self, *, audio_backend=None, vision_backend=None):
+        self._audio_backend = audio_backend
+        self._vision_backend = vision_backend
+        self._closed = False
+        self._vision_perception = (
+            LocalPerception(vision_provider=vision_backend)
+            if vision_backend is not None
+            else None
+        )
+
+    async def aclose(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        backends = [self._audio_backend, self._vision_perception]
+        closers = [getattr(backend, "aclose", None) for backend in backends]
+        await asyncio.gather(
+            *(closer() for closer in closers if closer is not None),
+            return_exceptions=True,
+        )
+
+    @classmethod
+    def from_environment(cls):
+        model_path = os.environ.get("ACCESSFLOW_DEMO_WHISPER_MODEL", "").strip()
+        if not model_path:
+            audio_backend = None
+        else:
+            resolved_model_path = Path(model_path).expanduser()
+        if model_path and not resolved_model_path.is_dir():
+            raise ValueError(
+                "ACCESSFLOW_DEMO_WHISPER_MODEL must point to an existing local model directory"
+            )
+        if model_path:
+            audio_backend = LocalPerception(model_path=resolved_model_path)
+
+        vision_model = os.environ.get("ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL", "").strip()
+        vision_backend = None
+        if vision_model:
+            vision_backend = OllamaVisionProvider(
+                model=vision_model,
+                endpoint=os.environ.get(
+                    "ACCESSFLOW_DEMO_OLLAMA_ENDPOINT",
+                    "http://127.0.0.1:11434/api/generate",
+                ),
+            )
+        return cls(audio_backend=audio_backend, vision_backend=vision_backend)
+
+    @property
+    def backend_label(self):
+        if self._audio_backend is None and self._vision_backend is None:
+            return "demo/mock"
+        labels = []
+        if self._audio_backend is None:
+            labels.append("demo/mock audio")
+        else:
+            audio_backend_name = getattr(self._audio_backend, "audio_backend_name", None)
+            if audio_backend_name == "faster-whisper/cpu-int8":
+                labels.append("local/Faster Whisper CPU INT8 audio")
+            elif audio_backend_name:
+                labels.append(f"{audio_backend_name} audio")
+            else:
+                labels.append("local/unknown-audio")
+        if self._vision_backend is None:
+            labels.append("demo/mock text/image")
+        else:
+            vision_model = getattr(self._vision_backend, "model", None)
+            vision_backend_name = getattr(self._vision_backend, "backend_name", None)
+            if vision_backend_name and vision_backend_name.startswith("ollama/") and vision_model:
+                labels.append(f"local/Ollama {vision_model} image")
+            elif vision_backend_name:
+                labels.append(f"{vision_backend_name} image")
+            else:
+                labels.append("local/unknown-vision image")
+        return " + ".join(labels)
 
     async def observe(self, event):
+        if self._closed:
+            return
         if isinstance(event, TranscriptEvent):
             payload = event.payload
             yield Observation(
@@ -55,6 +149,10 @@ class DemoPerception:
             )
             return
         if isinstance(event, AudioEvent):
+            if self._audio_backend is not None:
+                async for observation in self._audio_backend.observe(event):
+                    yield observation
+                return
             payload = event.payload
             yield Observation(
                 event_id=event.event_id,
@@ -69,6 +167,10 @@ class DemoPerception:
             )
             return
         if isinstance(event, FrameEvent):
+            if self._vision_backend is not None:
+                async for observation in self._vision_perception.observe(event):
+                    yield observation
+                return
             payload = event.payload
             yield Observation(
                 event_id=event.event_id,
@@ -88,10 +190,43 @@ class DemoPerception:
 class DemoReasoner:
     """Return a visible mock response while the real reasoner is developed separately."""
 
+    @property
+    def backend_name(self):
+        return "demo/mock-reasoner"
+
+    @classmethod
+    def from_environment(cls):
+        model = os.environ.get("ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL", "").strip()
+        if not model:
+            return cls()
+        return OllamaReasoner(
+            model=model,
+            endpoint=os.environ.get(
+                "ACCESSFLOW_DEMO_OLLAMA_REASONER_ENDPOINT",
+                "http://127.0.0.1:11434/api/generate",
+            ),
+        )
+
     async def plan(self, view, manifests) -> PlanProposal:
         latest = view.observations[-1]
+        context_items = []
+        context_chars = 0
+        for observation in reversed(view.observations[:-1]):
+            item = f"{observation.modality}: {observation.text}"
+            separator = 2 if context_items else 0
+            available = MAX_CONTEXT_CHARS - context_chars - separator
+            if available <= 0:
+                break
+            if len(item) > available:
+                item = item[:available]
+                context_items.append(item)
+                break
+            context_items.append(item)
+            context_chars += separator + len(item)
+        prior_context = "; ".join(reversed(context_items))
+        context_suffix = f" | multimodal context: {prior_context}" if prior_context else ""
         return PlanProposal(
-            response=f"Mock agent received {latest.modality} input.",
+            response=f"Mock agent received {latest.modality} input: {latest.text}{context_suffix}",
             request_complete=True,
         )
 
@@ -101,12 +236,29 @@ async def index() -> FileResponse:
     return FileResponse(ROOT / "index.html")
 
 
+@app.get("/favicon.svg")
+async def favicon() -> FileResponse:
+    return FileResponse(ROOT / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/recorder-worklet.js")
+async def recorder_worklet() -> FileResponse:
+    return FileResponse(ROOT / "recorder-worklet.js", media_type="application/javascript")
+
+
 def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | None) -> str:
     data = payload.get("data_base64")
     if data is None:
-        return payload.get("path", "browser-mock.wav" if kind == "audio" else "browser-mock.png")
+        fallback = "browser-mock.wav" if kind == "audio" else "browser-mock.png"
+        if media_root is None:
+            return payload.get("path", fallback)
+        return str(media_root / fallback)
     if media_root is None:
         raise ValueError("media upload requires a session directory")
+    if not isinstance(data, str):
+        raise ValueError("media upload must be base64 text")
+    if len(data) > MAX_BASE64_CHARS:
+        raise ValueError("media upload exceeds the 8 MiB limit or is empty")
     try:
         raw = base64.b64decode(data, validate=True)
     except (binascii.Error, ValueError) as error:
@@ -119,20 +271,72 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
             raise ValueError("audio upload must be a RIFF WAV file")
         path = media_root / f"audio-{uuid.uuid4().hex}.wav"
         path.write_bytes(raw)
-        validate_wav(path)
+        try:
+            validate_wav(path)
+        except ValueError as error:
+            path.unlink(missing_ok=True)
+            raise ValueError("audio upload must be a valid PCM WAV file") from error
         return str(path)
 
     if kind == "frame":
-        if len(raw) < 24 or raw[:8] != b"\x89PNG\r\n\x1a\n" or raw[12:16] != b"IHDR":
-            raise ValueError("image upload must be a PNG file")
-        width, height = struct.unpack(">II", raw[16:24])
-        if width < 1 or height < 1:
-            raise ValueError("image upload has invalid dimensions")
         path = media_root / f"frame-{uuid.uuid4().hex}.png"
         path.write_bytes(raw)
+        try:
+            validate_png(path)
+        except ValueError as error:
+            path.unlink(missing_ok=True)
+            raise ValueError("image upload must be a valid PNG file") from error
         return str(path)
-
     raise ValueError(f"Unsupported upload kind: {kind}")
+
+
+def _source_id(payload: dict[str, Any], key: str) -> str:
+    """Return a generated identity for omitted IDs and reject blank identities."""
+    if key not in payload:
+        return str(uuid.uuid4())
+    value = payload[key]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"browser {key} must be a non-empty string")
+    return value
+
+
+def _finite_timestamp(value: Any, key: str) -> int | float:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value < 0
+    ):
+        raise ValueError(f"browser {key} must be a finite non-negative number")
+    return value
+
+
+def _revision(payload: dict[str, Any]) -> int:
+    value = payload.get("revision", 0)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("browser revision must be a non-negative integer")
+    return value
+
+
+def _sequence(message: dict[str, Any]) -> int:
+    value = message.get("sequence", 0)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("browser sequence must be a non-negative integer")
+    return value
+
+
+def _final_flag(payload: dict[str, Any]) -> bool:
+    value = payload.get("final", True)
+    if not isinstance(value, bool):
+        raise ValueError("browser final must be a boolean")
+    return value
+
+
+def _text(payload: dict[str, Any]) -> str:
+    value = payload.get("text", "")
+    if not isinstance(value, str):
+        raise ValueError("browser text must be a string")
+    return value
 
 
 def event_from_message(
@@ -142,38 +346,83 @@ def event_from_message(
     media_root: Path | None = None,
 ):
     """Translate browser messages into typed v0.1 input events."""
+    if not isinstance(message, dict):
+        raise ValueError("browser event must be a JSON object")
     kind = message.get("kind")
     payload = message.get("payload", {})
+    if not isinstance(payload, dict):
+        raise ValueError("browser event payload must be an object")
+    timestamp = _finite_timestamp(
+        message.get("timestamp", payload.get("timestamp", 0)), "timestamp"
+    )
+    sequence = _sequence(message)
     if kind == "transcript":
+        speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
+        speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
+        if speech_end < speech_start:
+            raise ValueError("browser speech_end must be at least speech_start")
         return TranscriptEvent(
             session_id=session_id,
+            timestamp=timestamp,
+            sequence=sequence,
             payload=Transcript(
-                utterance_id=payload.get("utterance_id", str(uuid.uuid4())),
-                revision=payload.get("revision", 0),
-                text=payload.get("text", ""),
-                final=payload.get("final", True),
-                speech_start=payload.get("speech_start", 0),
-                speech_end=payload.get("speech_end", 0),
+                utterance_id=_source_id(payload, "utterance_id"),
+                revision=_revision(payload),
+                text=_text(payload),
+                final=_final_flag(payload),
+                speech_start=speech_start,
+                speech_end=speech_end,
             ),
         )
     if kind == "audio":
+        speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
+        speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
+        if speech_end < speech_start:
+            raise ValueError("browser speech_end must be at least speech_start")
+        utterance_id = _source_id(payload, "utterance_id")
+        revision = _revision(payload)
         return AudioEvent(
             session_id=session_id,
+            timestamp=timestamp,
+            sequence=sequence,
             payload=Audio(
                 path=_materialize_upload("audio", payload, media_root),
-                utterance_id=payload.get("utterance_id", str(uuid.uuid4())),
-                revision=payload.get("revision", 0),
+                utterance_id=utterance_id,
+                revision=revision,
+                speech_start=speech_start,
+                speech_end=speech_end,
             ),
         )
     if kind == "frame":
+        frame_id = _source_id(payload, "frame_id")
         return FrameEvent(
             session_id=session_id,
+            timestamp=timestamp,
+            sequence=sequence,
             payload=Frame(
                 path=_materialize_upload("frame", payload, media_root),
-                frame_id=payload.get("frame_id", str(uuid.uuid4())),
+                frame_id=frame_id,
             ),
         )
     raise ValueError(f"Unsupported browser event: {kind}")
+
+
+async def _materialize_event(
+    session_id: str,
+    message: dict[str, Any],
+    media_root: Path,
+    active_tasks: set[asyncio.Task[Any]],
+):
+    """Keep threaded upload materialization alive if the receiver is cancelled."""
+    task = asyncio.create_task(
+        asyncio.to_thread(event_from_message, session_id, message, media_root=media_root)
+    )
+    active_tasks.add(task)
+    try:
+        return await asyncio.shield(task)
+    finally:
+        if task.done():
+            active_tasks.discard(task)
 
 
 @app.websocket("/ws")
@@ -182,34 +431,89 @@ async def websocket(websocket: WebSocket) -> None:
     session_id = str(uuid.uuid4())
     incoming: asyncio.Queue = asyncio.Queue()
     outgoing: asyncio.Queue = asyncio.Queue()
+
+    async def send_outputs():
+        while True:
+            event = await outgoing.get()
+            if event is None:
+                return
+            if isinstance(event, OutputEvent):
+                event = event.model_dump(mode="json")
+            try:
+                await websocket.send_json(event)
+            except Exception:
+                # A closed peer makes the transport unusable; route cleanup owns shutdown.
+                return
+
+    sender = asyncio.create_task(send_outputs())
+    try:
+        perception = DemoPerception.from_environment()
+        reasoner_factory = getattr(DemoReasoner, "from_environment", None)
+        reasoner = reasoner_factory() if callable(reasoner_factory) else DemoReasoner()
+    except ValueError as error:
+        await outgoing.put(
+            {"kind": "demo_error", "payload": {"backend": "demo/config", "message": str(error)}}
+        )
+        await outgoing.put(None)
+        await asyncio.gather(sender, return_exceptions=True)
+        await websocket.close(code=1008)
+        return
+    await outgoing.put(
+        {
+            "kind": "demo_status",
+            "payload": {
+                "perception_backend": perception.backend_label,
+                "reasoner_backend": getattr(reasoner, "backend_name", "demo/unknown-reasoner"),
+            },
+        }
+    )
     agent = Agent(
-        DemoPerception(),
+        perception,
         FinalFlagPolicy(),
-        DemoReasoner(),
+        reasoner,
         FakeTools(),
         MockOnlyAuthorization(),
     )
     agent_task = asyncio.create_task(agent.run(incoming, outgoing))
     await incoming.put(StartEvent(session_id=session_id, payload=Start()))
 
-    async def send_outputs():
-        while True:
-            event = await outgoing.get()
-            await websocket.send_json(event.model_dump(mode="json"))
-
     with tempfile.TemporaryDirectory(prefix="accessflow-demo-") as media_dir:
         media_root = Path(media_dir)
+        materialization_tasks: set[asyncio.Task[Any]] = set()
 
         async def receive_inputs():
             while True:
-                event = event_from_message(
-                    session_id,
-                    await websocket.receive_json(),
-                    media_root=media_root,
-                )
+                message = await websocket.receive_json()
+                try:
+                    event = await _materialize_event(
+                        session_id,
+                        message,
+                        media_root,
+                        materialization_tasks,
+                    )
+                except (TypeError, ValueError) as error:
+                    await outgoing.put(
+                        {
+                            "kind": "demo_error",
+                            "payload": {"backend": "demo/input", "message": str(error)},
+                        }
+                    )
+                    continue
+                if isinstance(event, AudioEvent):
+                    source_id = event.payload.utterance_id
+                elif isinstance(event, FrameEvent):
+                    source_id = event.payload.frame_id
+                else:
+                    source_id = None
+                if source_id is not None:
+                    await outgoing.put(
+                        {
+                            "kind": "demo_status",
+                            "payload": {"media_received": event.kind, "source_id": source_id},
+                        }
+                    )
                 await incoming.put(event)
 
-        sender = asyncio.create_task(send_outputs())
         receiver = asyncio.create_task(receive_inputs())
         try:
             done, _ = await asyncio.wait(
@@ -222,10 +526,13 @@ async def websocket(websocket: WebSocket) -> None:
         except (WebSocketDisconnect, RuntimeError, ValueError):
             pass
         finally:
-            for task in (sender, receiver):
+            for task in (receiver,):
                 if not task.done():
                     task.cancel()
-            await asyncio.gather(sender, receiver, return_exceptions=True)
+            await asyncio.gather(receiver, return_exceptions=True)
+            if materialization_tasks:
+                await asyncio.gather(*materialization_tasks, return_exceptions=True)
+                materialization_tasks.clear()
 
             if agent.running and not agent_task.done():
                 await incoming.put(EndEvent(session_id=session_id))
@@ -235,6 +542,10 @@ async def websocket(websocket: WebSocket) -> None:
                 except (asyncio.TimeoutError, RuntimeError):
                     agent_task.cancel()
             await asyncio.gather(agent_task, return_exceptions=True)
+            if not sender.done():
+                await outgoing.put(None)
+            await asyncio.gather(sender, return_exceptions=True)
+            await perception.aclose()
 
 
 if __name__ == "__main__":

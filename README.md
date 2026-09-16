@@ -43,6 +43,31 @@ The tests prove contract and adapter behavior only. No live ASR, vision quality,
 backend result or hardware latency is claimed yet. Next: turn timing policies, partial
 transcript cases, a replaceable vision adapter and the minimal fake-agent demo.
 
+
+### Checkpoint 1 - 13 September 2026: perception foundation
+
+Atishay's Workstream B has started on `atishay/perception`.
+
+- Added `LocalPerception` for transcript pass-through and raw PCM WAV validation.
+- Preserved utterance IDs, revisions, source event IDs and speech timestamps.
+- Added an injected ASR seam for deterministic tests and a lazy Faster Whisper CPU INT8
+  path that requires an already-installed local model.
+- Kept blocking WAV and transcription work off the event loop with `asyncio.to_thread`.
+- Image input is explicitly refused until a real replaceable vision provider is supplied;
+  no canned caption is treated as perception.
+
+Evidence from this checkpoint:
+
+```text
+uv run --python 3.12 --extra dev pytest -q  -> 21 passed
+uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
+                                             -> All checks passed
+```
+
+The tests prove contract and adapter behavior only. No live ASR, vision quality, hosted
+backend result or hardware latency is claimed yet. Next: turn timing policies, partial
+transcript cases, a replaceable vision adapter and the minimal fake-agent demo.
+
 ## Checkpoint 2 - 13 September 2026: turn policy baseline
 
 Added the first synchronous `HeuristicTurnPolicy` under Atishay's owned workstream.
@@ -290,15 +315,46 @@ uv run --python 3.12 --extra dev ruff check demo tests/demo
                                                        -> All checks passed
 ~~~
 
+## Checkpoint 15 - 13 September 2026: browser microphone capture
+
+Replaced the mock microphone button with browser capture that encodes mono PCM into a
+16-bit WAV and sends it through the existing validated session upload route.
+
+- Uses getUserMedia and a short-lived browser audio processor; the stream stops when the user uploads.
+- Encodes the captured samples as a RIFF/WAV payload before WebSocket transport.
+- Reuses the server-side 8 MiB limit, WAV validation and per-session temporary storage.
+- Keeps the downstream agent on demo/mock perception, so microphone transport is not live ASR evidence.
+- Adds static checks for the microphone controls, getUserMedia path and WAV encoder.
+
+Evidence from this checkpoint:
+
+~~~text
+uv run --python 3.12 --extra dev pytest tests/demo -q  -> 9 passed
+uv run --python 3.12 --extra dev ruff check demo tests/demo
+                                                       -> All checks passed
+~~~
+
+A real browser permission/device smoke run is still required before claiming microphone
+capture works on evaluator hardware.
+
+## Checkpoint 16 - 13 September 2026: endpoint candidate extraction
+
+Added internal and trailing pause candidates over activity windows.
+
+- Internal gaps and end-of-recording silence are returned separately with timestamps and durations.
+- Short gaps and all-silence input produce no endpoint candidate at the default threshold.
+- The helper remains timing-only; consumers must combine it with transcript revisions and turn policy.
+- On generated speech, WebRTC found an internal 0.780 s gap and a 0.640 s trailing gap.
+- On the pause-correction fixture, WebRTC found the designed 2.260 s internal gap and a 0.640 s trailing gap.
+
+This is endpointing evidence for development fixtures, not a semantic completion or held-out
+benchmark. The detailed measurements are in docs/feedback/VAD_MEASUREMENTS.md.
+
 Python 3.11 and `uv` are required:
 
 ```powershell
 uv sync --extra dev
 uv run pytest tests/test_contract.py
-uv run pytest -q
-uv run accessflow replay scenarios/dev/text_correction.json
-uv run accessflow metrics artifacts/replay.jsonl
-uv run accessflow suite scenarios/dev --output-dir artifacts/development-suite
 ```
 
 This is the canonical repository root. Organizer PDFs and prior research live outside
@@ -309,28 +365,179 @@ The internal protocol is v0.1, **not Samsung's unpublished wire schema**. Offlin
 prove contracts and orchestration only. No live ASR, vision quality, official-kit score,
 hardware latency or accessibility benefit is claimed by passing those tests.
 
-The public repository is https://github.com/MridulNegi2005/AccessFlow. Registration, final
+The shared GitHub remote is being set up at the user's request. Registration, final
 submission tag and submission are separate human steps. No API credentials are required
 for contract tests.
 
-## Development profiles
+## Checkpoint 17 - 13 September 2026: feedback and recording safeguards
 
-The default replay is **offline-fake**: scripted reasoning, transcript pass-through and
-mock external effects. It proves no ASR/vision capability. Explicit `--backend ollama`
-or `--backend gemini` exercises actual reasoning while external tools remain fake.
-See [docs/RUNNING.md](docs/RUNNING.md) for setup and model limits, and
-[local model setup and measurements](docs/LOCAL_MODELS.md) for the portable runtime.
+Added an ethical voluntary-feedback worksheet and a timed demo recording script.
 
-Use `--components local` with replay or suite to connect the process-isolated local adapter and
-`HeuristicTurnPolicy` to the engine. Reasoning stays scripted unless `--backend` is changed:
+- Feedback defaults to anonymized written notes.
+- Recording, upload or redistribution requires specific agreement before capture.
+- The worksheet records backend labels, prototype commit/configuration, retention and
+  deletion decisions, while excluding diagnosis, training and population claims.
+- The 4m40s recording script labels mock, local and future integration boundaries and
+  gives evidence-backed narration for corrections, stale results, image uncertainty,
+  reconciliation and current measurements.
 
-```powershell
-uv run accessflow suite scenarios/dev --components local --output-dir artifacts/integration-local
-```
+Files:
 
-The suite checks confirmed slots and actual mock effects; see
-[docs/EVALUATION.md](docs/EVALUATION.md). Raw audio requires a preinstalled ASR model;
-real vision, adaptive timing and model evaluation remain incomplete. GitHub Actions
-remains disabled; run the development checks locally.
+- docs/feedback/SESSION_TEMPLATE.md
+- docs/presentation/DEMO_RECORDING_SCRIPT.md
 
-Native media lifecycle and test limitations: [docs/PROCESS_WORKER.md](docs/PROCESS_WORKER.md).
+The session has not been run and no participant data has been collected. The recording
+has not been made; manual browser/device smoke and the Mridul engine integration remain.
+
+Local smoke evidence:
+
+~~~text
+GET http://127.0.0.1:8000/ -> 200
+served page contains getUserMedia, encodeWav and the demo/mock label
+uv run --python 3.12 --extra dev pytest -q -> 61 passed, 2 warnings
+~~~
+
+The browser-control surface was unavailable in this run, so microphone permission and
+physical-device capture remain unverified.
+## Checkpoint 18 - 13 September 2026: held-out generated speech and endpoint check
+
+Added three generated-voice cases after the earlier development fixtures and fixed timing
+threshold:
+
+- fluent request: “Please book a screen repair for Friday at ten.”
+- repetition and correction: “I want Tuesday, Tuesday, actually Wednesday at five.”
+- two-part request with a labeled 1.2 second inserted break.
+
+Faster Whisper base.en CPU INT8 recognized all three cases through LocalPerception.observe.
+The model emitted numerals for “ten” and “five”; the repeated phrase and correction wording
+were retained.
+
+WebRTC VAD at aggressiveness 2 and 20 ms found no internal candidate in the fluent or
+repetition case. In the pause case it found 1.880-3.860 seconds, overlapping the labeled
+2.549-3.749 second break. The candidate's interval-over-union was 0.606, with a -0.669
+second start error and +0.111 second end error. The early start is a known limitation of
+the fixed-window timing baseline.
+
+Evidence and provenance:
+
+- docs/feedback/HELD_OUT_CASES.json
+- docs/feedback/HELD_OUT_RESULTS.json
+- docs/feedback/ASR_MEASUREMENTS.md
+- docs/feedback/VAD_MEASUREMENTS.md
+- docs/feedback/PROVENANCE.md
+
+These are generated development cases held out from the earlier local examples. They do
+not establish human speech accuracy, representative generalization, endpoint quality or
+clinical benefit. The fixture metadata check passed; full-suite verification follows.
+## Checkpoint 19 - 13 September 2026: opt-in local audio demo path
+
+The browser demo now supports an explicit local audio mode without changing its safe
+default:
+
+~~~powershell
+$env:ACCESSFLOW_DEMO_WHISPER_MODEL = 'E:\path\to\existing\faster-whisper-model'
+uv run --python 3.12 uvicorn demo.app:app
+~~~
+
+When configured, uploaded or microphone WAV input uses LocalPerception and the page shows
+“local/Faster Whisper CPU INT8 audio + demo/mock text/image”. Text and image inputs remain
+demo/mock. The model must already exist locally; the demo does not download weights.
+
+Integration smoke evidence with the cached base.en model:
+
+~~~text
+WebSocket status: local/Faster Whisper CPU INT8 audio + demo/mock text/image
+Audio acknowledgment: faster-whisper/cpu-int8
+Controller final: Mock agent received audio input: Please book a screen repair for Friday at 10. (informational)
+~~~
+
+The backend route and controller output are verified through TestClient. Browser permission,
+physical microphone capture, live vision and a non-mock reasoner remain unverified.
+## Checkpoint 20 - 13 September 2026: presentation content outline
+
+Added docs/presentation/SLIDE_OUTLINE.md, a template-neutral eight-slide content draft
+for the required final presentation.
+
+It includes the scenario, failure mode, architecture, correction and pause evidence,
+action-safety states, browser/backend boundaries, current measurements and remaining
+gates. It explicitly labels generated fixtures, mock reasoning and missing live evidence.
+The official organizer template is still required before final assembly.
+## Checkpoint 21 - 13 September 2026: session path isolation
+
+Hardened the browser upload boundary so a WebSocket payload cannot make the demo read an
+arbitrary client-supplied filesystem path.
+
+- Byte uploads are decoded, validated and written inside the session temporary directory.
+- When no bytes are supplied, the mock fallback path is also rooted in that session.
+- Unit coverage confirms a path such as C:\private\recording.wav is never used when a
+  session upload root exists.
+- The no-root helper behavior remains available for isolated typed-event tests.
+
+This is a demo boundary hardening change; it does not alter shared contracts or authorize
+real actions.
+## Checkpoint 22 - 13 September 2026: local model configuration guard
+
+The opt-in local audio mode now validates its model directory before starting the demo
+session.
+
+- A missing or invalid ACCESSFLOW_DEMO_WHISPER_MODEL value produces a labeled demo/config
+  error and closes the WebSocket with a policy error code.
+- A valid existing directory still enables local Faster Whisper audio.
+- The default unset configuration remains demo/mock.
+- This prevents the page from advertising a local backend that cannot run.
+
+The guard is covered by unit and WebSocket tests. No shared contract or dependency changed.
+## Checkpoint 23 - 13 September 2026: opt-in local Ollama vision path
+
+Added an optional local PNG provider using the Ollama generate API.
+
+~~~powershell
+$env:ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL = 'gemma3:4b'
+$env:ACCESSFLOW_DEMO_OLLAMA_ENDPOINT = 'http://127.0.0.1:11434/api/generate'
+uv run --python 3.12 uvicorn demo.app:app
+~~~
+
+When configured, the demo routes PNG input through the existing LocalPerception validation
+and displays an ollama/gemma3:4b observation backend. The provider sends image bytes only
+to a loopback endpoint, never downloads a model, trims the response and surfaces service or
+shape errors. Text remains mock; audio stays independently configurable.
+
+The provider and demo delegate are covered with mocked responses. No ollama executable or
+loopback service was available on this machine, so model availability and live vision
+quality remain unverified.
+## Checkpoint 24 - 13 September 2026: WebSocket media protocol smoke
+
+Added end-to-end demo coverage for browser media messages after session materialization.
+
+- A base64 WAV upload is acknowledged as received, reaches the mock controller and produces
+  the expected informational final output.
+- A base64 PNG upload is acknowledged as received and preserved for the session; the current
+  v0.1 agent still needs a paired transcript before it emits a controller final output.
+- The transport status includes the media kind and source ID without changing perception
+  backend labels or shared contracts.
+
+Verification: pytest tests/demo -q -> 18 passed; pytest -q -> 77 passed; Ruff clean;
+git diff --check clean. FastAPI/Starlette dependency deprecation warnings remain informational.
+
+## Checkpoint 25 - 13 September 2026: functional Chrome browser smoke
+
+Ran the local demo through a temporary isolated Chrome session using the actual page controls.
+
+- Chrome connected to the WebSocket route and rendered the demo/mock backend label.
+- Text produced the visible mock acknowledgment and informational final output.
+- The checked-in WAV control produced a media-received audio status and mock final.
+- The PNG control produced a media-received frame status; a paired transcript then produced
+  its informational final.
+- The captured viewport had no horizontal overflow.
+- Uvicorn required local-only websockets 17.1 because the committed dependency set does not
+  currently include a WebSocket runtime. This is recorded as a proposal for the shared owner.
+- Physical microphone/device capture, pixel inspection and separate console capture remain
+  unverified.
+## Checkpoint 26 - 13 September 2026: synthetic microphone browser smoke
+
+Exercised the microphone controls in isolated Chrome with a synthetic audio device.
+
+- Start entered recording state; stop encoded the captured samples as WAV and uploaded them.
+- The session reported media_received=audio and emitted the expected mock final.
+- This run used no person or physical microphone. Physical device permission, pixel inspection
+  and separate console capture remain unverified.

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AccessFlow">
+  <rect width="64" height="64" rx="14" fill="#171c26"/>
+  <path d="M16 34 28 16l8 12 8-8 8 28H12z" fill="#7aa2f7"/>
+  <circle cx="28" cy="39" r="4" fill="#9ee6b3"/>
+</svg>
