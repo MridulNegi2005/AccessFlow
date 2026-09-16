@@ -4,11 +4,15 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from accessflow.contracts import Observation, SessionView, Snapshot, ToolCall
+from accessflow.contracts import Observation, PlanProposal, ProposedCall, SessionView, Snapshot, ToolCall
+from accessflow.evaluation.replay import replay
 from accessflow.evaluation.scenarios import Scenario, ScriptedStep, StepReasoner, load_scenario
+from accessflow.fakes import EventReasoner, FakePerception
 
 ROOT = Path(__file__).resolve().parents[2]
 DEV_SCENARIO = ROOT / "scenarios/dev/device_correction_during_write.json"
+CLARIFY_FIXTURE = ROOT / "scenarios/live_dev/audio_correction_ambiguous_hour_clarification.json"
+CLARIFY_AUDIO = (ROOT / "tests/fixtures/audio/synthetic_pause_correction.wav").resolve()
 
 
 def scenario():
@@ -132,6 +136,141 @@ def test_committed_audio_scenario_resolves_to_the_checked_in_fixture():
     assert resolved.is_absolute()
     assert resolved == (ROOT / "tests/fixtures/audio/synthetic_pause_correction.wav").resolve()
     assert resolved.is_file()
+
+
+# M1: scenarios/live_dev/audio_correction_ambiguous_hour_clarification.json declares
+# a clarification, never a final, as its correct endpoint. These drive the ACTUAL
+# committed fixture through real replay() with explicitly labelled fake perception
+# and a scripted reasoner -- no ASR, no live model, per the fixture's own provenance.
+
+
+def _clarify_fixture(tmp_path, timeout=0.3):
+    raw = json.loads(CLARIFY_FIXTURE.read_text(encoding="utf-8"))
+    raw["completion_timeout_s"] = timeout
+    raw["events"][-1]["payload"]["path"] = str(CLARIFY_AUDIO)
+    path = tmp_path / "clarify.json"
+    path.write_text(json.dumps(raw), encoding="utf-8")
+    return path
+
+
+async def _replay_clarify(tmp_path, proposal, timeout=0.3, deliver_observation=True):
+    source = _clarify_fixture(tmp_path, timeout)
+    definition = load_scenario(source)
+    event_id = definition.events[-1].event_id
+    observations = [Observation(event_id=event_id, source_id="u1", revision=0, modality="audio",
+                                text="Book Tuesday. Actually, Wednesday at five.", final=True,
+                                backend="test/injected-audio-observation")] if deliver_observation else []
+    perception = FakePerception(scripted={event_id: observations})
+    reasoner = EventReasoner({event_id: proposal} if proposal is not None else {})
+    trace = tmp_path / "trace.jsonl"
+    return await replay(source, trace, reasoner=reasoner, perception=perception)
+
+
+async def test_clarify_fixture_passes_on_correct_clarification_through_real_replay(tmp_path):
+    proposal = PlanProposal(slot_updates={"day": "Wednesday"},
+                            clarification="Do you mean five AM or PM?", request_complete=True)
+    result = await _replay_clarify(tmp_path, proposal)
+    assert result["completion_status"] == "completed"
+    assert result["task_oracle"]["passed"] is True
+    assert result["mock_effects"] == 0
+
+
+async def test_clarify_fixture_fails_on_wrong_day_through_real_replay(tmp_path):
+    proposal = PlanProposal(slot_updates={"day": "Tuesday"},
+                            clarification="Do you mean five AM or PM?", request_complete=True)
+    result = await _replay_clarify(tmp_path, proposal)
+    assert result["completion_status"] == "completed"
+    assert result["task_oracle"]["passed"] is False
+    checks = {c["name"]: c["passed"] for c in result["task_oracle"]["checks"]}
+    assert checks["slot:day"] is False
+
+
+async def test_clarify_fixture_fails_on_silence_through_real_replay(tmp_path):
+    result = await _replay_clarify(tmp_path, None, timeout=0.2, deliver_observation=False)
+    assert result["completion_status"] == "timeout"
+    assert result["task_oracle"]["passed"] is False
+    rows = [json.loads(line) for line in Path(result["trace"]).read_text().splitlines()]
+    kinds = [r["event"]["kind"] for r in rows if r.get("type") == "output"]
+    assert "clarify" not in kinds
+
+
+async def test_clarify_fixture_fails_on_acknowledgement_only_through_real_replay(tmp_path):
+    # The engine emits its own "I'll check that." acknowledgement for any complete
+    # utterance; an empty proposal that never actually asks the clarifying question
+    # must still fail, not be credited for that ambient acknowledgement.
+    result = await _replay_clarify(tmp_path, PlanProposal(), timeout=0.2)
+    assert result["completion_status"] == "timeout"
+    assert result["task_oracle"]["passed"] is False
+    rows = [json.loads(line) for line in Path(result["trace"]).read_text().splitlines()]
+    kinds = [r["event"]["kind"] for r in rows if r.get("type") == "output"]
+    assert "acknowledge" in kinds
+    assert "clarify" not in kinds
+
+
+async def test_clarify_fixture_fails_on_fabricated_final_through_real_replay(tmp_path):
+    # A confident final claiming the booking happened, with no tool call at all,
+    # must not be accepted just because it exists: the scenario's declared
+    # terminal condition is a clarify, so a final is never eligible to stand in.
+    proposal = PlanProposal(slot_updates={"day": "Wednesday"}, request_complete=True,
+                            response="Booked your Wednesday appointment.")
+    result = await _replay_clarify(tmp_path, proposal, timeout=0.2)
+    assert result["task_oracle"]["passed"] is False
+    checks = {c["name"]: c["passed"] for c in result["task_oracle"]["checks"]}
+    assert checks["slot:day"] is False
+    assert result["mock_effects"] == 0
+
+
+async def test_clarify_fixture_fails_on_premature_write_through_real_replay(tmp_path):
+    # A controller that guesses the hour and writes anyway must fail the exact
+    # zero-effects check even though the day it guessed happens to be right.
+    proposal = PlanProposal(
+        slot_updates={"day": "Wednesday", "hour": "17:00"}, request_complete=True, write_requested=True,
+        calls=[ProposedCall(tool="reserve_service_slot", arguments={"day": "Wednesday", "hour": "17:00"},
+                            dependencies=["day", "hour"])])
+    result = await _replay_clarify(tmp_path, proposal, timeout=0.3)
+    assert result["mock_effects"] == 1
+    assert result["task_oracle"]["passed"] is False
+    checks = {c["name"]: c["passed"] for c in result["task_oracle"]["checks"]}
+    assert checks["committed_effects"] is False
+
+
+async def test_clarify_fixture_ignores_a_stale_clarification_from_an_earlier_turn(tmp_path):
+    # A clarification left over from an earlier, unrelated turn must not be picked
+    # as the scored outcome merely because it is the only clarify in the trace.
+    # Only one caused by the scenario's own declared (last) event counts.
+    raw = json.loads(CLARIFY_FIXTURE.read_text(encoding="utf-8"))
+    raw["completion_timeout_s"] = 0.4
+    raw["event_gaps_s"] = [0.02, 0.15]
+    raw["events"][-1]["payload"]["path"] = str(CLARIFY_AUDIO)
+    stale_turn = {"kind": "transcript", "session_id": raw["events"][0]["session_id"],
+                 "payload": {"utterance_id": "u0", "revision": 0,
+                             "text": "Do you carry the premium warranty plan?", "final": True}}
+    raw["events"].insert(1, stale_turn)
+    source = tmp_path / "clarify-with-stale-turn.json"
+    source.write_text(json.dumps(raw), encoding="utf-8")
+
+    definition = load_scenario(source)
+    stale_id, real_id = definition.events[1].event_id, definition.events[2].event_id
+    real_observation = Observation(event_id=real_id, source_id="u1", revision=0, modality="audio",
+                                   text="Book Tuesday. Actually, Wednesday at five.", final=True,
+                                   backend="test/injected-audio-observation")
+    # The stale turn's transcript is left unscripted: FakePerception's own
+    # text-pass-through synthesizes its Observation, same as any ordinary transcript.
+    perception = FakePerception(scripted={real_id: [real_observation]})
+    reasoner = EventReasoner({stale_id: PlanProposal(clarification="Standard or express service?",
+                                                     request_complete=True),
+                              real_id: PlanProposal(request_complete=True)})
+    trace = tmp_path / "trace.jsonl"
+    result = await replay(source, trace, reasoner=reasoner, perception=perception)
+
+    rows = [json.loads(line) for line in trace.read_text().splitlines()]
+    clarifies = [r["event"] for r in rows if r.get("type") == "output" and r["event"]["kind"] == "clarify"]
+    assert len(clarifies) == 1
+    assert clarifies[0]["payload"]["caused_by_event_id"] == stale_id
+    assert result["completion_status"] == "timeout"
+    assert result["task_oracle"]["passed"] is False
+    checks = {c["name"]: c["passed"] for c in result["task_oracle"]["checks"]}
+    assert checks["slot:day"] is False
 
 
 async def test_step_reasoner_uses_public_call_state_to_resolve_status_query():
