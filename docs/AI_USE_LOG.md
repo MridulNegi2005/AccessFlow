@@ -1018,3 +1018,9 @@ changed.
 parallel; no overlapping demo patch was used. Source tests, full tests and a real browser smoke passed:
 636 passed, 1 xfailed, 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior
 changed.
+
+2026-09-16 AI-assisted implementation: A delegated perception review identified malformed activity frame
+timestamps as a source of invalid timing summaries. The patch was reviewed and tightened to reject
+negative timestamps, non-finite values, zero-length frames, invalid RMS/activity types and decreasing
+frame order, with direct summary and pause-candidate coverage. Full suite: 643 passed, 1 xfailed,
+2 warnings. No engine, contracts, adapters, lockfile or model/network behavior changed.
