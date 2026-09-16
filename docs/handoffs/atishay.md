@@ -439,3 +439,15 @@ smoke; no controller or event contract changed.
 
 **Status:** Full suite passes 643 tests with one retained expected conflict example; Ruff and diff checks
 pass. The browser smoke produced a final response with no console errors or warnings. Commit: a5ece4b.
+
+## 2026-09-16 - Browser session restart control
+
+**Task:** Close the demo session-recovery gap after a WebSocket disconnect.
+
+**Changes:** Added an explicit Restart session button. It stops an active microphone stream before
+reloading the page, which clears the event trace and client counters and establishes a fresh WebSocket
+session. A browser smoke created a final event, activated Restart session, and verified the new page
+contained only the two fresh connection status events.
+
+**Status:** Full suite passes 643 tests with one retained expected conflict example; Ruff and diff checks
+pass. Browser smoke had no console errors or warnings and no horizontal overflow. Commit: 85f4b81.
