@@ -65,11 +65,8 @@ class OllamaVisionProvider:
     @staticmethod
     def _read_bounded_response(response: Any) -> bytes:
         try:
-            try:
-                body = response.read(MAX_VISION_RESPONSE_BYTES + 1)
-            except TypeError:
-                body = response.read()
-        except OSError as exc:
+            body = response.read(MAX_VISION_RESPONSE_BYTES + 1)
+        except (OSError, TypeError) as exc:
             raise RuntimeError("Ollama vision response could not be read") from exc
         if not isinstance(body, bytes):
             raise RuntimeError("Ollama vision response was not bytes")
