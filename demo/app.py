@@ -6,6 +6,7 @@ import asyncio
 import base64
 import os
 import binascii
+import importlib.util
 import math
 import tempfile
 import uuid
@@ -37,6 +38,18 @@ ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
+
+_reasoner_spec = importlib.util.spec_from_file_location(
+    "accessflow_demo_reasoner", ROOT / "reasoner.py"
+)
+if _reasoner_spec is None or _reasoner_spec.loader is None:
+    raise ImportError("Unable to load the demo reasoner")
+_reasoner_module = importlib.util.module_from_spec(_reasoner_spec)
+_reasoner_spec.loader.exec_module(_reasoner_module)
+MAX_REASONER_CONTEXT_CHARS = _reasoner_module.MAX_REASONER_CONTEXT_CHARS
+MAX_REASONER_RESPONSE_BYTES = _reasoner_module.MAX_REASONER_RESPONSE_BYTES
+OllamaReasoner = _reasoner_module.OllamaReasoner
+
 app = FastAPI(title="AccessFlow mock demo")
 
 
@@ -176,6 +189,19 @@ class DemoPerception:
 
 class DemoReasoner:
     """Return a visible mock response while the real reasoner is developed separately."""
+
+    @classmethod
+    def from_environment(cls):
+        model = os.environ.get("ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL", "").strip()
+        if not model:
+            return cls()
+        return OllamaReasoner(
+            model=model,
+            endpoint=os.environ.get(
+                "ACCESSFLOW_DEMO_OLLAMA_REASONER_ENDPOINT",
+                "http://127.0.0.1:11434/api/generate",
+            ),
+        )
 
     async def plan(self, view, manifests) -> PlanProposal:
         latest = view.observations[-1]
@@ -418,6 +444,8 @@ async def websocket(websocket: WebSocket) -> None:
     sender = asyncio.create_task(send_outputs())
     try:
         perception = DemoPerception.from_environment()
+        reasoner_factory = getattr(DemoReasoner, "from_environment", None)
+        reasoner = reasoner_factory() if callable(reasoner_factory) else DemoReasoner()
     except ValueError as error:
         await outgoing.put(
             {"kind": "demo_error", "payload": {"backend": "demo/config", "message": str(error)}}
@@ -432,7 +460,7 @@ async def websocket(websocket: WebSocket) -> None:
     agent = Agent(
         perception,
         FinalFlagPolicy(),
-        DemoReasoner(),
+        reasoner,
         FakeTools(),
         MockOnlyAuthorization(),
     )
