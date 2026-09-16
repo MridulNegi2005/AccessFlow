@@ -638,9 +638,14 @@ async def websocket(websocket: WebSocket) -> None:
                 await asyncio.gather(*materialization_tasks, return_exceptions=True)
                 materialization_tasks.clear()
 
+            agent_cancelled = False
             if agent.running and not agent_task.done():
-                await incoming.put(EndEvent(session_id=session_id))
-            if not agent_task.done():
+                try:
+                    incoming.put_nowait(EndEvent(session_id=session_id))
+                except asyncio.QueueFull:
+                    agent_task.cancel()
+                    agent_cancelled = True
+            if not agent_cancelled and not agent_task.done():
                 try:
                     await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
                 except (asyncio.TimeoutError, RuntimeError):
