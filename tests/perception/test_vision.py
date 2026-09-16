@@ -116,6 +116,19 @@ def test_ollama_provider_rejects_non_object_json_response(tmp_path: Path, body):
         OllamaVisionProvider(opener=lambda request, timeout: FakeResponse(body))(image)
 
 
+@pytest.mark.parametrize("done", [False, "true"])
+def test_ollama_provider_rejects_incomplete_response(tmp_path: Path, done):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    with pytest.raises(RuntimeError, match="incomplete response"):
+        OllamaVisionProvider(
+            opener=lambda request, timeout: FakeResponse(
+                {"done": done, "response": "partial caption"}
+            )
+        )(image)
+
+
 def test_ollama_provider_surfaces_service_and_shape_errors(tmp_path: Path):
     image = tmp_path / "screen.png"
     image.write_bytes(b"png-test-bytes")
