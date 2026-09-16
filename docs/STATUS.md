@@ -579,6 +579,9 @@ Updated 16 September 2026.
   state, so an active result is not falsely suppressed and the cancelled revision can be retried.
   Focused local-perception coverage passes 52 tests; full verification passes 779 tests with one
   retained conflict xfail and Ruff.
+- Demo WebSocket cleanup now inserts its end sentinel without waiting on a full input queue and
+  cancels a stalled agent when that queue is saturated. The disconnect regression passes; full
+  verification passes 780 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
