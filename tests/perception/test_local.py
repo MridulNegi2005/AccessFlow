@@ -523,6 +523,33 @@ async def test_cancelled_pending_audio_revision_restores_retry_state(tmp_path: P
 
 
 @pytest.mark.asyncio
+async def test_latest_worker_bounds_completed_source_state():
+    worker = local_module._LatestWorker(max_pending_keys=2, max_state_keys=4)
+    calls = []
+
+    async def operation(value):
+        calls.append(value)
+        return value
+
+    for index in range(12):
+        result = await worker.submit(
+            ("audio", f"source-{index}"),
+            lambda index=index: operation(index),
+            revision=0,
+        )
+        assert result == index
+        assert len(worker._latest_state) <= 4
+
+    retained_key = ("audio", "source-11")
+    stale = await worker.submit(retained_key, lambda: operation("stale"), revision=0)
+    await worker.aclose()
+
+    assert stale is local_module._SUPERSEDED
+    assert calls == list(range(12))
+    assert len(worker._latest_state) <= 4
+
+
+@pytest.mark.asyncio
 async def test_audio_revision_does_not_supersede_different_utterance(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)
