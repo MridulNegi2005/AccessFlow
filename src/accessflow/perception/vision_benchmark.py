@@ -28,6 +28,18 @@ def _image_cases(root: Path) -> list[dict[str, Any]]:
     cases = [case for case in manifest["cases"] if case["modality"] == "image"]
     if len(cases) != 12:
         raise ValueError(f"expected 12 image cases, found {len(cases)}")
+    ids = [case.get("id") for case in cases]
+    if (
+        any(not isinstance(case_id, str) or not case_id.strip() for case_id in ids)
+        or len(set(ids)) != len(ids)
+    ):
+        raise ValueError("image case IDs must be unique non-empty strings")
+    if any(
+        not isinstance(case.get("visual_label"), str)
+        or not case["visual_label"].strip()
+        for case in cases
+    ):
+        raise ValueError("image case visual labels must be non-empty strings")
     return cases
 
 
