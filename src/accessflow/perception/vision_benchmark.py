@@ -87,6 +87,7 @@ async def run_vision_benchmark(
     backend: str,
     model: str,
     prompt: str,
+    timeout_s: float | None = None,
 ) -> dict[str, Any]:
     """Run every committed image case and return an evidence-labeled report."""
     cases = _image_cases(root)
@@ -155,6 +156,7 @@ async def run_vision_benchmark(
         "backend": backend,
         "model": model,
         "prompt": prompt,
+        "timeout_s": timeout_s,
         "cases": len(results),
         "failures": failures,
         "mean_elapsed_s": round(
@@ -204,6 +206,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="optionally persist the live report as JSON at this path",
     )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=None,
+        help="per-request live provider timeout in seconds",
+    )
     args = parser.parse_args(argv)
     if not args.live:
         print(
@@ -217,10 +225,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 0
 
+    timeout_s = args.timeout
+    if timeout_s is None:
+        raw_timeout = os.environ.get("ACCESSFLOW_LIVE_VISION_TIMEOUT", "30")
+        try:
+            timeout_s = float(raw_timeout)
+        except ValueError as error:
+            parser.error("ACCESSFLOW_LIVE_VISION_TIMEOUT must be a number")
+            raise AssertionError("argparse.error must exit") from error
+
     provider = OllamaVisionProvider(
         model=args.model,
         endpoint=args.endpoint,
         prompt=args.prompt,
+        timeout_s=timeout_s,
     )
     report = asyncio.run(
         run_vision_benchmark(
@@ -230,6 +248,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             backend=provider.backend_name,
             model=provider.model,
             prompt=provider.prompt,
+            timeout_s=provider.timeout_s,
         )
     )
     if args.output is not None:
