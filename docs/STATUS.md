@@ -575,6 +575,10 @@ Updated 16 September 2026.
 - Modality coverage now rejects whitespace-only required and observed labels, preventing blank
   values from entering evidence metrics. Focused metrics coverage passes 16 tests; full
   verification passes 778 tests with one retained conflict xfail and Ruff.
+- Cancelled queued perception revisions now restore the prior per-source worker token and revision
+  state, so an active result is not falsely suppressed and the cancelled revision can be retried.
+  Focused local-perception coverage passes 52 tests; full verification passes 779 tests with one
+  retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
