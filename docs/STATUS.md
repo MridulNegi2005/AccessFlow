@@ -142,6 +142,7 @@ Updated 16 September 2026.
 - Browser event translation now rejects explicit blank or non-string utterance and frame identities while preserving generated IDs for omitted fields, so accepted multimodal observations always have a usable source identity.
 - The same browser boundary now rejects coerced revision/final/text values, non-finite or boolean timestamps, and inverted speech bounds before typed events are built; valid omitted defaults remain supported.
 - Browser events now carry a page-scoped monotonic envelope sequence through the adapter, preserving arrival order alongside timestamps, source IDs and revisions.
+- Browser WAV and PNG actions now serialize their asynchronous file reads and sends in click order, so event sequencing and media identity allocation cannot be reordered by competing reads.
 - Audio and frame metadata is now validated before base64 media materialization, so rejected browser events cannot leave an orphaned session file; direct cleanup regressions cover both modalities.
 - Threaded browser upload materialization is now shielded from receiver cancellation and drained before the session directory is cleaned up, so a disconnect cannot race an in-flight WAV or PNG write. A focused cancellation regression covers this boundary.
 - PCM loading, energy activity, WebRTC VAD and pause-threshold boundaries now reject booleans, wrong numeric types and non-finite values with stable ValueErrors instead of leaking arithmetic or range TypeErrors.

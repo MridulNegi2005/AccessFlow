@@ -67,6 +67,7 @@
     let mediaSequence = 0;
     let eventSequence = 0;
     let microphone = null;
+    let mediaSendChain = Promise.resolve();
     const pendingMessages = [];
     const maxPendingMessages = 16;
 
@@ -246,23 +247,27 @@
       show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: false, uploaded } });
     }
 
-    async function sendFile(kind, selector, fallback) {
+    function sendFile(kind, selector, fallback) {
       const file = document.querySelector(selector).files[0];
-      if (!file) {
-        send(kind, { path: fallback });
-        return;
-      }
-      try {
-        const dataBase64 = await fileToBase64(file);
-        send(kind, () => ({
-          data_base64: dataBase64,
-          filename: file.name,
-          utterance_id: kind === 'audio' ? nextMediaId('upload-audio') : undefined,
-          frame_id: kind === 'frame' ? nextMediaId('upload-frame') : undefined
-        }));
-      } catch (error) {
-        show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
-      }
+      const action = async () => {
+        if (!file) {
+          send(kind, { path: fallback });
+          return;
+        }
+        try {
+          const dataBase64 = await fileToBase64(file);
+          send(kind, () => ({
+            data_base64: dataBase64,
+            filename: file.name,
+            utterance_id: kind === 'audio' ? nextMediaId('upload-audio') : undefined,
+            frame_id: kind === 'frame' ? nextMediaId('upload-frame') : undefined
+          }));
+        } catch (error) {
+          show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
+        }
+      };
+      mediaSendChain = mediaSendChain.then(action, action);
+      return mediaSendChain;
     }
 
     socket.onmessage = (message) => show(JSON.parse(message.data));

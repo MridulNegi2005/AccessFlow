@@ -383,6 +383,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "send('transcript', () => transcript(false))" in html
     assert 'function nextMediaId(prefix)' in html
     assert 'mediaSequence += 1' in html
+    assert 'let mediaSendChain = Promise.resolve()' in html
+    assert 'mediaSendChain = mediaSendChain.then(action, action)' in html
     assert "nextMediaId('mic-audio')" in html
     assert "nextMediaId('upload-audio')" in html
     assert "nextMediaId('upload-frame')" in html
