@@ -9,7 +9,7 @@ lockfile, release documentation and packaging. You do not need his API key or ma
 ## Current handoff — 16 September 2026
 
 The published `atishay/perception` branch carries this handoff. The verified
-baseline at this snapshot is **229 passed, 4 strict expected failures**.
+baseline at this snapshot is **230 passed, 4 strict expected failures**.
 Read `docs/STATUS.md` before changing anything. The multimodal path now covers text,
 validated WAV, validated PNG, injected local ASR and vision providers, source IDs,
 event IDs, revisions, timestamps, session isolation, recovery, cleanup and bounded
@@ -67,7 +67,7 @@ this guide at commit `4892c185`.
 demo, owned tests and multimodal evidence are already implemented. Preserve their
 boundaries while working on the remaining gaps: broader engine race and status
 reconciliation coverage, live reasoning adapters, replay and metrics, official-kit
-integration after the kit is supplied, execution and scoring of the 60-scenario
+integration after the kit is supplied, live-backend execution and scoring of the 60-scenario
 authored/provenance-tracked set, Docker/CI, voluntary feedback, disclosure, demo
 video and final release assembly.
 
