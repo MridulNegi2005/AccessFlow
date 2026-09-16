@@ -152,8 +152,17 @@
       }
       const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
       const message = messageFor(kind, payload);
-      socket.send(message);
-      return true;
+      return sendSerialized(message);
+    }
+
+    function sendSerialized(message) {
+      try {
+        socket.send(message);
+        return true;
+      } catch {
+        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session closed before the event could be sent.' } });
+        return false;
+      }
     }
 
     function transcript(final) {
@@ -324,8 +333,16 @@
 
     socket.onmessage = (message) => show(JSON.parse(message.data));
     socket.onopen = () => {
-      while (pendingMessages.length) socket.send(pendingMessages.shift());
-      show({ kind: 'demo_status', payload: { connected: true } });
+      let drained = true;
+      while (pendingMessages.length && socket.readyState === WebSocket.OPEN) {
+        if (!sendSerialized(pendingMessages.shift())) {
+          pendingMessages.length = 0;
+          drained = false;
+        }
+      }
+      if (drained) {
+        show({ kind: 'demo_status', payload: { connected: true } });
+      }
     };
     socket.onclose = () => {
       pendingMessages.length = 0;

@@ -430,6 +430,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="announcements" class="sr-only" aria-live="polite"' in html
     assert 'id="events" aria-live="off"' in html
     assert 'const maxAnnouncementChars = 240' in html
+    assert 'function sendSerialized(message)' in html
+    assert 'The session closed before the event could be sent.' in html
     assert "sendInterrupt('speech')" in html
     assert "sendInterrupt('task')" in html
     assert 'id="backend-label"' in html
