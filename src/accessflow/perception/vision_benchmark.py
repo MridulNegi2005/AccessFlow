@@ -40,6 +40,33 @@ def _token_recall(reference: str, hypothesis: str) -> float:
     return matched / sum(expected.values())
 
 
+def _asset_bytes(case: dict[str, Any]) -> tuple[bytes, str]:
+    """Decode one manifest asset and verify its declared provenance before use."""
+    case_id = case["id"]
+    asset = case.get("asset")
+    if not isinstance(asset, dict):
+        raise ValueError(f"image asset metadata is invalid for {case_id}")
+    payload = asset.get("payload_base64")
+    if not isinstance(payload, str):
+        raise ValueError(f"image asset payload is invalid for {case_id}")
+    try:
+        raw = base64.b64decode(payload, validate=True)
+    except (ValueError, TypeError) as error:
+        raise ValueError(f"image asset payload is invalid for {case_id}") from error
+    declared_bytes = asset.get("bytes")
+    if (
+        isinstance(declared_bytes, bool)
+        or not isinstance(declared_bytes, int)
+        or declared_bytes != len(raw)
+    ):
+        raise ValueError(f"image asset byte count mismatch for {case_id}")
+    digest = hashlib.sha256(raw).hexdigest().upper()
+    declared_sha256 = asset.get("sha256")
+    if not isinstance(declared_sha256, str) or declared_sha256.upper() != digest:
+        raise ValueError(f"image asset SHA-256 mismatch for {case_id}")
+    return raw, digest
+
+
 async def run_vision_benchmark(
     provider: Callable[[Path], str],
     *,
@@ -58,28 +85,29 @@ async def run_vision_benchmark(
             image_root = Path(directory)
             for sequence, case in enumerate(cases, start=1):
                 case_id = case["id"]
-                raw = base64.b64decode(case["asset"]["payload_base64"], validate=True)
-                image_path = image_root / f"{case_id}.png"
-                image_path.write_bytes(raw)
                 started = time.perf_counter()
-                event = FrameEvent(
-                    session_id="vision-benchmark",
-                    event_id=f"vision-benchmark-{case_id}",
-                    timestamp=float(sequence),
-                    sequence=sequence,
-                    payload=Frame(path=str(image_path), frame_id=case_id),
-                )
                 result: dict[str, Any] = {
                     "id": case_id,
                     "split": case["split"],
                     "source_id": case_id,
-                    "sha256": hashlib.sha256(raw).hexdigest().upper(),
+                    "sha256": None,
                     "elapsed_s": 0.0,
                     "status": "error",
                     "caption": None,
                     "label_token_recall": 0.0,
                 }
                 try:
+                    raw, digest = _asset_bytes(case)
+                    result["sha256"] = digest
+                    image_path = image_root / f"{case_id}.png"
+                    image_path.write_bytes(raw)
+                    event = FrameEvent(
+                        session_id="vision-benchmark",
+                        event_id=f"vision-benchmark-{case_id}",
+                        timestamp=float(sequence),
+                        sequence=sequence,
+                        payload=Frame(path=str(image_path), frame_id=case_id),
+                    )
                     observations = [item async for item in adapter.observe(event)]
                     if len(observations) != 1:
                         raise RuntimeError(
