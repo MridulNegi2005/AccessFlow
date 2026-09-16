@@ -15,10 +15,16 @@ Two denominators matter and must never collapse into one:
     was blocked before the model had a chance to generate anything.
 
 A run is removed from the quality denominator only on positive evidence of that
-block: a rate-limit/admission-control rejection (HTTP 429) recorded before any
-output existed. Absence of evidence is not evidence of absence. A failure with no
-captured status code or body does not prove infrastructure was at fault, so it
-stays inside the quality denominator, as a failure, rather than being excused.
+block: a rate-limit/admission-control rejection (HTTP 429) recorded, with no
+evidence anywhere else in the same run that the model ever generated anything.
+A run that shows a successful request (`outcome: "success"`), or a failed
+request whose body shows the provider rejected output the model already
+generated, is not a "never invoked" run, no matter where a 429 falls relative
+to it: that run keeps `GENERATION_THEN_INFRA_FAILURE` or
+`SCORED_FAIL_GENERATED_OUTPUT` and stays in the quality denominator. Absence of
+evidence is not evidence of absence, either way. A failure with no captured
+status code or body does not prove infrastructure was at fault, so it stays
+inside the quality denominator, as a failure, rather than being excused.
 `QUALITY_EXCLUDED_LABELS` is the single place this policy lives.
 
 Join key: run identity is the sha256 of the trace file's text content
@@ -33,6 +39,7 @@ from pathlib import Path
 SCORED_PASS = "scored_pass"
 SCORED_FAIL_OUTPUT_MISMATCH = "scored_fail_output_mismatch"
 SCORED_FAIL_GENERATED_OUTPUT = "scored_fail_generated_output"
+GENERATION_THEN_INFRA_FAILURE = "generation_then_infra_failure"
 TIMEOUT_UNDETERMINED_CAUSE = "timeout_undetermined_cause"
 INFRA_ADMISSION_FAILURE = "infra_admission_failure"
 UNDETERMINED_FAILURE = "undetermined_failure"
@@ -43,6 +50,10 @@ LABEL_MEANINGS = {
     SCORED_FAIL_OUTPUT_MISMATCH: "Completed run; task oracle failed on the recorded output.",
     SCORED_FAIL_GENERATED_OUTPUT: "Provider rejected the model's own generated output "
                                    "(HTTP 4xx carrying a failed_generation body). Not infrastructure.",
+    GENERATION_THEN_INFRA_FAILURE: "The model already generated output (a request in this run "
+                                    "recorded outcome=success) before a later HTTP 429. The 429 "
+                                    "did not block generation; it stopped the run from completing "
+                                    "afterward. Not an admission refusal.",
     TIMEOUT_UNDETERMINED_CAUSE: "Scenario-level timeout. The trace does not establish "
                                  "whether the model or its environment stalled.",
     INFRA_ADMISSION_FAILURE: "HTTP 429 from the provider before any output existed: "
@@ -55,8 +66,9 @@ LABEL_MEANINGS = {
 
 # Excluded from the model-output quality denominator because the evidence shows the
 # request was blocked before the model could generate anything. Every other label,
-# including UNDETERMINED_FAILURE, stays in the quality denominator: the trace does
-# not clear the model, so the run counts against it rather than disappearing.
+# including UNDETERMINED_FAILURE and GENERATION_THEN_INFRA_FAILURE, stays in the
+# quality denominator: the trace does not clear the model, so the run counts against
+# it rather than disappearing.
 QUALITY_EXCLUDED_LABELS = frozenset({INFRA_ADMISSION_FAILURE, UNSCORED})
 
 DIAG_LIMIT = 200
@@ -98,16 +110,30 @@ def classify_eligibility(row):
 
     failed = [r for r in requests if isinstance(r, dict) and r.get("outcome") == "failure"]
 
-    for entry in failed:
-        if entry.get("status_code") == 429:
-            detail = _truncate(entry.get("error_detail") or "no body captured")
-            return INFRA_ADMISSION_FAILURE, f"HTTP 429 before any output existed: {detail}"
+    # Positive evidence the model was invoked at some point in this run: either a
+    # request that actually succeeded, or a failed request whose body shows the
+    # provider generated output and then rejected it. Checked before any 429, and
+    # regardless of that 429's position in the list -- a later admission-control
+    # rejection cannot retroactively erase evidence that generation already
+    # happened somewhere in this run's request history.
+    generated_at_some_point = any(
+        isinstance(r, dict) and r.get("outcome") == "success" for r in requests)
 
     for entry in failed:
         code = entry.get("status_code")
         detail = entry.get("error_detail") or ""
         if code is not None and 400 <= code < 500 and code != 429 and "failed_generation" in detail:
             return SCORED_FAIL_GENERATED_OUTPUT, f"HTTP {code}, provider rejected generated output: {_truncate(detail)}"
+
+    for entry in failed:
+        if entry.get("status_code") == 429:
+            detail = _truncate(entry.get("error_detail") or "no body captured")
+            if generated_at_some_point:
+                return GENERATION_THEN_INFRA_FAILURE, (
+                    "A request in this run recorded outcome=success (the model already "
+                    f"generated output) before this HTTP 429: {detail}. Partial progress "
+                    "existed, so this is not an admission refusal.")
+            return INFRA_ADMISSION_FAILURE, f"HTTP 429 before any output existed: {detail}"
 
     if status == "timeout":
         return TIMEOUT_UNDETERMINED_CAUSE, LABEL_MEANINGS[TIMEOUT_UNDETERMINED_CAUSE]
