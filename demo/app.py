@@ -43,6 +43,7 @@ MAX_SESSION_UPLOAD_BYTES = 16 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
 MAX_PENDING_INPUTS = 16
+MAX_PENDING_OUTPUTS = 16
 
 _reasoner_spec = importlib.util.spec_from_file_location(
     "accessflow_demo_reasoner", ROOT / "reasoner.py"
@@ -500,7 +501,7 @@ async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
     session_id = str(uuid.uuid4())
     incoming: asyncio.Queue = asyncio.Queue(maxsize=MAX_PENDING_INPUTS)
-    outgoing: asyncio.Queue = asyncio.Queue()
+    outgoing: asyncio.Queue = asyncio.Queue(maxsize=MAX_PENDING_OUTPUTS)
 
     async def send_outputs():
         while True:
