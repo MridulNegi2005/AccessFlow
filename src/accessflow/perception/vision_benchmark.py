@@ -18,7 +18,10 @@ from typing import Any
 from ..contracts import Frame, FrameEvent
 from .local import LocalPerception
 from .metrics import normalize_words
-from .vision import OllamaVisionProvider
+from .vision import MAX_VISION_IMAGE_BYTES, OllamaVisionProvider
+
+
+MAX_VISION_IMAGE_BASE64_CHARS = ((MAX_VISION_IMAGE_BYTES + 2) // 3) * 4
 
 
 def _image_cases(root: Path) -> list[dict[str, Any]]:
@@ -66,16 +69,20 @@ def _asset_bytes(case: dict[str, Any]) -> tuple[bytes, str]:
     payload = asset.get("payload_base64")
     if not isinstance(payload, str):
         raise ValueError(f"image asset payload is invalid for {case_id}")
-    try:
-        raw = base64.b64decode(payload, validate=True)
-    except (ValueError, TypeError) as error:
-        raise ValueError(f"image asset payload is invalid for {case_id}") from error
+    if len(payload) > MAX_VISION_IMAGE_BASE64_CHARS:
+        raise ValueError(f"image asset payload is too large for {case_id}")
     declared_bytes = asset.get("bytes")
     if (
         isinstance(declared_bytes, bool)
         or not isinstance(declared_bytes, int)
-        or declared_bytes != len(raw)
+        or declared_bytes > MAX_VISION_IMAGE_BYTES
     ):
+        raise ValueError(f"image asset byte count mismatch for {case_id}")
+    try:
+        raw = base64.b64decode(payload, validate=True)
+    except (ValueError, TypeError) as error:
+        raise ValueError(f"image asset payload is invalid for {case_id}") from error
+    if declared_bytes != len(raw):
         raise ValueError(f"image asset byte count mismatch for {case_id}")
     digest = hashlib.sha256(raw).hexdigest().upper()
     declared_sha256 = asset.get("sha256")
