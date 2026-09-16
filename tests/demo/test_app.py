@@ -1765,6 +1765,75 @@ async def test_websocket_disconnect_does_not_block_on_full_agent_queue(monkeypat
     assert perception.closed is True
 
 
+@pytest.mark.asyncio
+async def test_websocket_stalled_agent_queue_fails_closed(monkeypatch):
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class StalledAgent:
+        def __init__(self, *args):
+            self.running = True
+            self.cancelled = asyncio.Event()
+
+        async def run(self, incoming, outgoing):
+            await incoming.get()
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+
+    class Peer:
+        def __init__(self):
+            self.inputs_seen = 0
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            return None
+
+        async def receive_json(self):
+            self.inputs_seen += 1
+            if self.inputs_seen <= demo_app.MAX_PENDING_INPUTS + 1:
+                return {"kind": "transcript", "payload": {"text": "queued"}}
+            await asyncio.Future()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+    agent_holder = {}
+
+    def make_agent(*args):
+        agent = StalledAgent(*args)
+        agent_holder["agent"] = agent
+        return agent
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(demo_app, "Agent", make_agent)
+
+    peer = Peer()
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=1)
+
+    assert peer.inputs_seen == demo_app.MAX_PENDING_INPUTS + 1
+    assert agent_holder["agent"].cancelled.is_set()
+    assert perception.closed is True
+
+
 def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeypatch):
     class FailingAudio:
         async def observe(self, event):
