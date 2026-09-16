@@ -19,6 +19,7 @@ from accessflow.contracts import (
     AudioEvent,
     EndEvent,
     FrameEvent,
+    InterruptEvent,
     Observation,
     PlanProposal,
     ProposedCall,
@@ -66,6 +67,66 @@ def test_browser_message_becomes_typed_event(kind, expected):
 
     assert isinstance(event, expected)
     assert event.session_id == "session-1"
+
+
+@pytest.mark.parametrize(
+    ("scope", "utterance_id"),
+    [("speech", "utterance-7"), ("task", None)],
+)
+def test_browser_interrupt_message_becomes_typed_event(scope, utterance_id):
+    payload = {"scope": scope}
+    if utterance_id is not None:
+        payload["utterance_id"] = utterance_id
+
+    event = event_from_message(
+        "session-1",
+        {"kind": "interrupt", "timestamp": 12.5, "sequence": 7, "payload": payload},
+    )
+
+    assert isinstance(event, InterruptEvent)
+    assert event.session_id == "session-1"
+    assert event.timestamp == 12.5
+    assert event.sequence == 7
+    assert event.payload.scope == scope
+    assert event.payload.utterance_id == utterance_id
+
+
+@pytest.mark.parametrize(
+    ("message", "error"),
+    [
+        (
+            {"kind": "interrupt", "payload": {"scope": "all"}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": None}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": 7}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": []}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": "speech", "utterance_id": 7}},
+            "browser utterance_id must be a non-empty string when provided",
+        ),
+        (
+            {"kind": "interrupt", "timestamp": "12.5", "payload": {"scope": "speech"}},
+            "browser timestamp must be a finite non-negative number",
+        ),
+        (
+            {"kind": "interrupt", "sequence": "7", "payload": {"scope": "speech"}},
+            "browser sequence must be a non-negative integer",
+        ),
+    ],
+)
+def test_browser_interrupt_rejects_invalid_scope_or_field_types(message, error):
+    with pytest.raises(ValueError, match=re.escape(error)):
+        event_from_message("session-1", message)
 
 
 def test_browser_message_preserves_event_and_audio_source_timestamps():
@@ -364,6 +425,10 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'accept="image/png,.png"' in html
     assert 'id="mic"' in html
     assert 'id="stop-mic"' in html
+    assert 'id="stop-speaking"' in html
+    assert 'id="stop-task"' in html
+    assert "sendInterrupt('speech')" in html
+    assert "sendInterrupt('task')" in html
     assert 'id="backend-label"' in html
     assert "Perception and reasoning backends:" in html
     assert 'event.payload.reasoner_backend' in html
@@ -514,6 +579,31 @@ def test_websocket_returns_controller_output_event():
     assert final["payload"]["basis"] == "informational"
     assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
+
+
+def test_websocket_speech_interrupt_keeps_session_usable():
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "interrupt",
+                    "timestamp": 12.5,
+                    "sequence": 7,
+                    "payload": {"scope": "speech", "utterance_id": "utterance-7"},
+                }
+            )
+            interrupted = socket.receive_json()
+
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    final = next(item for item in received if item["kind"] == "final")
+    assert status["kind"] == "demo_status"
+    assert interrupted["kind"] == "acknowledge"
+    assert interrupted["payload"]["text"] == "I'm listening."
+    assert interrupted["payload"]["stop_output"] is True
+    assert "Still connected" in final["payload"]["text"]
 
 
 def test_websocket_serializes_controller_and_input_messages(monkeypatch):
