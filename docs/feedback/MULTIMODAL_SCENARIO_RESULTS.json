@@ -574,7 +574,7 @@
     {
       "id": "audio-03",
       "modality": "audio",
-      "split": "development",
+      "split": "held_out",
       "event_id": "e2e-audio-03",
       "source_id": "audio-03",
       "revision": 0,
@@ -592,7 +592,7 @@
     {
       "id": "audio-04",
       "modality": "audio",
-      "split": "development",
+      "split": "held_out",
       "event_id": "e2e-audio-04",
       "source_id": "audio-04",
       "revision": 0,
@@ -610,7 +610,7 @@
     {
       "id": "audio-05",
       "modality": "audio",
-      "split": "development",
+      "split": "held_out",
       "event_id": "e2e-audio-05",
       "source_id": "audio-05",
       "revision": 0,
@@ -754,7 +754,7 @@
     {
       "id": "audio-13",
       "modality": "audio",
-      "split": "held_out",
+      "split": "development",
       "event_id": "e2e-audio-13",
       "source_id": "audio-13",
       "revision": 0,
@@ -772,7 +772,7 @@
     {
       "id": "audio-14",
       "modality": "audio",
-      "split": "held_out",
+      "split": "development",
       "event_id": "e2e-audio-14",
       "source_id": "audio-14",
       "revision": 0,
@@ -790,7 +790,7 @@
     {
       "id": "audio-15",
       "modality": "audio",
-      "split": "held_out",
+      "split": "development",
       "event_id": "e2e-audio-15",
       "source_id": "audio-15",
       "revision": 0,

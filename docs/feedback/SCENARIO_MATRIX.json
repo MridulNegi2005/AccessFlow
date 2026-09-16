@@ -582,7 +582,7 @@
     {
       "id": "audio-03",
       "modality": "audio",
-      "split": "development",
+      "split": "held_out",
       "stimulus": "Please book a screen repair for Friday at ten.",
       "expected_boundary": "measure fluent ASR and completion without an internal pause",
       "evidence_status": "fake_mode_replayed",
@@ -607,7 +607,7 @@
     {
       "id": "audio-04",
       "modality": "audio",
-      "split": "development",
+      "split": "held_out",
       "stimulus": "I want Tuesday, Tuesday, actually Wednesday at five.",
       "expected_boundary": "preserve repetition and correction instead of deleting words",
       "evidence_status": "fake_mode_replayed",
@@ -632,7 +632,7 @@
     {
       "id": "audio-05",
       "modality": "audio",
-      "split": "development",
+      "split": "held_out",
       "stimulus": "I tried restarting already. [pause] The screen still flickers.",
       "expected_boundary": "expose an internal pause candidate without forcing completion",
       "evidence_status": "fake_mode_replayed",
@@ -832,7 +832,7 @@
     {
       "id": "audio-13",
       "modality": "audio",
-      "split": "held_out",
+      "split": "development",
       "stimulus": "Two tickets ... two tickets.",
       "expected_boundary": "preserve repeated quantity words for downstream interpretation",
       "evidence_status": "fake_mode_replayed",
@@ -857,7 +857,7 @@
     {
       "id": "audio-14",
       "modality": "audio",
-      "split": "held_out",
+      "split": "development",
       "stimulus": "Change the appointment time from five to six.",
       "expected_boundary": "update only the dependent time slot",
       "evidence_status": "fake_mode_replayed",
@@ -882,7 +882,7 @@
     {
       "id": "audio-15",
       "modality": "audio",
-      "split": "held_out",
+      "split": "development",
       "stimulus": "Correct the date twice before the final hypothesis.",
       "expected_boundary": "accept only the newest audio revision",
       "evidence_status": "fake_mode_replayed",

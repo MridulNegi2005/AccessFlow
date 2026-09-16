@@ -15,9 +15,9 @@ used a 0.4 second threshold.
 |---|---|---:|---:|---:|---:|---:|
 | audio-01 | development | 189/265 | 2 | 1 | 1 | 0.64 |
 | audio-02 | development | 139/301 | 3 | 1 | 1 | 0.64 |
-| audio-03 | development | 130/172 | 1 | 0 | 1 | 0.66 |
-| audio-04 | development | 173/236 | 3 | 0 | 1 | 0.64 |
-| audio-05 | development | 162/297 | 2 | 1 | 1 | 0.62 |
+| audio-03 | held_out | 130/172 | 1 | 0 | 1 | 0.66 |
+| audio-04 | held_out | 173/236 | 3 | 0 | 1 | 0.64 |
+| audio-05 | held_out | 162/297 | 2 | 1 | 1 | 0.62 |
 | audio-06 | development | 114/162 | 2 | 0 | 1 | 0.62 |
 | audio-07 | development | 131/246 | 3 | 2 | 1 | 0.64 |
 | audio-08 | development | 120/210 | 3 | 1 | 1 | 0.66 |
@@ -25,9 +25,9 @@ used a 0.4 second threshold.
 | audio-10 | development | 112/151 | 1 | 0 | 1 | 0.66 |
 | audio-11 | development | 115/190 | 2 | 1 | 1 | 0.64 |
 | audio-12 | development | 126/163 | 2 | 1 | 0 | 0.0 |
-| audio-13 | held_out | 90/163 | 2 | 1 | 1 | 0.62 |
-| audio-14 | held_out | 135/172 | 1 | 0 | 1 | 0.64 |
-| audio-15 | held_out | 170/270 | 4 | 1 | 1 | 0.64 |
+| audio-13 | development | 90/163 | 2 | 1 | 1 | 0.62 |
+| audio-14 | development | 135/172 | 1 | 0 | 1 | 0.64 |
+| audio-15 | development | 170/270 | 4 | 1 | 1 | 0.64 |
 | audio-16 | held_out | 162/237 | 2 | 1 | 1 | 0.62 |
 | audio-17 | held_out | 130/172 | 1 | 0 | 1 | 0.66 |
 | audio-18 | held_out | 126/164 | 1 | 0 | 1 | 0.64 |

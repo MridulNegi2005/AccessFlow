@@ -149,3 +149,10 @@ def test_live_vad_result_covers_every_audio_case():
         for case in manifest["cases"]
         if case["modality"] == "audio"
     )
+
+
+def test_historical_held_out_audio_stays_out_of_development_split():
+    _, manifest = _manifest()
+    splits = {case["id"]: case["split"] for case in manifest["cases"]}
+    assert {splits[case_id] for case_id in ("audio-03", "audio-04", "audio-05")} == {"held_out"}
+    assert {splits[case_id] for case_id in ("audio-13", "audio-14", "audio-15")} == {"development"}

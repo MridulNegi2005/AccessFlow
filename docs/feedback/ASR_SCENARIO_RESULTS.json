@@ -74,7 +74,7 @@
     },
     {
       "id": "audio-03",
-      "split": "development",
+      "split": "held_out",
       "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
       "reference_text": "Please book a screen repair for Friday at ten.",
       "transcript": "Please book a screen repair for Friday at 10.",
@@ -102,7 +102,7 @@
     },
     {
       "id": "audio-04",
-      "split": "development",
+      "split": "held_out",
       "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
       "reference_text": "I want Tuesday, Tuesday, actually Wednesday at five.",
       "transcript": "I want Tuesday, Tuesday, actually Wednesday at 5.",
@@ -130,7 +130,7 @@
     },
     {
       "id": "audio-05",
-      "split": "development",
+      "split": "held_out",
       "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
       "reference_text": "I tried restarting already. The screen still flickers.",
       "transcript": "I tried restarting already. The screen still flickers.",
@@ -354,7 +354,7 @@
     },
     {
       "id": "audio-13",
-      "split": "held_out",
+      "split": "development",
       "fixture": "tests/fixtures/audio/audio-13.wav",
       "reference_text": "Two tickets. Two tickets.",
       "transcript": "2 tickets, 2 tickets",
@@ -382,7 +382,7 @@
     },
     {
       "id": "audio-14",
-      "split": "held_out",
+      "split": "development",
       "fixture": "tests/fixtures/audio/audio-14.wav",
       "reference_text": "Change the appointment time from five to six.",
       "transcript": "Change the appointment time from 5 to 6.",
@@ -410,7 +410,7 @@
     },
     {
       "id": "audio-15",
-      "split": "held_out",
+      "split": "development",
       "fixture": "tests/fixtures/audio/audio-15.wav",
       "reference_text": "Correct the date twice. Tuesday, Wednesday, Thursday.",
       "transcript": "Correct the date twice. Tuesday, Wednesday, Thursday.",
