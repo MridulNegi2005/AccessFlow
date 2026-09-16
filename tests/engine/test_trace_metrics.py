@@ -262,3 +262,148 @@ def test_distinct_call_ids_are_scoped_to_the_session():
     result = evaluate_trace(trace)
 
     assert result["operation_ids"]["distinct_call_ids"] == 2
+
+
+def _committed_effects_metadata(expected):
+    return {"type": "run_metadata", "task_oracle": {"checks": [
+        {"name": "committed_effects", "expected": expected},
+    ]}}
+
+
+def test_wrong_action_rate_counts_a_committed_effect_the_oracle_did_not_expect():
+    trace = [
+        _committed_effects_metadata([{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A"}}]),
+        row("output", "tool_call", 1.0, call_id="call-1", operation_id="op-1", effect="write",
+            tool="reserve_repair_window", arguments={"device": "Panel-A"}),
+        row("input", "tool_result", 1.1, call_id="call-1", payload={"status": "success", "committed": True}),
+        row("output", "tool_call", 2.0, call_id="call-2", operation_id="op-2", effect="write",
+            tool="cancel_repair_window", arguments={"device": "Panel-A"}),
+        row("input", "tool_result", 2.1, call_id="call-2", payload={"status": "success", "committed": True}),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong == {
+        "scored": True, "rate": 0.5, "wrong_actions": 1, "committed_effects": 2, "sample_count": 2,
+        "expected_effects": 1, "missed_expected": 0, "unexpected": 1, "wrong_arguments": 0, "duplicate_expected": 0,
+    }
+
+
+def test_wrong_action_rate_counts_expected_tool_committed_with_wrong_arguments():
+    trace = [
+        _committed_effects_metadata([{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A"}}]),
+        row("output", "tool_call", 1.0, call_id="call-1", operation_id="op-1", effect="write",
+            tool="reserve_repair_window", arguments={"device": "Panel-B"}),
+        row("input", "tool_result", 1.1, call_id="call-1", payload={"status": "success", "committed": True}),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong["wrong_arguments"] == 1
+    assert wrong["unexpected"] == 0
+    assert wrong["duplicate_expected"] == 0
+    assert wrong["wrong_actions"] == 1
+    assert wrong["missed_expected"] == 1
+    assert wrong["committed_effects"] == 1
+    assert wrong["rate"] == 1.0
+
+
+def test_wrong_action_rate_counts_a_duplicate_delivery_of_an_expected_effect():
+    trace = [
+        _committed_effects_metadata([{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A"}}]),
+        row("output", "tool_call", 1.0, call_id="call-1", operation_id="op-1", effect="write",
+            tool="reserve_repair_window", arguments={"device": "Panel-A"}),
+        row("input", "tool_result", 1.1, call_id="call-1", payload={"status": "success", "committed": True}),
+        row("output", "tool_call", 2.0, call_id="call-2", operation_id="op-2", effect="write",
+            tool="reserve_repair_window", arguments={"device": "Panel-A"}),
+        row("input", "tool_result", 2.1, call_id="call-2", payload={"status": "success", "committed": True}),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong["duplicate_expected"] == 1
+    assert wrong["unexpected"] == 0
+    assert wrong["wrong_arguments"] == 0
+    assert wrong["wrong_actions"] == 1
+    assert wrong["missed_expected"] == 0
+    assert wrong["committed_effects"] == 2
+    assert wrong["rate"] == 0.5
+
+
+def test_wrong_action_rate_treats_a_never_committed_expected_effect_as_a_miss_not_a_wrong_action():
+    trace = [
+        _committed_effects_metadata([{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A"}}]),
+        row("output", "tool_call", 1.0, call_id="call-1", operation_id="op-1", effect="write",
+            tool="reserve_repair_window", arguments={"device": "Panel-A"}),
+        row("input", "tool_result", 1.1, call_id="call-1", payload={
+            "status": "failed", "committed": False, "result": {},
+        }),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong["scored"] is True
+    assert wrong["missed_expected"] == 1
+    assert wrong["wrong_actions"] == 0
+    assert wrong["committed_effects"] == 0
+    # A miss is never counted as a wrong action, and an empty denominator is
+    # null, never a flattering 0.0.
+    assert wrong["rate"] is None
+
+
+def test_wrong_action_rate_is_zero_for_a_clean_run_ignoring_the_idempotency_argument():
+    trace = [
+        _committed_effects_metadata(
+            [{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A", "day": "Wednesday"}}]
+        ),
+        row("input", "session_start", 0.0, payload={"tools": [
+            {"name": "reserve_repair_window", "effect": "write", "idempotency_parameter": "dedupe_key"},
+        ]}),
+        row("output", "tool_call", 1.0, call_id="call-1", operation_id="op-1", effect="write",
+            tool="reserve_repair_window",
+            arguments={"device": "Panel-A", "day": "Wednesday", "dedupe_key": "op-1"}),
+        row("input", "tool_result", 1.1, call_id="call-1", payload={"status": "success", "committed": True}),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong["scored"] is True
+    assert wrong["wrong_actions"] == 0
+    assert wrong["missed_expected"] == 0
+    assert wrong["committed_effects"] == 1
+    # A clean run is a measured zero, distinct from the null of an empty denominator.
+    assert wrong["rate"] == 0.0
+    assert wrong["rate"] is not None
+
+
+def test_wrong_action_rate_is_unscored_without_an_effect_expectation():
+    trace = [
+        {"type": "run_metadata", "backend": "offline-fake"},
+        row("output", "tool_call", 1.0, call_id="call-1", operation_id="op-1", effect="write",
+            tool="reserve_repair_window", arguments={"device": "Panel-A"}),
+        row("input", "tool_result", 1.1, call_id="call-1", payload={"status": "success", "committed": True}),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong["scored"] is False
+    assert wrong["rate"] is None
+    assert wrong["committed_effects"] is None
+    assert wrong["wrong_actions"] is None
+    assert wrong["missed_expected"] is None
+
+
+def test_wrong_action_rate_is_null_not_zero_for_a_trace_with_zero_effects():
+    trace = [
+        _committed_effects_metadata([{"tool": "reserve_repair_window", "arguments": {"device": "Panel-A"}}]),
+        row("input", "transcript", 1.0, event_id="speech-1", payload={"final": True}),
+        row("output", "final", 1.2, payload={"text": "done"}),
+    ]
+
+    wrong = evaluate_trace(trace)["wrong_action_rate"]
+
+    assert wrong["scored"] is True
+    assert wrong["committed_effects"] == 0
+    assert wrong["missed_expected"] == 1
+    # No effect was ever committed, so the rate is undefined -- null, not 0.0.
+    assert wrong["rate"] is None
