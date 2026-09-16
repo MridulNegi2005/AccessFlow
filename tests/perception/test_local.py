@@ -1252,6 +1252,31 @@ def test_png_validation_accepts_adam7_scanline_payload(tmp_path: Path):
     assert validate_png(image_path) == PngFormat(width=2, height=2, bit_depth=8, color_type=6)
 
 
+def test_png_validation_rejects_nonconsecutive_idat_chunks(tmp_path: Path):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "split-idat.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    compressed = zlib.compress(b"\x00\x40\x80\xff\xff")
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", compressed[:1])
+        + chunk(b"tEXt", b"note\x00metadata")
+        + chunk(b"IDAT", compressed[1:])
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG chunk order"):
+        validate_png(image_path)
+
+
 @pytest.mark.asyncio
 async def test_image_input_rejects_malformed_png(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
