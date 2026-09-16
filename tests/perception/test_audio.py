@@ -307,6 +307,26 @@ def test_activity_summary_rejects_out_of_order_frames():
         pause_candidates(frames)
 
 
+@pytest.mark.parametrize(
+    "frames",
+    [
+        (
+            ActivityFrame(0.0, 0.5, 1_000, True),
+            ActivityFrame(0.4, 0.8, 1_000, True),
+        ),
+        (
+            ActivityFrame(0.0, 0.5, 1_000, True),
+            ActivityFrame(0.0, 0.5, 1_000, True),
+        ),
+    ],
+)
+def test_activity_summary_rejects_overlapping_frames(frames):
+    with pytest.raises(ValueError, match="non-overlapping"):
+        summarize_activity(frames)
+    with pytest.raises(ValueError, match="non-overlapping"):
+        pause_candidates(frames)
+
+
 def test_webrtc_activity_uses_injected_detector_without_optional_import():
     calls = []
 
