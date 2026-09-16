@@ -1000,3 +1000,9 @@ A separate delegated perception review found unknown critical PNG chunks were ac
 inference; added parser rejection and a provider-not-called regression. Focused checks passed, with
 full-suite verification recorded at 635 passed and one retained expected conflict example. No engine,
 contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Added failure-safe cleanup for browser media materialization after
+unexpected validator or write exceptions, with a regression covering partial-file removal and aggregate
+budget release. Focused demo coverage reached 107 passed and the full suite reached 636 passed with one
+retained expected conflict example. No engine, contracts, adapters, lockfile or model/network behavior
+changed.

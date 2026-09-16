@@ -161,6 +161,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Browser input now reports malformed JSON as a recoverable `demo/input` error, and PNG validation
   rejects unknown critical chunks before a vision provider is called. The full branch passes 635
   tests with one retained conflict example; Ruff and diff checks pass.
+- Failed browser media writes and unexpected validation errors now remove partial session files while
+  releasing their aggregate budget reservation. The full branch passes 636 tests with one retained
+  conflict example; live vision and device behavior remain unverified.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the

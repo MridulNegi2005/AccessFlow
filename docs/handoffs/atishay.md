@@ -373,3 +373,16 @@ adapter, lockfile or script changes were made.
 perception-local suite passes 45 tests. The full suite passes 635 tests with one retained expected
 conflict example, and Ruff plus diff checks pass. Live vision quality remains unverified. Commits:
 650e172, ee66a5.
+
+## 2026-09-16 - Browser media failure cleanup
+
+**Task:** Close the remaining cleanup edge in bounded browser media intake.
+
+**Changes:** A materialized upload path is now removed for unexpected validator or disk exceptions,
+while the thread-safe session budget reservation is released. Expected validation failures retain their
+stable adapter messages. Added a regression that raises from the validator and proves both cleanup and
+budget release.
+
+**Status:** Demo coverage passes 107 tests with one retained expected conflict example; the full suite
+passes 636 tests with one retained expected conflict example, and Ruff plus diff checks pass. Live vision,
+device behavior and human feedback remain unverified. Commit: 9477b1b.
