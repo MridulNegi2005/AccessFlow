@@ -25,6 +25,14 @@ class _ReplayVision:
         return self._captions[path.stem]
 
 
+def _write_manifest(root: Path, manifest: dict) -> None:
+    feedback = root / "docs" / "feedback"
+    feedback.mkdir(parents=True)
+    (feedback / "SCENARIO_MATRIX.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+
+
 @pytest.mark.asyncio
 async def test_vision_benchmark_replays_all_image_cases_and_scores_labels():
     root, manifest = _manifest()
@@ -93,6 +101,44 @@ async def test_vision_benchmark_records_provider_failures_without_caption():
         "type": "RuntimeError",
         "message": "vision service unavailable",
     }
+    assert sum(item["status"] == "completed" for item in report["results"]) == 11
+
+
+@pytest.mark.asyncio
+async def test_vision_benchmark_rejects_manifest_hash_mismatch_before_provider_call(tmp_path: Path):
+    root, manifest = _manifest()
+    image_cases = [case for case in manifest["cases"] if case["modality"] == "image"]
+    manifest["cases"][next(index for index, case in enumerate(manifest["cases"]) if case["id"] == "image-01")]["asset"]["sha256"] = "0" * 64
+    _write_manifest(tmp_path, manifest)
+
+    class RecordingVision(_ReplayVision):
+        def __init__(self, captions):
+            super().__init__(captions)
+            self.calls = []
+
+        def __call__(self, path: Path) -> str:
+            self.calls.append(path.name)
+            return super().__call__(path)
+
+    provider = RecordingVision({case["id"]: case["visual_label"] for case in image_cases})
+    report = await benchmark.run_vision_benchmark(
+        provider,
+        root=tmp_path,
+        mode="offline_injected",
+        backend=provider.backend_name,
+        model="synthetic-replay",
+        prompt="synthetic label replay",
+    )
+
+    failed = next(item for item in report["results"] if item["id"] == "image-01")
+    assert report["failures"] == 1
+    assert failed["status"] == "error"
+    assert failed["sha256"] is None
+    assert failed["failure"] == {
+        "type": "ValueError",
+        "message": "image asset SHA-256 mismatch for image-01",
+    }
+    assert "image-01.png" not in provider.calls
     assert sum(item["status"] == "completed" for item in report["results"]) == 11
 
 
