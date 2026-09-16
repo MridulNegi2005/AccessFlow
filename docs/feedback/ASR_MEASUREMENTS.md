@@ -80,3 +80,21 @@ The transcripts preserve the repeated phrase, correction and two-part pause case
 number words were emitted as numerals by the model. These are three generated-voice
 cases held out from the earlier local development examples; they do not establish
 held-out human speech accuracy, generalization, accessibility benefit or clinical value.
+
+## 2026-09-16 - Weighted multimodal inventory audio scoring
+
+- Mode: live local ASR through `LocalPerception.observe`
+- Model: Systran/faster-whisper-base.en, snapshot `3d3d5dee26484f91867d81cb899cfcf72b96be6c`
+- Device: Intel(R) Core(TM) Ultra 5 125H; Python 3.12.10; compute type `int8`
+- Inventory: 18 generated WAV cases from the weighted scenario matrix
+- Reference words: 132; word errors: 13; micro-WER: 0.098
+- Mean realtime factor: 0.158; maximum realtime factor: 0.251
+- Full per-case transcripts, timing and edit counts: `docs/feedback/ASR_SCENARIO_RESULTS.json`
+
+| Case group | Count | Result |
+|---|---:|---|
+| Development | 12 | 12 adapter observations completed |
+| Held-out | 6 | 6 adapter observations completed |
+| Total | 18 | 18 adapter observations completed |
+
+The fixtures are generated voice or generated acoustic material. The scores compare known local scripts and do not establish human speech accuracy, generalization, accessibility benefit, vision quality, reasoning quality or end-to-end task completion.

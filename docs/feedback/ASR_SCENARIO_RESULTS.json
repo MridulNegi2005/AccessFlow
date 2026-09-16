@@ -1,0 +1,529 @@
+{
+  "recorded": "2026-09-16",
+  "mode": "live_local_asr",
+  "model": "Systran/faster-whisper-base.en",
+  "model_snapshot": "3d3d5dee26484f91867d81cb899cfcf72b96be6c",
+  "device": "CPU",
+  "cpu": "Intel(R) Core(TM) Ultra 5 125H",
+  "python": "3.12.10",
+  "compute_type": "int8",
+  "cases": 18,
+  "summary": {
+    "reference_words": 132,
+    "word_errors": 13,
+    "micro_word_error_rate": 0.098,
+    "mean_realtime_factor": 0.158,
+    "max_realtime_factor": 0.251
+  },
+  "results": [
+    {
+      "id": "audio-01",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/synthetic_speech.wav",
+      "reference_text": "My screen keeps flickering after the update. Book Wednesday at five.",
+      "transcript": "My screen keeps flickering after the update. Book Wednesday at 5.",
+      "word_error_rate": 0.091,
+      "word_errors": {
+        "substitutions": 1,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 11,
+        "hypothesis_words": 11
+      },
+      "duration_s": 5.304,
+      "adapter_elapsed_s": 1.33,
+      "realtime_factor": 0.251,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-01",
+      "event_id": "live-audio-01",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 116949
+      }
+    },
+    {
+      "id": "audio-02",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/synthetic_pause_correction.wav",
+      "reference_text": "Book Tuesday. Actually, Wednesday at five.",
+      "transcript": "Book Tuesday. Actually, Wednesday at 5.",
+      "word_error_rate": 0.167,
+      "word_errors": {
+        "substitutions": 1,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 6,
+        "hypothesis_words": 6
+      },
+      "duration_s": 6.024,
+      "adapter_elapsed_s": 0.59,
+      "realtime_factor": 0.098,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-02",
+      "event_id": "live-audio-02",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 132830
+      }
+    },
+    {
+      "id": "audio-03",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/held_out/heldout_fluent.wav",
+      "reference_text": "Please book a screen repair for Friday at ten.",
+      "transcript": "Please book a screen repair for Friday at 10.",
+      "word_error_rate": 0.111,
+      "word_errors": {
+        "substitutions": 1,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 9,
+        "hypothesis_words": 9
+      },
+      "duration_s": 3.449,
+      "adapter_elapsed_s": 0.635,
+      "realtime_factor": 0.184,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-03",
+      "event_id": "live-audio-03",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 76049
+      }
+    },
+    {
+      "id": "audio-04",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/held_out/heldout_repetition.wav",
+      "reference_text": "I want Tuesday, Tuesday, actually Wednesday at five.",
+      "transcript": "I want Tuesday, Tuesday, actually Wednesday at 5.",
+      "word_error_rate": 0.125,
+      "word_errors": {
+        "substitutions": 1,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 8,
+        "hypothesis_words": 8
+      },
+      "duration_s": 4.724,
+      "adapter_elapsed_s": 0.567,
+      "realtime_factor": 0.12,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-04",
+      "event_id": "live-audio-04",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 104166
+      }
+    },
+    {
+      "id": "audio-05",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/held_out/heldout_pause.wav",
+      "reference_text": "I tried restarting already. The screen still flickers.",
+      "transcript": "I tried restarting already. The screen still flickers.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 8,
+        "hypothesis_words": 8
+      },
+      "duration_s": 5.958,
+      "adapter_elapsed_s": 0.639,
+      "realtime_factor": 0.107,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-05",
+      "event_id": "live-audio-05",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 131381
+      }
+    },
+    {
+      "id": "audio-06",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-06.wav",
+      "reference_text": "The screen flickers ... after the update.",
+      "transcript": "The screen flickers, after the update.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 6,
+        "hypothesis_words": 6
+      },
+      "duration_s": 3.254,
+      "adapter_elapsed_s": 0.617,
+      "realtime_factor": 0.19,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-06",
+      "event_id": "live-audio-06",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 71752
+      }
+    },
+    {
+      "id": "audio-07",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-07.wav",
+      "reference_text": "Book Tuesday. Tuesday. Actually Wednesday.",
+      "transcript": "Book Tuesday. Tuesday. Actually Wednesday.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 5,
+        "hypothesis_words": 5
+      },
+      "duration_s": 4.924,
+      "adapter_elapsed_s": 0.555,
+      "realtime_factor": 0.113,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-07",
+      "event_id": "live-audio-07",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 108572
+      }
+    },
+    {
+      "id": "audio-08",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-08.wav",
+      "reference_text": "Use this device. Wait, the other one.",
+      "transcript": "Use this device. Wait, the other one.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 7,
+        "hypothesis_words": 7
+      },
+      "duration_s": 4.219,
+      "adapter_elapsed_s": 0.61,
+      "realtime_factor": 0.145,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-08",
+      "event_id": "live-audio-08",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 93029
+      }
+    },
+    {
+      "id": "audio-09",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-09.wav",
+      "reference_text": "Stop speaking, but keep the repair task ready.",
+      "transcript": "Stop speaking, but keep the repair task ready.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 8,
+        "hypothesis_words": 8
+      },
+      "duration_s": 3.864,
+      "adapter_elapsed_s": 0.563,
+      "realtime_factor": 0.146,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-09",
+      "event_id": "live-audio-09",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 85199
+      }
+    },
+    {
+      "id": "audio-10",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-10.wav",
+      "reference_text": "Stop the task before it books anything.",
+      "transcript": "Stop the task before it books anything.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 7,
+        "hypothesis_words": 7
+      },
+      "duration_s": 3.039,
+      "adapter_elapsed_s": 0.607,
+      "realtime_factor": 0.2,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-10",
+      "event_id": "live-audio-10",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 67009
+      }
+    },
+    {
+      "id": "audio-11",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-11.wav",
+      "reference_text": "I need a repair for Friday. Mm-hmm.",
+      "transcript": "I need a repair for Friday. M.M.H.M.",
+      "word_error_rate": 0.5,
+      "word_errors": {
+        "substitutions": 2,
+        "insertions": 2,
+        "deletions": 0,
+        "reference_words": 8,
+        "hypothesis_words": 10
+      },
+      "duration_s": 3.819,
+      "adapter_elapsed_s": 0.656,
+      "realtime_factor": 0.172,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-11",
+      "event_id": "live-audio-11",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 84208
+      }
+    },
+    {
+      "id": "audio-12",
+      "split": "development",
+      "fixture": "tests/fixtures/audio/audio-12.wav",
+      "reference_text": "The screen flickers after the update.",
+      "transcript": "The screen flickers after the update.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 6,
+        "hypothesis_words": 6
+      },
+      "duration_s": 3.279,
+      "adapter_elapsed_s": 0.564,
+      "realtime_factor": 0.172,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-12",
+      "event_id": "live-audio-12",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 72304
+      }
+    },
+    {
+      "id": "audio-13",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-13.wav",
+      "reference_text": "Two tickets. Two tickets.",
+      "transcript": "2 tickets, 2 tickets",
+      "word_error_rate": 0.5,
+      "word_errors": {
+        "substitutions": 2,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 4,
+        "hypothesis_words": 4
+      },
+      "duration_s": 3.279,
+      "adapter_elapsed_s": 0.603,
+      "realtime_factor": 0.184,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-13",
+      "event_id": "live-audio-13",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 72304
+      }
+    },
+    {
+      "id": "audio-14",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-14.wav",
+      "reference_text": "Change the appointment time from five to six.",
+      "transcript": "Change the appointment time from 5 to 6.",
+      "word_error_rate": 0.25,
+      "word_errors": {
+        "substitutions": 2,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 8,
+        "hypothesis_words": 8
+      },
+      "duration_s": 3.454,
+      "adapter_elapsed_s": 0.563,
+      "realtime_factor": 0.163,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-14",
+      "event_id": "live-audio-14",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 76157
+      }
+    },
+    {
+      "id": "audio-15",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-15.wav",
+      "reference_text": "Correct the date twice. Tuesday, Wednesday, Thursday.",
+      "transcript": "Correct the date twice. Tuesday, Wednesday, Thursday.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 7,
+        "hypothesis_words": 7
+      },
+      "duration_s": 5.419,
+      "adapter_elapsed_s": 0.596,
+      "realtime_factor": 0.11,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-15",
+      "event_id": "live-audio-15",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 119482
+      }
+    },
+    {
+      "id": "audio-16",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-16.wav",
+      "reference_text": "I tried restarting already ... The screen still flickers.",
+      "transcript": "I tried restarting already. The screen still flickers.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 8,
+        "hypothesis_words": 8
+      },
+      "duration_s": 4.759,
+      "adapter_elapsed_s": 0.613,
+      "realtime_factor": 0.129,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-16",
+      "event_id": "live-audio-16",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 104933
+      }
+    },
+    {
+      "id": "audio-17",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-17.wav",
+      "reference_text": "Please book a screen repair for Friday at ten.",
+      "transcript": "Please book a screen repair for Friday at 10.",
+      "word_error_rate": 0.111,
+      "word_errors": {
+        "substitutions": 1,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 9,
+        "hypothesis_words": 9
+      },
+      "duration_s": 3.449,
+      "adapter_elapsed_s": 0.623,
+      "realtime_factor": 0.181,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-17",
+      "event_id": "live-audio-17",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 76049
+      }
+    },
+    {
+      "id": "audio-18",
+      "split": "held_out",
+      "fixture": "tests/fixtures/audio/audio-18.wav",
+      "reference_text": "Submit a new request after session reset.",
+      "transcript": "Submit a new request after session reset.",
+      "word_error_rate": 0.0,
+      "word_errors": {
+        "substitutions": 0,
+        "insertions": 0,
+        "deletions": 0,
+        "reference_words": 7,
+        "hypothesis_words": 7
+      },
+      "duration_s": 3.299,
+      "adapter_elapsed_s": 0.577,
+      "realtime_factor": 0.175,
+      "backend": "faster-whisper/cpu-int8",
+      "source_id": "audio-18",
+      "event_id": "live-audio-18",
+      "final": true,
+      "format": {
+        "channels": 1,
+        "sample_width": 2,
+        "sample_rate": 22050,
+        "frames": 72740
+      }
+    }
+  ],
+  "limitations": [
+    "All fixtures are generated voice or generated acoustic material; they are not representative human speech.",
+    "Word error rates compare generated scripts and do not establish generalization or accessibility benefit.",
+    "This measures the ASR adapter only; it does not measure vision, reasoning, controller actions or end-to-end task completion."
+  ]
+}

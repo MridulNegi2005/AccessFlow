@@ -43,14 +43,16 @@ async def test_entire_scenario_inventory_replays_through_local_perception(tmp_pa
     cases = manifest["cases"]
     audio_cases = [case for case in cases if case["modality"] == "audio"]
     image_cases = [case for case in cases if case["modality"] == "image"]
-    audio_scripts = {Path(case["asset"]["fixture"]).name: case["stimulus"] for case in audio_cases}
+    audio_scripts = {
+        Path(case["asset"]["fixture"]).name: case["reference_text"] for case in audio_cases
+    }
     image_paths = {}
     image_captions = {}
     for case in image_cases:
         path = tmp_path / f"{case['id']}.png"
         path.write_bytes(base64.b64decode(case["asset"]["payload_base64"], validate=True))
         image_paths[case["id"]] = path
-        image_captions[path.name] = case["stimulus"]
+        image_captions[path.name] = case["visual_label"]
 
     perception = LocalPerception(
         transcriber=_ReplayAudio(audio_scripts),

@@ -31,7 +31,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "complete only when the request is sufficiently specified"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-02",
@@ -45,7 +46,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "retain Wednesday and five as the latest corrected values"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-03",
@@ -59,7 +61,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "preserve repetition while interpreting the intended quantity"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-04",
@@ -73,7 +76,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "keep the two clauses in the same request context"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-05",
@@ -87,7 +91,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "treat wait/use-other-device as a possible correction"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-06",
@@ -101,7 +106,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "supersede the device slot while retaining unrelated state"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-07",
@@ -115,7 +121,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "stop or supersede speech output without canceling the task automatically"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-08",
@@ -129,7 +136,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "block state-changing dispatch after explicit task cancellation"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-09",
@@ -143,7 +151,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "classify as a backchannel without completing a task"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-10",
@@ -157,7 +166,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "avoid treating noise as a completed spoken request"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-11",
@@ -171,7 +181,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "keep the partial hypothesis open"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-12",
@@ -185,7 +196,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "replace the earlier hypothesis for the same utterance"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-13",
@@ -199,7 +211,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "allow completion only after the final revision"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-14",
@@ -213,7 +226,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "invalidate dependent time work while preserving other slots"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-15",
@@ -227,7 +241,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "invalidate dependent day work while preserving device evidence"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-16",
@@ -241,7 +256,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "clarify the missing required slot"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-17",
@@ -255,7 +271,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "permit reversible read-only work when intent is stable"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-18",
@@ -269,7 +286,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "reject the stale result as outdated evidence"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-19",
@@ -283,7 +301,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "prevent duplicate acceptance of the same logical result"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-20",
@@ -297,7 +316,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "reconcile unknown outcome before retrying"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-21",
@@ -311,7 +331,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "distinguish an intentional repeat from a duplicate delivery"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-22",
@@ -325,7 +346,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "report cancellation without claiming rollback of a confirmed effect"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-23",
@@ -339,7 +361,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "separate attempted from confirmed effect"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-24",
@@ -353,7 +376,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "resolve capability from the supplied manifest"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-25",
@@ -367,7 +391,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "retain only the newest correction for the affected slot"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-26",
@@ -381,7 +406,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "preserve unrelated useful session details"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-27",
@@ -395,7 +421,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "prevent the older revision from becoming a new command"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-28",
@@ -409,7 +436,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "ask rather than inventing a location"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-29",
@@ -423,7 +451,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "avoid adding delay beyond the evidence needed for completion"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "text-30",
@@ -437,7 +466,8 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "clear session-scoped state before the new request"
-      }
+      },
+      "live_evidence_status": "not_run"
     },
     {
       "id": "audio-01",
@@ -458,7 +488,9 @@
         "created": "2026-09-13",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "carry audio speech through one session with a final source revision"
-      }
+      },
+      "reference_text": "My screen keeps flickering after the update. Book Wednesday at five.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-02",
@@ -479,7 +511,9 @@
         "created": "2026-09-13",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "preserve correction wording and the latest day"
-      }
+      },
+      "reference_text": "Book Tuesday. Actually, Wednesday at five.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-03",
@@ -500,7 +534,9 @@
         "created": "2026-09-13",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "measure fluent ASR and completion without an internal pause"
-      }
+      },
+      "reference_text": "Please book a screen repair for Friday at ten.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-04",
@@ -521,7 +557,9 @@
         "created": "2026-09-13",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "preserve repetition and correction instead of deleting words"
-      }
+      },
+      "reference_text": "I want Tuesday, Tuesday, actually Wednesday at five.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-05",
@@ -542,7 +580,9 @@
         "created": "2026-09-13",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "expose an internal pause candidate without forcing completion"
-      }
+      },
+      "reference_text": "I tried restarting already. The screen still flickers.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-06",
@@ -563,7 +603,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "keep the utterance open across the pause"
-      }
+      },
+      "reference_text": "The screen flickers ... after the update.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-07",
@@ -584,7 +626,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "replace earlier audio hypotheses for one utterance"
-      }
+      },
+      "reference_text": "Book Tuesday. Tuesday. Actually Wednesday.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-08",
@@ -605,7 +649,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "retain the latest device correction"
-      }
+      },
+      "reference_text": "Use this device. Wait, the other one.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-09",
@@ -626,7 +672,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "separate stop-speaking from stop-task"
-      }
+      },
+      "reference_text": "Stop speaking, but keep the repair task ready.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-10",
@@ -647,7 +695,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "block state-changing work after stop-task"
-      }
+      },
+      "reference_text": "Stop the task before it books anything.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-11",
@@ -668,7 +718,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "classify the backchannel without losing the active utterance"
-      }
+      },
+      "reference_text": "I need a repair for Friday. Mm-hmm.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-12",
@@ -679,17 +731,19 @@
       "evidence_status": "fake_mode_replayed",
       "asset": {
         "fixture": "tests/fixtures/audio/audio-12.wav",
-        "status": "generated_speech",
-        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer",
-        "bytes": 122604,
-        "sha256": "57DF935EC17C07190A5A20816C5F7AA04448A52597E4060B31B931F91E3CABDA"
+        "status": "generated_speech_with_noise_tail",
+        "generator": "Windows System.Speech.Synthesis.SpeechSynthesizer plus deterministic 0.5s white-noise tail (seed 20260916)",
+        "bytes": 144652,
+        "sha256": "162EDD66445102A806D7563EC45F147BF8CCB905101A92634A79679FB07D8FA8"
       },
       "provenance": {
         "author": "AccessFlow Workstream B",
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "avoid a false completion from non-speech audio"
-      }
+      },
+      "reference_text": "The screen flickers after the update.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-13",
@@ -710,7 +764,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "preserve repeated quantity words for downstream interpretation"
-      }
+      },
+      "reference_text": "Two tickets. Two tickets.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-14",
@@ -731,7 +787,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "update only the dependent time slot"
-      }
+      },
+      "reference_text": "Change the appointment time from five to six.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-15",
@@ -752,7 +810,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "accept only the newest audio revision"
-      }
+      },
+      "reference_text": "Correct the date twice. Tuesday, Wednesday, Thursday.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-16",
@@ -773,7 +833,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "keep timing as evidence rather than a semantic completion decision"
-      }
+      },
+      "reference_text": "I tried restarting already ... The screen still flickers.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-17",
@@ -794,7 +856,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "avoid treating ordinary fluency as a correction"
-      }
+      },
+      "reference_text": "Please book a screen repair for Friday at ten.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "audio-18",
@@ -815,7 +879,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "avoid inheriting prior audio observations after reset"
-      }
+      },
+      "reference_text": "Submit a new request after session reset.",
+      "live_evidence_status": "live_local_asr_scored"
     },
     {
       "id": "image-01",
@@ -837,7 +903,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "retain frame identity and timing as informational evidence"
-      }
+      },
+      "visual_label": "WED 5",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-02",
@@ -859,7 +927,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "keep visual evidence separate from the spoken correction until resolved"
-      }
+      },
+      "visual_label": "TUE / WED",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-03",
@@ -881,7 +951,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "surface uncertainty rather than choosing a date silently"
-      }
+      },
+      "visual_label": "DATE ?",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-04",
@@ -903,7 +975,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "replace stale active-frame evidence when controller support is present"
-      }
+      },
+      "visual_label": "DEVICE B",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-05",
@@ -925,7 +999,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "suppress the stale result and keep the current frame"
-      }
+      },
+      "visual_label": "FRAME 2",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-06",
@@ -947,7 +1023,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "never authorize a write from image text alone"
-      }
+      },
+      "visual_label": "BOOK 5",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-07",
@@ -969,7 +1047,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "require a spoken request before any state-changing action"
-      }
+      },
+      "visual_label": "APPROVE ?",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-08",
@@ -991,7 +1071,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "retain independent audio and image observations together"
-      }
+      },
+      "visual_label": "AUDIO + IMG",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-09",
@@ -1013,7 +1095,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "represent conflict before a write is planned"
-      }
+      },
+      "visual_label": "OLD FRAME",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-10",
@@ -1035,7 +1119,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "return a recoverable input error and keep the session usable"
-      }
+      },
+      "visual_label": "QUOTA",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-11",
@@ -1057,7 +1143,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "retain the frame beside the corrected audio/text evidence"
-      }
+      },
+      "visual_label": "UNCERTAIN",
+      "live_evidence_status": "not_run"
     },
     {
       "id": "image-12",
@@ -1079,7 +1167,9 @@
         "created": "2026-09-16",
         "consent_license": "Generated locally; no participant or third-party data.",
         "expected_outcome": "respond informationally without overclaiming visual certainty"
-      }
+      },
+      "visual_label": "RESET",
+      "live_evidence_status": "not_run"
     }
   ],
   "execution": {
@@ -1098,5 +1188,25 @@
       "fake/replay-vision"
     ],
     "evidence_note": "Replay verifies owned perception routing and metadata preservation; it does not measure model quality, latency, or user benefit."
+  },
+  "live_audio_scoring": {
+    "recorded": "2026-09-16",
+    "mode": "live_local_asr",
+    "result_file": "docs/feedback/ASR_SCENARIO_RESULTS.json",
+    "model": "Systran/faster-whisper-base.en",
+    "model_snapshot": "3d3d5dee26484f91867d81cb899cfcf72b96be6c",
+    "device": "CPU",
+    "cpu": "Intel(R) Core(TM) Ultra 5 125H",
+    "python": "3.12.10",
+    "compute_type": "int8",
+    "cases_scored": 18,
+    "summary": {
+      "reference_words": 132,
+      "word_errors": 13,
+      "micro_word_error_rate": 0.098,
+      "mean_realtime_factor": 0.158,
+      "max_realtime_factor": 0.251
+    },
+    "evidence_note": "Generated local audio only; this does not establish human speech accuracy or multimodal task quality."
   }
 }

@@ -89,7 +89,7 @@ The 16 September inventory assets below are generated locally for the weighted s
 | audio-09 | audio | development | `tests/fixtures/audio/audio-09.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 170444 | `89E4359A32C642C32BEAE8BFFFD0F94727834B3555CD1003E87F15AEFB4D8DD0` |
 | audio-10 | audio | development | `tests/fixtures/audio/audio-10.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 134064 | `E358BC7D2547D460F5D413346CC9CF9C62CA2D01B558AB2341572C75B09F8CDA` |
 | audio-11 | audio | development | `tests/fixtures/audio/audio-11.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 168462 | `41FFC4204B235AF6435139949E917BE4FA88DEA9064A3F6080B78109215F5374` |
-| audio-12 | audio | development | `tests/fixtures/audio/audio-12.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 122604 | `57DF935EC17C07190A5A20816C5F7AA04448A52597E4060B31B931F91E3CABDA` |
+| audio-12 | audio | development | `tests/fixtures/audio/audio-12.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer plus deterministic 0.5s white-noise tail (seed 20260916) | 144652 | `162EDD66445102A806D7563EC45F147BF8CCB905101A92634A79679FB07D8FA8` |
 | audio-13 | audio | held_out | `tests/fixtures/audio/audio-13.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 144654 | `16F61BBB74026723B0559CDB8213FF469AA212061550BDE568F3F57D8B7FC323` |
 | audio-14 | audio | held_out | `tests/fixtures/audio/audio-14.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 152360 | `672FF49F2EA57B8603BE9FFD13FCC70790D3DA0C6797146483FEC10D759513B9` |
 | audio-15 | audio | held_out | `tests/fixtures/audio/audio-15.wav` | Windows System.Speech.Synthesis.SpeechSynthesizer | 239010 | `4DADB58C984CD23619CD512CB02A882E65ADEA2C1BD5AC839D83F7A7EE0A0187` |

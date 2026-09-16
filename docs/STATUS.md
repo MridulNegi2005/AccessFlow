@@ -117,6 +117,10 @@ Updated 16 September 2026.
   verifies one observation per case, preserved event/source identities and the 30/18/12 modality counts.
   The injected replay providers make this routing evidence only; live ASR, vision and reasoning quality
   remain unmeasured.
+- The 18 authored WAV cases now have a live local Faster Whisper base.en CPU INT8 run with per-case
+  transcripts, word edits and realtime factors recorded. Across 132 reference words, micro-WER was 0.098,
+  mean realtime factor 0.158 and maximum realtime factor 0.251 on the declared Intel Core Ultra 5 125H;
+  the generated fixtures do not establish human speech accuracy or task completion.
 - Browser base64 decoding and WAV/PNG materialization validation now run in a worker from the WebSocket
   receive path, keeping upload handling off the event loop.
 - The browser demo renders untrusted multimodal event kinds and payloads through text nodes, so model or
@@ -163,8 +167,8 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 230 tests passed with 4 strict expected failures, including 89 passing demo
-  tests and 125 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 231 tests passed with 4 strict expected failures, including 89 passing demo
+  tests and 126 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before
@@ -185,7 +189,7 @@ Updated 16 September 2026.
 - Held-out generated-case ASR and endpoint measurements are recorded; human speech and endpoint quality, live vision service and real multimodal
   benchmark on declared hardware.
 - Manual browser/device smoke proof, a completed voluntary feedback session, demo video and final presentation assembly.
-- Docker/CI verification, live-backend execution and scoring of the 60-scenario authored/provenance-tracked set,
+- Docker/CI verification, live vision/reasoning execution and scoring of the remaining 42 scenarios,
   reviewed disclosure and final release assembly.
 
 No live model, official compatibility, latency or completion target is currently certified.
