@@ -560,6 +560,9 @@ Updated 16 September 2026.
 - The benchmark also rejects duplicate or blank image case IDs and blank visual labels before a
   run can produce misleading provenance or vacuous recall. The focused benchmark coverage passes
   six tests; the full integrated branch passes 772 tests with one retained conflict xfail.
+- The live benchmark now records the configured per-request timeout in its report and exposes an
+  explicit `--timeout` option. Invalid timeout environment values no longer break the offline
+  opt-in skip path; full verification passes 774 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 
