@@ -11,6 +11,7 @@ from accessflow.contracts import (
 )
 from accessflow.corpus import (
     CORPUS_TOOL_NAME, MAX_DOCUMENT_BYTES, MAX_QUERY_CHARS, CorpusAccessError, CorpusStore, best_passage,
+    is_safe_document_name,
 )
 from accessflow.engine import Agent
 from accessflow.fakes import FakePerception, FakeTools, FinalFlagPolicy, MockOnlyAuthorization, ScriptedReasoner
@@ -50,6 +51,9 @@ class LookupOnce:
 @pytest.mark.parametrize("bad", [
     "../secret.txt", "..\\secret.txt", "/etc/passwd", "C:\\Windows\\win.ini",
     "sub/dir.txt", "sub\\dir.txt", "", ".", "..", ".hidden", "a\x00b.txt",
+    # L1 (security review): $ matches before a trailing newline under re.match, and
+    # Windows reserves these stems (any extension) for devices, not files.
+    "manual.txt\n", "NUL", "nul", "CON", "COM1", "LPT1", "PRN", "AUX", "NUL.txt",
 ])
 def test_start_rejects_unsafe_corpus_names(bad):
     with pytest.raises(ValidationError):
@@ -63,6 +67,31 @@ def test_start_rejects_duplicate_corpus_names():
 
 def test_start_accepts_plain_filenames():
     assert Start(corpus=["manual.txt", "notes-v2.md"]).corpus == ["manual.txt", "notes-v2.md"]
+
+
+# --- corpus.py: filename validation, tested directly --------------------------------
+
+@pytest.mark.parametrize("bad", [
+    "manual.txt\n", "NUL", "nul", "Nul", "CON", "COM1", "COM9", "LPT1", "LPT9",
+    "PRN", "AUX", "NUL.txt", "com1.md",
+])
+def test_is_safe_document_name_rejects_trailing_newline_and_reserved_stems(bad):
+    assert not is_safe_document_name(bad)
+
+
+def test_is_safe_document_name_accepts_ordinary_names():
+    assert is_safe_document_name("manual.txt")
+    assert is_safe_document_name("notes-v2.md")
+    # Not a reserved stem: "console" and "comedy" only start with one, they are not it.
+    assert is_safe_document_name("console.txt")
+    assert is_safe_document_name("comedy.txt")
+
+
+def test_corpus_store_refuses_reserved_device_name_even_if_allowlisted(tmp_path):
+    store = CorpusStore(tmp_path)
+    with pytest.raises(CorpusAccessError) as excinfo:
+        store.read("NUL.txt", {"NUL.txt"})
+    assert excinfo.value.code == "unsafe_document_name"
 
 
 # --- corpus.py: CorpusStore is a security boundary, tested directly -----------------
