@@ -180,6 +180,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - The demo WebSocket now bounds both incoming and outgoing event queues at 16 items, applying
   backpressure when a browser stops reading responses. The full branch passes 644 tests with one
   retained conflict example; live model and device behavior remain unverified.
+- Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
+  validation or loading can process them. This closes the unbounded local-path seam while preserving
+  the existing small fixtures; the full branch passes 646 tests with one retained conflict example.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
