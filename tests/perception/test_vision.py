@@ -90,6 +90,29 @@ def test_ollama_provider_rejects_oversized_image_before_request(tmp_path: Path):
     assert called is False
 
 
+def test_ollama_provider_reads_image_with_a_bounded_payload(tmp_path: Path, monkeypatch):
+    image = tmp_path / "growing.png"
+    image.write_bytes(b"small")
+
+    class BoundedReader:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self, amount=None):
+            if amount is None:
+                return b"small"
+            assert amount == vision_module.MAX_VISION_IMAGE_BYTES + 1
+            return b"x" * amount
+
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: BoundedReader())
+
+    with pytest.raises(RuntimeError, match="image is too large"):
+        OllamaVisionProvider._read_image(image)
+
+
 def test_ollama_provider_rejects_oversized_response(tmp_path: Path):
     image = tmp_path / "screen.png"
     image.write_bytes(b"png-test-bytes")
