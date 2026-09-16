@@ -8,6 +8,7 @@ from ..contracts import Observation, SessionView, TurnDecision
 from ..perception.timing import ActivitySummary
 
 _CORRECTION = re.compile(r"\b(actually|rather|correction|sorry|i mean)\b|^\s*(no|wait)\s*[,.-]", re.I)
+_STOP_REQUEST = re.compile(r"^\s*(stop|cancel)\b", re.I)
 _BACKCHANNELS = frozenset({"mm", "mm-hmm", "mhm", "uh huh", "uh-huh", "right", "okay", "ok"})
 
 
@@ -28,6 +29,8 @@ class HeuristicTurnPolicy:
             return TurnDecision(kind="continue", uncertainty=1.0)
         if observation.modality == "image":
             return TurnDecision(kind="continue", uncertainty=1.0)
+        if _STOP_REQUEST.search(text):
+            return TurnDecision(kind="stop", uncertainty=0.1 if observation.final else 0.3)
         if timing is not None and timing.pause_detected and not observation.final:
             return TurnDecision(kind="continue", uncertainty=0.25)
         if normalized in _BACKCHANNELS and observation.final:

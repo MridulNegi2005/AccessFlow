@@ -105,6 +105,16 @@ def test_backchannel_is_not_planned_as_a_new_request():
     assert decision.kind == "backchannel"
 
 
+@pytest.mark.parametrize("text", ["Stop speaking while I think", "Stop the whole task now"])
+def test_explicit_stop_request_returns_stop(text: str):
+    item = observation(text, final=True)
+
+    decision = HeuristicTurnPolicy().update(item, view())
+
+    assert decision.kind == "stop"
+    assert decision.uncertainty < 0.2
+
+
 def test_image_captions_cannot_drive_speech_turn_policy():
     policy = HeuristicTurnPolicy()
 
