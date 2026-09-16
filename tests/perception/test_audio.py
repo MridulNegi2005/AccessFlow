@@ -58,6 +58,37 @@ def test_energy_activity_exposes_frame_timing_without_claiming_vad():
     assert frames[1].rms == 10_000
 
 
+@pytest.mark.parametrize(
+    ("sample_width", "sample"),
+    [(1, 64), (2, 16_384), (3, 4_194_304), (4, 1_073_741_824)],
+)
+def test_energy_activity_normalizes_equivalent_pcm_amplitudes(sample_width: int, sample: int):
+    if sample_width == 1:
+        encoded = bytes([sample + 128])
+    else:
+        encoded = sample.to_bytes(sample_width, "little", signed=True)
+
+    frames = energy_activity(AudioBuffer(encoded * 320, 16_000, sample_width), rms_threshold=12_000)
+
+    assert len(frames) == 1
+    assert frames[0].rms == 16_384
+    assert frames[0].active is True
+
+
+def test_energy_activity_uses_canonical_full_scale_for_clipped_samples():
+    values = {
+        1: bytes([255]),
+        2: struct.pack("<h", 32_767),
+        3: ((1 << 23) - 1).to_bytes(3, "little", signed=True),
+        4: ((1 << 31) - 1).to_bytes(4, "little", signed=True),
+    }
+
+    for sample_width, encoded in values.items():
+        frames = energy_activity(AudioBuffer(encoded * 320, 16_000, sample_width))
+        assert frames[0].rms <= 32_767
+        assert frames[0].active is True
+
+
 def test_energy_activity_rejects_invalid_configuration():
     with pytest.raises(ValueError, match="frame_ms"):
         energy_activity(AudioBuffer(b"\x00\x00", 16_000, 2), frame_ms=0)
@@ -189,9 +220,34 @@ def test_webrtc_activity_uses_injected_detector_without_optional_import():
     assert calls == [(640, 16_000), (640, 16_000)]
 
 
+@pytest.mark.parametrize("sample_width", [1, 3, 4])
+def test_webrtc_activity_converts_supported_pcm_widths_to_16_bit(sample_width: int):
+    if sample_width == 1:
+        sample = bytes([192])
+    else:
+        sample = (1 << (sample_width * 8 - 2)).to_bytes(sample_width, "little", signed=True)
+    observed = []
+
+    class Detector:
+        def __init__(self, aggressiveness: int):
+            assert aggressiveness == 2
+
+        def is_speech(self, chunk: bytes, sample_rate: int) -> bool:
+            observed.append((len(chunk), sample_rate, chunk[:2]))
+            return True
+
+    frames = webrtc_activity(
+        AudioBuffer(sample * 320, 16_000, sample_width),
+        vad_factory=Detector,
+    )
+
+    assert len(frames) == 1
+    assert observed == [(640, 16_000, struct.pack("<h", 16_384))]
+
+
 def test_webrtc_activity_rejects_unsupported_format():
-    with pytest.raises(ValueError, match="requires 16-bit"):
-        webrtc_activity(AudioBuffer(b"\x00" * 640, 16_000, 1))
+    with pytest.raises(ValueError, match="sample widths"):
+        webrtc_activity(AudioBuffer(b"\x00" * 640, 16_000, 5))
 
     with pytest.raises(ValueError, match="frame_ms"):
         webrtc_activity(AudioBuffer(b"\x00\x00" * 640, 16_000, 2), frame_ms=25)
