@@ -238,6 +238,23 @@ def test_wav_validation_returns_metadata_for_backend_checks(tmp_path: Path):
     assert metadata == WavFormat(channels=1, sample_width=2, sample_rate=16_000, frames=320)
 
 
+def test_wav_validation_rejects_oversized_file_before_parsing(tmp_path: Path):
+    wav_path = tmp_path / "oversized.wav"
+    wav_path.write_bytes(b"\0" * (local_module.MAX_WAV_FILE_BYTES + 1))
+
+    with pytest.raises(ValueError, match="WAV file is too large"):
+        validate_wav(wav_path)
+
+
+def test_wav_validation_rejects_oversized_decoded_payload(tmp_path: Path, monkeypatch):
+    wav_path = tmp_path / "oversized-pcm.wav"
+    _write_wav(wav_path, frames=80)
+    monkeypatch.setattr(local_module, "MAX_WAV_DECODED_BYTES", 100)
+
+    with pytest.raises(ValueError, match="WAV decoded payload is too large"):
+        validate_wav(wav_path)
+
+
 @pytest.mark.asyncio
 async def test_audio_rejects_malformed_wav(tmp_path: Path):
     wav_path = tmp_path / "broken.wav"
@@ -938,6 +955,63 @@ def test_png_validation_rejects_incomplete_scanline_payload(tmp_path: Path):
         validate_png(image_path)
 
 
+@pytest.mark.asyncio
+async def test_image_input_rejects_unknown_critical_png_chunk_before_provider(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "unknown-critical.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"ABCD", b"unrecognized critical data")
+        + chunk(b"IDAT", zlib.compress(b"\x00\x40\x80\xff\xff"))
+        + chunk(b"IEND", b"")
+    )
+    provider_calls = []
+    event = FrameEvent(
+        session_id="s1",
+        payload=Frame(path=str(image_path), frame_id="unknown-critical-frame"),
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG"):
+        await _one(LocalPerception(vision_provider=lambda path: provider_calls.append(path) or "unsafe"), event)
+
+    assert provider_calls == []
+
+
+@pytest.mark.parametrize("chunk_type", [b"abcd", b"ab1d"])
+def test_png_validation_rejects_invalid_chunk_type_code(tmp_path: Path, chunk_type: bytes):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "invalid-chunk-type.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(chunk_type, b"ignored metadata")
+        + chunk(b"IDAT", zlib.compress(b"\x00\x40\x80\xff\xff"))
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG chunk type"):
+        validate_png(image_path)
+
+
 def test_png_validation_rejects_oversized_decoded_payload(tmp_path: Path):
     def chunk(kind: bytes, payload: bytes) -> bytes:
         return (
@@ -983,6 +1057,31 @@ def test_png_validation_rejects_indexed_image_without_palette(tmp_path: Path):
         b"\x89PNG\r\n\x1a\n"
         + chunk(b"IHDR", ihdr)
         + chunk(b"IDAT", zlib.compress(b"\x00\x00"))
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG palette"):
+        validate_png(image_path)
+
+
+@pytest.mark.parametrize("color_type", [0, 4])
+def test_png_validation_rejects_palette_for_grayscale_images(tmp_path: Path, color_type: int):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / f"grayscale-{color_type}-with-palette.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, color_type, 0, 0, 0)
+    pixel_bytes = b"\x00" if color_type == 0 else b"\x00\xff"
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"PLTE", b"\x00\x00\x00")
+        + chunk(b"IDAT", zlib.compress(b"\x00" + pixel_bytes))
         + chunk(b"IEND", b"")
     )
 

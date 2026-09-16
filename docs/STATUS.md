@@ -243,14 +243,84 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 
 ### Workstream B — Atishay
 
-- Held-out speech-quality ASR measurement and validated acoustic VAD integration.
+- PCM activity measurements now normalize 8/16/24/32-bit input to signed 16-bit full-scale units,
+  and the WebRTC path converts those widths before calling the detector. Activity frames now reject
+  non-finite, negative, zero-length and out-of-order timelines. Focused audio coverage passes 45
+  tests and the full branch passes 673 tests with one retained conflict example; held-out speech-quality
+  measurement and hardware timing validation remain open.
+- The browser adapter now translates typed `speech` and `task` interruption events, and the demo
+  exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
+  usability after a speech interruption; no engine or shared-contract change was needed.
+- Demo media intake now enforces a 16 MiB per-session aggregate budget in addition to the 8 MiB
+  per-file bound, releases reservations after failed validation, and applies backpressure with a
+  16-item incoming queue. Focused and full checks pass; live device behavior remains unverified.
+- Browser input now reports malformed JSON as a recoverable `demo/input` error, and PNG validation
+  rejects unknown critical chunks before a vision provider is called. The full branch passes 673
+  tests with one retained conflict example; Ruff and diff checks pass.
+- Failed browser media writes and unexpected validation errors now remove partial session files while
+  releasing their aggregate budget reservation. The full branch passes 673 tests with one retained
+  conflict example; live vision and device behavior remain unverified.
+- The demo now keeps the detailed event trace out of live announcements and exposes a concise
+  screen-reader status region. A fresh local browser smoke confirmed the page rendered without
+  horizontal overflow or console errors; the full branch remains at 673 passed with one xfail.
+- Live announcements also compact untrusted message and response text to a 240-character content
+  bound. A browser smoke with a 1,200-character response produced a bounded announcement while the
+  full trace stayed visible; no live model or device claim is made.
+- Browser sends now catch a close race after the ready-state check and report a stable transport error;
+  queued-message draining also stops without a false connected announcement. A fresh browser send
+  smoke completed with no console errors; the full branch remains at 673 passed with one xfail.
+- The demo now exposes an explicit Restart session control that discards an active microphone stream,
+  reloads client state and establishes a fresh WebSocket session. Browser smoke cleared the prior
+  event trace and reconnected cleanly; no live model or device claim is made.
+- The demo WebSocket now bounds both incoming and outgoing event queues at 16 items, applying
+  backpressure when a browser stops reading responses. The full branch passes 673 tests with one
+  retained conflict example; live model and device behavior remain unverified.
+- Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
+  validation or loading can process them. This closes the unbounded local-path seam while preserving
+  the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
+- Browser microphone capture now caps accumulated samples so the generated WAV stays within the 8 MiB
+  media boundary; reaching the cap stops capture once, reports a labeled status and uploads only the
+  bounded recording. Browser layout smoke remained clean; the full branch passes 673 tests with one
+  retained conflict example.
+- Selected WAV and PNG files are rejected in the browser before `arrayBuffer()` when they exceed the
+  8 MiB media boundary, avoiding an unnecessary client-side read while preserving the existing
+  serialized send path. Browser smoke remained free of layout overflow and console errors.
+- Derived timing facts now validate finite nonnegative timestamps, positive and non-overlapping activity
+  windows, matching pause and active durations, and boolean timing labels before policy experiments
+  consume them. Duration comparison uses a bounded absolute tolerance. Focused timing coverage and the
+  full branch pass with one retained conflict example.
+- Configured local audio and vision backends now reject browser placeholder paths before backend
+  invocation, emit a recoverable `demo/input` error and keep the WebSocket session usable. Mock mode
+  retains its explicitly labeled placeholder behavior; the full branch passes 673 tests with one xfail.
+- Modality coverage metrics now reject observations with missing, blank or non-string modality labels
+  before constructing a typed result, instead of leaking invalid values or failing during sorting.
+- A demo startup failure in reasoner configuration now closes any perception backend that was already
+  initialized before reporting the configuration error. The full branch passes 675 tests with one
+  retained conflict example and two dependency deprecation warnings; Ruff passes.
+- Direct PNG validation now rejects `PLTE` chunks for grayscale and grayscale-with-alpha images before
+  a vision provider can receive the malformed input. Focused local-perception coverage passes 49 tests;
+  the full branch passes 677 tests with one retained conflict example and Ruff passes.
+- Ollama vision configuration now rejects blank and non-string grounding prompts and normalizes valid
+  prompt whitespace before a request can reach the local model. The full branch passes 679 tests with
+  one retained conflict example and two dependency deprecation warnings; Ruff passes.
+- An explicit opt-in vision benchmark now runs the 12 committed image cases through LocalPerception and
+  OllamaVisionProvider, recording backend/model/prompt metadata, hashes, source IDs, timings, captions,
+  failures and token-level label recall. Offline execution reports `SKIPPED` without fabricating live
+  evidence; deterministic benchmark coverage passes 3 tests and the full branch passes 682 tests with
+  one retained conflict example. The live backend remains unavailable on this machine.
+- An explicit `--live` probe against `ollama/gemma3:4b` processed all 12 image cases and returned 12
+  classified loopback transport failures with exit code 1, zero captions and zero recall; this confirms
+  the gate fails closed without fabricating live vision quality evidence.
+- Direct PNG validation now rejects non-alphabetic chunk codes and lowercase reserved bytes before
+  unknown data can be treated as metadata. Focused local-perception coverage passes 51 tests; the full
+  branch passes 684 tests with one retained conflict example and Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
   default `none` so audio-only behaviour is unchanged. This is finding A2; see the ownership
   note in `CONTRACT_PROPOSALS.md` for why this file stays with Atishay despite the general
   directory rule.
-- Microphone capture and voluntary feedback notes.
+- Voluntary feedback notes and live microphone/device validation.
 - Demo video and presentation draft.
 
 ### Completed since this list was last written (as of 15 September 2026)
@@ -336,7 +406,7 @@ Updated 16 September 2026.
   misleading final response.
 - The Ollama vision provider normalizes syntactically invalid JSON bytes and syntactically valid
   non-object JSON roots into classified invalid JSON errors, with raw-byte, list and null response
-  coverage, and normalizes provider timeouts
+  coverage, rejects explicit incomplete responses, and normalizes provider timeouts
   into the same stable runtime failure boundary.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
   emitted and the same session completes a later text request. A malformed list response and a
@@ -452,8 +522,8 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 255 tests passed with 4 strict expected failures, including 108 passing demo
-  tests and 131 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 257 tests passed with 4 strict expected failures, including 108 passing demo
+  tests and 133 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before
@@ -466,6 +536,11 @@ Updated 16 September 2026.
   live interactive device behavior remains open.
 - origin/mridul/engine was fetched at 919ed27 for integrated state review. No engine owned
   files were changed and this branch remains atishay/perception.
+- An offline timing-policy replay now compares 0.4-second acoustic candidates with a 2.0-second
+  baseline over the recorded held-out pause and fluent VAD timelines. It reports the short
+  baseline's internal premature candidate, the long baseline's missed endpoint, and a final-
+  revision-gated trailing candidate with 0.62/0.66 seconds of added wait; six focused tests and
+  the full branch pass. This is prerecorded timing-policy evidence only, not live endpointing.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 

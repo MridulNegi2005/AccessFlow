@@ -3,14 +3,14 @@
 Date and branch: 2026-09-16 / atishay/perception
 Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, optional loopback Ollama JSON reasoner, opt-in local audio demo path, opt-in local Ollama vision path, session path isolation, local model configuration guard, synthetic audio/image provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, weighted 60-case scenario inventory with hash-checked assets, feedback-session template, demo recording script, template-neutral presentation outline and multimodal end-to-end evidence implemented in owned paths; shared fakes/interfaces remain unchanged.
 Contract version used: 0.1
-Tests run and results: repository virtualenv pytest -q — 255 passed, 4 strict xfailed;
+Tests run and results: repository virtualenv pytest -q — 257 passed, 4 strict xfailed;
 Configured vision environment wiring is covered through a loopback HTTP provider at the WebSocket route; the final retains image evidence with the later spoken question.
-perception run — 131 passed; demo run — 108 passed, 4 strict xfailed; contract/engine — 16 passed;
+perception run — 133 passed; demo run — 108 passed, 4 strict xfailed; contract/engine — 16 passed;
 held-out fixture check included;
 Ruff and git diff --check clean for owned paths.
 Live-model/backend results: Local Faster Whisper base.en CPU INT8 measured on the development and three generated held-out cases; a real local ASR plus injected-vision Agent composition completed in 3.222 seconds with both observations in one view; fresh Chrome also routed the speech fixture through faster-whisper/cpu-int8 before accepting a PNG in the same session, and the WebSocket route retains the latest transcript revision alongside the frame; the mock final exposed both prior modalities; the opt-in WebSocket demo route completed a checked-in WAV with the cached model and emitted a local-backend acknowledgment; an isolated Chrome run without a fake audio-device flag used the present Microphone Array and completed getUserMedia, AudioWorklet capture, WAV upload and the mock final; no human speech accuracy, live vision quality or endpoint-quality claim.
 Configured vision failure is covered at the WebSocket boundary: backend_failure is emitted and a later text request completes in the same session.
-The loopback OllamaVisionProvider regression exercises the real local HTTP request with local ASR in one Agent context; it verifies protocol payloads and provenance, not live model quality.
+The loopback OllamaVisionProvider regression exercises the real local HTTP request with local ASR in one Agent context; it verifies protocol payloads and provenance, rejects explicit incomplete responses, and does not claim live model quality.
 In-flight frame coverage also proves a delayed stale frame result cannot enter the current reasoner view after a newer frame arrives.
 The image boundary now rejects structurally incomplete or CRC-invalid PNG uploads before vision inference and removes rejected materializations.
 The demo also has an optional loopback Ollama JSON reasoner selected by `ACCESSFLOW_DEMO_OLLAMA_REASONER_MODEL`; it bounds request context with valid JSON that preserves newest evidence, rejects explicit incomplete responses, bounds response size, strictly parses `PlanProposal`, and leaves the mock reasoner as the default. WebSocket regressions cover a recoverable reasoner failure and configured vision plus reasoning providers together: frame evidence and a later spoken request reach the configured reasoner and return an informational final, while the browser status labels both perception and reasoning backends. The local service was unavailable during verification, so live reasoning quality remains unmeasured.
@@ -318,3 +318,164 @@ hypothesis. Focused demo tests and JavaScript syntax validation passed; no prote
 2026-09-16 verification: Added explicit labels for the transcript, WAV and PNG browser controls. A refreshed current-head 1280x1600 headless Chrome capture remained legible with no visible clipping or overlap. No protected files changed.
 2026-09-16 verification: Energy activity now rejects PCM buffers with trailing partial samples instead of silently dropping bytes. Added focused coverage; full suite: 189 passed, 4 strict xfailed. No protected files changed.
 2026-09-16 verification: Current-head Chrome CDP interaction drove text partial/final submission, checked-in WAV upload and generated PNG upload. The page showed connected/media acknowledgments and retained both prior modalities with zero console or page exceptions. No source or protected files changed.
+
+## 2026-09-16 - PCM width normalization for activity and VAD
+
+**Task:** Close the audio normalization gap identified in Workstream B finding B7 while preserving
+the existing width-preserving `load_pcm` API.
+
+**Changes:** Energy RMS values now use signed 16-bit full-scale units for 8-, 16-, 24- and 32-bit
+PCM. The WebRTC adapter converts supported PCM widths to bounded little-endian signed 16-bit frames
+before invoking its detector. Unsupported widths and malformed partial samples remain rejected.
+
+**Status:** `tests/perception/test_audio.py` passes 38 tests; full suite passes 620 tests with one
+retained expected conflict example; Ruff passes. This is deterministic offline evidence with an
+injected detector. Held-out speech quality, live acoustic timing validation and live vision remain
+unverified. Commits: `051f5f2`, `e021882`.
+
+## 2026-09-16 - Browser interruption route
+
+**Task:** Close the owned demo interruption gap using the existing typed `InterruptEvent` contract.
+
+**Changes:** `event_from_message` now validates and translates `speech` and `task` interruption messages,
+including optional utterance IDs, timestamps and envelope sequence. The browser now exposes separate Stop
+speaking and Stop task controls, with the active utterance ID attached when available. Invalid scope and
+field types return recoverable adapter errors. The engine and shared contracts were unchanged.
+
+**Status:** Demo interruption coverage and the full suite pass: 102 demo tests with one retained expected
+conflict example, 630 full tests with one retained expected conflict example; Ruff passes. No live browser
+device or human feedback session was used. Commits: `cddcfc1`, `3f603a6`.
+
+## 2026-09-16 - Bounded browser media intake
+
+**Task:** Close the demo-side aggregate upload and pending-input gap from Workstream B finding B5.
+
+**Changes:** The WebSocket session now owns a thread-safe 16 MiB aggregate media budget in addition to
+the existing 8 MiB per-file bound. Reservations are made after base64 decoding and released when media
+validation or materialization fails, so invalid input cannot consume the session budget. The incoming
+event queue is bounded at 16 items; validation and disk work remain in the worker thread.
+
+**Status:** Demo coverage is 105 passed with one retained expected conflict example; the full suite is
+633 passed with one retained expected conflict example, and Ruff passes. Tests cover cross-modality budget
+accounting, overflow without a new file and reservation release. No engine, contracts, adapters, lockfile
+or live device behavior changed. Commits: `31fc5b7`, `660088a`.
+
+## 2026-09-16 - Recoverable browser parse and critical PNG validation
+
+**Task:** Close two bounded input-validation gaps found during the Workstream B continuation review.
+
+**Changes:** The demo WebSocket now converts malformed JSON into a structured demo/input error and
+keeps the session available for later valid events. The owned PNG validator now rejects unknown critical
+PNG chunks before any vision provider call; ancillary chunks remain accepted. No engine, contract,
+adapter, lockfile or script changes were made.
+
+**Status:** The demo suite passes 106 tests with one retained expected conflict example; the focused
+perception-local suite passes 45 tests. The full suite passes 635 tests with one retained expected
+conflict example, and Ruff plus diff checks pass. Live vision quality remains unverified. Commits:
+650e172, ee66a5.
+
+## 2026-09-16 - Browser media failure cleanup
+
+**Task:** Close the remaining cleanup edge in bounded browser media intake.
+
+**Changes:** A materialized upload path is now removed for unexpected validator or disk exceptions,
+while the thread-safe session budget reservation is released. Expected validation failures retain their
+stable adapter messages. Added a regression that raises from the validator and proves both cleanup and
+budget release.
+
+**Status:** Demo coverage passes 107 tests with one retained expected conflict example; the full suite
+passes 636 tests with one retained expected conflict example, and Ruff plus diff checks pass. Live vision,
+device behavior and human feedback remain unverified. Commit: 9477b1b.
+
+## 2026-09-16 - Accessible demo event announcements
+
+**Task:** Close the remaining demo accessibility issue where the detailed JSON trace was also a live
+screen-reader region.
+
+**Changes:** The visible event stream now uses ria-live="off", while a visually hidden polite region
+announces concise connection, error, clarification and final-response messages. The existing 	extContent
+rendering and controller behavior remain unchanged. Source coverage checks the live-region split and
+announcement helper.
+
+**Status:** Full suite passes 636 tests with one retained expected conflict example; Ruff passes. A fresh
+local browser smoke at 850px width rendered the page with body scroll width 835px, no horizontal overflow,
+and no browser console errors or warnings. The temporary server and tab were stopped after inspection.
+Commit pending after the evidence-only documentation update.
+
+## 2026-09-16 - Bounded live announcements
+
+**Task:** Keep the new screen-reader announcement region concise for untrusted model or input text.
+
+**Changes:** Added a 240-character content bound with whitespace compaction for final responses,
+clarifications and input errors. The complete event JSON remains in the visible trace for inspection.
+A browser smoke sent a 1,200-character transcript and read back a 256-character announcement including
+its prefix and ellipsis; the console remained clean.
+
+**Status:** Full suite passes 636 tests with one retained expected conflict example, Ruff passes, and
+git diff --check passes. Commit: b60f32a.
+
+## 2026-09-16 - Activity frame timeline validation
+
+**Task:** Close the timing-helper input invariant gap identified during the perception review.
+
+**Changes:** ActivityFrame now validates finite non-negative timestamps, strictly positive duration,
+non-negative integer RMS and boolean activity. Timing summaries and pause candidates reject frames whose
+timestamps move backward, preventing negative or misleading silence measurements. This remains a timing
+fact layer; no turn completion or controller behavior changed.
+
+**Status:** Focused audio coverage passes 45 tests; the full suite passes 643 tests with one retained
+expected conflict example. Ruff and diff checks pass. Held-out speech quality, live acoustic hardware
+timing and live vision remain unverified. Commit: 3aec3b2.
+
+## 2026-09-16 - Browser send close-race handling
+
+**Task:** Keep browser transport errors recoverable when a WebSocket closes between readiness checking
+and sending.
+
+**Changes:** Added a small serialized-send boundary that catches send exceptions, emits a stable
+transport error and returns failure to callers. Pending messages now stop draining after a failed send
+without announcing a false connected state. Normal transcript sending was checked in a fresh browser
+smoke; no controller or event contract changed.
+
+**Status:** Full suite passes 643 tests with one retained expected conflict example; Ruff and diff checks
+pass. The browser smoke produced a final response with no console errors or warnings. Commit: a5ece4b.
+
+## 2026-09-16 - Browser session restart control
+
+**Task:** Close the demo session-recovery gap after a WebSocket disconnect.
+
+**Changes:** Added an explicit Restart session button. It stops an active microphone stream before
+reloading the page, which clears the event trace and client counters and establishes a fresh WebSocket
+session. A browser smoke created a final event, activated Restart session, and verified the new page
+contained only the two fresh connection status events.
+
+**Status:** Full suite passes 643 tests with one retained expected conflict example; Ruff and diff checks
+pass. Browser smoke had no console errors or warnings and no horizontal overflow. Commit: 85f4b81.
+
+## 2026-09-16 - Bounded browser output queue
+
+**Task:** Close the slow-client response accumulation gap in the demo WebSocket route.
+
+**Changes:** Added a 16-item outgoing queue bound to match the existing incoming bound. A browser that
+stops reading responses now applies backpressure through the route instead of allowing unbounded output
+accumulation. Added a focused implementation regression; normal client behavior is unchanged.
+
+**Status:** Full suite passes 644 tests with one retained expected conflict example, Ruff and diff checks
+pass. No engine, contract, adapter, lockfile or model/network behavior changed. Commit: 10d2069.
+
+## 2026-09-16 - Offline timing-policy replay
+
+**Task:** Advance the acoustic timing milestone without treating prerecorded activity as live turn
+completion or changing the controller.
+
+**Changes:** Added `turn_policy.timing_replay`, which replays the recorded held-out fluent and pause
+VAD timelines against timestamped transcript revisions. The 0.4-second acoustic baseline exposes an
+internal premature candidate, the 2.0-second baseline misses the held-out endpoints, and the combined
+replay emits a trailing candidate only after the matching final revision is available. Stale and
+mismatched revisions and all-silence input cannot emit candidates. The result contains endpoint
+measurements only; it does not construct a `TurnDecision`, authorize tools or mutate session state.
+
+**Status:** Focused timing/audio/policy coverage passes 87 tests; all perception coverage passes 190
+tests; demo coverage passes 132 tests with one retained conflict xfail; the full suite passes 690 tests
+with one retained xfail and two dependency deprecation warnings. Ruff passes. Commits: `378d178`,
+`5fd2f91`, `fce7e62`. Live endpoint quality and live vision quality remain unverified.

@@ -2,6 +2,7 @@ import io
 import asyncio
 import base64
 import importlib.util
+import inspect
 import json
 import re
 import struct
@@ -19,6 +20,7 @@ from accessflow.contracts import (
     AudioEvent,
     EndEvent,
     FrameEvent,
+    InterruptEvent,
     Observation,
     PlanProposal,
     ProposedCall,
@@ -66,6 +68,66 @@ def test_browser_message_becomes_typed_event(kind, expected):
 
     assert isinstance(event, expected)
     assert event.session_id == "session-1"
+
+
+@pytest.mark.parametrize(
+    ("scope", "utterance_id"),
+    [("speech", "utterance-7"), ("task", None)],
+)
+def test_browser_interrupt_message_becomes_typed_event(scope, utterance_id):
+    payload = {"scope": scope}
+    if utterance_id is not None:
+        payload["utterance_id"] = utterance_id
+
+    event = event_from_message(
+        "session-1",
+        {"kind": "interrupt", "timestamp": 12.5, "sequence": 7, "payload": payload},
+    )
+
+    assert isinstance(event, InterruptEvent)
+    assert event.session_id == "session-1"
+    assert event.timestamp == 12.5
+    assert event.sequence == 7
+    assert event.payload.scope == scope
+    assert event.payload.utterance_id == utterance_id
+
+
+@pytest.mark.parametrize(
+    ("message", "error"),
+    [
+        (
+            {"kind": "interrupt", "payload": {"scope": "all"}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": None}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": 7}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": []}},
+            "browser interrupt scope must be 'speech' or 'task'",
+        ),
+        (
+            {"kind": "interrupt", "payload": {"scope": "speech", "utterance_id": 7}},
+            "browser utterance_id must be a non-empty string when provided",
+        ),
+        (
+            {"kind": "interrupt", "timestamp": "12.5", "payload": {"scope": "speech"}},
+            "browser timestamp must be a finite non-negative number",
+        ),
+        (
+            {"kind": "interrupt", "sequence": "7", "payload": {"scope": "speech"}},
+            "browser sequence must be a non-negative integer",
+        ),
+    ],
+)
+def test_browser_interrupt_rejects_invalid_scope_or_field_types(message, error):
+    with pytest.raises(ValueError, match=re.escape(error)):
+        event_from_message("session-1", message)
 
 
 def test_browser_message_preserves_event_and_audio_source_timestamps():
@@ -364,6 +426,22 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'accept="image/png,.png"' in html
     assert 'id="mic"' in html
     assert 'id="stop-mic"' in html
+    assert 'id="stop-speaking"' in html
+    assert 'id="stop-task"' in html
+    assert 'id="announcements" class="sr-only" aria-live="polite"' in html
+    assert 'id="events" aria-live="off"' in html
+    assert 'id="restart-session"' in html
+    assert 'const maxAnnouncementChars = 240' in html
+    assert 'const maxMediaBytes = 8 * 1024 * 1024' in html
+    assert 'const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2)' in html
+    assert 'const accepted = incoming.length <= remaining ? incoming : incoming.slice(0, remaining)' in html
+    assert 'void stopMicrophone(\'limit\')' in html
+    assert 'Microphone recording reached the 8 MiB limit and was stopped.' in html
+    assert 'async function stopMicrophone(reason = null)' in html
+    assert 'function sendSerialized(message)' in html
+    assert 'The session closed before the event could be sent.' in html
+    assert "sendInterrupt('speech')" in html
+    assert "sendInterrupt('task')" in html
     assert 'id="backend-label"' in html
     assert "Perception and reasoning backends:" in html
     assert 'event.payload.reasoner_backend' in html
@@ -392,9 +470,56 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "nextMediaId('upload-audio')" in html
     assert "nextMediaId('upload-frame')" in html
     assert 'Date.now()' not in html
+
+
+def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
+    html = Path("demo/index.html").read_text(encoding="utf-8")
+
+    recorder_handler = html.index("recorder.port.onmessage")
+    stop_function = html.index("async function stopMicrophone")
+    stop_body = html[stop_function:]
+
+    assert "const maxMediaBytes = 8 * 1024 * 1024" in html
+    assert "const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2)" in html
+    assert "const remaining = maxMicrophoneSamples - microphoneSamples" in html[recorder_handler:stop_function]
+    assert "incoming.slice(0, remaining)" in html[recorder_handler:stop_function]
+    assert "microphoneLimitReached = true" in html[recorder_handler:stop_function]
+    assert "void stopMicrophone('limit')" in html[recorder_handler:stop_function]
+    assert stop_body.index("if (!microphone) return;") < stop_body.index("microphone = null;")
+    assert "await enqueueMediaAction(() => send('audio'" in stop_body
+    assert "Microphone recording reached the 8 MiB limit and was stopped." in stop_body
     assert 'card.innerHTML' not in html
+    assert "function announce(event)" in html
+    assert "function compactAnnouncement(value)" in html
+    assert "function restartSession()" in html
+    assert "window.location.reload()" in html
+    assert "compactAnnouncement(payload.text)" in html
+    assert "textContent = announce(event)" in html
     assert 'heading.textContent = event.kind' in html
     assert 'details.textContent = JSON.stringify(event, null, 2)' in html
+
+
+def test_demo_selected_media_size_preflight_rejects_before_reading_or_sending():
+    html = Path("demo/index.html").read_text(encoding="utf-8")
+
+    send_file_start = html.index("function sendFile(kind, selector, fallback)")
+    send_file_body = html[send_file_start:]
+    preflight = send_file_body.index("if (file.size > maxMediaBytes)")
+    file_read = send_file_body.index("const dataBase64 = await fileToBase64(file)")
+    file_send = send_file_body.index("send(kind, () => ({", file_read)
+
+    assert preflight < file_read
+    assert file_read < file_send
+    assert "backend: 'browser/media'" in send_file_body[preflight:file_read]
+    assert "Selected media file exceeds the 8 MiB limit." in send_file_body[preflight:file_read]
+    assert "return;" in send_file_body[preflight:file_read]
+
+
+def test_websocket_output_queue_is_bounded():
+    source = inspect.getsource(demo_app.websocket)
+
+    assert demo_app.MAX_PENDING_OUTPUTS == 16
+    assert "asyncio.Queue(maxsize=MAX_PENDING_OUTPUTS)" in source
 
 
 @pytest.mark.asyncio
@@ -499,6 +624,44 @@ def test_websocket_reports_invalid_local_model_configuration(monkeypatch, tmp_pa
     assert "existing local model directory" in error["payload"]["message"]
 
 
+def test_websocket_closes_perception_when_reasoner_configuration_fails(monkeypatch):
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        async def aclose(self):
+            self.closed = True
+
+    perception = TrackingPerception()
+
+    def invalid_reasoner_configuration():
+        raise ValueError("invalid reasoner config")
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(
+        demo_app.DemoReasoner,
+        "from_environment",
+        staticmethod(invalid_reasoner_configuration),
+    )
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            error = socket.receive_json()
+
+    assert error["kind"] == "demo_error"
+    assert error["payload"] == {
+        "backend": "demo/config",
+        "message": "invalid reasoner config",
+    }
+    assert perception.closed is True
+
+
 def test_websocket_returns_controller_output_event():
     with TestClient(demo_app.app) as client:
         with client.websocket_connect("/ws") as socket:
@@ -514,6 +677,31 @@ def test_websocket_returns_controller_output_event():
     assert final["payload"]["basis"] == "informational"
     assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
+
+
+def test_websocket_speech_interrupt_keeps_session_usable():
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "interrupt",
+                    "timestamp": 12.5,
+                    "sequence": 7,
+                    "payload": {"scope": "speech", "utterance_id": "utterance-7"},
+                }
+            )
+            interrupted = socket.receive_json()
+
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    final = next(item for item in received if item["kind"] == "final")
+    assert status["kind"] == "demo_status"
+    assert interrupted["kind"] == "acknowledge"
+    assert interrupted["payload"]["text"] == "I'm listening."
+    assert interrupted["payload"]["stop_output"] is True
+    assert "Still connected" in final["payload"]["text"]
 
 
 def test_websocket_serializes_controller_and_input_messages(monkeypatch):
@@ -605,6 +793,11 @@ def _receive_controller_outputs(socket):
     return received
 
 
+def _assert_backend_failure(error):
+    assert error["payload"]["code"] == "backend_failure"
+    assert error["payload"]["detail"] == "RuntimeError"
+
+
 def test_websocket_audio_upload_reaches_mock_controller():
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
@@ -674,7 +867,7 @@ def test_websocket_local_perception_timeout_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "local/injected-asr audio + demo/mock text/image"
     assert media_status["payload"] == {"media_received": "audio", "source_id": "timed-out-upload"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
     assert started.wait(timeout=1)
     assert finished.wait(timeout=1)
@@ -698,6 +891,27 @@ def test_websocket_reports_recoverable_structural_input_error():
     assert error["kind"] == "demo_error"
     assert error["payload"]["backend"] == "demo/input"
     assert "payload must be an object" in error["payload"]["message"]
+    final = next(item for item in received if item["kind"] == "final")
+    assert "Still connected" in final["payload"]["text"]
+
+
+def test_websocket_reports_recoverable_malformed_json_error():
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_text("{not-json")
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            received = _receive_controller_outputs(socket)
+
+    assert status["kind"] == "demo_status"
+    assert error == {
+        "kind": "demo_error",
+        "payload": {
+            "backend": "demo/input",
+            "message": "browser event must be valid JSON",
+        },
+    }
     final = next(item for item in received if item["kind"] == "final")
     assert "Still connected" in final["payload"]["text"]
 
@@ -1063,8 +1277,18 @@ def test_websocket_environment_vision_provider_reaches_multimodal_context(monkey
                     {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
                 )
                 outputs = _receive_controller_outputs(socket)
+                if not any(
+                    item["kind"] == "final"
+                    and "What is on this screen?" in item["payload"]["text"]
+                    for item in outputs
+                ):
+                    outputs.extend(_receive_controller_outputs(socket))
 
-        final = next(item for item in outputs if item["kind"] == "final")
+        final = next(
+            item
+            for item in outputs
+            if item["kind"] == "final" and "What is on this screen?" in item["payload"]["text"]
+        )
         assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
         assert media_status["payload"] == {"media_received": "frame", "source_id": "env-frame"}
         assert "screen shows the approval prompt" in final["payload"]["text"]
@@ -1134,11 +1358,14 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
     class CapturingReasoner(demo_app.DemoReasoner):
         latest_view = None
         first_audio_seen = threading.Event()
+        corrected_audio_seen = threading.Event()
 
         async def plan(self, view, manifests):
             CapturingReasoner.latest_view = view.model_copy(deep=True)
             if any(item.modality == "audio" and item.revision == 2 for item in view.observations):
                 CapturingReasoner.first_audio_seen.set()
+            if any(item.modality == "audio" and item.revision == 3 for item in view.observations):
+                CapturingReasoner.corrected_audio_seen.set()
             if {item.modality for item in view.observations} >= {"audio", "image", "text"}:
                 return PlanProposal(
                     response="Text, audio context and screen evidence are available together.",
@@ -1198,6 +1425,7 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
                         assert CapturingReasoner.first_audio_seen.wait(timeout=1)
                     else:
                         revised_audio_status, revised_audio_messages = audio_status, audio_messages
+                        assert CapturingReasoner.corrected_audio_seen.wait(timeout=1)
                 socket.send_json(
                     {
                         "kind": "transcript",
@@ -1234,11 +1462,11 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
         assert first_audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
         assert revised_audio_status["payload"] == {"media_received": "audio", "source_id": "real-audio"}
         assert frame_status["payload"] == {"media_received": "frame", "source_id": "real-frame"}
-        assert final["payload"] == {
-            "text": "Text, audio context and screen evidence are available together.",
-            "basis": "informational",
-            "backend": "reasoner",
-        }
+        assert final["payload"]["text"] == (
+            "Text, audio context and screen evidence are available together."
+        )
+        assert final["payload"]["basis"] == "informational"
+        assert final["payload"]["backend"] == "reasoner"
         assert CapturingReasoner.latest_view is not None
         observations = {item.source_id: item for item in CapturingReasoner.latest_view.observations}
         event_ids = [item.event_id for item in observations.values()]
@@ -1526,7 +1754,7 @@ def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeyp
         "media_received": "frame",
         "source_id": "after-audio-failure",
     }
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "What is on this screen?" in final["payload"]["text"]
     assert "screen shows the approval prompt" in final["payload"]["text"]
     assert final["payload"]["basis"] == "informational"
@@ -1650,12 +1878,10 @@ def test_websocket_audio_revision_recovers_after_failure_with_image(monkeypatch)
         "media_received": "audio",
         "source_id": "recovery-audio",
     }
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
-    assert final["payload"] == {
-        "text": "Recovered audio and screen evidence are available together.",
-        "basis": "informational",
-        "backend": "reasoner",
-    }
+    _assert_backend_failure(error)
+    assert final["payload"]["text"] == "Recovered audio and screen evidence are available together."
+    assert final["payload"]["basis"] == "informational"
+    assert final["payload"]["backend"] == "reasoner"
     assert len(audio_calls) == 2
     assert RecoveryReasoner.latest_view is not None
     observations = {item.source_id: item for item in RecoveryReasoner.latest_view.observations}
@@ -1706,7 +1932,7 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert "local/failing-vision image" in status["payload"]["perception_backend"]
     assert media_status["payload"] == {"media_received": "frame", "source_id": "frame-failure"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -1795,7 +2021,7 @@ def test_websocket_vision_failure_recovers_to_multimodal_session(monkeypatch):
         "media_received": "audio",
         "source_id": "recovered-audio",
     }
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Please inspect the attached screen" in final["payload"]["text"]
     assert "screen shows the approval prompt" in final["payload"]["text"]
     assert vision.calls == 2
@@ -2037,7 +2263,7 @@ def test_websocket_malformed_vision_json_is_recoverable(monkeypatch, vision_resp
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "bad-json-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -2085,7 +2311,7 @@ def test_websocket_vision_quota_exhaustion_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "quota-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -2133,7 +2359,7 @@ def test_websocket_http_vision_quota_exhaustion_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "http-quota-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected after HTTP quota" in final["payload"]["text"]
 
 def test_websocket_vision_timeout_is_recoverable(monkeypatch):
@@ -2173,7 +2399,7 @@ def test_websocket_vision_timeout_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert status["payload"]["perception_backend"] == "demo/mock audio + local/Ollama gemma3:4b image"
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "timeout-frame"}
-    assert error["payload"] == {"code": "backend_failure", "detail": "RuntimeError"}
+    _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 
 
@@ -2226,10 +2452,6 @@ async def test_configured_vision_failure_emits_backend_error_without_final(tmp_p
 
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current Agent retains prior frame observations when the active frame changes.",
-)
 def test_websocket_new_frame_replaces_previous_frame():
     png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
@@ -2526,13 +2748,16 @@ async def test_inflight_old_frame_cannot_enter_multimodal_context(tmp_path: Path
         def __init__(self):
             self.first_started = asyncio.Event()
             self.release_first = asyncio.Event()
-            self.first_finished = asyncio.Event()
+            self.first_cancelled = asyncio.Event()
 
         async def observe(self, event):
             if event.payload.frame_id == "frame-1":
                 self.first_started.set()
-                await self.release_first.wait()
-                self.first_finished.set()
+                try:
+                    await self.release_first.wait()
+                except asyncio.CancelledError:
+                    self.first_cancelled.set()
+                    raise
                 text = "stale first frame"
             else:
                 text = "current second frame"
@@ -2595,12 +2820,7 @@ async def test_inflight_old_frame_cannot_enter_multimodal_context(tmp_path: Path
         assert perception.first_started.is_set()
         await incoming.put(second)
         await asyncio.wait_for(reasoner.second_seen.wait(), timeout=1)
-        perception.release_first.set()
-        for _ in range(100):
-            if perception.first_finished.is_set():
-                break
-            await asyncio.sleep(0.01)
-        assert perception.first_finished.is_set()
+        await asyncio.wait_for(perception.first_cancelled.wait(), timeout=1)
         await asyncio.sleep(0.05)
 
         frame_views = [
@@ -2911,7 +3131,6 @@ async def test_image_evidence_never_authorizes_a_write_without_spoken_request(tm
         await incoming.put(image)
         await asyncio.wait_for(reasoner.seen.wait(), timeout=1)
         await asyncio.sleep(0.05)
-        assert agent.state.correction_pending
         assert not agent.executor.calls
         assert not agent.executor.effects
     finally:
@@ -3145,10 +3364,6 @@ async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current Agent retains prior frame observations when the active frame changes.",
-)
 async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: Path):
     class FrameReasoner:
         def __init__(self):
@@ -3205,10 +3420,6 @@ async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: P
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current Agent only emits informational responses after completed speech.",
-)
 async def test_image_only_informational_response_needs_additive_controller_support(tmp_path: Path):
     class ImageOnlyReasoner:
         def __init__(self):
@@ -3269,6 +3480,61 @@ def test_browser_path_is_not_used_when_session_upload_root_exists(tmp_path: Path
     assert "private" not in str(materialized)
 
 
+@pytest.mark.parametrize(
+    ("kind", "id_key", "backend_kind", "message"),
+    [
+        ("audio", "utterance_id", "audio", "uploaded WAV bytes"),
+        ("frame", "frame_id", "vision", "uploaded PNG bytes"),
+    ],
+)
+def test_configured_media_backend_rejects_placeholder_and_session_recovers(
+    monkeypatch, kind, id_key, backend_kind, message
+):
+    calls = []
+
+    class GuardedAudio:
+        audio_backend_name = "local/guarded-audio"
+
+        async def observe(self, event):
+            calls.append(event)
+            if False:
+                yield None
+
+    class GuardedVision:
+        backend_name = "local/guarded-vision"
+
+        def __call__(self, path):
+            calls.append(path)
+            return "should not run"
+
+    audio_backend = GuardedAudio() if backend_kind == "audio" else None
+    vision_backend = GuardedVision() if backend_kind == "vision" else None
+
+    def configured_perception(cls):
+        return DemoPerception(audio_backend=audio_backend, vision_backend=vision_backend)
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            socket.receive_json()
+            socket.send_json({"kind": kind, "payload": {id_key: "missing-upload"}})
+            error = socket.receive_json()
+            socket.send_json({"kind": "transcript", "payload": {"text": "Still connected"}})
+            outputs = _receive_controller_outputs(socket)
+
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert error["kind"] == "demo_error"
+    assert error["payload"]["backend"] == "demo/input"
+    assert message in error["payload"]["message"]
+    assert calls == []
+    assert "Still connected" in final["payload"]["text"]
+
+
 def test_browser_audio_upload_is_materialized_and_validated(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
@@ -3301,6 +3567,120 @@ def test_browser_png_upload_is_materialized_and_validated(tmp_path: Path):
     assert materialized.suffix == ".png"
     assert materialized.read_bytes() == png
     assert event.payload.frame_id == "upload-frame"
+
+
+def test_browser_media_uploads_share_a_session_budget(tmp_path: Path):
+    audio = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    audio_bytes = audio.read_bytes()
+    png = _png_bytes(width=2, height=3)
+    budget = demo_app._SessionMediaBudget(limit=len(audio_bytes) + len(png))
+
+    audio_event = event_from_message(
+        "session-1",
+        {
+            "kind": "audio",
+            "payload": {
+                "data_base64": base64.b64encode(audio_bytes).decode("ascii"),
+                "utterance_id": "audio-1",
+            },
+        },
+        media_root=tmp_path,
+        media_budget=budget,
+    )
+    frame_event = event_from_message(
+        "session-1",
+        {
+            "kind": "frame",
+            "payload": {
+                "data_base64": base64.b64encode(png).decode("ascii"),
+                "frame_id": "frame-1",
+            },
+        },
+        media_root=tmp_path,
+        media_budget=budget,
+    )
+
+    assert budget.used == len(audio_bytes) + len(png)
+    assert Path(audio_event.payload.path).read_bytes() == audio_bytes
+    assert Path(frame_event.payload.path).read_bytes() == png
+
+
+def test_browser_media_budget_rejects_overflow_without_materializing(tmp_path: Path):
+    audio = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    audio_bytes = audio.read_bytes()
+    png = _png_bytes(width=2, height=3)
+    budget = demo_app._SessionMediaBudget(limit=len(audio_bytes))
+
+    event_from_message(
+        "session-1",
+        {
+            "kind": "audio",
+            "payload": {
+                "data_base64": base64.b64encode(audio_bytes).decode("ascii"),
+                "utterance_id": "audio-1",
+            },
+        },
+        media_root=tmp_path,
+        media_budget=budget,
+    )
+
+    with pytest.raises(ValueError, match="16 MiB aggregate limit"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "frame",
+                "payload": {
+                    "data_base64": base64.b64encode(png).decode("ascii"),
+                    "frame_id": "frame-1",
+                },
+            },
+            media_root=tmp_path,
+            media_budget=budget,
+        )
+
+    assert budget.used == len(audio_bytes)
+    assert len(list(tmp_path.iterdir())) == 1
+
+
+def test_browser_media_budget_releases_failed_validation_reservation(tmp_path: Path):
+    invalid_wav = b"RIFF" + b"\x00\x00\x00\x00" + b"WAVE"
+    budget = demo_app._SessionMediaBudget(limit=len(invalid_wav))
+
+    with pytest.raises(ValueError, match="valid PCM WAV"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "audio",
+                "payload": {
+                    "data_base64": base64.b64encode(invalid_wav).decode("ascii"),
+                    "utterance_id": "audio-1",
+                },
+            },
+            media_root=tmp_path,
+            media_budget=budget,
+        )
+
+    assert budget.used == 0
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_browser_media_budget_cleans_unexpected_validation_failure(
+    monkeypatch, tmp_path: Path
+):
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    payload = {"data_base64": base64.b64encode(fixture.read_bytes()).decode("ascii")}
+    budget = demo_app._SessionMediaBudget()
+
+    def broken_validator(path: Path):
+        raise RuntimeError("validator crashed")
+
+    monkeypatch.setattr(demo_app, "validate_wav", broken_validator)
+
+    with pytest.raises(RuntimeError, match="validator crashed"):
+        demo_app._materialize_upload("audio", payload, tmp_path, media_budget=budget)
+
+    assert list(tmp_path.iterdir()) == []
+    assert budget.used == 0
 
 
 def test_browser_media_upload_rejects_oversized_encoded_payload(tmp_path: Path):

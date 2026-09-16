@@ -27,6 +27,23 @@ class ActivityFrame:
     rms: int
     active: bool
 
+    def __post_init__(self) -> None:
+        for name, value in (("start_s", self.start_s), ("end_s", self.end_s)):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+            ):
+                raise ValueError(f"activity frame {name} must be finite")
+        if self.start_s < 0:
+            raise ValueError("activity frame start_s must be non-negative")
+        if self.end_s <= self.start_s:
+            raise ValueError("activity frame end_s must be greater than start_s")
+        if isinstance(self.rms, bool) or not isinstance(self.rms, int) or self.rms < 0:
+            raise ValueError("activity frame rms must be a non-negative integer")
+        if not isinstance(self.active, bool):
+            raise ValueError("activity frame active must be a boolean")
+
 
 def _decode_samples(pcm: bytes, sample_width: int) -> list[int]:
     if sample_width not in (1, 2, 3, 4):
@@ -63,6 +80,17 @@ def _encode_samples(samples: list[int], sample_width: int) -> bytes:
     return bytes(encoded)
 
 
+def _to_pcm16(pcm: bytes, sample_width: int) -> bytes:
+    """Convert signed or unsigned PCM samples to little-endian signed 16-bit PCM."""
+    samples = _decode_samples(pcm, sample_width)
+    if sample_width == 2:
+        return pcm
+
+    scale = 1 << (sample_width * 8 - 1)
+    normalized = [max(-32768, min(32767, round(sample * 32768 / scale))) for sample in samples]
+    return _encode_samples(normalized, 2)
+
+
 def _downmix_to_mono(pcm: bytes, sample_width: int, channels: int) -> bytes:
     if channels == 1:
         return pcm
@@ -94,7 +122,7 @@ def _resample_mono(pcm: bytes, sample_width: int, source_rate: int, target_rate:
 
 
 def _rms(pcm: bytes, sample_width: int) -> int:
-    samples = _decode_samples(pcm, sample_width)
+    samples = _decode_samples(_to_pcm16(pcm, sample_width), 2)
     if not samples:
         return 0
     return math.isqrt(sum(sample * sample for sample in samples) // len(samples))

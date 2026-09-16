@@ -9,6 +9,7 @@ import binascii
 import importlib.util
 import math
 import tempfile
+import threading
 import uuid
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,8 @@ from accessflow.contracts import (
     EndEvent,
     Frame,
     FrameEvent,
+    Interrupt,
+    InterruptEvent,
     Observation,
     OutputEvent,
     PlanProposal,
@@ -36,8 +39,11 @@ from accessflow.perception import LocalPerception, OllamaVisionProvider, validat
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+MAX_SESSION_UPLOAD_BYTES = 16 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
+MAX_PENDING_INPUTS = 16
+MAX_PENDING_OUTPUTS = 16
 
 _reasoner_spec = importlib.util.spec_from_file_location(
     "accessflow_demo_reasoner", ROOT / "reasoner.py"
@@ -130,6 +136,21 @@ class DemoPerception:
             else:
                 labels.append("local/unknown-vision image")
         return " + ".join(labels)
+
+    def validate_media_source(self, event: Any) -> None:
+        """Reject placeholder paths before a configured local backend sees them."""
+        if (
+            isinstance(event, AudioEvent)
+            and self._audio_backend is not None
+            and not Path(event.payload.path).is_file()
+        ):
+            raise ValueError("configured audio backend requires uploaded WAV bytes")
+        if (
+            isinstance(event, FrameEvent)
+            and self._vision_backend is not None
+            and not Path(event.payload.path).is_file()
+        ):
+            raise ValueError("configured vision backend requires uploaded PNG bytes")
 
     async def observe(self, event):
         if self._closed:
@@ -246,7 +267,30 @@ async def recorder_worklet() -> FileResponse:
     return FileResponse(ROOT / "recorder-worklet.js", media_type="application/javascript")
 
 
-def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | None) -> str:
+class _SessionMediaBudget:
+    def __init__(self, limit: int = MAX_SESSION_UPLOAD_BYTES):
+        self.limit = limit
+        self.used = 0
+        self._lock = threading.Lock()
+
+    def reserve(self, size: int) -> None:
+        with self._lock:
+            if self.used + size > self.limit:
+                raise ValueError("session media exceeds the 16 MiB aggregate limit")
+            self.used += size
+
+    def release(self, size: int) -> None:
+        with self._lock:
+            self.used -= size
+
+
+def _materialize_upload(
+    kind: str,
+    payload: dict[str, Any],
+    media_root: Path | None,
+    *,
+    media_budget: _SessionMediaBudget | None = None,
+) -> str:
     data = payload.get("data_base64")
     if data is None:
         fallback = "browser-mock.wav" if kind == "audio" else "browser-mock.png"
@@ -266,28 +310,36 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
     if not raw or len(raw) > MAX_UPLOAD_BYTES:
         raise ValueError("media upload exceeds the 8 MiB limit or is empty")
 
-    if kind == "audio":
-        if raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
-            raise ValueError("audio upload must be a RIFF WAV file")
-        path = media_root / f"audio-{uuid.uuid4().hex}.wav"
-        path.write_bytes(raw)
-        try:
-            validate_wav(path)
-        except ValueError as error:
-            path.unlink(missing_ok=True)
-            raise ValueError("audio upload must be a valid PCM WAV file") from error
-        return str(path)
+    if media_budget is not None:
+        media_budget.reserve(len(raw))
+    materialized_path: Path | None = None
+    try:
+        if kind == "audio":
+            if raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
+                raise ValueError("audio upload must be a RIFF WAV file")
+            materialized_path = media_root / f"audio-{uuid.uuid4().hex}.wav"
+            materialized_path.write_bytes(raw)
+            try:
+                validate_wav(materialized_path)
+            except ValueError as error:
+                raise ValueError("audio upload must be a valid PCM WAV file") from error
+            return str(materialized_path)
 
-    if kind == "frame":
-        path = media_root / f"frame-{uuid.uuid4().hex}.png"
-        path.write_bytes(raw)
-        try:
-            validate_png(path)
-        except ValueError as error:
-            path.unlink(missing_ok=True)
-            raise ValueError("image upload must be a valid PNG file") from error
-        return str(path)
-    raise ValueError(f"Unsupported upload kind: {kind}")
+        if kind == "frame":
+            materialized_path = media_root / f"frame-{uuid.uuid4().hex}.png"
+            materialized_path.write_bytes(raw)
+            try:
+                validate_png(materialized_path)
+            except ValueError as error:
+                raise ValueError("image upload must be a valid PNG file") from error
+            return str(materialized_path)
+        raise ValueError(f"Unsupported upload kind: {kind}")
+    except Exception:
+        if materialized_path is not None:
+            materialized_path.unlink(missing_ok=True)
+        if media_budget is not None:
+            media_budget.release(len(raw))
+        raise
 
 
 def _source_id(payload: dict[str, Any], key: str) -> str:
@@ -339,11 +391,28 @@ def _text(payload: dict[str, Any]) -> str:
     return value
 
 
+def _interrupt_scope(payload: dict[str, Any]) -> str:
+    value = payload.get("scope", "speech")
+    if not isinstance(value, str) or value not in {"speech", "task"}:
+        raise ValueError("browser interrupt scope must be 'speech' or 'task'")
+    return value
+
+
+def _optional_source_id(payload: dict[str, Any], key: str) -> str | None:
+    if key not in payload:
+        return None
+    value = payload[key]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"browser {key} must be a non-empty string when provided")
+    return value
+
+
 def event_from_message(
     session_id: str,
     message: dict[str, Any],
     *,
     media_root: Path | None = None,
+    media_budget: _SessionMediaBudget | None = None,
 ):
     """Translate browser messages into typed v0.1 input events."""
     if not isinstance(message, dict):
@@ -356,6 +425,16 @@ def event_from_message(
         message.get("timestamp", payload.get("timestamp", 0)), "timestamp"
     )
     sequence = _sequence(message)
+    if kind == "interrupt":
+        return InterruptEvent(
+            session_id=session_id,
+            timestamp=timestamp,
+            sequence=sequence,
+            payload=Interrupt(
+                scope=_interrupt_scope(payload),
+                utterance_id=_optional_source_id(payload, "utterance_id"),
+            ),
+        )
     if kind == "transcript":
         speech_start = _finite_timestamp(payload.get("speech_start", 0), "speech_start")
         speech_end = _finite_timestamp(payload.get("speech_end", 0), "speech_end")
@@ -386,7 +465,7 @@ def event_from_message(
             timestamp=timestamp,
             sequence=sequence,
             payload=Audio(
-                path=_materialize_upload("audio", payload, media_root),
+                path=_materialize_upload("audio", payload, media_root, media_budget=media_budget),
                 utterance_id=utterance_id,
                 revision=revision,
                 speech_start=speech_start,
@@ -400,7 +479,7 @@ def event_from_message(
             timestamp=timestamp,
             sequence=sequence,
             payload=Frame(
-                path=_materialize_upload("frame", payload, media_root),
+                path=_materialize_upload("frame", payload, media_root, media_budget=media_budget),
                 frame_id=frame_id,
             ),
         )
@@ -412,10 +491,17 @@ async def _materialize_event(
     message: dict[str, Any],
     media_root: Path,
     active_tasks: set[asyncio.Task[Any]],
+    media_budget: _SessionMediaBudget | None = None,
 ):
     """Keep threaded upload materialization alive if the receiver is cancelled."""
     task = asyncio.create_task(
-        asyncio.to_thread(event_from_message, session_id, message, media_root=media_root)
+        asyncio.to_thread(
+            event_from_message,
+            session_id,
+            message,
+            media_root=media_root,
+            media_budget=media_budget,
+        )
     )
     active_tasks.add(task)
     try:
@@ -429,8 +515,8 @@ async def _materialize_event(
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
     session_id = str(uuid.uuid4())
-    incoming: asyncio.Queue = asyncio.Queue()
-    outgoing: asyncio.Queue = asyncio.Queue()
+    incoming: asyncio.Queue = asyncio.Queue(maxsize=MAX_PENDING_INPUTS)
+    outgoing: asyncio.Queue = asyncio.Queue(maxsize=MAX_PENDING_OUTPUTS)
 
     async def send_outputs():
         while True:
@@ -446,6 +532,7 @@ async def websocket(websocket: WebSocket) -> None:
                 return
 
     sender = asyncio.create_task(send_outputs())
+    perception = None
     try:
         perception = DemoPerception.from_environment()
         reasoner_factory = getattr(DemoReasoner, "from_environment", None)
@@ -456,6 +543,8 @@ async def websocket(websocket: WebSocket) -> None:
         )
         await outgoing.put(None)
         await asyncio.gather(sender, return_exceptions=True)
+        if perception is not None:
+            await perception.aclose()
         await websocket.close(code=1008)
         return
     await outgoing.put(
@@ -479,18 +568,33 @@ async def websocket(websocket: WebSocket) -> None:
 
     with tempfile.TemporaryDirectory(prefix="accessflow-demo-") as media_dir:
         media_root = Path(media_dir)
+        media_budget = _SessionMediaBudget()
         materialization_tasks: set[asyncio.Task[Any]] = set()
 
         async def receive_inputs():
             while True:
-                message = await websocket.receive_json()
+                try:
+                    message = await websocket.receive_json()
+                except ValueError:
+                    await outgoing.put(
+                        {
+                            "kind": "demo_error",
+                            "payload": {
+                                "backend": "demo/input",
+                                "message": "browser event must be valid JSON",
+                            },
+                        }
+                    )
+                    continue
                 try:
                     event = await _materialize_event(
                         session_id,
                         message,
                         media_root,
                         materialization_tasks,
+                        media_budget,
                     )
+                    perception.validate_media_source(event)
                 except (TypeError, ValueError) as error:
                     await outgoing.put(
                         {
