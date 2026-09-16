@@ -542,10 +542,14 @@ async def test_latest_worker_bounds_completed_source_state():
 
     retained_key = ("audio", "source-11")
     stale = await worker.submit(retained_key, lambda: operation("stale"), revision=0)
+    evicted_key = ("audio", "source-0")
+    assert evicted_key not in worker._latest_state
+    replayed = await worker.submit(evicted_key, lambda: operation("replayed"), revision=0)
     await worker.aclose()
 
     assert stale is local_module._SUPERSEDED
-    assert calls == list(range(12))
+    assert replayed == "replayed"
+    assert calls == [*range(12), "replayed"]
     assert len(worker._latest_state) <= 4
 
 
