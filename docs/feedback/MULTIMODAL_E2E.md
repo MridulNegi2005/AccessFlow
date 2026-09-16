@@ -78,6 +78,11 @@ the status payload and browser label identify the Ollama vision and reasoner bac
 The service is a deterministic test stub because Ollama is unavailable on this machine, so this is
 provider and session wiring evidence rather than live vision or reasoning quality evidence.
 
+The companion regression, tests/demo/test_reasoner.py::test_websocket_reasoner_failure_is_recoverable,
+returns malformed provider JSON for the first configured reasoning request and a valid plan for the
+second. The route emits one `backend_failure`, then accepts the later spoken request and returns its
+informational final in the same session.
+
 ## What this proves
 
 - A real local ASR result can enter the same multimodal session context as image evidence.
