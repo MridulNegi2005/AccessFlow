@@ -128,6 +128,18 @@ def test_vision_benchmark_rejects_duplicate_image_case_ids(tmp_path: Path):
         benchmark._image_cases(tmp_path)
 
 
+def test_vision_benchmark_rejects_path_containing_image_case_ids(tmp_path: Path):
+    _, manifest = _manifest()
+    image_index = next(
+        index for index, case in enumerate(manifest["cases"]) if case["modality"] == "image"
+    )
+    manifest["cases"][image_index]["id"] = "../outside"
+    _write_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="safe filenames"):
+        benchmark._image_cases(tmp_path)
+
+
 @pytest.mark.asyncio
 async def test_vision_benchmark_rejects_manifest_hash_mismatch_before_provider_call(tmp_path: Path):
     root, manifest = _manifest()
