@@ -1034,3 +1034,8 @@ contracts, adapters, lockfile or model/network behavior changed.
 reset and active microphone-stream discard after disconnects. Real browser smoke verified the pre-restart
 final was cleared and a new WebSocket session connected cleanly; full suite: 643 passed, 1 xfailed,
 2 warnings. No engine, contracts, adapters, lockfile or model/network behavior changed.
+
+2026-09-16 AI-assisted implementation: Bounded the demo WebSocket outgoing event queue at 16 items to
+match the existing incoming bound. Added a focused regression and ran the full suite: 644 passed,
+1 xfailed, 2 warnings; Ruff passed. No engine, contracts, adapters, lockfile or model/network behavior
+changed.

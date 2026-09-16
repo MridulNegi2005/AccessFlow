@@ -177,6 +177,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - The demo now exposes an explicit Restart session control that discards an active microphone stream,
   reloads client state and establishes a fresh WebSocket session. Browser smoke cleared the prior
   event trace and reconnected cleanly; no live model or device claim is made.
+- The demo WebSocket now bounds both incoming and outgoing event queues at 16 items, applying
+  backpressure when a browser stops reading responses. The full branch passes 644 tests with one
+  retained conflict example; live model and device behavior remain unverified.
 - Live vision backend and a real multimodal benchmark on declared hardware.
 - Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
   and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the

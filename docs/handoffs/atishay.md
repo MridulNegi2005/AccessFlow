@@ -451,3 +451,14 @@ contained only the two fresh connection status events.
 
 **Status:** Full suite passes 643 tests with one retained expected conflict example; Ruff and diff checks
 pass. Browser smoke had no console errors or warnings and no horizontal overflow. Commit: 85f4b81.
+
+## 2026-09-16 - Bounded browser output queue
+
+**Task:** Close the slow-client response accumulation gap in the demo WebSocket route.
+
+**Changes:** Added a 16-item outgoing queue bound to match the existing incoming bound. A browser that
+stops reading responses now applies backpressure through the route instead of allowing unbounded output
+accumulation. Added a focused implementation regression; normal client behavior is unchanged.
+
+**Status:** Full suite passes 644 tests with one retained expected conflict example, Ruff and diff checks
+pass. No engine, contract, adapter, lockfile or model/network behavior changed. Commit: 10d2069.
