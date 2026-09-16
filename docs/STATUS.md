@@ -5,11 +5,104 @@ submission.
 
 ## Current status
 
-This section is the single authoritative statement of current state. It replaces all older
-headers in this file. Read it first. Facts below were measured by the orchestrator on
-16 September 2026 at commit `fd53aca` on branch `mridul/engine`, using the commands quoted
-next to each fact. Everything dated below this section is historical and is kept for record,
-not as current status.
+This section is the single authoritative statement of current state. It replaces the
+commit `fd53aca` snapshot below, which is now historical, and all older headers in this
+file. Read it first. Facts below were measured by the orchestrator on 16 September 2026, on
+branch `main`, after commit `71b1bb5`, using the commands quoted next to each fact.
+Everything dated below this section, including the `fd53aca` snapshot, is historical and is
+kept for record, not as current status.
+
+- **Engine, perception and contract tests:** 543 passed.
+  Command: `uv run --offline --frozen --extra dev pytest tests/engine tests/perception
+  tests/test_contract.py -q`.
+- **Full test suite:** 635 passed, 19 failed, 1 xfailed.
+  Command: `uv run --offline --frozen --extra dev pytest -q`. All 19 failures are in
+  `tests/demo/`, owned by Workstream B, and are tracked in
+  [INTEGRATION_NOTE_2026-09-16.md](INTEGRATION_NOTE_2026-09-16.md). Three of the 19 are
+  `XPASS(strict)`: the engine repairs in this range closed gaps that those demo tests still
+  mark as expected failures. This is Atishay's list to re-triage, not Workstream A's.
+- **Lint:** `uv run --offline --frozen --extra dev ruff check .` reports all checks passed.
+- **Offline dev suite:** `uv run --offline --frozen accessflow suite scenarios/dev` reports
+  4 passed, 0 failed.
+- **Scenario corpus:** still 17 files, 10 distinct tool sets, confirmed by a directory
+  listing at this commit. See [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is
+  generated from the files and is current.
+- **`Start.corpus`:** no longer has zero consumers. That was true at commit `fd53aca`; it is
+  not true at `71b1bb5`. `src/accessflow/engine.py` wires it into manifest dispatch
+  (`corpus_manifest`, `CORPUS_TOOL_NAME`), allowlist enforcement (`corpus_allowlist`), and
+  bounded reads through `CorpusStore` (`_corpus_lookup`, with dispatch and cancellation
+  handled in `_execute`/`_cancel`). Scope stays limited by intent: lexical retrieval only, no
+  semantic ranking, no multi-passage citation, no document size limit, and no installed
+  document directory wired into the process or demonstration adapters. See
+  [reviews/REAUDIT_RESOLUTION_2026-09-16.md](reviews/REAUDIT_RESOLUTION_2026-09-16.md),
+  "Scope limit of the corpus implementation". **A security review of `corpus.py` has never
+  been run.** That code is on the remote unreviewed; do not mark this boundary clear before
+  one runs.
+- **Evidence bundle:** 57 attempted runs. The quality denominator is **43 of 49**, not 43 of
+  46. The earlier 43 of 46 figure treated a 429 admission refusal as excusing the whole run
+  even when the model had already generated output on an earlier step; three such runs now
+  count in the denominator. A 429 no longer excuses a run whose model already produced
+  output.
+- **Held-out planner probes:** ran once, on 16 September 2026, on `groq/qwen/qwen3.8-27b`,
+  and passed 4 of 4. They are spent: they are development data now, not unseen evidence. Do
+  not run them again and call the result unseen evaluation. This agrees with
+  [reviews/REAUDIT_RESOLUTION_2026-09-16.md](reviews/REAUDIT_RESOLUTION_2026-09-16.md) and
+  with [.ai-sync/handoff.md](../.ai-sync/handoff.md); neither document should say the probes
+  have never run.
+- **Docker:** not installed on this machine. The container execution gate is unmeasured in
+  this environment; this is neither a pass nor a failure.
+- **Endpoint telemetry:** not independently re-measured at `71b1bb5`. The last recorded
+  figure (0 of 161 traces carry `config.endpoint`) is in the `fd53aca` snapshot below. Treat
+  it as unverified at the current commit, not as re-confirmed.
+
+### Findings status after the second re-audit
+
+The current findings record is
+[reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md](reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md)
+(M1 through M7), which followed up on
+[reviews/MRIDUL_REAUDIT_2026-09-15.md](reviews/MRIDUL_REAUDIT_2026-09-15.md) (A1 through A9).
+Fix evidence is recorded in
+[reviews/REAUDIT_RESOLUTION_2026-09-16.md](reviews/REAUDIT_RESOLUTION_2026-09-16.md). Read
+the second re-audit for the current state of any A-numbered finding it reassessed; do not
+treat the first audit's verdict as current where the second audit reopened or narrowed it.
+
+- **Addressed, with tests, since the second re-audit:**
+  - M1, the clarification fixture — commit `7b0d373`.
+  - M4, evidence-to-write authority — commit `6caa889`.
+  - M6, 429 run classification — commit `86655f0`.
+  - M2, M3, M5, corpus dispatch, I/O bounding and discovery — commit `71b1bb5`.
+  - M7, this documentation-consistency finding — fixed by this update to this file and to
+    `.ai-sync/handoff.md`. `SessionView` (`src/accessflow/contracts.py`) exposes
+    `write_pending`. It does not expose `write_intent_retained` or
+    `clarification_outstanding`; those remain controller-only attributes on the engine's
+    session object (`src/accessflow/engine.py`). Only `write_intent_retained` reaches the
+    view, copied onto its `write_pending` field inside `_view()`.
+- **Still open, named by owner and reason:**
+  - A2 / B0, vision worker wiring — assigned to Atishay by Mridul's decision; see
+    `CONTRACT_PROPOSALS.md`.
+  - The 19 `tests/demo/` failures noted above — Atishay's; tracked in
+    [INTEGRATION_NOTE_2026-09-16.md](INTEGRATION_NOTE_2026-09-16.md).
+  - Matched-timing baseline and end-of-speech latency — needs Atishay's calibrated signal.
+  - Wrong-action-rate metric — not implemented.
+  - Security review over `corpus.py` — never run; that code is on the remote unreviewed.
+  - Official kit adapter — blocked on the organizer.
+  - Docker — unmeasured in this environment.
+  - Submission materials: deck, video, AI disclosure, tag — untouched.
+
+Multimodal coverage counts are unchanged from the `fd53aca` snapshot below (2 audio files
+over one recording, 1 visual file blocked on A2). See
+[SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is current.
+
+---
+
+## Historical current-status snapshot: commit `fd53aca` (16 September 2026)
+
+Superseded by the "Current status" section above. Keep this for record. Do not cite the
+numbers below as current, and do not treat its "Findings status" or "Multimodal coverage"
+subsections below as the present state; the section above replaces them.
+
+Measured by the orchestrator on 16 September 2026 at commit `fd53aca` on branch
+`mridul/engine`, using the commands quoted next to each fact.
 
 - **Tests:** 384 passed, 0 xfailed, two unrelated deprecation warnings.
   Command: `uv run --offline --frozen --extra dev pytest -q`.
@@ -38,7 +131,7 @@ not as current status.
 - **Endpoint telemetry:** no trace recorded on or before 15 September 2026 carries
   `config.endpoint`; 0 of 161.
 
-### Findings status
+### Findings status (as recorded 16 September 2026 at `fd53aca`; superseded above)
 
 The live list of findings is
 [reviews/MRIDUL_REAUDIT_2026-09-15.md](reviews/MRIDUL_REAUDIT_2026-09-15.md), identified
@@ -65,7 +158,7 @@ A-numbered list; do not cite an R-number as current status.
   and release gates (official kit adapter, Docker execution, clean-install evidence,
   submission materials).
 
-### Multimodal coverage
+### Multimodal coverage (as recorded 16 September 2026 at `fd53aca`)
 
 - **Audio:** 2 files, both built on the same committed WAV recording.
   `audio_correction.json` is an ASR and turn-correction smoke check.
@@ -131,9 +224,11 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - Independently authored held-out cases, and the full 60-scenario set. The corpus currently
   has 17 scenario files: 4 in `scenarios/dev`, 9 in `scenarios/live_dev` and 4 planner probes.
   See [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md) for the distinct-tool-set count and for
-  which files are repeats of the same underlying workflow. The probes ran once on 16
-  September 2026 and
-  their labels are unread.
+  which files are repeats of the same underlying workflow. The four planner probes ran once,
+  on 16 September 2026, and passed 4 of 4; see "Current status" above. They are now spent
+  development data, not unseen evidence, so do not run them again expecting a fresh
+  measurement. The remaining gap is breadth: four text-only probes are a narrow sample, and
+  there is no unseen audio or visual case.
 - Baseline comparison. The dependency-rejection ablation is complete and returned a negative
   result; see `results/ABLATION_2026-09-15.md`. No baseline arm exists yet.
 - End-to-end multimodal runs through the controller, reported by modality and backend.
