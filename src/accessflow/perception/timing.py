@@ -8,12 +8,29 @@ from dataclasses import dataclass
 from .audio import ActivityFrame
 
 
+def _validate_finite_nonnegative(value: float, field_name: str) -> None:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+    ):
+        raise ValueError(f"{field_name} must be a finite number")
+    if value < 0:
+        raise ValueError(f"{field_name} cannot be negative")
+
+
 @dataclass(frozen=True)
 class ActivityWindow:
     """A contiguous region containing active audio frames."""
 
     start_s: float
     end_s: float
+
+    def __post_init__(self) -> None:
+        _validate_finite_nonnegative(self.start_s, "start_s")
+        _validate_finite_nonnegative(self.end_s, "end_s")
+        if self.end_s <= self.start_s:
+            raise ValueError("end_s must be greater than start_s")
 
 
 @dataclass(frozen=True)
@@ -24,6 +41,22 @@ class PauseCandidate:
     end_s: float
     duration_s: float
     trailing: bool
+
+    def __post_init__(self) -> None:
+        _validate_finite_nonnegative(self.start_s, "start_s")
+        _validate_finite_nonnegative(self.end_s, "end_s")
+        _validate_finite_nonnegative(self.duration_s, "duration_s")
+        if self.end_s < self.start_s:
+            raise ValueError("end_s must be greater than or equal to start_s")
+        if not math.isclose(
+            self.duration_s,
+            self.end_s - self.start_s,
+            rel_tol=1e-9,
+            abs_tol=1e-12,
+        ):
+            raise ValueError("duration_s must match the interval between start_s and end_s")
+        if not isinstance(self.trailing, bool):
+            raise ValueError("trailing must be a boolean")
 
 
 @dataclass(frozen=True)
