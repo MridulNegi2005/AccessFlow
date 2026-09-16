@@ -9,6 +9,7 @@ import binascii
 import importlib.util
 import math
 import tempfile
+import threading
 import uuid
 from pathlib import Path
 from typing import Any
@@ -38,8 +39,10 @@ from accessflow.perception import LocalPerception, OllamaVisionProvider, validat
 
 ROOT = Path(__file__).parent
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+MAX_SESSION_UPLOAD_BYTES = 16 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
+MAX_PENDING_INPUTS = 16
 
 _reasoner_spec = importlib.util.spec_from_file_location(
     "accessflow_demo_reasoner", ROOT / "reasoner.py"
@@ -248,7 +251,30 @@ async def recorder_worklet() -> FileResponse:
     return FileResponse(ROOT / "recorder-worklet.js", media_type="application/javascript")
 
 
-def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | None) -> str:
+class _SessionMediaBudget:
+    def __init__(self, limit: int = MAX_SESSION_UPLOAD_BYTES):
+        self.limit = limit
+        self.used = 0
+        self._lock = threading.Lock()
+
+    def reserve(self, size: int) -> None:
+        with self._lock:
+            if self.used + size > self.limit:
+                raise ValueError("session media exceeds the 16 MiB aggregate limit")
+            self.used += size
+
+    def release(self, size: int) -> None:
+        with self._lock:
+            self.used -= size
+
+
+def _materialize_upload(
+    kind: str,
+    payload: dict[str, Any],
+    media_root: Path | None,
+    *,
+    media_budget: _SessionMediaBudget | None = None,
+) -> str:
     data = payload.get("data_base64")
     if data is None:
         fallback = "browser-mock.wav" if kind == "audio" else "browser-mock.png"
@@ -268,28 +294,35 @@ def _materialize_upload(kind: str, payload: dict[str, Any], media_root: Path | N
     if not raw or len(raw) > MAX_UPLOAD_BYTES:
         raise ValueError("media upload exceeds the 8 MiB limit or is empty")
 
-    if kind == "audio":
-        if raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
-            raise ValueError("audio upload must be a RIFF WAV file")
-        path = media_root / f"audio-{uuid.uuid4().hex}.wav"
-        path.write_bytes(raw)
-        try:
-            validate_wav(path)
-        except ValueError as error:
-            path.unlink(missing_ok=True)
-            raise ValueError("audio upload must be a valid PCM WAV file") from error
-        return str(path)
+    if media_budget is not None:
+        media_budget.reserve(len(raw))
+    try:
+        if kind == "audio":
+            if raw[:4] != b"RIFF" or raw[8:12] != b"WAVE":
+                raise ValueError("audio upload must be a RIFF WAV file")
+            path = media_root / f"audio-{uuid.uuid4().hex}.wav"
+            path.write_bytes(raw)
+            try:
+                validate_wav(path)
+            except ValueError as error:
+                path.unlink(missing_ok=True)
+                raise ValueError("audio upload must be a valid PCM WAV file") from error
+            return str(path)
 
-    if kind == "frame":
-        path = media_root / f"frame-{uuid.uuid4().hex}.png"
-        path.write_bytes(raw)
-        try:
-            validate_png(path)
-        except ValueError as error:
-            path.unlink(missing_ok=True)
-            raise ValueError("image upload must be a valid PNG file") from error
-        return str(path)
-    raise ValueError(f"Unsupported upload kind: {kind}")
+        if kind == "frame":
+            path = media_root / f"frame-{uuid.uuid4().hex}.png"
+            path.write_bytes(raw)
+            try:
+                validate_png(path)
+            except ValueError as error:
+                path.unlink(missing_ok=True)
+                raise ValueError("image upload must be a valid PNG file") from error
+            return str(path)
+        raise ValueError(f"Unsupported upload kind: {kind}")
+    except Exception:
+        if media_budget is not None:
+            media_budget.release(len(raw))
+        raise
 
 
 def _source_id(payload: dict[str, Any], key: str) -> str:
@@ -362,6 +395,7 @@ def event_from_message(
     message: dict[str, Any],
     *,
     media_root: Path | None = None,
+    media_budget: _SessionMediaBudget | None = None,
 ):
     """Translate browser messages into typed v0.1 input events."""
     if not isinstance(message, dict):
@@ -414,7 +448,7 @@ def event_from_message(
             timestamp=timestamp,
             sequence=sequence,
             payload=Audio(
-                path=_materialize_upload("audio", payload, media_root),
+                path=_materialize_upload("audio", payload, media_root, media_budget=media_budget),
                 utterance_id=utterance_id,
                 revision=revision,
                 speech_start=speech_start,
@@ -428,7 +462,7 @@ def event_from_message(
             timestamp=timestamp,
             sequence=sequence,
             payload=Frame(
-                path=_materialize_upload("frame", payload, media_root),
+                path=_materialize_upload("frame", payload, media_root, media_budget=media_budget),
                 frame_id=frame_id,
             ),
         )
@@ -440,10 +474,17 @@ async def _materialize_event(
     message: dict[str, Any],
     media_root: Path,
     active_tasks: set[asyncio.Task[Any]],
+    media_budget: _SessionMediaBudget | None = None,
 ):
     """Keep threaded upload materialization alive if the receiver is cancelled."""
     task = asyncio.create_task(
-        asyncio.to_thread(event_from_message, session_id, message, media_root=media_root)
+        asyncio.to_thread(
+            event_from_message,
+            session_id,
+            message,
+            media_root=media_root,
+            media_budget=media_budget,
+        )
     )
     active_tasks.add(task)
     try:
@@ -457,7 +498,7 @@ async def _materialize_event(
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
     session_id = str(uuid.uuid4())
-    incoming: asyncio.Queue = asyncio.Queue()
+    incoming: asyncio.Queue = asyncio.Queue(maxsize=MAX_PENDING_INPUTS)
     outgoing: asyncio.Queue = asyncio.Queue()
 
     async def send_outputs():
@@ -507,6 +548,7 @@ async def websocket(websocket: WebSocket) -> None:
 
     with tempfile.TemporaryDirectory(prefix="accessflow-demo-") as media_dir:
         media_root = Path(media_dir)
+        media_budget = _SessionMediaBudget()
         materialization_tasks: set[asyncio.Task[Any]] = set()
 
         async def receive_inputs():
@@ -518,6 +560,7 @@ async def websocket(websocket: WebSocket) -> None:
                         message,
                         media_root,
                         materialization_tasks,
+                        media_budget,
                     )
                 except (TypeError, ValueError) as error:
                     await outgoing.put(
