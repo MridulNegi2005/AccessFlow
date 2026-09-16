@@ -1,10 +1,12 @@
 import asyncio
+import datetime as dt
 import json
 import hashlib
 import os
 import platform
 import subprocess
 import time
+import uuid
 from pathlib import Path
 
 from accessflow.contracts import EndEvent, ResultEvent, ToolResult
@@ -44,7 +46,7 @@ def source_evidence(path):
 
 
 async def replay(path, output, reasoner=None, backend="offline-fake", *, perception=None, turn_policy=None,
-                 component_config=None, inference_timeout=None):
+                 component_config=None, inference_timeout=None, disabled=()):
     definition = load_scenario(path)
     scenario = definition.model_dump(mode="json")
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -96,10 +98,16 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                 yield observation
 
     agent_kwargs = {} if inference_timeout is None else {"inference_timeout": inference_timeout}
+    # Only forwarded when an ablation is requested, so a default run constructs the agent
+    # exactly as before and any Agent substitute stays valid.
+    if disabled:
+        agent_kwargs["disabled"] = tuple(disabled)
     agent = Agent(RecordedPerception(), turn_policy if turn_policy is not None else FinalFlagPolicy(), reasoner,
                   tools, MockOnlyAuthorization(), **agent_kwargs)
     runner = asyncio.create_task(agent.run(incoming, outgoing))
     events = []
+    run_id = str(uuid.uuid4())
+    run_started_at = dt.datetime.now(dt.timezone.utc).isoformat()
     started = time.perf_counter()
     terminal = asyncio.Event()
     completion_status = "completed"
@@ -127,13 +135,15 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
             finally:
                 outgoing.task_done()
 
+    gaps = definition.gaps()
+
     async def feed_and_wait():
         for index, entry in enumerate(inputs):
             record("input", entry)
             await incoming.put(entry)
             # Explicit test pacing, not an inferred speech/end-of-turn measurement.
             if index < len(inputs) - 1:
-                await asyncio.sleep(definition.event_spacing_s)
+                await asyncio.sleep(gaps[index])
         await asyncio.wait_for(terminal.wait(), definition.completion_timeout_s)
 
     collector = asyncio.create_task(collect())
@@ -193,8 +203,10 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
             row["type"] == "output" and row["event"]["payload"].get("code") == "backend_failure" for row in events):
         completion_status = "backend_failure"
     tool_profile = "manifest-mock" if definition.environment is not None else "fake"
+    run_ended_at = dt.datetime.now(dt.timezone.utc).isoformat()
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
-                "provenance": definition.provenance,
+                "run_id": run_id, "run_started_at": run_started_at, "run_ended_at": run_ended_at,
+                "provenance": definition.provenance, "disabled_components": sorted(disabled),
                 "tools": tool_profile, "perception": perception_profile, "commit": commit_revision(),
                 "perception_backends_observed": sorted(observed_backends),
                 "python": platform.python_version(), "platform": platform.platform(),
@@ -206,6 +218,11 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                 "mock_executor_effect_count": len(tools.effects),
                 "config": {"partial_debounce_s": agent.partial_debounce_s, "turn_policy": policy_profile,
                            "tools": tool_profile, "perception": perception_profile,
+                           # Controller deadline per planning step. Independent of the model
+                           # backend's own HTTP request deadline (reasoner_evidence.config.
+                           # request_timeout_seconds) -- this being shorter is a valid,
+                           # deliberate configuration, not a mismatch to reconcile.
+                           "inference_timeout_s": getattr(agent, "inference_timeout", None),
                            "component_config": component_config or {}}}
     metadata.update(source_evidence(path))
     reasoner_evidence = getattr(reasoner, "evidence", None)
@@ -217,6 +234,24 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
     destination.write_text("\n".join(json.dumps(e) for e in [metadata, *events]) + "\n", encoding="utf-8")
     return {"trace": str(destination), "backend": backend, "events": len(events), "mock_effects": len(tools.effects),
             "completion_status": completion_status, "task_oracle": outcome}
+
+
+def load_run_metadata(path):
+    """Return the single `run_metadata` row from a trace file, never `[-1]`.
+
+    `replay()` writes run_metadata first, followed by output/input rows, so the last
+    line of a trace is an event row, not metadata -- selecting it with `[-1]` silently
+    reads the wrong row (see docs/PROFILES.md verification command). Raises ValueError
+    with a specific count when the file has zero or more than one run_metadata row,
+    instead of returning a wrong row or raising a bare KeyError deeper in the caller.
+    """
+    rows = [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line]
+    metadata_rows = [row for row in rows if row.get("type") == "run_metadata"]
+    if len(metadata_rows) != 1:
+        raise ValueError(
+            f"Expected exactly one run_metadata row in {path}, found {len(metadata_rows)}. "
+            "This file is not a single AccessFlow replay trace.")
+    return metadata_rows[0]
 
 
 def metrics(path):

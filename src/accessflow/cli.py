@@ -1,9 +1,12 @@
 import argparse
 import asyncio
 import json
+import math
+import os
 from pathlib import Path
 
 from .adapters.models import JsonBackend, ModelReasoner
+from .engine import Agent
 from .evaluation.replay import metrics, replay
 from .evaluation.suite import run_suite
 from .evaluation.responsiveness import run_responsiveness
@@ -29,34 +32,67 @@ def main():
                                       help="Use fakes or process-isolated local media plus HeuristicTurnPolicy")
         component_parser.add_argument("--asr-model-path", type=Path,
                                       help="Already-installed Faster Whisper directory; requires --components local")
+        component_parser.add_argument("--vision-provider", choices=["none", "ollama"], default="none",
+                                      help="Vision backend for frame events; requires --components local")
+        component_parser.add_argument("--vision-model", default=None,
+                                      help="Vision model name; defaults to the provider's own default")
+        component_parser.add_argument("--vision-url", default=None,
+                                      help="Vision backend URL; defaults to the provider's own default")
     for model_parser in (replay_parser, suite, warmup):
         model_parser.add_argument("--request-timeout", type=float, default=20.0,
                                   help="Seconds allowed per model request; record it with any result")
     for deadline_parser in (replay_parser, suite):
+        deadline_parser.add_argument("--disable", action="append", default=[],
+                                     choices=sorted(Agent.ABLATIONS),
+                                     help="Switch off one engine component for a baseline comparison. "
+                                          "Everything else stays identical.")
         deadline_parser.add_argument("--inference-timeout", type=float,
                                      help="Controller deadline per planning step; defaults to the Agent value")
     responsiveness = commands.add_parser("responsiveness", help="Measure synthetic controller responsiveness")
     responsiveness.add_argument("--samples", type=int, default=100, help="Independent samples per condition")
     responsiveness.add_argument("--output-dir", default="artifacts/responsiveness")
     args = parser.parse_args()
-    if getattr(args, "request_timeout", 1.0) <= 0:
+    request_timeout = getattr(args, "request_timeout", 1.0)
+    if request_timeout <= 0 or not math.isfinite(request_timeout):
         parser.error("--request-timeout must be positive")
-    if getattr(args, "inference_timeout", None) is not None and args.inference_timeout <= 0:
+    if getattr(args, "inference_timeout", None) is not None and (
+        args.inference_timeout <= 0 or not math.isfinite(args.inference_timeout)
+    ):
         parser.error("--inference-timeout must be positive")
     perception_factory = policy_factory = None
     component_config = {}
     if args.command in {"suite", "replay"}:
         if args.asr_model_path is not None and args.components != "local":
             parser.error("--asr-model-path requires --components local")
+        if args.vision_provider != "none" and args.components != "local":
+            parser.error("--vision-provider requires --components local")
         component_config = {"profile": args.components}
         if args.components == "local":
             from .adapters.process_perception import ProcessPerception
             from .turn_policy import HeuristicTurnPolicy
+            worker_args = []
+            if args.vision_provider != "none":
+                worker_args += ["--vision-provider", args.vision_provider]
+                if args.vision_model:
+                    worker_args += ["--vision-model", args.vision_model]
+                if args.vision_url:
+                    worker_args += ["--vision-url", args.vision_url]
             def perception_factory():
-                return ProcessPerception(model_path=args.asr_model_path)
+                return ProcessPerception(model_path=args.asr_model_path, worker_args=worker_args)
             policy_factory = HeuristicTurnPolicy
             component_config["asr_model_path"] = str(args.asr_model_path) if args.asr_model_path else None
-            component_config["vision_provider"] = "not_configured"
+            if args.vision_provider == "none":
+                component_config["vision_provider_requested"] = "none"
+            else:
+                from .adapters.vision import DEFAULT_MODEL as vision_default_model
+                resolved_vision_model = args.vision_model or os.getenv(
+                    "ACCESSFLOW_VISION_OLLAMA_MODEL", vision_default_model)
+                # What the parent asked for, never proof that the child honoured it. The
+                # child rejects these options today, so a resolved-sounding name here would
+                # claim a vision backend that never ran. The observation backend field is
+                # the evidence of what actually served a frame. See CONTRACT_PROPOSALS.md.
+                component_config["vision_provider_requested"] = (
+                    f"{args.vision_provider}/{resolved_vision_model}")
             component_config["native_worker"] = "subprocess"
     if args.command == "metrics":
         result = metrics(args.trace)
@@ -78,7 +114,8 @@ def main():
                         JsonBackend(args.backend, timeout=args.request_timeout))) if backend else None,
                     backend=backend.name if backend else "offline-fake",
                     perception_factory=perception_factory, turn_policy_factory=policy_factory,
-                    component_config=component_config, inference_timeout=args.inference_timeout))
+                    component_config=component_config, inference_timeout=args.inference_timeout,
+                    disabled=tuple(args.disable)))
         result = {key: value for key, value in report.items() if key != "cases"}
         result["report"] = str(Path(args.output_dir) / "report.json")
         print(json.dumps(result, indent=2))
@@ -92,7 +129,8 @@ def main():
                             backend=backend.name if backend else "offline-fake",
                             perception=perception_factory() if perception_factory else None,
                             turn_policy=policy_factory() if policy_factory else None,
-                            component_config=component_config, inference_timeout=args.inference_timeout))
+                            component_config=component_config, inference_timeout=args.inference_timeout,
+                    disabled=tuple(args.disable)))
     print(json.dumps(result, indent=2))
     if args.command == "replay" and (
             result["completion_status"] != "completed" or result["task_oracle"]["passed"] is False):

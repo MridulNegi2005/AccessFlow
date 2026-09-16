@@ -3,9 +3,11 @@
 import asyncio
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import uuid4
 
 from jsonschema import Draft202012Validator, validate
+from jsonschema.exceptions import ValidationError as PlanSchemaViolation
 
 from .clock import RealClock
 from .contracts import (
@@ -13,6 +15,7 @@ from .contracts import (
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
     ToolResult, TranscriptEvent,
 )
+from .corpus import CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest
 
 
 class DenyWrites:
@@ -27,13 +30,26 @@ class WorkerMessage:
     value: object
     perception_epoch: int = 0
     source: tuple | None = None
+    # True only for a "plan" message produced from a genuinely new observation
+    # (new/partial speech or an image). False for a plan triggered internally by a
+    # tool result, retry, or reconciliation continuation for the same request.
+    fresh_evidence: bool = False
 
 
 class Agent:
+    ABLATIONS = frozenset({"dependency_invalidation"})
+
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
-                 scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08):
+                 scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
+                 disabled=(), corpus_root=None):
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
+        unknown = set(disabled) - self.ABLATIONS
+        if unknown:
+            raise ValueError(f"Unknown ablation: {sorted(unknown)}")
+        # Named components a baseline run may switch off. Every other behaviour, the model,
+        # the tools and the scenarios stay identical so only this component is compared.
+        self.disabled = frozenset(disabled)
         self.perception = perception
         self.turn_policy = turn_policy
         self.reasoner = reasoner
@@ -42,6 +58,11 @@ class Agent:
         self.scenario_timeout = min(scenario_timeout, 119)
         self.inference_timeout = inference_timeout
         self.partial_debounce_s = partial_debounce_s
+        # Installed directory holding corpus documents. None means no corpus is wired up:
+        # any session that still declares Start.corpus gets a bounded per-request refusal
+        # (see _execute_corpus) instead of a crash. A session with an empty corpus never
+        # touches this at all -- see the StartEvent handling in run().
+        self._corpus_root = corpus_root
         self.running = False
 
     async def run(self, input_queue, output_queue, clock=None):
@@ -68,10 +89,35 @@ class Agent:
         self.output_sequence = 0
         self.latest_complete = False
         self.planner = None
+        self.repeated_completed_call = False
+        self.no_progress = False
+        self.repeat_recoveries = {}
+        self.write_stall_recoveries = {}
+        self.schema_rejection_recoveries = {}
+        # Shared bounded-recovery budget for every no-progress mechanism above, keyed by
+        # (request_id, request_input_epoch) so a request cannot chain several single-shot
+        # mechanisms into unlimited retries, while a genuinely new utterance/frame for the
+        # same still-open request still gets its own fresh attempt. The per-mechanism dicts
+        # above are kept only for external introspection/back-compat; they no longer gate.
+        self.recovery_budget = {}
+        self.request_input_epoch = 0
         self.active_frame = None
         self.active_speech = None
         self.speech_ready = False
-        self.speech_write_requested = False
+        # Retained spoken write authorization for the CURRENT request (self.request_id).
+        # Set only from a completed ("ready") spoken utterance. Survives a clarifying
+        # turn on the same request -- a clarifying question is unresolved information,
+        # not a retraction of intent -- and is only granted or retracted by a genuinely
+        # new spoken utterance's own write_requested flag. Never set or read from an
+        # image proposal: an image may resolve missing information but cannot itself
+        # authorize a write. Cleared on interrupt, explicit stop, and request
+        # completion/rotation.
+        self.write_intent_retained = False
+        # Whether the current request still has an unanswered clarifying question.
+        # Blocks write dispatch independently of write_intent_retained so a resolved
+        # or still-open information gap is never conflated with the user's underlying
+        # authorization to write.
+        self.clarification_outstanding = False
         self.semantic_correction_event = None
         self.last_sequence = -1
         self.invalidated = set()
@@ -84,6 +130,15 @@ class Agent:
         self.planning_source = None
         self.current_event_id = None
         self.call_causes = {}
+        self._fresh_evidence = False
+        # Session-scoped corpus state. Reinitialized fresh here on every run() (a session
+        # boundary already shared by every other piece of state above) so corpus access
+        # from a previous session can never leak into a new one. Populated only if the
+        # StartEvent declares a non-empty corpus; an empty corpus leaves these at their
+        # defaults and self.manifests never gains the corpus tool -- see StartEvent below.
+        self.corpus_root = Path(self._corpus_root) if self._corpus_root else None
+        self.corpus_allowlist = frozenset()
+        self.corpus_store = None
 
         async def pump():
             while True:
@@ -119,6 +174,16 @@ class Agent:
                            self.manifests[tool.status_tool].effect != "read") for tool in self.manifests.values()):
                         await self._emit("error", code="invalid_status_tool_manifest")
                         break
+                    # Corpus document names are already validated (safe, unique) by
+                    # Start.valid_corpus; only the cross-item manifest-name collision is
+                    # this controller's own concern, same as duplicate_manifest_names above.
+                    if event.payload.corpus:
+                        if CORPUS_TOOL_NAME in self.manifests:
+                            await self._emit("error", code="duplicate_manifest_names")
+                            break
+                        self.manifests[CORPUS_TOOL_NAME] = corpus_manifest()
+                        self.corpus_allowlist = frozenset(event.payload.corpus)
+                        self.corpus_store = CorpusStore(self.corpus_root) if self.corpus_root else None
                     self.seen.add(event.event_id)
                     self.last_sequence = event.sequence
                     continue
@@ -149,7 +214,8 @@ class Agent:
                         self.planner.cancel()
                     self.latest_complete = False
                     self.speech_ready = False
-                    self.speech_write_requested = False
+                    self.write_intent_retained = False
+                    self.clarification_outstanding = False
                     self.semantic_correction_event = None
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
@@ -186,12 +252,13 @@ class Agent:
                     if source[0] == "speech":
                         self.active_speech = source[1]
                         self.speech_ready = False
-                        self.speech_write_requested = False
+                        self.write_intent_retained = False
                         self.semantic_correction_event = None
                     if self.last_request_finished:
                         self.request_id = str(uuid4())
                         self.last_request_finished = False
-                        self.speech_write_requested = False
+                        self.write_intent_retained = False
+                        self.clarification_outstanding = False
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -253,7 +320,10 @@ class Agent:
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
-                           write_pending=self.speech_write_requested)
+                           write_pending=self.write_intent_retained,
+                           repeated_completed_call=self.repeated_completed_call,
+                           no_progress=self.no_progress,
+                           active_request_id=self.request_id)
 
     async def _emit(self, kind, **payload):
         if self.current_event_id is not None:
@@ -299,6 +369,8 @@ class Agent:
             if decision.kind == "stop":
                 self.generation += 1
                 self.perception_epoch += 1
+                self.write_intent_retained = False
+                self.clarification_outstanding = False
                 await self._cancel_writes("explicit_stop")
                 self.state.status = "stopped"
                 await self._emit("acknowledge", text="Stopped.", stop_output=True)
@@ -314,12 +386,29 @@ class Agent:
             self._start_plan(source=key)
         elif message.kind == "plan":
             self.current_event_id = self.source_events.get(message.source)
+            # Stashed on self (rather than an _apply parameter) so subclasses that
+            # override _apply(self, plan, source=None) -- its signature before this
+            # fix -- keep working unchanged.
+            self._fresh_evidence = message.fresh_evidence
             await self._apply(message.value, message.source)
+        elif message.kind == "plan_rejected":
+            await self._emit("error", code="plan_schema_rejected", detail=message.value)
+            await self._offer_recovery(self.schema_rejection_recoveries)
 
     def _start_plan(self, source=None):
         self.generation += 1
+        # A source given here comes from _worker's observation handling and means new
+        # user evidence (fresh/partial speech, or an image) just arrived. Every other
+        # caller reuses the existing planning_source to continue reasoning about the
+        # same request (a tool result, a bounded retry, a reconciliation step) and
+        # must not be mistaken for new evidence about user intent.
+        fresh_evidence = source is not None
         if source is not None:
             self.planning_source = source
+            # Genuinely new evidence about this still-open request earns its own
+            # bounded recovery budget instead of inheriting an exhausted one from
+            # an earlier, unrelated stall on the same request_id.
+            self.request_input_epoch += 1
         source = self.planning_source
         if self.planner and not self.planner.done():
             self.planner.cancel()
@@ -333,12 +422,64 @@ class Agent:
                 proposal = await self._bounded(self.reasoner.plan(view, [m.model_copy(deep=True)
                                                                         for m in self.manifests.values()]),
                                                self.inference_timeout)
-                await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True), source=source))
+                await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True),
+                                                   source=source, fresh_evidence=fresh_evidence))
+            except PlanSchemaViolation as exc:
+                # The reasoner's own generation failed the exact schema built for this
+                # request (dynamic tool/effect restrictions, forced null response, ...).
+                # This is a rejection, not a generic backend outage: route it into a
+                # bounded correction attempt instead of a silent stall.
+                await self.inbox.put(WorkerMessage("plan_rejected", generation, str(exc)))
             except Exception as exc:
                 await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
         self.planner = self._spawn(plan())
 
+    async def _offer_recovery(self, compat_bucket):
+        """Grant one bounded re-plan for the active (request, input revision), or fail explicitly.
+
+        Every no-progress mechanism -- schema rejection, a stalled owed write, a repeated or
+        otherwise undispatchable call, an empty plan -- draws from this single shared budget
+        instead of each getting its own independent attempt, so a request cannot chain several
+        single-shot mechanisms into unbounded retries. `compat_bucket`, when given, is one of
+        the pre-existing per-mechanism dicts (repeat_recoveries, write_stall_recoveries,
+        schema_rejection_recoveries); it is still incremented for external introspection and
+        the tests that key off it, but it no longer independently gates the retry.
+        On exhaustion this ends the request with an explicit diagnostic instead of leaving it
+        to silently wait for the scenario deadline.
+        """
+        if self.state.status in {"stopped", "ended"}:
+            return
+        key = (self.request_id, self.request_input_epoch)
+        used = self.recovery_budget.get(key, 0)
+        if used < 1:
+            self.recovery_budget[key] = used + 1
+            if compat_bucket is not None:
+                compat_bucket[self.request_id] = compat_bucket.get(self.request_id, 0) + 1
+            self._start_plan()
+            return
+        if not self.last_request_finished:
+            self.last_request_finished = True
+            self.state.status = "no_progress"
+            await self._emit("error", code="no_progress_exhausted",
+                             message="No progress after one bounded automatic retry; this "
+                                     "request will not retry again on its own.")
+
     async def _apply(self, proposal: PlanProposal, source=None):
+        fresh_evidence = self._fresh_evidence
+        # Snapshot before this proposal can mutate write_intent_retained below. Mirrors
+        # ModelReasoner.write_outstanding: true when the CURRENT request's spoken write
+        # request names a real write tool that has not been dispatched or confirmed by
+        # any call the current request has made yet. Scoped to self.request_id so an
+        # old, unrelated write earlier in the session cannot silently satisfy (or
+        # continuation-block) a brand new request -- see ToolCall.request_id.
+        prior_write_owed = (self.write_intent_retained
+                            and any(m.effect == "write" for m in self.manifests.values())
+                            and not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
+                                       for call in self.ledger.values()
+                                       if call.request_id == self.request_id))
+        self.repeated_completed_call = False
+        self.no_progress = False
+        repeated, dispatched_any, blocked_calls = [], False, 0
         speech = self.observations.get(("speech", self.active_speech))
         speech_origin = source == ("speech", self.active_speech)
         final_correction = bool(speech_origin and speech and speech.final and
@@ -352,10 +493,31 @@ class Agent:
             self.state.correction_pending = False
             self.semantic_correction_event = None
         if speech_origin:
-            # Only the current spoken request can supply write intent. An image
-            # may fill missing details, but cannot invent or revive that intent.
-            self.speech_write_requested = bool(self.speech_ready and proposal.write_requested
-                                               and not proposal.clarification)
+            # Only the current spoken request can supply write intent. A genuinely
+            # new utterance/hypothesis (fresh_evidence) is authoritative either way,
+            # matching prior behaviour: it can newly recognise intent or retract it
+            # (an explicit correction/cancellation is new user evidence).
+            #
+            # A clarifying question is unresolved information, not a retraction: a
+            # completed utterance that both requests a write AND asks a clarification
+            # (e.g. "book the date shown in this image") must keep that intent alive
+            # for a later turn on the SAME request to complete it once the missing
+            # information (spoken or visual) arrives. Only the write_requested flag
+            # itself -- never the presence of a clarification -- grants or retracts
+            # intent here.
+            #
+            # A plan triggered by a tool result for this same request
+            # (fresh_evidence=False) may still newly RECOGNISE intent it had not
+            # seen before (e.g. deciding to book only after reading support notes),
+            # which is why read-then-write continuations work. What it must not do
+            # is ERASE already-recognised intent just because this follow-up omits
+            # or flips the flag -- that is not new user evidence, only a change of
+            # mind by the same model on the same evidence. See the request
+            # lifecycle note on ToolCall.request_id.
+            if fresh_evidence:
+                self.write_intent_retained = bool(self.speech_ready and proposal.write_requested)
+            elif proposal.write_requested and self.speech_ready and not proposal.clarification:
+                self.write_intent_retained = True
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
@@ -383,30 +545,49 @@ class Agent:
                 self.provisional_intent = None
             self.state.intent = proposal.intent
         await self._invalidate_dependencies(changed, "dependency_changed")
+        said_something = bool(proposal.clarification)
         if proposal.clarification and (self.latest_complete or final_correction):
+            # Required information is now outstanding for this request. This is tracked
+            # separately from write_intent_retained: asking a question never touches
+            # whether the user authorized a write, only whether dispatch may proceed yet.
+            self.clarification_outstanding = True
             self.state.status = "clarifying"
             await self._emit("clarify", text=proposal.clarification)
+        elif self.latest_complete or final_correction:
+            # A complete turn that does not clarify is the model's own signal that any
+            # previously missing information (spoken or supplied by an image) is now
+            # resolved for this request.
+            self.clarification_outstanding = False
         for proposed in proposal.calls:
             manifest = self.manifests.get(proposed.tool)
             if not manifest:
                 await self._emit("error", code="unknown_tool", tool=proposed.tool)
+                blocked_calls += 1
                 continue
             dependency_error = self._argument_dependency_error(proposed, manifest)
             if dependency_error:
                 await self._emit("error", code=dependency_error, tool=proposed.tool)
+                blocked_calls += 1
                 continue
             if manifest.effect == "write":
-                if not (self.latest_complete and self.speech_ready and self.speech_write_requested
+                if not (self.latest_complete and self.speech_ready and self.write_intent_retained
                         and proposal.request_complete and proposal.write_requested
-                        and not self.state.correction_pending and not proposal.clarification):
+                        and not self.state.correction_pending and not proposal.clarification
+                        and not self.clarification_outstanding):
+                    blocked_calls += 1
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
+                    blocked_calls += 1
                     continue
                 # Unknown/cancelled writes may have committed: no new write until reconciled.
                 if any(c.effect == "write" and c.status in {"unknown", "cancelled"} for c in self.ledger.values()):
                     await self._emit("clarify", text="The earlier action has an unresolved outcome; check its status first.")
+                    said_something = True
                     continue
-            dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies}
+            # A dependency name may be ledger operation identity rather than a slot
+            # (see _argument_dependency_error); those carry no slot revision to track.
+            dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies
+                            if name in self.state.slots}
             args = dict(proposed.arguments)
             # This field belongs to the controller, including when a model supplies
             # a different value on each retry. It cannot split a logical operation.
@@ -415,6 +596,12 @@ class Agent:
             signature = json.dumps([self.request_id, proposed.tool, args, dependencies], sort_keys=True)
             previous = self.ledger.get(self.dispatched.get(signature))
             if previous and (previous.status != "failed" or self.attempt_counts[signature] >= 2):
+                if previous.status == "success":
+                    repeated.append(previous.call_id)
+                elif previous.status == "failed":
+                    # A permanently failed call (its one bounded retry already used) proposed
+                    # again verbatim is not new work either; it just never got flagged before.
+                    blocked_calls += 1
                 continue
             operation_id = previous.operation_id if previous else str(uuid4())
             if manifest.idempotency_parameter:
@@ -423,39 +610,126 @@ class Agent:
                 validate(args, manifest.parameters)
             except Exception:
                 await self._emit("error", code="invalid_tool_arguments", tool=proposed.tool)
+                blocked_calls += 1
                 continue
             call = ToolCall(call_id=str(uuid4()), operation_id=operation_id, tool=proposed.tool,
-                            arguments=args, dependencies=dependencies, effect=manifest.effect)
+                            arguments=args, dependencies=dependencies, effect=manifest.effect,
+                            request_id=self.request_id)
             if call.effect == "write" and not self.authorization.allows(self._view(), call):
                 await self._emit("clarify", text="This environment has not authorized that state-changing tool.")
+                said_something = True
                 continue
             self.dispatched[signature] = call.call_id
             self.attempt_counts[signature] = self.attempt_counts.get(signature, 0) + 1
             self.ledger[call.call_id] = call
             self.call_causes[call.call_id] = self.current_event_id
             self.state.status = "working"
+            dispatched_any = True
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
-        if proposal.response and not proposal.calls and not self.state.pending_call_ids and self.latest_complete:
-            if not any(c.effect == "write" for c in self.ledger.values()):
+        pending_now = any(c.status == "pending" for c in self.ledger.values())
+        history_has_write = any(c.effect == "write" for c in self.ledger.values())
+        # --- Outcome classification --------------------------------------------------
+        # Every accepted plan is exactly one of: dispatched work (dispatched_any),
+        # emitted an answer/clarification (said_something), legitimately waiting on
+        # existing pending work (pending_now), or made no progress at all. Only the
+        # last case needs a diagnostic and a bounded recovery attempt.
+        write_owed_unmet = False
+        if not proposal.calls and not pending_now and self.latest_complete:
+            if history_has_write:
+                pass  # A write call already exists in this session; unchanged prior behaviour.
+            elif prior_write_owed and not proposal.clarification:
+                # The accepted request still owes a state-changing effect. A completed read,
+                # an omitted response, or a change of mind in this proposal's flags is
+                # evidence, never a substitute for the effect: neither a prose claim nor
+                # total silence may finish it.
+                write_owed_unmet = True
+            elif proposal.response:
+                said_something = True
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
+        if write_owed_unmet and not self.last_request_finished:
+            # This proposal silently dropped the write intent a prior proposal established
+            # for the same spoken request (e.g. write_requested=False on a follow-up, or an
+            # empty plan). That is not new user evidence of cancellation, so restore intent
+            # and give the reasoner one bounded corrective turn.
+            self.write_intent_retained = True
+            await self._emit("error", code="write_owed_not_progressed",
+                             message="A requested state-changing effect is not complete; "
+                                     "an empty or prose-only response cannot finish it.")
+            await self._offer_recovery(self.write_stall_recoveries)
+        elif ((self.latest_complete or final_correction) and not dispatched_any and not said_something
+                and not pending_now and not self.last_request_finished
+                and (repeated or blocked_calls
+                     or (not proposal.calls and proposal.request_complete and not history_has_write))):
+            # An empty plan on a request the model itself does not yet consider complete
+            # (no calls, no clarification, request_complete=False) is legitimately still
+            # awaiting more input (e.g. a spoken write request waiting on a promised
+            # image) -- the same as partial speech, not a stall. Likewise, a write that
+            # already exists elsewhere in this session keeps the prior informational-
+            # answer restraint (see the pass branch above) rather than a new diagnostic.
+            # Dropping this silently ends the turn with no output and nothing left to wake
+            # the loop, so the session would otherwise stall until the scenario deadline.
+            if repeated and not blocked_calls:
+                await self._emit("error", code="repeated_completed_call", call_ids=sorted(set(repeated)),
+                                 message="Every proposed call has already completed; its result is in evidence.")
+                self.repeated_completed_call = True
+                await self._offer_recovery(self.repeat_recoveries)
+            elif repeated:
+                # A mixed proposal: some calls already completed, others could not be
+                # dispatched. "Every call is done" would misdescribe this turn.
+                await self._emit("error", code="repeated_completed_call", call_ids=sorted(set(repeated)),
+                                 message="Some proposed calls already completed and are in evidence; "
+                                         "the rest could not be dispatched as proposed. Not every call is done.")
+                self.repeated_completed_call = True
+                await self._offer_recovery(self.repeat_recoveries)
+            elif blocked_calls:
+                await self._emit("error", code="no_dispatchable_call",
+                                 message="None of the proposed calls could be dispatched as proposed; "
+                                         "see the preceding errors for each one.")
+                self.no_progress = True
+                await self._offer_recovery(None)
+            else:
+                await self._emit("error", code="no_progress",
+                                 message="The plan produced no tool call, clarification or answer; "
+                                         "nothing else will advance this request.")
+                self.no_progress = True
+                await self._offer_recovery(None)
 
     def _argument_dependency_error(self, proposed, manifest):
         """Ground dynamic arguments in tracked state before read or write dispatch.
 
         This checks declared data dependencies; semantic context not represented in
         arguments must still be listed by the planner. No fuzzy alias/value inference.
+
+        Conversational slots and ledger operation identity are separate namespaces.
+        A status tool's lookup parameter (e.g. "receipt") is not a conversational
+        slot, so it never lives in session.state.slots -- but the planner may still
+        legitimately list that parameter name in `dependencies` to flag it as the
+        value the call depends on. `ledger_dependencies` recognises that specific,
+        narrow case: an unaliased argument whose value is exactly the operation_id
+        of an unresolved write this manifest is the declared status_tool for. This
+        does not create a slot and does not accept any other UUID-like string; a
+        stale or unrelated operation id, or a name that is not this argument's own
+        parameter name, still falls through to "missing_dependency" below.
         """
-        if any(name not in self.state.slots for name in proposed.dependencies):
-            return "missing_dependency"
-        if any(name not in proposed.arguments for name in proposed.argument_slots):
-            return "argument_dependency_mismatch"
         properties = manifest.parameters.get("properties", {})
         unresolved_operations = {
             call.operation_id for call in self.ledger.values()
             if call.effect == "write" and call.status in {"unknown", "cancelled"}
             and self.manifests[call.tool].status_tool == manifest.name
         } if manifest.effect == "read" else set()
+        ledger_dependencies = {
+            name for name in proposed.dependencies
+            if name not in self.state.slots
+            and name not in proposed.argument_slots
+            and isinstance(proposed.arguments.get(name), str)
+            and proposed.arguments.get(name) in unresolved_operations
+        }
+        if any(name not in self.state.slots and name not in ledger_dependencies
+               for name in proposed.dependencies):
+            return "missing_dependency"
+        if any(name not in proposed.arguments for name in proposed.argument_slots):
+            return "argument_dependency_mismatch"
         for parameter, value in proposed.arguments.items():
             if parameter == manifest.idempotency_parameter:
                 continue  # Replaced with the controller's stable operation identity.
@@ -474,6 +748,12 @@ class Agent:
                 if isinstance(value, str) and value in unresolved_operations:
                     continue
             slot_name = explicit_slot if explicit_slot is not None else parameter
+            # Match the parameter's own name, never an alias target. ledger_dependencies
+            # holds parameter names; slot_name holds a slot name for an aliased argument,
+            # so comparing the two lets any parameter alias onto a ledger name and skip
+            # grounding entirely.
+            if explicit_slot is None and parameter in ledger_dependencies:
+                continue
             slot = self.state.slots.get(slot_name)
             if slot is None or slot_name not in proposed.dependencies:
                 return "missing_dependency"
@@ -502,6 +782,15 @@ class Agent:
             await self._invalidate_dependencies(changed, "hypothesis_replaced")
 
     async def _invalidate_dependencies(self, changed, reason):
+        if "dependency_invalidation" in self.disabled:
+            # Ablation: obsolete calls keep running and accepted reads stay in evidence.
+            affected = [call.call_id for call in self.ledger.values()
+                        if changed.intersection(call.dependencies)
+                        and call.status in {"pending", "success"}]
+            if affected:
+                await self._emit("error", code="ablation_skipped_invalidation", reason=reason,
+                                 slots=sorted(changed), call_ids=affected)
+            return
         for call in list(self.ledger.values()):
             if not changed.intersection(call.dependencies):
                 continue
@@ -513,7 +802,33 @@ class Agent:
                 call.status = "stale"
                 self.results = [result for result in self.results if result.call_id != call.call_id]
 
+    def _execute_corpus(self, call):
+        """Deterministic local lookup; never forwarded to the external executor.
+
+        The "document" argument is model-supplied and untrusted: CorpusStore.read enforces
+        the allowlist and refuses traversal/absolute names regardless of Start.corpus's own
+        (already-validated) contents. The passage returned is opaque text in a ToolResult,
+        entering evidence the same way any other read tool's result does.
+        """
+        document = call.arguments.get("document")
+        query = call.arguments.get("query", "")
+        if self.corpus_store is None:
+            return ToolResult(call_id=call.call_id, status="failed", error="corpus_unavailable")
+        try:
+            text = self.corpus_store.read(document, self.corpus_allowlist)
+        except CorpusAccessError as exc:
+            return ToolResult(call_id=call.call_id, status="failed", error=exc.code)
+        passage = best_passage(text, query)
+        return ToolResult(call_id=call.call_id, status="success",
+                          result={"document": document, "query": query, "passage": passage})
+
     async def _execute(self, call, timeout):
+        if call.tool == CORPUS_TOOL_NAME:
+            if call.status != "pending":
+                await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
+                return
+            await self.inbox.put(WorkerMessage("tool", 0, self._execute_corpus(call)))
+            return
         if self.executor is not None and call.status != "pending":
             await self.inbox.put(WorkerMessage("tool", 0, ToolResult(call_id=call.call_id, status="cancelled")))
             return

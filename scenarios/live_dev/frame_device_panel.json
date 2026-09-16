@@ -1,0 +1,80 @@
+{
+  "id": "live-dev-frame-device-panel-01",
+  "provenance": "Claude-authored frame/vision analog of live-dev-audio-correction-01.json for Package 3 item 2 (docs/results/VISION_E2E_2026-09-15.md). One real committed PNG fixture (tests/fixtures/images/device_panel.png, generated programmatically with pure-Python PNG encoding, provenance in docs/results/VISION_E2E_2026-09-15.md) drives a frame event; the transcript deliberately never names the device, so the required 'device' tool argument can only be filled from the image. The frame event is delivered before the transcript, with a long explicit gap: the engine's own write-authorization logic (src/accessflow/engine.py, `_apply`) only sets `speech_write_requested` on a planning round triggered by speech evidence -- an image-triggered round can inform but never authorizes a write. The gap gives real vision inference time to land in session state before the final spoken request is evaluated, so that final round already has the device slot available. This mirrors a real usage order (show the device, then state the request) and was confirmed empirically: an in-order (speech-then-frame) delivery deadlocks with repeated no_dispatchable_call/no_progress_exhausted, because the plan round that finally has request_complete+write_requested true is image-triggered and can never flip the write-authorization flag. offline-fake mode has no scripted proposals for this file on purpose, so it fails loudly instead of silently substituting a caption for vision. Requires --components local --asr-model-path <installed Faster Whisper directory> --vision-provider ollama --inference-timeout 60 for a live run; the ASR model path is still required by the persistent worker process even though this scenario has no audio event.",
+  "completion_timeout_s": 30,
+  "event_gaps_s": [0.01, 55],
+  "environment": {
+    "file_visit_request": {
+      "kind": "write",
+      "identity_fields": ["device", "day", "hour"],
+      "mode": "reservation"
+    }
+  },
+  "events": [
+    {
+      "kind": "session_start",
+      "session_id": "frame-demo",
+      "payload": {
+        "tools": [
+          {
+            "name": "file_visit_request",
+            "description": "Create a mock device service visit",
+            "effect": "write",
+            "idempotency_parameter": "request_token",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "device": {
+                  "type": "string",
+                  "description": "The device model or panel label, as shown on the device itself."
+                },
+                "day": {
+                  "type": "string"
+                },
+                "hour": {
+                  "type": "string",
+                  "description": "Local time in 24-hour HH:MM format, for example 09:30.",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "request_token": {
+                  "type": "string"
+                }
+              },
+              "required": ["device", "day", "hour", "request_token"],
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "frame",
+      "session_id": "frame-demo",
+      "event_id": "frame-panel",
+      "payload": {
+        "path": "../../tests/fixtures/images/device_panel.png",
+        "frame_id": "f1"
+      }
+    },
+    {
+      "kind": "transcript",
+      "session_id": "frame-demo",
+      "event_id": "frame-request",
+      "payload": {
+        "utterance_id": "u1",
+        "revision": 0,
+        "final": true,
+        "text": "Book a Wednesday five PM service visit for the device shown in this photo."
+      }
+    }
+  ],
+  "expected_slots": {
+    "day": "Wednesday"
+  },
+  "expectation": {
+    "slots": {
+      "day": "Wednesday"
+    },
+    "final_basis": "confirmed_tool_effect"
+  }
+}

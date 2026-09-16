@@ -1,13 +1,17 @@
 """Explicit backend selection, one async worker, bounded requests, no automatic fallback."""
 import asyncio
+import copy
 import json
 import math
 import os
+import re
 import time
 from collections import deque
 from collections.abc import Mapping
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+from jsonschema import Draft202012Validator
 
 from accessflow.contracts import PlanProposal
 
@@ -60,6 +64,43 @@ OPENAI_COMPATIBLE = {
 }
 BACKENDS = frozenset(DEFAULT_MODELS)
 
+# Provider error `type`/`code` values that are stable, provider-defined enums rather than
+# free text. Safe to export verbatim; anything not in this map is never copied into evidence.
+_ERROR_TYPE_CATEGORIES = {
+    "rate_limit_exceeded": "rate_limit",
+    "rate_limit_error": "rate_limit",
+    "requests_rate_limit_exceeded": "rate_limit",
+    "tokens_rate_limit_exceeded": "rate_limit",
+    "invalid_api_key": "authentication",
+    "authentication_error": "authentication",
+    "permission_error": "authentication",
+    "insufficient_quota": "authentication",
+    "context_length_exceeded": "output_limit",
+    "string_too_long": "output_limit",
+    "json_validate_failed": "invalid_json",
+    "invalid_json": "invalid_json",
+    "invalid_request_error": "client_error",
+    "timeout": "timeout",
+}
+# Fallback classification from HTTP status alone, when the provider gave no usable type/code.
+_STATUS_CATEGORIES = {
+    400: "client_error", 401: "authentication", 403: "authentication", 404: "client_error",
+    408: "timeout", 413: "output_limit", 422: "invalid_json", 429: "rate_limit",
+    500: "server_error", 502: "server_error", 503: "server_error", 504: "timeout",
+}
+_OUTPUT_LIMIT_RE = re.compile(r"output tokens?\s*(?:per|/)\s*minute|\botpm\b", re.IGNORECASE)
+# Matches the shape "(OTPM): Limit 1000, Requested 1990" -- numeric quota values are useful
+# and safe to keep even though the surrounding free text (which may echo request/output
+# content) is not.
+# An accumulated rate limit reports "Limit 8000, Used 6667, Requested 2325", so the optional
+# used group is required; a bare \D+ stops at those digits and the whole quota is lost.
+_QUOTA_RE = re.compile(r"\(([A-Za-z]{2,10})\)\s*:?\s*limit\s+(\d+)"
+                       r"(?:\D+used\s+(\d+))?\D+requested\s+(\d+)", re.IGNORECASE)
+# finish_reason/done_reason are small closed provider enums, safe to export; they explain a
+# truncated/malformed JSON body instead of it reading as an unexplained reasoning failure.
+_ALLOWED_OPENAI_FINISH_REASONS = {"stop", "length", "content_filter", "tool_calls", "function_call"}
+_ALLOWED_OLLAMA_DONE_REASONS = {"stop", "length", "load", "unload"}
+
 
 class JsonBackend:
     def __init__(self, backend="ollama", client=None, timeout=20, warmup_timeout=290,
@@ -73,6 +114,12 @@ class JsonBackend:
         self.backend = backend
         variable, default = DEFAULT_MODELS[backend]
         self.model = os.getenv(variable, default)
+        # Resolved once, here, from the environment this process actually started with.
+        # A request method must reuse self._request_url, never os.getenv again, so a
+        # mutable env var changed mid-run cannot make exported evidence disagree with
+        # what a request actually sent (see docs/PROFILES.md verification contract).
+        self._request_url, self.endpoint = self._resolve_endpoint(backend, self.model)
+        self.max_output_tokens = os.getenv("ACCESSFLOW_MAX_OUTPUT_TOKENS")
         self.client = client
         self.timeout = timeout
         self.warmup_timeout = warmup_timeout
@@ -86,6 +133,10 @@ class JsonBackend:
         self.num_gpu = num_gpu
         self.lock = asyncio.Lock()
         self._request_history = deque(maxlen=history_limit)
+        # Local-only, bounded raw provider error bodies. evidence() never returns this: it
+        # exists purely for a developer reading logs on this machine. Do not add it to any
+        # exported/published telemetry path.
+        self._local_raw_errors = deque(maxlen=history_limit)
         self._request_count = 0
         self._omitted_count = 0
         self._outcome_counts = {"success": 0, "failure": 0, "cancelled": 0}
@@ -100,6 +151,7 @@ class JsonBackend:
             "backend": self.backend,
             "model": self.model,
             "config": {
+                "endpoint": self.endpoint,
                 "request_timeout_seconds": self.timeout,
                 "warmup_timeout_seconds": self.warmup_timeout,
                 "history_limit": self.history_limit,
@@ -108,6 +160,7 @@ class JsonBackend:
                 "response_format": (self._openai_response_format({"stub": True}, OPENAI_COMPATIBLE[self.backend][0])["type"]
                                     if self.backend in OPENAI_COMPATIBLE else None),
                 "temperature": 0,
+                "max_output_tokens": self.max_output_tokens,
                 "ollama_duration_unit": "nanoseconds",
             },
             "request_count": self._request_count,
@@ -126,8 +179,9 @@ class JsonBackend:
             response = getattr(exception, "response", None)
             if response is not None:
                 record["status_code"] = response.status_code
-                # Provider error text explains 4xx rejections; bound it and keep it out of plan data.
-                record["error_detail"] = response.text[:400]
+                record.update(self._sanitize_error(response))
+                # Raw body kept local-only, bounded, and outside the evidence() path.
+                self._local_raw_errors.append(response.text[:400])
         if metrics:
             record.update(metrics)
         if len(self._request_history) == self.history_limit:
@@ -135,6 +189,117 @@ class JsonBackend:
         self._request_history.append(record)
         self._request_count += 1
         self._outcome_counts[outcome] += 1
+
+    def local_only_raw_errors(self):
+        """Bounded raw provider error bodies, for local debugging only.
+
+        evidence() never includes this. A raw provider error body can echo request
+        content, generated text, or identifiers, so it must never be copied into
+        exportable/published telemetry (see docs/reviews/CLAUDE_REVIEW_2026-09-15.md R5).
+        """
+        return list(self._local_raw_errors)
+
+    @staticmethod
+    def _classify_error(status_code, error_type, text):
+        if text and _OUTPUT_LIMIT_RE.search(text):
+            return "output_limit"
+        if error_type in _ERROR_TYPE_CATEGORIES:
+            return _ERROR_TYPE_CATEGORIES[error_type]
+        return _STATUS_CATEGORIES.get(status_code, "unknown")
+
+    @staticmethod
+    def _extract_quota(text):
+        if not text:
+            return None
+        match = _QUOTA_RE.search(text)
+        if not match:
+            return None
+        unit, limit, used, requested = match.groups()
+        quota = {"unit": unit.upper(), "limit": int(limit), "requested": int(requested)}
+        if used is not None:
+            quota["used"] = int(used)
+        return quota
+
+    @staticmethod
+    def _resolve_endpoint(backend, model):
+        """Resolve the exact request URL for `backend` from the environment, once.
+
+        Returns (request_url, sanitized_endpoint). request_url is what the request
+        method sends to; it may carry a configured base URL's own query string (some
+        proxies route on it). sanitized_endpoint is the exportable form -- credentials
+        and query-string secrets removed -- and is never used to make a request.
+        """
+        if backend == "ollama":
+            base = os.getenv("ACCESSFLOW_OLLAMA_URL", "http://localhost:11434")
+            full = JsonBackend._join_path(base, "/api/chat")
+        elif backend in OPENAI_COMPATIBLE:
+            prefix, default_url = OPENAI_COMPATIBLE[backend]
+            base = os.getenv(f"{prefix}_URL", default_url)
+            full = JsonBackend._join_path(base, "/chat/completions")
+        else:
+            full = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        return full, JsonBackend._sanitize_endpoint(full)
+
+    @staticmethod
+    def _join_path(base, suffix):
+        """Append `suffix` to base's path, ahead of any existing query/fragment.
+
+        Plain string concatenation breaks when a configured base URL already carries a
+        query string (`?api-version=...`): the suffix would land inside the query value
+        instead of the path. Parsing and rebuilding keeps that query intact and the path
+        correct either way.
+        """
+        parsed = urlsplit(base)
+        path = parsed.path.rstrip("/") + suffix
+        return urlunsplit((parsed.scheme, parsed.netloc, path, parsed.query, parsed.fragment))
+
+    @staticmethod
+    def _sanitize_endpoint(url):
+        """Strip credentials and query-string secrets before a URL is exported.
+
+        Keeps scheme, host, port and path only -- the same redaction stance as
+        _sanitize_error: never export anything that could carry a secret.
+        """
+        parsed = urlsplit(url)
+        netloc = parsed.hostname or ""
+        if parsed.port:
+            netloc += f":{parsed.port}"
+        return urlunsplit((parsed.scheme, netloc, parsed.path, "", ""))
+
+    @staticmethod
+    def _sanitize_error(response):
+        """Bound AND sanitize a provider error response for exportable evidence.
+
+        Only a stable provider-defined type/code, a normalized category, and numeric
+        quota values parsed out of the message survive. The raw body -- which can echo
+        request content, generated text, or identifiers -- is never copied here.
+        """
+        try:
+            body = response.json()
+        except ValueError:
+            body = None
+        error_type = None
+        message = None
+        if isinstance(body, Mapping):
+            error = body.get("error")
+            if isinstance(error, Mapping):
+                candidate = error.get("type") or error.get("code")
+                if isinstance(candidate, str):
+                    error_type = candidate
+                candidate_message = error.get("message")
+                if isinstance(candidate_message, str):
+                    message = candidate_message
+            elif isinstance(body.get("message"), str):
+                message = body["message"]
+        text_for_analysis = message if message is not None else response.text
+        sanitized = {"category": JsonBackend._classify_error(
+            response.status_code, error_type, text_for_analysis)}
+        if error_type in _ERROR_TYPE_CATEGORIES:
+            sanitized["error_type"] = error_type
+        quota = JsonBackend._extract_quota(text_for_analysis)
+        if quota is not None:
+            sanitized["quota"] = quota
+        return sanitized
 
     async def generate(self, system, data, schema, *, timeout=None, _validator=None):
         started = time.monotonic()
@@ -179,26 +344,31 @@ class JsonBackend:
             request_kwargs = {"json": body}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
-            response = await client.post(os.getenv("ACCESSFLOW_OLLAMA_URL", "http://localhost:11434") + "/api/chat",
-                                         **request_kwargs)
+            response = await client.post(self._request_url, **request_kwargs)
             response.raise_for_status()
             payload = response.json()
             text = payload["message"]["content"]
             metrics = self._ollama_metrics(payload)
         elif self.backend in OPENAI_COMPATIBLE:
-            prefix, default_url = OPENAI_COMPATIBLE[self.backend]
+            prefix = OPENAI_COMPATIBLE[self.backend][0]
             key = os.getenv(f"{prefix}_API_KEY")
             if not key:
                 raise ValueError(f"{prefix}_API_KEY is required for explicit hosted mode")
-            request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": {
-                    "model": self.model, "stream": False, "temperature": 0,
+            body = {"model": self.model, "stream": False, "temperature": 0,
                     "response_format": self._openai_response_format(schema, prefix),
                     "messages": [{"role": "system", "content": system},
-                                 {"role": "user", "content": prompt}]}}
+                                 {"role": "user", "content": prompt}]}
+            # Some free tiers reject a request whose default output ceiling exceeds their
+            # per-minute output budget, before any usage accrues. An explicit cap is the
+            # only way to reach those models. Unset by default so nothing else changes.
+            # Resolved once at construction (self.max_output_tokens), not re-read here, so
+            # the value a request sends can never drift from what evidence() exports.
+            if self.max_output_tokens:
+                body["max_tokens"] = int(self.max_output_tokens)
+            request_kwargs = {"headers": {"Authorization": f"Bearer {key}"}, "json": body}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
-            response = await client.post(
-                os.getenv(f"{prefix}_URL", default_url) + "/chat/completions", **request_kwargs)
+            response = await client.post(self._request_url, **request_kwargs)
             response.raise_for_status()
             payload = response.json()
             text = payload["choices"][0]["message"]["content"]
@@ -213,9 +383,7 @@ class JsonBackend:
                     "generationConfig": {"temperature": 0, "responseMimeType": "application/json"}}}
             if timeout is not None:
                 request_kwargs["timeout"] = timeout
-            response = await client.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
-                **request_kwargs)
+            response = await client.post(self._request_url, **request_kwargs)
             response.raise_for_status()
             parts = response.json()["candidates"][0]["content"]["parts"]
             text = "".join(part.get("text", "") for part in parts)
@@ -234,16 +402,20 @@ class JsonBackend:
     def _openai_metrics(payload):
         if not isinstance(payload, Mapping):
             return None
-        usage = payload.get("usage")
-        if not isinstance(usage, Mapping):
-            return None
         metrics = {}
-        for key in ("queue_time", "prompt_tokens", "prompt_time", "completion_tokens",
-                    "completion_time", "total_tokens", "total_time"):
-            value = usage.get(key)
-            if (isinstance(value, (int, float)) and not isinstance(value, bool)
-                    and value >= 0 and math.isfinite(value)):
-                metrics[key] = value
+        choices = payload.get("choices")
+        if isinstance(choices, list) and choices and isinstance(choices[0], Mapping):
+            finish_reason = choices[0].get("finish_reason")
+            if finish_reason in _ALLOWED_OPENAI_FINISH_REASONS:
+                metrics["finish_reason"] = finish_reason
+        usage = payload.get("usage")
+        if isinstance(usage, Mapping):
+            for key in ("queue_time", "prompt_tokens", "prompt_time", "completion_tokens",
+                        "completion_time", "total_tokens", "total_time"):
+                value = usage.get(key)
+                if (isinstance(value, (int, float)) and not isinstance(value, bool)
+                        and value >= 0 and math.isfinite(value)):
+                    metrics[key] = value
         return metrics or None
 
     @staticmethod
@@ -251,6 +423,9 @@ class JsonBackend:
         if not isinstance(payload, Mapping):
             return None
         metrics = {}
+        done_reason = payload.get("done_reason")
+        if done_reason in _ALLOWED_OLLAMA_DONE_REASONS:
+            metrics["done_reason"] = done_reason
         for key in ("total_duration", "load_duration", "prompt_eval_cached_count",
                     "prompt_eval_count", "prompt_eval_duration", "eval_count", "eval_duration"):
             value = payload.get(key)
@@ -274,6 +449,93 @@ class JsonBackend:
             raise ValueError("Warmup response did not confirm ready=true")
 
 
+# Verification contract for JsonBackend.evidence() / ModelReasoner.evidence(). Whoever runs a
+# scored profile (see docs/PROFILES.md) must be able to prove the backend, model, output cap
+# and endpoint promised by the profile actually reached this process. Checking that by eye
+# ("print the dict, look for the key") is exactly how a missing field goes unnoticed; this
+# schema is the explicit, enforced version of that check.
+REASONER_EVIDENCE_SCHEMA = {
+    "type": "object",
+    "required": ["backend", "model", "config"],
+    "properties": {
+        "backend": {"type": "string", "minLength": 1},
+        "model": {"type": "string", "minLength": 1},
+        "config": {
+            "type": "object",
+            "required": ["endpoint", "max_output_tokens", "request_timeout_seconds",
+                        "warmup_timeout_seconds"],
+            "properties": {
+                # Sanitized scheme+host+port+path; never carries credentials or a query string.
+                "endpoint": {"type": "string", "minLength": 1},
+                # Raw env value: the string a provider's admission control actually saw, or
+                # null when the profile does not require a cap.
+                "max_output_tokens": {"type": ["string", "null"]},
+                # The HTTP client deadline for one model request. Deliberately independent of
+                # the controller's inference deadline (Agent.inference_timeout, exported
+                # separately in run_metadata.config.inference_timeout_s) -- a controller
+                # deadline shorter than this is a correct, intentional configuration, not an
+                # inconsistency this schema should flag.
+                "request_timeout_seconds": {"type": "number"},
+                "warmup_timeout_seconds": {"type": "number"},
+            },
+        },
+    },
+}
+
+
+PROMISED_CONFIG_FIELDS = ("endpoint", "max_output_tokens", "request_timeout_seconds",
+                          "warmup_timeout_seconds")
+
+
+def missing_promised_config(evidence):
+    """Return the promised config values this evidence block does not carry.
+
+    docs/PROFILES.md promises an endpoint, an output cap and both deadlines. Traces
+    recorded before a field was exported simply lack it. An absent field is UNVERIFIED
+    for that run: it is not evidence that any particular value was used, so a caller
+    must report it as unverified and never substitute a default.
+    """
+    config = (evidence or {}).get("config") or {}
+    return [name for name in PROMISED_CONFIG_FIELDS if name not in config]
+
+
+def validate_reasoner_evidence(evidence, strict=True):
+    """Verify reasoner_evidence against REASONER_EVIDENCE_SCHEMA; return it unchanged.
+
+    Raises ValueError with a specific, actionable message when the profile did not reach
+    the process: a null evidence block (no model backend was constructed -- e.g. an
+    offline-fake run) or a config missing one of the values docs/PROFILES.md promises to
+    check (model id, output cap, endpoint, HTTP request deadline).
+
+    strict=True is the contract for a new run and is what a profile check must use.
+    strict=False verifies only that a real backend recorded a config, for reading an
+    older trace whose export predates some of those fields; pair it with
+    missing_promised_config() and report every named field as unverified.
+    """
+    if evidence is None:
+        raise ValueError(
+            "reasoner_evidence is null: this run used a reasoner with no backend evidence "
+            "(for example offline-fake or a hand-built test double), so no profile settings "
+            "reached a real model backend.")
+    schema = REASONER_EVIDENCE_SCHEMA
+    if not strict:
+        schema = copy.deepcopy(schema)
+        schema["properties"]["config"]["required"] = []
+    errors = sorted(Draft202012Validator(schema).iter_errors(evidence), key=str)
+    if errors:
+        first = errors[0]
+        location = "reasoner_evidence" + "".join(f"[{part!r}]" for part in first.path)
+        absent = missing_promised_config(evidence)
+        if strict and list(first.path) == ["config"] and absent:
+            raise ValueError(
+                f"reasoner_evidence['config'] does not carry {', '.join(absent)}: this trace "
+                f"predates that export. Re-run to verify those values, or call with "
+                f"strict=False and report each of them as unverified. Absence is not "
+                f"evidence of any particular value.")
+        raise ValueError(f"reasoner_evidence failed verification: {location}: {first.message}")
+    return evidence
+
+
 class ModelReasoner:
     def __init__(self, backend):
         self.backend = backend
@@ -291,6 +553,28 @@ class ModelReasoner:
                                "performed. A completed read is evidence for that effect, never a "
                                "substitute for it. Continue the plan: either call the write tool or ask "
                                "a specific clarification. Do not answer with the read result alone."}
+        repeating = getattr(view, "repeated_completed_call", False) and not unresolved
+        if repeating:
+            # Stronger than the write-continuation rule: this fires on the controller's own
+            # observation that the last proposal repeated finished work, so it does not
+            # depend on the model having recognised the request as a write.
+            request["required_next_step"] = {
+                "kind": "act_on_completed_result",
+                "instruction": "Your last proposal only repeated tool calls that already completed. "
+                               "Their results are in the session evidence. Do not propose them again. "
+                               "Read the evidence and take the next step: call a different tool, call the "
+                               "same tool with different arguments, or answer the user."}
+        no_progress = getattr(view, "no_progress", False) and not unresolved
+        if no_progress:
+            # The controller's own observation that the last accepted plan advanced
+            # nothing at all: no dispatched call, no clarification, no answer, and
+            # nothing already pending to explain the silence.
+            request["required_next_step"] = {
+                "kind": "make_progress",
+                "instruction": "Your last proposal made no progress: it dispatched no call, gave no "
+                               "clarification, and gave no answer, and no previous call is still pending. "
+                               "Do not repeat that empty result. Call an appropriate tool with corrected, "
+                               "grounded arguments, ask a specific clarifying question, or answer the user now."}
         if unresolved:
             request["required_next_step"] = {
                 "kind": "reconcile_unknown_effects",
@@ -298,23 +582,46 @@ class ModelReasoner:
                 "instruction": "Do not call the write tools again. Query each declared status tool using "
                                "the listed operation_id and its parameter schema. If there is no status tool, "
                                "explain the unknown outcome instead of inventing success or retrying."}
-        kwargs = {"_validator": PlanProposal.model_validate} if isinstance(self.backend, JsonBackend) else {}
         # Bind model generation to the caller's manifest.  An unresolved write is
         # deliberately a read-only planning turn; the controller remains the final
         # authority even when a backend does not enforce this JSON schema.
-        result = await self.backend.generate(
-            SYSTEM,
-            request,
-            self.output_schema(manifests, allow_write_calls=not bool(unresolved),
-                               allow_final_response=not outstanding),
-            **kwargs)
+        schema = self.output_schema(manifests, allow_write_calls=not bool(unresolved),
+                                    allow_final_response=not outstanding,
+                                    require_progress=outstanding or repeating or no_progress)
+
+        def _validate(result):
+            # Static shape first: cheap, and keeps the existing pydantic-error contract
+            # for callers that only care whether this is a well-formed PlanProposal.
+            PlanProposal.model_validate(result)
+            # Provider structured output (response_format=json_object/json_schema) is an
+            # aid, never the enforcement layer. Re-check the EXACT dynamic schema built
+            # for this request -- restricted tool names, forced null response while a
+            # write is outstanding, no write calls during an unresolved-outcome turn --
+            # before this generation is accepted or counted as successful.
+            errors = sorted(Draft202012Validator(schema).iter_errors(result), key=str)
+            if errors:
+                raise errors[0]
+
+        kwargs = {"_validator": _validate} if isinstance(self.backend, JsonBackend) else {}
+        result = await self.backend.generate(SYSTEM, request, schema, **kwargs)
+        if not isinstance(self.backend, JsonBackend):
+            # Non-JsonBackend reasoners (test doubles, alternative adapters) do not
+            # accept the _validator hook; enforce the same two layers here instead.
+            _validate(result)
         return PlanProposal.model_validate(result)
 
     @staticmethod
     def write_outstanding(view):
-        """True when no write call has been dispatched or confirmed for this request."""
+        """True when no write call has been dispatched or confirmed for THIS request.
+
+        Scoped to view.active_request_id via ToolCall.request_id, so an unrelated
+        write from an earlier, already-finished request in the same session cannot
+        suppress continuation for a brand new request that also needs a write.
+        Callers that never populate either field (e.g. hand-built SessionView/
+        ToolCall fixtures) keep their prior behaviour, since both default to "".
+        """
         return not any(call.effect == "write" and call.status in {"pending", "success", "unknown"}
-                       for call in view.calls)
+                       for call in view.calls if call.request_id == view.active_request_id)
 
     @staticmethod
     def reconciliation_context(view, manifests):
@@ -324,7 +631,8 @@ class ModelReasoner:
                 for call in view.calls if call.effect == "write" and call.status in {"unknown", "cancelled"}]
 
     @staticmethod
-    def output_schema(manifests=None, *, allow_write_calls=True, allow_final_response=True):
+    def output_schema(manifests=None, *, allow_write_calls=True, allow_final_response=True,
+                      require_progress=False):
         # Internal proposals retain defaults for fixtures and backwards compatibility.
         # Model generation must make each safety/action decision explicitly rather than
         # satisfying an all-optional schema with only extracted slots (or an empty object).
@@ -360,6 +668,18 @@ class ModelReasoner:
             schema["properties"]["response"] = {
                 "type": "null",
                 "description": "Must be null while a requested state-changing effect is outstanding."}
+        if require_progress:
+            # A fully expanded PlanProposal() -- empty calls, null clarification, null
+            # response -- otherwise validates cleanly even here: nothing in the plain
+            # per-field schema forbids returning nothing at all. Spell out the valid
+            # alternatives explicitly instead of only forbidding one field: this turn
+            # must produce at least one call, an explicit clarification, or (when still
+            # permitted) an explicit answer.
+            alternatives = [{"properties": {"calls": {"minItems": 1}}, "required": ["calls"]},
+                           {"properties": {"clarification": {"type": "string"}}, "required": ["clarification"]}]
+            if allow_final_response:
+                alternatives.append({"properties": {"response": {"type": "string"}}, "required": ["response"]})
+            schema["anyOf"] = alternatives
         if manifests is not None:
             calls = schema["properties"]["calls"]
             available = [manifest for manifest in manifests

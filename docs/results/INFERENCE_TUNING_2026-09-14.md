@@ -81,9 +81,38 @@ An earlier session left `num_gpu` at 99, which forced `qwen2.5:7b` to request a 
 buffer on a 4096 MiB card and spill into shared memory. The tuned run was first verified
 with an explicit `ACCESSFLOW_OLLAMA_NUM_GPU=37`, then repeated with it unset.
 
-With flash attention and a q8_0 KV cache, Ollama's own fitting selects 37/37 layers and
-reaches 37.3 tok/s, matching the pinned result. Leave `num_gpu` unset: automatic fitting
-adapts to each model, while a pinned layer count is correct for exactly one.
+With flash attention and a q8_0 KV cache, Ollama's own fitting selected 37/37 layers and
+reached 37.3 tok/s, matching the pinned result.
+
+### Correction, 15 September 2026
+
+The sentence above holds only at the free-memory level measured on 14 September. Ollama
+keeps a 1024 MiB free-memory target on the device. The fitter reduces the layer count when
+full offload does not leave that much spare. The server log states the decision:
+
+```
+common_params_fit_impl: projected to use 2760 MiB of device memory vs. 3296 MiB of free device memory
+common_params_fit_impl: cannot meet free memory target of 1024 MiB, need to reduce device memory by 488 MiB
+common_params_fit_impl:   - CUDA0 (NVIDIA GeForce GTX 1650): 29 layers, 2252 MiB used, 1044 MiB free
+```
+
+The model needs 2760 MiB for full offload. The 14 September run had 3801 MiB free, which
+left 1041 MiB spare and cleared the target by 17 MiB. A later run had 3296 MiB free, which
+left 536 MiB spare. The fitter then selected 29/37 layers and left 1044 MiB of VRAM idle.
+Generation fell to 175 tok/s for prompt evaluation, and each request took 19 s to 23 s.
+
+Automatic fitting on this card is therefore not dependable. The margin is smaller than the
+memory that a browser or any other application takes.
+
+Set `ACCESSFLOW_OLLAMA_NUM_GPU=37` for `qwen3:4b` on this hardware. Confirm the result in
+the server log before you record any local score:
+
+```
+load_tensors: offloaded 37/37 layers to GPU
+```
+
+Do not put the pin in `.env`. A pinned layer count is correct for exactly one model. An
+earlier stale pin made `qwen2.5:7b` request more VRAM than the card has.
 
 ## Remaining headroom
 
