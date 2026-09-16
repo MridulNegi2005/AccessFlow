@@ -68,7 +68,7 @@ Updated 16 September 2026.
   misleading final response.
 - The Ollama vision provider normalizes syntactically invalid JSON bytes and syntactically valid
   non-object JSON roots into classified invalid JSON errors, with raw-byte, list and null response
-  coverage, and normalizes provider timeouts
+  coverage, rejects explicit incomplete responses, and normalizes provider timeouts
   into the same stable runtime failure boundary.
 - The configured vision failure is also covered through the WebSocket route: backend_failure is
   emitted and the same session completes a later text request. A malformed list response and a
@@ -184,8 +184,8 @@ Updated 16 September 2026.
 - A fresh current-head Uvicorn/WebSocket smoke repeated the mock route with the checked-in WAV and a valid PNG: both media acknowledgments arrived in one session, and the final retained audio and image context.
 - A current-head served run also used the cached Faster Whisper base.en CPU INT8 model and a loopback Ollama vision endpoint: the speech fixture was transcribed, the PNG produced image evidence, and the final transcript retained both real audio and vision observations. This is protocol/backend evidence with mock reasoning, not a live quality benchmark.
 
-- Final verification is 255 tests passed with 4 strict expected failures, including 108 passing demo
-  tests and 131 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
+- Final verification is 257 tests passed with 4 strict expected failures, including 108 passing demo
+  tests and 133 passing perception tests; Ruff, compilation and git diff --check are clean. The browser runtime
   still uses local only websockets 17.1.
 - The four expected failures record current controller integration gaps: image-only informational response,
   direct or WebSocket replacement of a prior active frame, and unresolved conflicting-frame evidence before

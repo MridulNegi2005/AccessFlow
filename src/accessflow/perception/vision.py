@@ -128,6 +128,8 @@ class OllamaVisionProvider:
             raise RuntimeError("Ollama vision returned invalid JSON shape")
         if payload.get("error"):
             raise RuntimeError(f"Ollama vision error: {payload['error']}")
+        if "done" in payload and payload["done"] is not True:
+            raise RuntimeError("Ollama vision returned an incomplete response")
         result = payload.get("response")
         if not isinstance(result, str) or not result.strip():
             raise RuntimeError("Ollama vision response did not contain text")
