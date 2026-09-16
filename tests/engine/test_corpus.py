@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import time
 from pathlib import Path
@@ -680,10 +681,16 @@ async def test_corpus_root_from_env_var_enables_real_retrieval(tmp_path, monkeyp
 
 
 def test_cli_corpus_root_flows_to_replay_trace_evidence(tmp_path, monkeypatch):
-    """The normal CLI suite path: --corpus-root sets ACCESSFLOW_CORPUS_ROOT and records the
-    resolved (non-absolute-to-the-planner) root in the trace's own evidence, without
-    touching src/accessflow/evaluation/ (out of scope for this fix; component_config was
-    already a generic pass-through recorded verbatim in replay()'s metadata).
+    """The normal CLI suite path: --corpus-root sets ACCESSFLOW_CORPUS_ROOT (for the
+    process that needs it, engine.Agent) without touching src/accessflow/evaluation/
+    (out of scope for this fix; component_config was already a generic pass-through
+    recorded verbatim in replay()'s metadata).
+
+    Security review LOW 2 (2026-09-16): component_config lands verbatim in committed
+    trace evidence, so it must never carry the resolved absolute corpus path (typically
+    a home directory). Only whether a corpus was configured, and the directory's own
+    basename, may be recorded there -- see the identical assertion below that neither
+    the raw nor the resolved path appears anywhere in the recorded config.
     """
     import sys
 
@@ -699,7 +706,14 @@ def test_cli_corpus_root_flows_to_replay_trace_evidence(tmp_path, monkeypatch):
         resolved = str(tmp_path.resolve())
         assert os.environ["ACCESSFLOW_CORPUS_ROOT"] == resolved
         metadata = load_run_metadata(out_dir / "scenario-001.jsonl")
-        assert metadata["config"]["component_config"]["corpus_root"] == resolved
+        recorded = metadata["config"]["component_config"]
+        assert recorded["corpus_root_configured"] is True
+        assert recorded["corpus_root_basename"] == Path(resolved).name
+        # No absolute path -- the resolved root, or the raw argument that produced
+        # it -- may appear anywhere in what gets committed to git as trace evidence.
+        dumped = json.dumps(recorded)
+        assert resolved not in dumped
+        assert str(tmp_path) not in dumped
     finally:
         os.environ.pop("ACCESSFLOW_CORPUS_ROOT", None)
 

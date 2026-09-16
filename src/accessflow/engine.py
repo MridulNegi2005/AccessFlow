@@ -482,10 +482,27 @@ class Agent:
             # bounded recovery budget instead of inheriting an exhausted one from
             # an earlier, unrelated stall on the same request_id.
             self.request_input_epoch += 1
+            # request_input_epoch only ever grows (never resets, even across
+            # request_id rotation -- see run()), and _apply only ever pops a
+            # _fresh_plan_cancelled entry keyed to the CURRENT epoch. So the instant
+            # epoch advances past an entry's own epoch, that entry can never again be
+            # popped: it is dead the moment this bump makes it stale, not merely old.
+            # Drop it now instead of keeping a live-forever, never-consumable record
+            # for the rest of the session (security review LOW 1).
+            if self._fresh_plan_cancelled:
+                self._fresh_plan_cancelled = {key: v for key, v in self._fresh_plan_cancelled.items()
+                                              if key[1] >= self.request_input_epoch}
         source = self.planning_source
         if self.planner and not self.planner.done():
             self.planner.cancel()
-            if self._planner_fresh:
+            # self._planner_key[1] can only be < self.request_input_epoch here when
+            # THIS call just bumped the epoch above (a new-evidence pre-emption of an
+            # in-flight fresh plan): that key is already stale by the pruning rule
+            # above and recording it would just recreate what was pruned two lines
+            # up. It equals the current epoch when this call did not bump it (a
+            # same-epoch, non-fresh pre-emption, e.g. an internal retry) -- the one
+            # case that is still legitimately consumable below.
+            if self._planner_fresh and self._planner_key[1] == self.request_input_epoch:
                 # The task being pre-empted here was reasoning on fresh user evidence
                 # and never got to deliver a proposal. Record that for its
                 # (request_id, request_input_epoch) so a legitimate hand-off to this

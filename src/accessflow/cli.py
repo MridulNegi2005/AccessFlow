@@ -74,15 +74,22 @@ def main():
         # Threaded to Agent through ACCESSFLOW_CORPUS_ROOT (see engine.Agent.__init__)
         # rather than a new constructor path here: this is the only normal-harness route
         # into replay()/run_suite(), which construct Agent themselves and are not part of
-        # this fix's owned files. Recorded in component_config (already plumbed verbatim
-        # into replay's trace metadata) so the resolved root is visible in evidence
-        # without ever being sent to the planner itself -- see corpus.corpus_manifest,
-        # which only ever exposes logical document names, never a filesystem path.
+        # this fix's owned files. The resolved absolute path stays only in that env var,
+        # for the process that actually needs it -- never in component_config, which
+        # replay.py copies verbatim into trace metadata and evidence bundles get
+        # committed to git. A committed absolute path is typically a home directory, so
+        # component_config records only what a run's reproducer needs: whether a corpus
+        # was configured, and the directory's own basename -- see
+        # corpus.corpus_manifest, which likewise only ever exposes logical document
+        # names, never a filesystem path.
         resolved_corpus_root = str(args.corpus_root.resolve()) if args.corpus_root is not None else None
         if resolved_corpus_root is not None:
             os.environ["ACCESSFLOW_CORPUS_ROOT"] = resolved_corpus_root
+        effective_corpus_root = resolved_corpus_root or os.environ.get("ACCESSFLOW_CORPUS_ROOT")
         component_config = {"profile": args.components,
-                            "corpus_root": resolved_corpus_root or os.environ.get("ACCESSFLOW_CORPUS_ROOT")}
+                            "corpus_root_configured": effective_corpus_root is not None,
+                            "corpus_root_basename": Path(effective_corpus_root).name
+                                                    if effective_corpus_root else None}
         if args.components == "local":
             from .adapters.process_perception import ProcessPerception
             from .turn_policy import HeuristicTurnPolicy
@@ -96,7 +103,13 @@ def main():
             def perception_factory():
                 return ProcessPerception(model_path=args.asr_model_path, worker_args=worker_args)
             policy_factory = HeuristicTurnPolicy
-            component_config["asr_model_path"] = str(args.asr_model_path) if args.asr_model_path else None
+            # Basename only. The resolved path reaches the worker through
+            # perception_factory above; component_config lands in trace metadata, and
+            # evidence bundles are committed, so an installation path would travel with
+            # them. The name is enough to tell two ASR installations apart.
+            component_config["asr_model_configured"] = args.asr_model_path is not None
+            component_config["asr_model_basename"] = (
+                args.asr_model_path.name if args.asr_model_path else None)
             if args.vision_provider == "none":
                 component_config["vision_provider_requested"] = "none"
             else:
