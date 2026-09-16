@@ -71,6 +71,7 @@ class PngFormat:
 
 MAX_PNG_FILE_BYTES = 8 * 1024 * 1024
 MAX_PNG_DECODED_BYTES = 64 * 1024 * 1024
+_PNG_CRITICAL_CHUNKS = frozenset({b"IHDR", b"PLTE", b"IDAT", b"IEND"})
 
 
 def validate_png(path: Path) -> PngFormat:
@@ -106,6 +107,8 @@ def validate_png(path: Path) -> PngFormat:
         chunk_data = data[offset + 8 : offset + 8 + length]
         chunk_crc = struct.unpack(">I", data[offset + 8 + length : chunk_end])[0]
         if zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF != chunk_crc:
+            raise ValueError(f"Invalid PNG file: {path}")
+        if chunk_type not in _PNG_CRITICAL_CHUNKS and 65 <= chunk_type[0] <= 90:
             raise ValueError(f"Invalid PNG file: {path}")
 
         if ihdr is None:

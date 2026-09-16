@@ -938,6 +938,39 @@ def test_png_validation_rejects_incomplete_scanline_payload(tmp_path: Path):
         validate_png(image_path)
 
 
+@pytest.mark.asyncio
+async def test_image_input_rejects_unknown_critical_png_chunk_before_provider(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "unknown-critical.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"ABCD", b"unrecognized critical data")
+        + chunk(b"IDAT", zlib.compress(b"\x00\x40\x80\xff\xff"))
+        + chunk(b"IEND", b"")
+    )
+    provider_calls = []
+    event = FrameEvent(
+        session_id="s1",
+        payload=Frame(path=str(image_path), frame_id="unknown-critical-frame"),
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG"):
+        await _one(LocalPerception(vision_provider=lambda path: provider_calls.append(path) or "unsafe"), event)
+
+    assert provider_calls == []
+
+
 def test_png_validation_rejects_oversized_decoded_payload(tmp_path: Path):
     def chunk(kind: bytes, payload: bytes) -> bytes:
         return (
