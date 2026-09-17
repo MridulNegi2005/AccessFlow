@@ -307,6 +307,16 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - PNG validation now requires all compressed image data chunks to be consecutive, rejecting ancillary
   data between `IDAT` chunks before a vision provider is called. The focused regression passes; full
   verification passes 799 tests with one retained conflict xfail and Ruff.
+- Timed-out local perception now retains one real native-work permit per session worker until the
+  underlying thread returns, so repeated timeouts cannot launch concurrent replacement calls. The
+  gated three-call probe now reports one native call, peak concurrency one, and one tracked call after
+  close; owned perception coverage passes 217 tests and full verification passes 807 tests with one
+  retained conflict xfail and Ruff.
+- The assigned JSONL perception worker now accepts `none` or `ollama` plus model, base URL and timeout
+  options, constructs the agreed A-side provider and preserves its `ollama/<model>` identity through
+  `LocalPerception`. A real child-process loopback regression covers a configured frame, while the
+  default builder remains audio-only; full verification passes 807 tests with one retained conflict
+  xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.

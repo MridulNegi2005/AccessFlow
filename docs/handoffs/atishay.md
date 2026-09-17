@@ -479,3 +479,15 @@ measurements only; it does not construct a `TurnDecision`, authorize tools or mu
 tests; demo coverage passes 132 tests with one retained conflict xfail; the full suite passes 690 tests
 with one retained xfail and two dependency deprecation warnings. Ruff passes. Commits: `378d178`,
 `5fd2f91`, `fce7e62`. Live endpoint quality and live vision quality remain unverified.
+
+## 2026-09-17 - Native lifecycle and assigned vision worker
+
+**Task:** Reproduce and close the native-work timeout/close defect, then complete the explicitly assigned process-worker vision wiring.
+
+**Changes:** A gated transcriber reproduced three timed-out awaits leaving three active native calls with peak concurrency three after `aclose()`. `LocalPerception` now holds one native-work permit per session worker until the underlying thread returns, detaches timed-out wrappers without canceling the thread, and tracks outstanding native tasks through completion. Independent sessions retain independent audio/image concurrency. The assigned JSONL worker now accepts `none` or `ollama`, model, base URL and timeout options, builds the A-side `OllamaVisionProvider`, preserves its `ollama/<model>` identity, and closes the perception backend at EOF. The default path constructs the same audio-only perception object as before.
+
+**Status:** Owned perception coverage: 217 passed. Demo coverage: 143 passed, 1 retained conflict xfail. Full merged suite: 807 passed, 1 xfailed, 2 dependency deprecation warnings. Ruff and git diff --check pass. Commits are local: `f50bd60` and `430103a`; not pushed per instruction.
+
+**Evidence mode:** Native lifecycle evidence uses an injected gated thread and records actual active calls and peak concurrency: fixed result is one native call, peak one, one tracked after close, then zero after release. Vision-worker evidence uses an actual child process and a deterministic loopback HTTP `/api/chat` service; it verifies model, image payload, observation provenance and backend identity. No live ASR, live vision, live reasoning or microphone session was run.
+
+**Notes:** C1-C4 remain coordination items; no controller, shared contract, other adapter, evaluation, engine-test, corpus or root configuration file was changed. A separate frame-conflict xfail remains untouched. Next work requires the four written decisions and their exact file splits before implementing B-side changes.

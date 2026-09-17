@@ -1039,3 +1039,10 @@ final was cleared and a new WebSocket session connected cleanly; full suite: 643
 match the existing incoming bound. Added a focused regression and ran the full suite: 644 passed,
 1 xfailed, 2 warnings; Ruff passed. No engine, contracts, adapters, lockfile or model/network behavior
 changed.
+
+## 2026-09-17 - Codex Atishay native lifecycle and vision worker wiring
+
+- **Task:** Reproduce the merged audit's gated-native timeout/close defect and complete the explicitly assigned `src/accessflow/adapters/perception_worker.py` vision options.
+- **Changes:** The initial gated transcriber probe produced three active native calls and peak concurrency three after repeated await timeouts and `aclose()`. `LocalPerception` now retains one real native permit per session worker until the actual thread returns, tracks detached work, and preserves independent session concurrency. The JSONL worker now accepts `none`/`ollama`, model, URL and timeout options, constructs A's `OllamaVisionProvider`, carries `ollama/<model>` provenance, and closes the backend at EOF. Added an actual child-process loopback `/api/chat` regression and default audio-only coverage.
+- **Status:** Owned perception 217 passed; demo 143 passed plus one retained conflict xfail; full suite 807 passed, one xfailed and two dependency warnings; Ruff and diff checks pass. Local commits `f50bd60` and `430103a`; not pushed by instruction.
+- **Evidence:** Injected gated thread and deterministic loopback HTTP protocol evidence only. No live ASR, vision, reasoning or microphone endpoint claim. C1-C4 coordination and the frame-conflict xfail remain open.
