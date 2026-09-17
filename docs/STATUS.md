@@ -383,11 +383,13 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   unknown data can be treated as metadata. Focused local-perception coverage passes 51 tests; the full
   branch passes 684 tests with one retained conflict example and Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
-- Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
-  and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
-  default `none` so audio-only behaviour is unchanged. This is finding A2; see the ownership
-  note in `CONTRACT_PROPOSALS.md` for why this file stays with Atishay despite the general
-  directory rule.
+- **Completed:** the assigned perception worker now accepts `none` or `ollama` with model, URL and
+  timeout options, passes the configured provider to `LocalPerception`, preserves audio-only
+  defaults and closes the backend at EOF. Actual child-process coverage is in
+  `tests/perception/test_perception_worker.py`.
+- **Completed:** repeated native perception timeouts retain one real in-flight permit per session
+  worker and track the underlying work through completion; the gated regression covers the
+  timeout/close lifecycle boundary.
 - Voluntary feedback notes and live microphone/device validation.
 - Demo video and presentation draft.
 

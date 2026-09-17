@@ -491,3 +491,13 @@ with one retained xfail and two dependency deprecation warnings. Ruff passes. Co
 **Evidence mode:** Native lifecycle evidence uses an injected gated thread and records actual active calls and peak concurrency: fixed result is one native call, peak one, one tracked after close, then zero after release. Vision-worker evidence uses an actual child process and a deterministic loopback HTTP `/api/chat` service; it verifies model, image payload, observation provenance and backend identity. No live ASR, live vision, live reasoning or microphone session was run.
 
 **Notes:** C1-C4 remain coordination items; no controller, shared contract, other adapter, evaluation, engine-test, corpus or root configuration file was changed. A separate frame-conflict xfail remains untouched. Next work requires the four written decisions and their exact file splits before implementing B-side changes.
+
+## 2026-09-17 - Verified continuation checkpoint
+
+**Task:** Revalidate the merged branch after the native lifecycle and worker slices, then correct stale Workstream B status wording.
+
+**Changes:** Confirmed `origin/main` was integrated without conflicts and that the current branch retains the newer lifecycle and worker implementations. Updated `docs/STATUS.md` so the owned Workstream B required-work list records both slices as completed.
+
+**Status:** `tests/perception`: 217 passed; `tests/demo`: 143 passed, 1 xfailed; full suite: 807 passed, 1 xfailed, 2 warnings; Ruff and `git diff --check` pass. Branch is clean and ahead of `origin/atishay/perception` by 9 commits. No push, CI, release tag or protected-file edits.
+
+**Notes:** Remaining B17-3 through B17-7 work is gated by written C1-C4 decisions. Sol was consulted for an architecture review and remains the single persistent advisor; no additional reviewer was started.
