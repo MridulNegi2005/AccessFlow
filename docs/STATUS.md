@@ -41,8 +41,10 @@ conflicts. It adds 59 commits of Workstream B work across 24 files.
   said the review had never run. That statement is obsolete.
 - **Security review of the Workstream B merge:** run on 17 September 2026 over
   `git diff 3c1619f de89f55`. The verdict is not clean. The review found one medium and
-  five low findings. All six are in Workstream B files. The merge commit therefore stays
-  local and is not pushed. See the open item below.
+  five low findings. All six are in Workstream B files. Mridul decided to push the merge
+  and to triage the findings separately. Branch `atishay/perception` then added 69 more
+  commits, many of which harden the same areas. Those 69 commits are NOT covered by any
+  security review. Treat the whole Workstream B surface as review-pending.
 - **Scenario corpus:** 17 files, 10 distinct tool sets. See
   [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is generated from the files.
 - **Evidence bundle:** 57 attempted runs. The quality denominator is **43 of 49**. It is not
@@ -102,7 +104,9 @@ first audit's verdict as current where the second audit reopened or narrowed it.
     validation after decompression costs the attacker no budget and can repeat without
     limit. One measured connection inflated 2442 MiB server-side from 2.38 MiB of upload.
     The other five findings are low. Workstream A did not repair any of them, because every
-    affected file belongs to Workstream B.
+    affected file belongs to Workstream B. Some later Workstream B commits may already close
+    some of these findings. No one has re-verified that. Do not assume any finding is closed
+    without a new review.
   - **Matched-timing baseline and end-of-speech latency.** This merge adds
     `src/accessflow/perception/timing.py` and `src/accessflow/turn_policy/timing_replay.py`.
     Whether these supply the calibrated signal that the baseline needs is not yet assessed.
