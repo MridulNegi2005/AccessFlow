@@ -19,3 +19,15 @@ To activate a live local run, provide an already-installed Ollama service and mo
 `ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL`, and run the 12 inline PNG cases through the provider
 with a fresh recorded backend, model, hardware and timing result. The provider intentionally
 does not download models or use a paid fallback.
+
+## Availability recheck — 17 September 2026
+
+The current `atishay/perception` checkout was rechecked before attempting another live run:
+
+- `ollama` is not available on `PATH`.
+- `http://127.0.0.1:11434/api/tags` is unavailable.
+- No `ACCESSFLOW_OLLAMA_VISION_MODEL` is configured.
+- No `ACCESSFLOW_GROQ_API_KEY` is configured.
+
+No live benchmark was started. The existing deterministic child-process loopback test remains
+protocol and provenance evidence only; it does not establish live vision grounding or quality.

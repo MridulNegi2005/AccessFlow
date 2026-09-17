@@ -1025,3 +1025,5 @@ Status: Owned perception 217 passed; demo 143 passed, 1 xfailed; full suite 807 
 Notes: Evidence is deterministic injected-thread and loopback protocol evidence. Live ASR, live vision, live reasoning, microphone endpointing and C1-C4 coordination decisions remain open.
 
 2026-09-17 verification: Revalidated the integrated `atishay/perception` checkpoint after merging `origin/main`; corrected the owned Workstream B required-work list to mark native lifecycle and assigned worker wiring complete. Perception: 217 passed; demo: 143 passed, 1 xfailed; full suite: 807 passed, 1 xfailed, 2 warnings; Ruff and diff checks pass. No push or protected-file changes. C1-C4 remain decision-gated.
+
+2026-09-17 verification: Rechecked live vision availability before attempting another benchmark. Ollama executable and loopback service were unavailable, the vision-model setting was absent, and no hosted key was configured; no live run was started. Recorded the fail-closed result in docs/feedback/VISION_MEASUREMENTS.md. No source or protected files changed.

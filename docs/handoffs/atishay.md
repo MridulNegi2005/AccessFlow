@@ -501,3 +501,13 @@ with one retained xfail and two dependency deprecation warnings. Ruff passes. Co
 **Status:** `tests/perception`: 217 passed; `tests/demo`: 143 passed, 1 xfailed; full suite: 807 passed, 1 xfailed, 2 warnings; Ruff and `git diff --check` pass. Branch is clean and ahead of `origin/atishay/perception` by 9 commits. No push, CI, release tag or protected-file edits.
 
 **Notes:** Remaining B17-3 through B17-7 work is gated by written C1-C4 decisions. Sol was consulted for an architecture review and remains the single persistent advisor; no additional reviewer was started.
+
+## 2026-09-17 - Live vision availability recheck
+
+**Task:** Check whether live vision/reasoning evidence could proceed without fabricating a result.
+
+**Changes:** Rechecked the executable, loopback Ollama endpoint, vision-model setting and hosted key. Recorded the result in `docs/feedback/VISION_MEASUREMENTS.md`.
+
+**Status:** `ollama` is missing, `127.0.0.1:11434` is unavailable, no vision model is configured and no Groq key is present. No live benchmark was started. The branch remains clean before this documentation checkpoint; no source or protected files changed.
+
+**Notes:** Deterministic loopback child-process evidence remains protocol/provenance evidence only. Live vision quality and C1-C4 decisions remain open.
