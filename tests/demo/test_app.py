@@ -219,6 +219,75 @@ def test_browser_message_rejects_coerced_or_inconsistent_timing_values(field, va
         event_from_message("session-1", browser_message)
 
 
+@pytest.mark.parametrize(
+    ("kind", "field", "value", "message"),
+    [
+        (
+            "transcript",
+            "text",
+            "x" * (demo_app.MAX_BROWSER_TEXT_CHARS + 1),
+            "browser text exceeds the 16384-character limit",
+        ),
+        (
+            "transcript",
+            "utterance_id",
+            "x" * (demo_app.MAX_BROWSER_SOURCE_ID_CHARS + 1),
+            "browser utterance_id exceeds the 256-character limit",
+        ),
+        (
+            "frame",
+            "frame_id",
+            "x" * (demo_app.MAX_BROWSER_SOURCE_ID_CHARS + 1),
+            "browser frame_id exceeds the 256-character limit",
+        ),
+    ],
+)
+def test_browser_message_rejects_oversized_text_and_source_identity(
+    kind, field, value, message
+):
+    with pytest.raises(ValueError, match=re.escape(message)):
+        event_from_message("session-1", {"kind": kind, "payload": {field: value}})
+
+
+def test_browser_message_accepts_text_and_source_identity_at_limits():
+    transcript = event_from_message(
+        "session-1",
+        {
+            "kind": "transcript",
+            "payload": {
+                "text": "x" * demo_app.MAX_BROWSER_TEXT_CHARS,
+                "utterance_id": "u" * demo_app.MAX_BROWSER_SOURCE_ID_CHARS,
+            },
+        },
+    )
+    frame = event_from_message(
+        "session-1",
+        {
+            "kind": "frame",
+            "payload": {"frame_id": "f" * demo_app.MAX_BROWSER_SOURCE_ID_CHARS},
+        },
+    )
+
+    assert len(transcript.payload.text) == demo_app.MAX_BROWSER_TEXT_CHARS
+    assert len(transcript.payload.utterance_id) == demo_app.MAX_BROWSER_SOURCE_ID_CHARS
+    assert len(frame.payload.frame_id) == demo_app.MAX_BROWSER_SOURCE_ID_CHARS
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", ["text", "bytes"])
+async def test_browser_frame_size_is_checked_before_json_parsing(field):
+    class OversizedSocket:
+        async def receive(self):
+            raw = "{" + ("x" * demo_app.MAX_BROWSER_MESSAGE_BYTES)
+            return {
+                "type": "websocket.receive",
+                field: raw if field == "text" else raw.encode(),
+            }
+
+    with pytest.raises(ValueError, match="browser event exceeds the 12582912-byte limit"):
+        await demo_app._receive_browser_message(OversizedSocket())
+
+
 def test_rejected_audio_metadata_does_not_materialize_upload(tmp_path: Path):
     fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
     with pytest.raises(ValueError, match="browser revision"):
@@ -1681,6 +1750,306 @@ def test_websocket_cleans_valid_session_media_after_disconnect(monkeypatch):
             assert len(list(created_paths[0].iterdir())) == 2
 
     assert not created_paths[0].exists()
+
+
+@pytest.mark.asyncio
+async def test_websocket_disconnect_does_not_block_on_full_agent_queue(monkeypatch):
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class TrackingReasoner:
+        pass
+
+    class StalledAgent:
+        def __init__(self, *args):
+            self.running = True
+            self.cancelled = asyncio.Event()
+
+        async def run(self, incoming, outgoing):
+            while not incoming.full():
+                await asyncio.sleep(0)
+            queue_full.set()
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+
+    class DisconnectingPeer:
+        def __init__(self, queue_full):
+            self.inputs_seen = 0
+            self.queue_full = queue_full
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            await self.queue_full.wait()
+            raise RuntimeError("peer disconnected")
+
+        async def receive_json(self):
+            self.inputs_seen += 1
+            if self.inputs_seen <= demo_app.MAX_PENDING_INPUTS - 1:
+                return {"kind": "transcript", "payload": {"text": "queued"}}
+            await asyncio.Future()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+    agent_holder = {}
+    queue_full = asyncio.Event()
+
+    def make_agent(*args):
+        agent = StalledAgent(*args)
+        agent_holder["agent"] = agent
+        return agent
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(
+        demo_app.DemoReasoner,
+        "from_environment",
+        staticmethod(lambda: TrackingReasoner()),
+    )
+    monkeypatch.setattr(demo_app, "Agent", make_agent)
+    peer = DisconnectingPeer(queue_full)
+
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=1)
+
+    assert peer.inputs_seen >= demo_app.MAX_PENDING_INPUTS - 1
+    assert agent_holder["agent"].cancelled.is_set()
+    assert perception.closed is True
+
+
+@pytest.mark.asyncio
+async def test_websocket_stalled_agent_queue_fails_closed(monkeypatch):
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class StalledAgent:
+        def __init__(self, *args):
+            self.running = True
+            self.cancelled = asyncio.Event()
+
+        async def run(self, incoming, outgoing):
+            await incoming.get()
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+
+    class Peer:
+        def __init__(self):
+            self.inputs_seen = 0
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            return None
+
+        async def receive_json(self):
+            self.inputs_seen += 1
+            if self.inputs_seen <= demo_app.MAX_PENDING_INPUTS + 1:
+                return {"kind": "transcript", "payload": {"text": "queued"}}
+            await asyncio.Future()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+    agent_holder = {}
+
+    def make_agent(*args):
+        agent = StalledAgent(*args)
+        agent_holder["agent"] = agent
+        return agent
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(demo_app, "Agent", make_agent)
+
+    peer = Peer()
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=1)
+
+    assert peer.inputs_seen == demo_app.MAX_PENDING_INPUTS + 1
+    assert agent_holder["agent"].cancelled.is_set()
+    assert perception.closed is True
+
+
+@pytest.mark.asyncio
+async def test_websocket_sender_cleanup_is_bounded_after_disconnect(monkeypatch):
+    agent_started = asyncio.Event()
+
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class TrackingAgent:
+        def __init__(self, *args):
+            self.running = True
+
+        async def run(self, incoming, outgoing):
+            await incoming.get()
+            agent_started.set()
+            event = await incoming.get()
+            assert isinstance(event, EndEvent)
+            self.running = False
+
+    class HungSenderPeer:
+        def __init__(self):
+            self.send_cancelled = False
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.send_cancelled = True
+                raise
+
+        async def receive_json(self):
+            await agent_started.wait()
+            raise demo_app.WebSocketDisconnect()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(demo_app, "Agent", TrackingAgent)
+
+    peer = HungSenderPeer()
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=2)
+
+    assert peer.send_cancelled is True
+    assert perception.closed is True
+
+
+@pytest.mark.asyncio
+async def test_websocket_output_queue_saturation_fails_closed(monkeypatch):
+    agent_started = asyncio.Event()
+
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class StalledAgent:
+        def __init__(self, *args):
+            self.running = True
+            self.cancelled = asyncio.Event()
+
+        async def run(self, incoming, outgoing):
+            await incoming.get()
+            agent_started.set()
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+
+    class SaturatingPeer:
+        def __init__(self):
+            self.inputs_seen = 0
+            self.send_cancelled = False
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.send_cancelled = True
+                raise
+
+        async def receive_json(self):
+            await agent_started.wait()
+            self.inputs_seen += 1
+            if self.inputs_seen <= demo_app.MAX_PENDING_OUTPUTS + 1:
+                return {
+                    "kind": "frame",
+                    "payload": {
+                        "path": "screen.png",
+                        "frame_id": f"frame-{self.inputs_seen}",
+                    },
+                }
+            await asyncio.Future()
+
+        async def close(self, code=None):
+            return None
+
+    perception = TrackingPerception()
+    agent_holder = {}
+
+    def make_agent(*args):
+        agent = StalledAgent(*args)
+        agent_holder["agent"] = agent
+        return agent
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(demo_app, "Agent", make_agent)
+
+    peer = SaturatingPeer()
+    await asyncio.wait_for(demo_app.websocket(peer), timeout=2)
+
+    assert peer.inputs_seen == demo_app.MAX_PENDING_OUTPUTS + 1
+    assert peer.send_cancelled is True
+    assert agent_holder["agent"].cancelled.is_set()
+    assert perception.closed is True
 
 
 def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeypatch):

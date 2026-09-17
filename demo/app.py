@@ -7,6 +7,7 @@ import base64
 import os
 import binascii
 import importlib.util
+import json
 import math
 import tempfile
 import threading
@@ -42,6 +43,9 @@ MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_SESSION_UPLOAD_BYTES = 16 * 1024 * 1024
 MAX_BASE64_CHARS = 4 * ((MAX_UPLOAD_BYTES + 2) // 3)
 MAX_CONTEXT_CHARS = 16_384
+MAX_BROWSER_TEXT_CHARS = MAX_CONTEXT_CHARS
+MAX_BROWSER_SOURCE_ID_CHARS = 256
+MAX_BROWSER_MESSAGE_BYTES = 12 * 1024 * 1024
 MAX_PENDING_INPUTS = 16
 MAX_PENDING_OUTPUTS = 16
 
@@ -349,6 +353,10 @@ def _source_id(payload: dict[str, Any], key: str) -> str:
     value = payload[key]
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"browser {key} must be a non-empty string")
+    if len(value) > MAX_BROWSER_SOURCE_ID_CHARS:
+        raise ValueError(
+            f"browser {key} exceeds the {MAX_BROWSER_SOURCE_ID_CHARS}-character limit"
+        )
     return value
 
 
@@ -388,6 +396,10 @@ def _text(payload: dict[str, Any]) -> str:
     value = payload.get("text", "")
     if not isinstance(value, str):
         raise ValueError("browser text must be a string")
+    if len(value) > MAX_BROWSER_TEXT_CHARS:
+        raise ValueError(
+            f"browser text exceeds the {MAX_BROWSER_TEXT_CHARS}-character limit"
+        )
     return value
 
 
@@ -404,6 +416,10 @@ def _optional_source_id(payload: dict[str, Any], key: str) -> str | None:
     value = payload[key]
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"browser {key} must be a non-empty string when provided")
+    if len(value) > MAX_BROWSER_SOURCE_ID_CHARS:
+        raise ValueError(
+            f"browser {key} exceeds the {MAX_BROWSER_SOURCE_ID_CHARS}-character limit"
+        )
     return value
 
 
@@ -511,6 +527,43 @@ async def _materialize_event(
             active_tasks.discard(task)
 
 
+async def _receive_browser_message(websocket: WebSocket) -> dict[str, Any]:
+    """Decode one bounded browser frame without parsing oversized JSON."""
+    receive = getattr(websocket, "receive", None)
+    if not callable(receive):
+        # Keep lightweight in-process peer doubles compatible with the route tests.
+        receive_json = getattr(websocket, "receive_json", None)
+        if not callable(receive_json):
+            raise RuntimeError("WebSocket does not support receiving browser events")
+        parsed = await receive_json()
+        if not isinstance(parsed, dict):
+            raise ValueError("browser event must be a JSON object")
+        return parsed
+    message = await receive()
+    if message["type"] == "websocket.disconnect":
+        raise WebSocketDisconnect(message["code"], message.get("reason"))
+    raw = message.get("text")
+    if raw is None:
+        raw = message.get("bytes")
+    if isinstance(raw, str):
+        size = len(raw.encode("utf-8"))
+    elif isinstance(raw, bytes):
+        size = len(raw)
+    else:
+        raise ValueError("browser event must be a JSON text or bytes frame")
+    if size > MAX_BROWSER_MESSAGE_BYTES:
+        raise ValueError(
+            f"browser event exceeds the {MAX_BROWSER_MESSAGE_BYTES}-byte limit"
+        )
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, json.JSONDecodeError) as error:
+        raise ValueError("browser event must be valid JSON") from error
+    if not isinstance(parsed, dict):
+        raise ValueError("browser event must be a JSON object")
+    return parsed
+
+
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -556,6 +609,13 @@ async def websocket(websocket: WebSocket) -> None:
             },
         }
     )
+
+    def enqueue_output(event: Any) -> None:
+        try:
+            outgoing.put_nowait(event)
+        except asyncio.QueueFull as error:
+            raise RuntimeError("demo output queue is full") from error
+
     agent = Agent(
         perception,
         FinalFlagPolicy(),
@@ -574,14 +634,14 @@ async def websocket(websocket: WebSocket) -> None:
         async def receive_inputs():
             while True:
                 try:
-                    message = await websocket.receive_json()
-                except ValueError:
-                    await outgoing.put(
+                    message = await _receive_browser_message(websocket)
+                except ValueError as error:
+                    enqueue_output(
                         {
                             "kind": "demo_error",
                             "payload": {
                                 "backend": "demo/input",
-                                "message": "browser event must be valid JSON",
+                                "message": str(error),
                             },
                         }
                     )
@@ -596,7 +656,7 @@ async def websocket(websocket: WebSocket) -> None:
                     )
                     perception.validate_media_source(event)
                 except (TypeError, ValueError) as error:
-                    await outgoing.put(
+                    enqueue_output(
                         {
                             "kind": "demo_error",
                             "payload": {"backend": "demo/input", "message": str(error)},
@@ -610,13 +670,16 @@ async def websocket(websocket: WebSocket) -> None:
                 else:
                     source_id = None
                 if source_id is not None:
-                    await outgoing.put(
+                    enqueue_output(
                         {
                             "kind": "demo_status",
                             "payload": {"media_received": event.kind, "source_id": source_id},
                         }
                     )
-                await incoming.put(event)
+                try:
+                    incoming.put_nowait(event)
+                except asyncio.QueueFull as error:
+                    raise RuntimeError("agent input queue is full") from error
 
         receiver = asyncio.create_task(receive_inputs())
         try:
@@ -638,16 +701,28 @@ async def websocket(websocket: WebSocket) -> None:
                 await asyncio.gather(*materialization_tasks, return_exceptions=True)
                 materialization_tasks.clear()
 
+            agent_cancelled = False
             if agent.running and not agent_task.done():
-                await incoming.put(EndEvent(session_id=session_id))
-            if not agent_task.done():
+                try:
+                    incoming.put_nowait(EndEvent(session_id=session_id))
+                except asyncio.QueueFull:
+                    agent_task.cancel()
+                    agent_cancelled = True
+            if not agent_cancelled and not agent_task.done():
                 try:
                     await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
                 except (asyncio.TimeoutError, RuntimeError):
                     agent_task.cancel()
             await asyncio.gather(agent_task, return_exceptions=True)
             if not sender.done():
-                await outgoing.put(None)
+                try:
+                    outgoing.put_nowait(None)
+                except asyncio.QueueFull:
+                    pass
+                try:
+                    await asyncio.wait_for(asyncio.shield(sender), timeout=1)
+                except (asyncio.TimeoutError, RuntimeError):
+                    sender.cancel()
             await asyncio.gather(sender, return_exceptions=True)
             await perception.aclose()
 

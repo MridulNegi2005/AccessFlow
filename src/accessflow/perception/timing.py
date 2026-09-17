@@ -106,10 +106,8 @@ def _active_windows(frames: tuple[ActivityFrame, ...]) -> tuple[ActivityWindow, 
 def _validate_frame_order(frames: tuple[ActivityFrame, ...]) -> None:
     previous: ActivityFrame | None = None
     for frame in frames:
-        if previous is not None and (
-            frame.start_s < previous.start_s or frame.end_s < previous.end_s
-        ):
-            raise ValueError("activity frames must be in chronological order")
+        if previous is not None and frame.start_s < previous.end_s:
+            raise ValueError("activity frames must be chronological and non-overlapping")
         previous = frame
 
 

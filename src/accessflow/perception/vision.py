@@ -65,11 +65,8 @@ class OllamaVisionProvider:
     @staticmethod
     def _read_bounded_response(response: Any) -> bytes:
         try:
-            try:
-                body = response.read(MAX_VISION_RESPONSE_BYTES + 1)
-            except TypeError:
-                body = response.read()
-        except OSError as exc:
+            body = response.read(MAX_VISION_RESPONSE_BYTES + 1)
+        except (OSError, TypeError) as exc:
             raise RuntimeError("Ollama vision response could not be read") from exc
         if not isinstance(body, bytes):
             raise RuntimeError("Ollama vision response was not bytes")
@@ -80,9 +77,8 @@ class OllamaVisionProvider:
     @staticmethod
     def _read_image(path: Path) -> bytes:
         try:
-            if path.stat().st_size > MAX_VISION_IMAGE_BYTES:
-                raise RuntimeError("Ollama vision image is too large")
-            image = path.read_bytes()
+            with path.open("rb") as handle:
+                image = handle.read(MAX_VISION_IMAGE_BYTES + 1)
         except OSError as exc:
             raise RuntimeError("Ollama vision image could not be read") from exc
         if len(image) > MAX_VISION_IMAGE_BYTES:

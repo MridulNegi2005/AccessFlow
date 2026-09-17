@@ -25,6 +25,14 @@ class _ReplayVision:
         return self._captions[path.stem]
 
 
+def _write_manifest(root: Path, manifest: dict) -> None:
+    feedback = root / "docs" / "feedback"
+    feedback.mkdir(parents=True)
+    (feedback / "SCENARIO_MATRIX.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+
+
 @pytest.mark.asyncio
 async def test_vision_benchmark_replays_all_image_cases_and_scores_labels():
     root, manifest = _manifest()
@@ -45,11 +53,13 @@ async def test_vision_benchmark_replays_all_image_cases_and_scores_labels():
     assert report["backend"] == "fake/replay-vision"
     assert report["model"] == "synthetic-replay"
     assert report["prompt"] == "synthetic label replay"
+    assert report["timeout_s"] is None
     assert report["cases"] == 12
     assert report["failures"] == 0
     assert report["mean_elapsed_s"] >= 0
     assert report["mean_label_token_recall"] == 1.0
     assert all(item["status"] == "completed" for item in report["results"])
+    assert all(item["backend"] == provider.backend_name for item in report["results"])
     assert all(item["source_id"] == item["id"] for item in report["results"])
     assert all(item["sha256"] for item in report["results"])
     assert all(item["label_token_recall"] == 1.0 for item in report["results"])
@@ -87,6 +97,7 @@ async def test_vision_benchmark_records_provider_failures_without_caption():
     assert report["failures"] == 1
     assert report["mean_label_token_recall"] == 0.916667
     assert failed["status"] == "error"
+    assert failed["backend"] is None
     assert failed["caption"] is None
     assert failed["label_token_recall"] == 0.0
     assert failed["failure"] == {
@@ -94,6 +105,88 @@ async def test_vision_benchmark_records_provider_failures_without_caption():
         "message": "vision service unavailable",
     }
     assert sum(item["status"] == "completed" for item in report["results"]) == 11
+
+
+def test_vision_benchmark_report_writer_preserves_json(tmp_path: Path):
+    report_path = tmp_path / "vision-report.json"
+    report = {"status": "failed", "failures": 1, "results": [{"id": "image-01"}]}
+
+    benchmark._write_report(report_path, report)
+
+    assert json.loads(report_path.read_text(encoding="utf-8")) == report
+
+
+def test_vision_benchmark_rejects_duplicate_image_case_ids(tmp_path: Path):
+    _, manifest = _manifest()
+    image_indexes = [
+        index for index, case in enumerate(manifest["cases"]) if case["modality"] == "image"
+    ]
+    manifest["cases"][image_indexes[1]]["id"] = manifest["cases"][image_indexes[0]]["id"]
+    _write_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="unique non-empty strings"):
+        benchmark._image_cases(tmp_path)
+
+
+def test_vision_benchmark_rejects_path_containing_image_case_ids(tmp_path: Path):
+    _, manifest = _manifest()
+    image_index = next(
+        index for index, case in enumerate(manifest["cases"]) if case["modality"] == "image"
+    )
+    manifest["cases"][image_index]["id"] = "../outside"
+    _write_manifest(tmp_path, manifest)
+
+    with pytest.raises(ValueError, match="safe filenames"):
+        benchmark._image_cases(tmp_path)
+
+
+@pytest.mark.asyncio
+async def test_vision_benchmark_rejects_manifest_hash_mismatch_before_provider_call(tmp_path: Path):
+    root, manifest = _manifest()
+    image_cases = [case for case in manifest["cases"] if case["modality"] == "image"]
+    manifest["cases"][next(index for index, case in enumerate(manifest["cases"]) if case["id"] == "image-01")]["asset"]["sha256"] = "0" * 64
+    _write_manifest(tmp_path, manifest)
+
+    class RecordingVision(_ReplayVision):
+        def __init__(self, captions):
+            super().__init__(captions)
+            self.calls = []
+
+        def __call__(self, path: Path) -> str:
+            self.calls.append(path.name)
+            return super().__call__(path)
+
+    provider = RecordingVision({case["id"]: case["visual_label"] for case in image_cases})
+    report = await benchmark.run_vision_benchmark(
+        provider,
+        root=tmp_path,
+        mode="offline_injected",
+        backend=provider.backend_name,
+        model="synthetic-replay",
+        prompt="synthetic label replay",
+    )
+
+    failed = next(item for item in report["results"] if item["id"] == "image-01")
+    assert report["failures"] == 1
+    assert failed["status"] == "error"
+    assert failed["sha256"] is None
+    assert failed["failure"] == {
+        "type": "ValueError",
+        "message": "image asset SHA-256 mismatch for image-01",
+    }
+    assert "image-01.png" not in provider.calls
+    assert sum(item["status"] == "completed" for item in report["results"]) == 11
+
+
+def test_vision_benchmark_rejects_oversized_asset_before_base64_decode():
+    _, manifest = _manifest()
+    image_case = next(case for case in manifest["cases"] if case["modality"] == "image")
+    image_case["asset"]["payload_base64"] = "A" * (
+        benchmark.MAX_VISION_IMAGE_BASE64_CHARS + 4
+    )
+
+    with pytest.raises(ValueError, match="payload is too large"):
+        benchmark._asset_bytes(image_case)
 
 
 def test_vision_benchmark_is_explicitly_opt_in(capsys):
@@ -104,3 +197,38 @@ def test_vision_benchmark_is_explicitly_opt_in(capsys):
         "reason": "live vision is opt-in; rerun with --live",
         "status": "SKIPPED",
     }
+
+
+def test_vision_benchmark_skip_ignores_invalid_timeout_environment(monkeypatch, capsys):
+    monkeypatch.setenv("ACCESSFLOW_LIVE_VISION_TIMEOUT", "not-a-number")
+
+    assert benchmark.main([]) == 0
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["status"] == "SKIPPED"
+
+
+def test_vision_benchmark_passes_explicit_timeout_to_live_provider(monkeypatch, capsys):
+    captured = {}
+
+    class FakeProvider:
+        backend_name = "ollama/fake"
+        model = "fake-model"
+        prompt = "fake-prompt"
+
+        def __init__(self, **kwargs):
+            captured["provider_kwargs"] = kwargs
+            self.timeout_s = kwargs["timeout_s"]
+
+    async def fake_run(provider, **kwargs):
+        captured["run_timeout_s"] = kwargs["timeout_s"]
+        return {"failures": 0, "status": "completed"}
+
+    monkeypatch.setattr(benchmark, "OllamaVisionProvider", FakeProvider)
+    monkeypatch.setattr(benchmark, "run_vision_benchmark", fake_run)
+
+    assert benchmark.main(["--live", "--timeout", "7.5"]) == 0
+
+    assert captured["provider_kwargs"]["timeout_s"] == 7.5
+    assert captured["run_timeout_s"] == 7.5
+    assert json.loads(capsys.readouterr().out)["status"] == "completed"
