@@ -280,6 +280,7 @@ class _LatestWorker:
         self._active: _PendingWork | None = None
         self._task: asyncio.Task | None = None
         self._closed = False
+        self.native_slot = asyncio.Semaphore(1)
 
     def _evict_state(self) -> None:
         protected = set(self._pending)
@@ -434,6 +435,7 @@ class LocalPerception:
         self._closed = False
         self._audio_workers: dict[str, _LatestWorker] = {}
         self._vision_workers: dict[str, _LatestWorker] = {}
+        self._native_tasks: set[asyncio.Task[Any]] = set()
 
     async def _worker_for(
         self, workers: dict[str, _LatestWorker], session_id: str
@@ -462,6 +464,11 @@ class LocalPerception:
             return "faster-whisper/cpu-int8"
         return "local/unconfigured-asr"
 
+    @property
+    def native_work_in_flight(self) -> int:
+        """Return native calls whose underlying worker thread has not returned."""
+        return len(self._native_tasks)
+
     async def observe(self, event: InputEvent) -> AsyncIterator[Observation]:
         if self._closed:
             return
@@ -487,7 +494,7 @@ class LocalPerception:
                 return
             result = await worker.submit(
                 ("audio", event.payload.utterance_id),
-                lambda: self._run_with_timeout(self._transcribe(path), "audio"),
+                lambda: self._transcribe(path, worker.native_slot),
                 revision=event.payload.revision,
             )
             if result is _SUPERSEDED:
@@ -517,8 +524,8 @@ class LocalPerception:
                 return
             text = await worker.submit(
                 ("frame",),
-                lambda: self._run_with_timeout(
-                    asyncio.to_thread(self._vision_provider, path), "image"
+                lambda: self._run_native_with_timeout(
+                    self._vision_provider, path, "image", worker.native_slot
                 ),
             )
             if text is _SUPERSEDED:
@@ -539,7 +546,7 @@ class LocalPerception:
         raise ValueError(f"Unsupported perception event: {event.kind}")
 
     async def aclose(self) -> None:
-        """Stop queued local work when its owning session is shutting down."""
+        """Close admission while tracking non-cancellable native calls to completion."""
         async with self._lifecycle_lock:
             self._closed = True
             workers = [*self._audio_workers.values(), *self._vision_workers.values()]
@@ -547,31 +554,69 @@ class LocalPerception:
             self._vision_workers.clear()
         await asyncio.gather(*(worker.aclose() for worker in workers))
 
-    async def _run_with_timeout(self, awaitable, modality: str):
-        if self._timeout_s is None:
-            return await awaitable
-        work = asyncio.create_task(awaitable)
+    async def _run_native_with_timeout(
+        self,
+        provider: Callable[[Path], str],
+        path: Path,
+        modality: str,
+        native_slot: asyncio.Semaphore,
+    ) -> str:
+        acquired = False
+        native: asyncio.Task[str] | None = None
         try:
-            await asyncio.sleep(0)
-            done, _ = await asyncio.wait({work}, timeout=self._timeout_s)
-            if work in done:
-                return work.result()
-            work.cancel()
-            await asyncio.gather(work, return_exceptions=True)
-            raise RuntimeError(f"{modality} perception timed out after {self._timeout_s:g}s")
-        finally:
-            if not work.done():
-                work.cancel()
-            await asyncio.gather(work, return_exceptions=True)
+            if self._timeout_s is None:
+                await native_slot.acquire()
+            else:
+                try:
+                    await asyncio.wait_for(native_slot.acquire(), timeout=self._timeout_s)
+                except TimeoutError as error:
+                    raise RuntimeError(
+                        f"{modality} perception timed out after {self._timeout_s:g}s"
+                    ) from error
+            acquired = True
+            native = asyncio.create_task(asyncio.to_thread(provider, path))
+            self._native_tasks.add(native)
 
-    async def _transcribe(self, path: Path) -> tuple[str, str]:
+            def release_slot(done: asyncio.Task[str]) -> None:
+                self._native_tasks.discard(done)
+                native_slot.release()
+                if not done.cancelled():
+                    done.exception()
+
+            native.add_done_callback(release_slot)
+            acquired = False
+            if self._timeout_s is None:
+                return await asyncio.shield(native)
+            try:
+                return await asyncio.wait_for(asyncio.shield(native), timeout=self._timeout_s)
+            except TimeoutError as error:
+                raise RuntimeError(
+                    f"{modality} perception timed out after {self._timeout_s:g}s"
+                ) from error
+        finally:
+            if acquired and native is None:
+                native_slot.release()
+
+    async def _transcribe(
+        self, path: Path, native_slot: asyncio.Semaphore
+    ) -> tuple[str, str]:
         if self._transcriber is not None:
-            return await asyncio.to_thread(self._transcriber, path), "local/injected-asr"
+            return (
+                await self._run_native_with_timeout(
+                    self._transcriber, path, "audio", native_slot
+                ),
+                "local/injected-asr",
+            )
         if self._model_path is None:
             raise RuntimeError(
                 "No local transcriber configured; install Faster Whisper and provide model_path"
             )
-        return await asyncio.to_thread(self._transcribe_installed_whisper, path), "faster-whisper/cpu-int8"
+        return (
+            await self._run_native_with_timeout(
+                self._transcribe_installed_whisper, path, "audio", native_slot
+            ),
+            "faster-whisper/cpu-int8",
+        )
 
     def _transcribe_installed_whisper(self, path: Path) -> str:
         if self._model_path is None or not self._model_path.exists():
