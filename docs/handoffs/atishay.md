@@ -521,3 +521,11 @@ with one retained xfail and two dependency deprecation warnings. Ruff passes. Co
 **Status:** Focused budget tests: 4 passed. Demo suite: 144 passed, 1 xfailed, 2 warnings. Full suite: 808 passed, 1 xfailed, 2 warnings. Ruff and diff checks pass. Commit pending for this slice; no push or protected-file edits.
 
 **Evidence:** Deterministic local invalid-PNG probe and test double only; no live service or user media. This bounds repeated decoded upload validation by session quota but does not claim a separate decompressed CPU budget.
+
+## 2026-09-17 - Media admission security diff review
+
+**Task:** Review the committed monotonic media-admission fix and its direct upload/materialization path.
+
+**Result:** A bounded Codex Security diff scan reviewed `demo/app.py` for decoded-byte accounting, rejected-upload cleanup and cancellation-adjacent materialization behavior. It found zero reportable findings. Daybreak access was not granted, so this remains a local static review backed by deterministic tests; it does not claim live service evidence or a separate decompressed CPU budget.
+
+**Scan:** `263348fe-a430-4ba6-bee6-f91882c33126`, commit `127a2c8`, base `5acfaeb`. No source or protected-file changes were made by the scan.

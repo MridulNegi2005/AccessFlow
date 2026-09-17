@@ -286,7 +286,7 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   rejects unknown critical chunks before a vision provider is called. The full branch passes 673
   tests with one retained conflict example; Ruff and diff checks pass.
 - Failed browser media writes and unexpected validation errors now remove partial session files while
-  releasing their aggregate budget reservation. The full branch passes 673 tests with one retained
+  retaining their aggregate budget admission. The full branch passes 673 tests with one retained
   conflict example; live vision and device behavior remain unverified.
 - The demo now keeps the detailed event trace out of live announcements and exposes a concise
   screen-reader status region. A fresh local browser smoke confirmed the page rendered without
@@ -345,6 +345,9 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   `LocalPerception`. A real child-process loopback regression covers a configured frame, while the
   default builder remains audio-only; full verification passes 807 tests with one retained conflict
   xfail and Ruff.
+- The committed monotonic media-admission fix was reviewed with a bounded security diff scan over
+  `demo/app.py`; it found zero reportable findings. Deterministic invalid-PNG repetition coverage
+  confirms the quota is consumed after decoded admission and failed temporary files are removed.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
