@@ -1050,3 +1050,5 @@ changed.
 2026-09-17 AI-assisted verification: Revalidated the merged branch, ran owned and full frozen suites with the available Python 3.12.10 interpreter override because the configured 3.11 installation was missing, and corrected stale Workstream B status wording. Perception 217 passed; demo 143 passed, 1 xfailed; full suite 807 passed, 1 xfailed, 2 warnings; Ruff passed. No push or protected-file edits.
 
 2026-09-17 AI-assisted verification: Rechecked live vision prerequisites and recorded the unavailable executable, endpoint, model setting and hosted key. No live benchmark or fabricated result was produced; deterministic loopback evidence remains clearly bounded.
+
+2026-09-17 AI-assisted implementation: Closed the owned monotonic media-admission gap after a deterministic invalid-PNG repetition probe. Replaced failed-upload quota refunds with cumulative decoded-byte accounting, retained cleanup, updated assertions and added the aggregate-limit regression. Demo 144 passed, 1 xfailed; full suite 808 passed, 1 xfailed, 2 warnings; Ruff passed.
