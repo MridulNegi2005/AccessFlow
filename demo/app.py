@@ -272,6 +272,8 @@ async def recorder_worklet() -> FileResponse:
 
 
 class _SessionMediaBudget:
+    """Monotonic per-session admission budget for decoded upload bytes."""
+
     def __init__(self, limit: int = MAX_SESSION_UPLOAD_BYTES):
         self.limit = limit
         self.used = 0
@@ -282,10 +284,6 @@ class _SessionMediaBudget:
             if self.used + size > self.limit:
                 raise ValueError("session media exceeds the 16 MiB aggregate limit")
             self.used += size
-
-    def release(self, size: int) -> None:
-        with self._lock:
-            self.used -= size
 
 
 def _materialize_upload(
@@ -341,8 +339,6 @@ def _materialize_upload(
     except Exception:
         if materialized_path is not None:
             materialized_path.unlink(missing_ok=True)
-        if media_budget is not None:
-            media_budget.release(len(raw))
         raise
 
 

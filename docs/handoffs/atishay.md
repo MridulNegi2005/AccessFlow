@@ -511,3 +511,13 @@ with one retained xfail and two dependency deprecation warnings. Ruff passes. Co
 **Status:** `ollama` is missing, `127.0.0.1:11434` is unavailable, no vision model is configured and no Groq key is present. No live benchmark was started. The branch remains clean before this documentation checkpoint; no source or protected files changed.
 
 **Notes:** Deterministic loopback child-process evidence remains protocol/provenance evidence only. Live vision quality and C1-C4 decisions remain open.
+
+## 2026-09-17 - Monotonic browser media admission budget
+
+**Task:** Reproduce and close the owned media-budget refund path that allowed repeated invalid PNG validation work within one WebSocket session.
+
+**Changes:** A deterministic CRC-valid PNG with an invalid filter byte was rejected repeatedly while the old budget returned to zero. `_SessionMediaBudget` now accounts decoded bytes monotonically for the session: every non-empty, per-file-valid decoded upload consumes quota even when media validation or materialization fails. Cleanup still removes failed temporary files, and pre-decode shape/base64/size failures consume no quota. Updated the old refund assertion and added a regression proving the aggregate limit rejects the third invalid PNG before validation.
+
+**Status:** Focused budget tests: 4 passed. Demo suite: 144 passed, 1 xfailed, 2 warnings. Full suite: 808 passed, 1 xfailed, 2 warnings. Ruff and diff checks pass. Commit pending for this slice; no push or protected-file edits.
+
+**Evidence:** Deterministic local invalid-PNG probe and test double only; no live service or user media. This bounds repeated decoded upload validation by session quota but does not claim a separate decompressed CPU budget.

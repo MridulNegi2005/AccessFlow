@@ -277,9 +277,11 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - The browser adapter now translates typed `speech` and `task` interruption events, and the demo
   exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
   usability after a speech interruption; no engine or shared-contract change was needed.
-- Demo media intake now enforces a 16 MiB per-session aggregate budget in addition to the 8 MiB
-  per-file bound, releases reservations after failed validation, and applies backpressure with a
-  16-item incoming queue. Focused and full checks pass; live device behavior remains unverified.
+- Demo media intake now enforces a monotonic 16 MiB per-session decoded-byte budget in addition to
+  the 8 MiB per-file bound, so rejected decoded uploads still consume admission quota and cannot
+  repeat expensive validation without limit; it also applies backpressure with a 16-item incoming
+  queue. The repeated-invalid-PNG regression passes; the current demo suite has 144 passed and one
+  retained conflict xfail, and live device behavior remains unverified.
 - Browser input now reports malformed JSON as a recoverable `demo/input` error, and PNG validation
   rejects unknown critical chunks before a vision provider is called. The full branch passes 673
   tests with one retained conflict example; Ruff and diff checks pass.
