@@ -12,6 +12,7 @@ import struct
 import threading
 import wave
 import zlib
+from collections import OrderedDict
 from collections.abc import AsyncIterator, Awaitable, Callable, Hashable
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,6 +33,7 @@ class WavFormat:
 
 MAX_WAV_FILE_BYTES = 8 * 1024 * 1024
 MAX_WAV_DECODED_BYTES = 64 * 1024 * 1024
+MAX_SESSION_WORKERS = 64
 
 
 def validate_wav(path: Path) -> WavFormat:
@@ -84,9 +86,8 @@ _PNG_CRITICAL_CHUNKS = frozenset({b"IHDR", b"PLTE", b"IDAT", b"IEND"})
 def validate_png(path: Path) -> PngFormat:
     """Validate PNG chunks, CRCs, compressed data and termination without decoding pixels."""
     try:
-        if path.stat().st_size > MAX_PNG_FILE_BYTES:
-            raise ValueError(f"PNG file is too large: {path}")
-        data = path.read_bytes()
+        with path.open("rb") as handle:
+            data = handle.read(MAX_PNG_FILE_BYTES + 1)
     except OSError as error:
         raise ValueError(f"Invalid PNG file: {path}") from error
     if len(data) > MAX_PNG_FILE_BYTES:
@@ -101,6 +102,7 @@ def validate_png(path: Path) -> PngFormat:
     interlace: int | None = None
     palette_entries: int | None = None
     saw_idat = False
+    idat_closed = False
     idat_data = bytearray()
     saw_iend = False
     while offset < len(data):
@@ -168,10 +170,14 @@ def validate_png(path: Path) -> PngFormat:
             if ihdr[3] == 3 and palette_entries > (1 << ihdr[2]):
                 raise ValueError(f"Invalid PNG palette: {path}")
         if chunk_type == b"IDAT":
+            if idat_closed:
+                raise ValueError(f"Invalid PNG chunk order: {path}")
             if ihdr is not None and ihdr[3] == 3 and palette_entries is None:
                 raise ValueError(f"Invalid PNG palette: {path}")
             saw_idat = True
             idat_data.extend(chunk_data)
+        elif saw_idat and chunk_type != b"IEND":
+            idat_closed = True
         if chunk_type == b"IEND":
             if length != 0 or chunk_end != len(data):
                 raise ValueError(f"Invalid PNG file: {path}")
@@ -253,20 +259,39 @@ class _PendingWork:
 
 
 class _LatestWorker:
-    """Run one provider call at a time while bounding pending work per source."""
+    """Run one provider call at a time with bounded recent source coalescing state.
 
-    def __init__(self, *, max_pending_keys: int = 8) -> None:
+    The controller remains responsible for authoritative per-session revision
+    gating; this worker only suppresses stale work while its recent state is
+    retained.
+    """
+
+    def __init__(self, *, max_pending_keys: int = 8, max_state_keys: int = 64) -> None:
         if max_pending_keys < 1:
             raise ValueError("max_pending_keys must be positive")
+        if max_state_keys < max_pending_keys + 1:
+            raise ValueError("max_state_keys must hold active and pending work")
         self._lock = asyncio.Lock()
         self._pending: dict[Hashable, _PendingWork] = {}
         self._max_pending_keys = max_pending_keys
-        self._latest_tokens: dict[Hashable, int] = {}
-        self._latest_revisions: dict[Hashable, int] = {}
+        self._max_state_keys = max_state_keys
+        self._latest_state: OrderedDict[Hashable, tuple[int, int | None]] = OrderedDict()
         self._next_token = 0
         self._active: _PendingWork | None = None
         self._task: asyncio.Task | None = None
         self._closed = False
+
+    def _evict_state(self) -> None:
+        protected = set(self._pending)
+        if self._active is not None:
+            protected.add(self._active.key)
+        while len(self._latest_state) > self._max_state_keys:
+            for key in self._latest_state:
+                if key not in protected:
+                    del self._latest_state[key]
+                    break
+            else:
+                return
 
     async def submit(
         self,
@@ -280,13 +305,18 @@ class _LatestWorker:
         async with self._lock:
             if self._closed:
                 return _SUPERSEDED
-            if revision is not None and revision <= self._latest_revisions.get(key, -1):
+            previous_state = self._latest_state.get(key)
+            if (
+                revision is not None
+                and previous_state is not None
+                and previous_state[1] is not None
+                and revision <= previous_state[1]
+            ):
                 return _SUPERSEDED
             self._next_token += 1
             token = self._next_token
-            self._latest_tokens[key] = token
-            if revision is not None:
-                self._latest_revisions[key] = revision
+            self._latest_state[key] = (token, revision)
+            self._latest_state.move_to_end(key)
             previous = self._pending.get(key)
             if previous is not None and not previous.result.done():
                 previous.result.set_result(_SUPERSEDED)
@@ -305,6 +335,16 @@ class _LatestWorker:
                 pending = self._pending.get(key)
                 if pending is not None and pending.result is result:
                     del self._pending[key]
+                active = self._active
+                if (
+                    (pending is not None and pending.result is result)
+                    or (active is not None and active.result is result)
+                ) and self._latest_state.get(key, (None, None))[0] == token:
+                    if previous_state is None:
+                        self._latest_state.pop(key, None)
+                    else:
+                        self._latest_state[key] = previous_state
+                        self._latest_state.move_to_end(key)
             raise
 
     async def _run(self) -> None:
@@ -320,20 +360,21 @@ class _LatestWorker:
                 value = await work.operation()
             except Exception as error:
                 async with self._lock:
-                    current = self._latest_tokens.get(work.key) == work.token
+                    current = self._latest_state.get(work.key, (None, None))[0] == work.token
                 if current and not work.result.done():
                     work.result.set_exception(error)
                 elif not work.result.done():
                     work.result.set_result(_SUPERSEDED)
             else:
                 async with self._lock:
-                    current = self._latest_tokens.get(work.key) == work.token
+                    current = self._latest_state.get(work.key, (None, None))[0] == work.token
                 if not work.result.done():
                     work.result.set_result(value if current else _SUPERSEDED)
             finally:
                 async with self._lock:
                     if self._active is work:
                         self._active = None
+                    self._evict_state()
 
     async def aclose(self) -> None:
         async with self._lock:
@@ -406,6 +447,8 @@ class LocalPerception:
     def _worker_for_open(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
         worker = workers.get(session_id)
         if worker is None:
+            if len(workers) >= MAX_SESSION_WORKERS:
+                raise RuntimeError("perception session worker limit reached")
             worker = _LatestWorker()
             workers[session_id] = worker
         return worker

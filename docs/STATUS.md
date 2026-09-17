@@ -297,6 +297,38 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - The demo WebSocket now bounds both incoming and outgoing event queues at 16 items, applying
   backpressure when a browser stops reading responses. The full branch passes 673 tests with one
   retained conflict example; live model and device behavior remain unverified.
+- Demo receiver status and error admission now fails closed when the bounded output queue is full,
+  allowing the existing cleanup path to cancel stalled sessions instead of waiting forever. The
+  output-queue saturation regression passes; full verification passes 785 tests with one retained
+  conflict xfail and Ruff.
+- Perception workers now bound retained source token and revision state to 64 recent keys while
+  protecting active and pending work from eviction. A regression confirms twelve completed unique
+  audio sources stay bounded, retained stale revisions remain suppressed, and an evicted source is
+  reprocessed as new; full verification passes 786 tests with one retained conflict xfail and Ruff.
+- Local perception now caps retained session worker registries at 64 entries per modality and fails
+  closed when a new session would exceed that bound, avoiding unbounded worker-object retention.
+  A session-capacity regression passes; full verification passes 787 tests with one retained conflict
+  xfail and Ruff.
+- Activity timing summaries now reject overlapping or duplicate frames before deriving pause evidence,
+  while preserving adjacent frame boundaries. Focused overlap regressions pass; full verification
+  passes 789 tests with one retained conflict xfail and Ruff.
+- PCM resampling now applies the shared 64 MiB decoded-payload ceiling before allocating its output
+  list, preventing a caller-controlled target rate from causing an oversized expansion. The focused
+  regression passes; full verification passes 790 tests with one retained conflict xfail and Ruff.
+- PNG validation and direct vision-provider reads now request at most one byte beyond the 8 MiB file
+  bound, preventing a size-check/read race from causing an oversized allocation. Focused bounded-read
+  regressions pass; full verification passes 792 tests with one retained conflict xfail and Ruff.
+- Browser transcript text is capped at the 16,384-character reasoner context limit, and client-supplied
+  utterance and frame identities are capped at 256 characters before they enter session state. Boundary
+  regressions preserve exact-limit inputs and reject oversized values; full verification passes 796 tests
+  with one retained conflict xfail and Ruff.
+- Browser WebSocket frames are size-checked at 12 MiB before JSON parsing, while the existing 8 MiB
+  per-file upload limit remains available with JSON overhead. Malformed and oversized frames remain
+  recoverable `demo/input` errors; the full demo suite passes 143 tests with one retained xfail and full
+  verification passes 798 tests with one retained conflict xfail and Ruff.
+- PNG validation now requires all compressed image data chunks to be consecutive, rejecting ancillary
+  data between `IDAT` chunks before a vision provider is called. The focused regression passes; full
+  verification passes 799 tests with one retained conflict xfail and Ruff.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
@@ -563,6 +595,57 @@ Updated 16 September 2026.
   baseline's internal premature candidate, the long baseline's missed endpoint, and a final-
   revision-gated trailing candidate with 0.62/0.66 seconds of added wait; six focused tests and
   the full branch pass. This is prerecorded timing-policy evidence only, not live endpointing.
+- After merging `origin/main` at `3c1619f`, the integrated branch passes 322 owned perception/demo
+  tests with one retained conflict xfail and the full repository passes 769 tests with one xfail;
+  Ruff passes. The merge introduced no conflict in Workstream B files and no protected file was
+  edited by this workstream.
+- A fresh 17 September live-vision preflight found no Ollama executable and a refused
+  `127.0.0.1:11434` connection. The explicit 12-case `--live` gate processed all cases, returned
+  12 classified transport failures with zero captions and zero label recall, and exited 1; the
+  gate remains fail-closed and live vision quality is still unmeasured.
+- The vision benchmark now verifies each manifest asset's declared byte count and SHA-256 before
+  materialization or provider invocation. A tampered case is recorded as one per-case failure while
+  the other 11 cases continue; the regression and full integrated suite pass with 770 tests and one
+  retained conflict xfail.
+- The opt-in vision benchmark now records the backend observed for every completed case and can
+  persist its stable JSON report through an explicit `--output` path. A writer regression passes,
+  and the integrated branch now passes 771 tests with one retained conflict xfail; live model
+  quality remains unmeasured.
+- The benchmark also rejects duplicate or blank image case IDs and blank visual labels before a
+  run can produce misleading provenance or vacuous recall. The focused benchmark coverage passes
+  six tests; the full integrated branch passes 772 tests with one retained conflict xfail.
+- The live benchmark now records the configured per-request timeout in its report and exposes an
+  explicit `--timeout` option. Invalid timeout environment values no longer break the offline
+  opt-in skip path; full verification passes 774 tests with one retained conflict xfail and Ruff.
+- Timing replay now selects the newest transcript revision available when each acoustic pause ends,
+  so a later provisional revision cannot suppress an earlier eligible final revision. The regression
+  and full verification pass 775 tests with one retained conflict xfail and Ruff.
+- Vision benchmark case IDs now have to be safe filenames on both POSIX and Windows before any
+  temporary asset is materialized. The focused benchmark coverage passes nine tests; full
+  verification passes 776 tests with one retained conflict xfail and Ruff.
+- Vision benchmark asset payloads are now bounded before base64 decoding, using the same 8 MiB
+  image limit enforced by the provider. The focused benchmark coverage passes ten tests; full
+  verification passes 777 tests with one retained conflict xfail and Ruff.
+- Modality coverage now rejects whitespace-only required and observed labels, preventing blank
+  values from entering evidence metrics. Focused metrics coverage passes 16 tests; full
+  verification passes 778 tests with one retained conflict xfail and Ruff.
+- Cancelled queued perception revisions now restore the prior per-source worker token and revision
+  state, so an active result is not falsely suppressed and the cancelled revision can be retried.
+  Focused local-perception coverage passes 52 tests; full verification passes 779 tests with one
+  retained conflict xfail and Ruff.
+- Demo WebSocket cleanup now inserts its end sentinel without waiting on a full input queue and
+  cancels a stalled agent when that queue is saturated. The disconnect regression passes; full
+  verification passes 780 tests with one retained conflict xfail and Ruff.
+- Ollama vision and demo-reasoner responses now require bounded `read(limit)` support; unsupported
+  response readers fail closed instead of falling back to an unbounded allocation. Focused vision
+  and reasoner coverage passes 45 tests; full verification passes 782 tests with one retained
+  conflict xfail and Ruff.
+- Demo input admission now fails closed when the bounded agent queue is full, allowing the existing
+  shutdown path to cancel a stalled agent instead of waiting forever. Two queue-lifecycle regressions
+  pass; full verification passes 783 tests with one retained conflict xfail and Ruff.
+- Demo sender cleanup now bounds the wait for a peer send that never returns, cancelling and gathering
+  the sender before perception teardown. The sender-lifecycle regression passes; full verification
+  passes 784 tests with one retained conflict xfail and Ruff.
 
 ## Still required (Workstream B, as recorded 13 September 2026)
 

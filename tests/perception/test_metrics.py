@@ -77,7 +77,14 @@ def test_modality_coverage_reports_missing_and_complete_modalities():
 
 
 def test_modality_coverage_rejects_invalid_observation_modalities():
-    observations = [type("Observation", (), {"modality": None})()]
+    observations = [type("Observation", (), {"modality": "   "})()]
 
     with pytest.raises(ValueError, match="observation modalities"):
         modality_coverage(observations)
+
+
+def test_modality_coverage_rejects_blank_required_modalities():
+    observations = [type("Observation", (), {"modality": "image"})()]
+
+    with pytest.raises(ValueError, match="required modalities"):
+        modality_coverage(observations, required=("audio", "\t"))

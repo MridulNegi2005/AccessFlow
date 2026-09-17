@@ -21,8 +21,8 @@ class FakeResponse:
     def __exit__(self, exc_type, exc, traceback):
         return False
 
-    def read(self):
-        return self._body
+    def read(self, amount=None):
+        return self._body if amount is None else self._body[:amount]
 
 
 def test_ollama_provider_posts_one_png_and_returns_trimmed_response(tmp_path: Path):
@@ -90,6 +90,29 @@ def test_ollama_provider_rejects_oversized_image_before_request(tmp_path: Path):
     assert called is False
 
 
+def test_ollama_provider_reads_image_with_a_bounded_payload(tmp_path: Path, monkeypatch):
+    image = tmp_path / "growing.png"
+    image.write_bytes(b"small")
+
+    class BoundedReader:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self, amount=None):
+            if amount is None:
+                return b"small"
+            assert amount == vision_module.MAX_VISION_IMAGE_BYTES + 1
+            return b"x" * amount
+
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: BoundedReader())
+
+    with pytest.raises(RuntimeError, match="image is too large"):
+        OllamaVisionProvider._read_image(image)
+
+
 def test_ollama_provider_rejects_oversized_response(tmp_path: Path):
     image = tmp_path / "screen.png"
     image.write_bytes(b"png-test-bytes")
@@ -100,6 +123,29 @@ def test_ollama_provider_rejects_oversized_response(tmp_path: Path):
                 b"x" * (vision_module.MAX_VISION_RESPONSE_BYTES + 1)
             )
         )(image)
+
+
+def test_ollama_provider_rejects_response_without_bounded_read(tmp_path: Path):
+    image = tmp_path / "screen.png"
+    image.write_bytes(b"png-test-bytes")
+
+    class UnboundedResponse(FakeResponse):
+        def __init__(self):
+            super().__init__(b"response")
+            self.unbounded_read_called = False
+
+        def read(self, amount=None):
+            if amount is not None:
+                raise TypeError("sized reads are unsupported")
+            self.unbounded_read_called = True
+            return super().read()
+
+    response = UnboundedResponse()
+
+    with pytest.raises(RuntimeError, match="response could not be read"):
+        OllamaVisionProvider(opener=lambda request, timeout: response)(image)
+
+    assert response.unbounded_read_called is False
 
 
 def test_ollama_provider_classifies_missing_image(tmp_path: Path):

@@ -476,6 +476,123 @@ async def test_newer_audio_revision_replaces_pending_work(tmp_path: Path):
 
 
 @pytest.mark.asyncio
+async def test_cancelled_pending_audio_revision_restores_retry_state(tmp_path: Path):
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    calls = []
+
+    def transcriber(path: Path) -> str:
+        call_number = len(calls)
+        calls.append(path)
+        if call_number == 0:
+            provider_started.set()
+            assert release_first.wait(1)
+        return f"revision {call_number}"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(transcriber=transcriber)
+    first_event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="utterance-1", revision=0),
+    )
+    revised_event = AudioEvent(
+        session_id="s1",
+        payload=Audio(path=str(wav_path), utterance_id="utterance-1", revision=1),
+    )
+
+    first_task = asyncio.create_task(collect(adapter, first_event))
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    cancelled_task = asyncio.create_task(collect(adapter, revised_event))
+    await asyncio.sleep(0.05)
+    cancelled_task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await cancelled_task
+
+    release_first.set()
+    first_result = await first_task
+    retry_result = await collect(adapter, revised_event)
+    await adapter.aclose()
+
+    assert [item.revision for item in first_result] == [0]
+    assert [item.revision for item in retry_result] == [1]
+    assert calls == [wav_path, wav_path]
+
+
+@pytest.mark.asyncio
+async def test_latest_worker_bounds_completed_source_state():
+    worker = local_module._LatestWorker(max_pending_keys=2, max_state_keys=4)
+    calls = []
+
+    async def operation(value):
+        calls.append(value)
+        return value
+
+    for index in range(12):
+        result = await worker.submit(
+            ("audio", f"source-{index}"),
+            lambda index=index: operation(index),
+            revision=0,
+        )
+        assert result == index
+        assert len(worker._latest_state) <= 4
+
+    retained_key = ("audio", "source-11")
+    stale = await worker.submit(retained_key, lambda: operation("stale"), revision=0)
+    evicted_key = ("audio", "source-0")
+    assert evicted_key not in worker._latest_state
+    replayed = await worker.submit(evicted_key, lambda: operation("replayed"), revision=0)
+    await worker.aclose()
+
+    assert stale is local_module._SUPERSEDED
+    assert replayed == "replayed"
+    assert calls == [*range(12), "replayed"]
+    assert len(worker._latest_state) <= 4
+
+
+@pytest.mark.asyncio
+async def test_local_perception_bounds_session_worker_registry(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(local_module, "MAX_SESSION_WORKERS", 2)
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    adapter = LocalPerception(transcriber=lambda _: "transcript")
+
+    try:
+        for index in range(2):
+            await _one(
+                adapter,
+                AudioEvent(
+                    session_id=f"session-{index}",
+                    payload=Audio(
+                        path=str(wav_path),
+                        utterance_id=f"utterance-{index}",
+                        revision=0,
+                    ),
+                ),
+            )
+
+        with pytest.raises(RuntimeError, match="session worker limit"):
+            await _one(
+                adapter,
+                AudioEvent(
+                    session_id="session-over-cap",
+                    payload=Audio(
+                        path=str(wav_path),
+                        utterance_id="utterance-over-cap",
+                        revision=0,
+                    ),
+                ),
+            )
+    finally:
+        await adapter.aclose()
+
+    assert len(adapter._audio_workers) == 0
+
+
+@pytest.mark.asyncio
 async def test_audio_revision_does_not_supersede_different_utterance(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)
@@ -906,6 +1023,29 @@ def test_png_validation_returns_structural_metadata(tmp_path: Path):
     assert validate_png(image_path) == PngFormat(width=320, height=240, bit_depth=8, color_type=6)
 
 
+def test_png_validation_reads_only_a_bounded_payload(tmp_path: Path, monkeypatch):
+    image_path = tmp_path / "growing.png"
+    image_path.write_bytes(b"small")
+
+    class BoundedReader:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self, amount=None):
+            if amount is None:
+                return b"small"
+            assert amount == local_module.MAX_PNG_FILE_BYTES + 1
+            return b"x" * amount
+
+    monkeypatch.setattr(Path, "open", lambda self, *args, **kwargs: BoundedReader())
+
+    with pytest.raises(ValueError, match="PNG file is too large"):
+        validate_png(image_path)
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("corruption", ["truncated", "bad-crc", "bad-idat"])
 async def test_image_input_rejects_structurally_invalid_png(tmp_path: Path, corruption: str):
@@ -1110,6 +1250,31 @@ def test_png_validation_accepts_adam7_scanline_payload(tmp_path: Path):
     )
 
     assert validate_png(image_path) == PngFormat(width=2, height=2, bit_depth=8, color_type=6)
+
+
+def test_png_validation_rejects_nonconsecutive_idat_chunks(tmp_path: Path):
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    image_path = tmp_path / "split-idat.png"
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    compressed = zlib.compress(b"\x00\x40\x80\xff\xff")
+    image_path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", compressed[:1])
+        + chunk(b"tEXt", b"note\x00metadata")
+        + chunk(b"IDAT", compressed[1:])
+        + chunk(b"IEND", b"")
+    )
+
+    with pytest.raises(ValueError, match="Invalid PNG chunk order"):
+        validate_png(image_path)
 
 
 @pytest.mark.asyncio

@@ -74,6 +74,19 @@ class TimingReplayReport:
     added_wait_after_speech_end_s: float | None
 
 
+def _latest_revision_available(
+    revisions: tuple[TranscriptRevision, ...], source_id: str, available_by_s: float
+) -> TranscriptRevision | None:
+    matching = [
+        revision
+        for revision in revisions
+        if revision.source_id == source_id and revision.available_at_s <= available_by_s
+    ]
+    if not matching:
+        return None
+    return max(matching, key=lambda revision: revision.revision)
+
+
 def _latest_revision(
     revisions: tuple[TranscriptRevision, ...], source_id: str
 ) -> TranscriptRevision | None:
@@ -94,10 +107,10 @@ def replay_endpoint_candidates(
     """Replay acoustic pauses against transcript revisions without completing a turn.
 
     A candidate is eligible for a gated replay only when the latest revision for
-    ``source_id`` is final, was available by the end of the pause, and reports a
-    speech end at or before the pause.  Older revisions and revisions for another
-    source cannot authorize a candidate.  An ungated replay is the acoustic
-    baseline and accepts every pause returned by :func:`pause_candidates`.
+    ``source_id`` available by the end of that pause is final and reports a speech
+    end at or before the pause.  Older revisions and revisions for another source
+    cannot authorize a candidate.  An ungated replay is the acoustic baseline and
+    accepts every pause returned by :func:`pause_candidates`.
     """
     if not isinstance(source_id, str) or not source_id.strip():
         raise ValueError("source_id must be a non-empty string")
@@ -115,12 +128,13 @@ def replay_endpoint_candidates(
         seen.add(key)
 
     pauses = pause_candidates(frames, min_pause_s=min_pause_s)
-    latest = _latest_revision(revision_values, source_id)
+    latest_overall = _latest_revision(revision_values, source_id)
     accepted: list[EndpointMeasurement] = []
     premature: list[PauseCandidate] = []
     matched_final = False
 
     for pause in pauses:
+        latest = _latest_revision_available(revision_values, source_id, pause.end_s)
         gated = (
             latest is not None
             and latest.final
@@ -157,7 +171,9 @@ def replay_endpoint_candidates(
         require_final=require_final,
         candidates=tuple(accepted),
         premature_candidates=tuple(premature),
-        missed_final_count=int(latest is not None and latest.final and not matched_final),
+        missed_final_count=int(
+            latest_overall is not None and latest_overall.final and not matched_final
+        ),
         added_wait_after_speech_end_s=(
             next(
                 measurement.wait_after_speech_end_s
