@@ -518,7 +518,7 @@ with one retained xfail and two dependency deprecation warnings. Ruff passes. Co
 
 **Changes:** A deterministic CRC-valid PNG with an invalid filter byte was rejected repeatedly while the old budget returned to zero. `_SessionMediaBudget` now accounts decoded bytes monotonically for the session: every non-empty, per-file-valid decoded upload consumes quota even when media validation or materialization fails. Cleanup still removes failed temporary files, and pre-decode shape/base64/size failures consume no quota. Updated the old refund assertion and added a regression proving the aggregate limit rejects the third invalid PNG before validation.
 
-**Status:** Focused budget tests: 4 passed. Demo suite: 144 passed, 1 xfailed, 2 warnings. Full suite: 808 passed, 1 xfailed, 2 warnings. Ruff and diff checks pass. Commit pending for this slice; no push or protected-file edits.
+**Status:** Focused budget tests: 4 passed. Demo suite: 144 passed, 1 xfailed, 2 warnings. Full suite: 808 passed, 1 xfailed, 2 warnings. Ruff and diff checks pass. Committed as `127a2c8`; no push or protected-file edits.
 
 **Evidence:** Deterministic local invalid-PNG probe and test double only; no live service or user media. This bounds repeated decoded upload validation by session quota but does not claim a separate decompressed CPU budget.
 
