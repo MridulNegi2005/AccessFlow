@@ -166,6 +166,56 @@ async def test_audio_transcriber_timeout_is_classified(tmp_path: Path):
     assert finished.is_set()
 
 
+@pytest.mark.asyncio
+async def test_repeated_audio_timeouts_keep_one_native_call_tracked(tmp_path: Path):
+    wav_path = tmp_path / "gated.wav"
+    _write_wav(wav_path)
+    gate = threading.Event()
+    finished = threading.Event()
+    counters_lock = threading.Lock()
+    active = 0
+    peak = 0
+    calls = 0
+
+    def transcriber(path: Path) -> str:
+        nonlocal active, peak, calls
+        with counters_lock:
+            calls += 1
+            active += 1
+            peak = max(peak, active)
+        try:
+            assert gate.wait(1)
+            return "late transcript"
+        finally:
+            with counters_lock:
+                active -= 1
+                finished.set()
+
+    adapter = LocalPerception(transcriber=transcriber, timeout_s=0.02)
+    for index in range(3):
+        event = AudioEvent(
+            session_id="gated-session",
+            payload=Audio(path=str(wav_path), utterance_id=f"gated-{index}"),
+        )
+        with pytest.raises(RuntimeError, match=r"audio perception timed out after 0.02s"):
+            [item async for item in adapter.observe(event)]
+
+    assert calls == 1
+    assert peak == 1
+    await adapter.aclose()
+    assert active == 1
+    assert adapter.native_work_in_flight == 1
+
+    gate.set()
+    assert await asyncio.to_thread(finished.wait, 1)
+    for _ in range(20):
+        if adapter.native_work_in_flight == 0:
+            break
+        await asyncio.sleep(0)
+    assert adapter.native_work_in_flight == 0
+    assert active == 0
+
+
 async def test_cancelled_audio_provider_releases_observer(tmp_path: Path):
     wav_path = tmp_path / "speech.wav"
     _write_wav(wav_path)
@@ -976,6 +1026,7 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
     for path in paths:
         _write_png(path)
     provider_started = threading.Event()
+    release_first = threading.Event()
     first_finished = threading.Event()
     calls = []
 
@@ -984,7 +1035,7 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
         if len(calls) == 1:
             provider_started.set()
             try:
-                time.sleep(0.2)
+                assert release_first.wait(1)
             finally:
                 first_finished.set()
             return "stale visual evidence"
@@ -1008,6 +1059,8 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
         )
     )
     await asyncio.sleep(0.05)
+    await asyncio.sleep(0.01)
+    release_first.set()
 
     first, second = await asyncio.gather(first_task, second_task)
     assert first == []
