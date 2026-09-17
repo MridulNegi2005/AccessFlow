@@ -529,3 +529,42 @@ with one retained xfail and two dependency deprecation warnings. Ruff passes. Co
 **Result:** A bounded Codex Security diff scan reviewed `demo/app.py` for decoded-byte accounting, rejected-upload cleanup and cancellation-adjacent materialization behavior. It found zero reportable findings. Daybreak access was not granted, so this remains a local static review backed by deterministic tests; it does not claim live service evidence or a separate decompressed CPU budget.
 
 **Scan:** `263348fe-a430-4ba6-bee6-f91882c33126`, commit `127a2c8`, base `5acfaeb`. No source or protected-file changes were made by the scan.
+
+## 2026-09-17 - C1-C4 coordination packet
+
+The remaining B17-3 through B17-7 changes are still pending written agreement with Mridul.
+The smallest proposals and ownership split are:
+
+- **C1 — image evidence and action authority.** Trace: spoken request `Book Wednesday` → frame
+  `F1` → replacement frame `F2`; ordinary replacement keeps only `F2`, while a declared conflict
+  produces `correction_pending` and no call/effect → spoken clarification resolves the evidence →
+  exactly one authorized write. Decision needed: whether a new frame supersedes the prior frame by
+  default, and how a user-fixed slot conflict is represented and resolved. Mridul owns the shared
+  provenance/conflict contract, controller guard and engine tests; Atishay owns frame metadata,
+  perception/UI translation and `tests/demo/` integration coverage.
+
+- **C2 — speech timing and stop scope.** Trace: capture start → partial speech → acoustic pause →
+  continuation or final; separately, `stop speaking` interrupts output while `cancel this booking`
+  cancels the task, and a device command remains a device command. Decision needed: the clock domain,
+  speech-end evidence and continued-pause rule, plus typed output-stop versus task-cancel scope for
+  partial hypotheses. Mridul owns the additive contract, controller interpretation and timing
+  harness; Atishay owns capture/activity evidence, turn policy and browser input events/tests.
+
+- **C3 — one configured agent path.** Trace: CLI provider/model/endpoint/deadline → process worker
+  and browser use the same configured factory → shared reasoner/provider protocol and tool manifest
+  → deterministic mock tool call → effect result with backend labels. Decision needed: the canonical
+  provider/reasoner interfaces, factory ownership and manifest source. Mridul owns the shared factory,
+  execution contract and A-side configuration; Atishay owns demo wiring, the assigned perception
+  worker and their child-process/browser tests.
+
+- **C4 — media catalog into task evaluation.** Trace: media ID and SHA-256 provenance → isolated
+  task mapping → ASR/vision observation → planner decision → terminal/effect oracle; consumed media
+  remains consumed and is never relabeled unseen. Decision needed: which media IDs map to independent
+  executable tasks, the terminal/effect oracle and exposure bookkeeping. Mridul owns executable
+  scenarios, evaluation metrics and oracle packaging; Atishay owns media assets, capture/ASR/vision
+  provenance, fixtures and labels.
+
+No implementation is implied by this packet. Until each decision is accepted, the frame-conflict
+xfail remains in place, stop policy remains unchanged, whole-file upload remains labeled as lacking
+speech-endpoint evidence, the demo reasoner remains separate, and media replay remains routing/
+observation evidence rather than completed task evaluation.
