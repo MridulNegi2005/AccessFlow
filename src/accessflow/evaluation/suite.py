@@ -7,7 +7,15 @@ from accessflow.evaluation.replay import metrics, replay
 
 async def run_suite(paths, output_dir, reasoner_factory=None, backend="offline-fake", *,
                     perception_factory=None, turn_policy_factory=None, component_config=None,
-                    inference_timeout=None, disabled=()):
+                    inference_timeout=None, disabled=(), corpus_root=None):
+    # Same precedence and validation as replay() (see evaluation/replay.py): an explicit
+    # corpus_root wins over ACCESSFLOW_CORPUS_ROOT, and a bad root is rejected once, up
+    # front, rather than letting every scenario in the loop fail separately with the
+    # same error.
+    if corpus_root is not None:
+        corpus_root = Path(corpus_root)
+        if not corpus_root.is_dir():
+            raise ValueError(f"corpus_root must be an existing directory: {corpus_root}")
     paths = sorted(Path(path) for path in paths)
     if not paths:
         raise ValueError("No scenario JSON files supplied")
@@ -24,7 +32,8 @@ async def run_suite(paths, output_dir, reasoner_factory=None, backend="offline-f
                                   inference_timeout=inference_timeout,
                                   perception=perception_factory() if perception_factory else None,
                                   turn_policy=turn_policy_factory() if turn_policy_factory else None,
-                                  component_config=component_config, disabled=disabled)
+                                  component_config=component_config, disabled=disabled,
+                                  corpus_root=corpus_root)
             record.update(result)
             record["metrics"] = metrics(trace)
             if result["completion_status"] != "completed":

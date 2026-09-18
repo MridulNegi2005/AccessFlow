@@ -46,7 +46,15 @@ def source_evidence(path):
 
 
 async def replay(path, output, reasoner=None, backend="offline-fake", *, perception=None, turn_policy=None,
-                 component_config=None, inference_timeout=None, disabled=()):
+                 component_config=None, inference_timeout=None, disabled=(), corpus_root=None):
+    # An explicit corpus_root always wins over ACCESSFLOW_CORPUS_ROOT (Agent's own env
+    # fallback, see engine.Agent.__init__). Passing None here (the default) leaves that
+    # fallback intact -- this is the only route a programmatic caller has for picking a
+    # corpus root without mutating process-global state.
+    if corpus_root is not None:
+        corpus_root = Path(corpus_root)
+        if not corpus_root.is_dir():
+            raise ValueError(f"corpus_root must be an existing directory: {corpus_root}")
     definition = load_scenario(path)
     scenario = definition.model_dump(mode="json")
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -102,6 +110,8 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
     # exactly as before and any Agent substitute stays valid.
     if disabled:
         agent_kwargs["disabled"] = tuple(disabled)
+    if corpus_root is not None:
+        agent_kwargs["corpus_root"] = str(corpus_root)
     agent = Agent(RecordedPerception(), turn_policy if turn_policy is not None else FinalFlagPolicy(), reasoner,
                   tools, MockOnlyAuthorization(), **agent_kwargs)
     runner = asyncio.create_task(agent.run(incoming, outgoing))
@@ -203,6 +213,10 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
             row["type"] == "output" and row["event"]["payload"].get("code") == "backend_failure" for row in events):
         completion_status = "backend_failure"
     tool_profile = "manifest-mock" if definition.environment is not None else "fake"
+    # Mirrors what Agent itself resolves (explicit argument, else ACCESSFLOW_CORPUS_ROOT):
+    # only whether a root was configured and its basename are ever recorded here -- never
+    # the absolute path, which would otherwise leak into committed trace evidence.
+    effective_corpus_root = corpus_root if corpus_root is not None else os.environ.get("ACCESSFLOW_CORPUS_ROOT")
     run_ended_at = dt.datetime.now(dt.timezone.utc).isoformat()
     metadata = {"type": "run_metadata", "scenario": scenario["id"], "backend": backend,
                 "run_id": run_id, "run_started_at": run_started_at, "run_ended_at": run_ended_at,
@@ -223,6 +237,8 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
                            # request_timeout_seconds) -- this being shorter is a valid,
                            # deliberate configuration, not a mismatch to reconcile.
                            "inference_timeout_s": getattr(agent, "inference_timeout", None),
+                           "corpus_root_configured": effective_corpus_root is not None,
+                           "corpus_root_basename": Path(effective_corpus_root).name if effective_corpus_root else None,
                            "component_config": component_config or {}}}
     metadata.update(source_evidence(path))
     reasoner_evidence = getattr(reasoner, "evidence", None)
