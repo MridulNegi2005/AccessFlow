@@ -914,6 +914,26 @@ class Agent:
             if parameter == manifest.idempotency_parameter:
                 continue  # Replaced with the controller's stable operation identity.
             explicit_slot = proposed.argument_slots.get(parameter)
+            if (manifest.effect == "write" and explicit_slot is not None
+                    and explicit_slot != parameter and parameter in self._user_fixed_slots):
+                # A17-1 alias bypass: the slot-provenance guard in _apply keys on
+                # slot NAME, refusing a non-fresh proposal that rewrites
+                # self.state.slots[name] for name in self._user_fixed_slots. A
+                # planner can dodge that guard entirely without ever touching the
+                # fixed slot: leave "day" alone, set a brand-new slot
+                # ("chosen_day") to whatever value it likes, and use
+                # argument_slots to point the write's "day" PARAMETER at that new
+                # slot instead. Nothing above ever rewrites self.state.slots["day"],
+                # so the _apply guard never fires -- but the call still ships a
+                # "day" argument the user never authorized. A parameter name that
+                # is itself a user-fixed slot denotes that slot's value by
+                # definition; argument_slots may rename which slot backs a
+                # parameter that was never fixed, but it may not redirect a
+                # parameter whose own name the user already fixed onto a
+                # different, unprotected slot. Self-aliasing (explicit_slot ==
+                # parameter) is not a redirect and still falls through to the
+                # ordinary grounding below.
+                return "argument_dependency_mismatch"
             if explicit_slot is None:
                 schema = properties.get(parameter, {})
                 if isinstance(schema, dict):
