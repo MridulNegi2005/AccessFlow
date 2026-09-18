@@ -165,6 +165,20 @@ class Agent:
         # only that pre-emption -- not an arbitrary non-fresh replan -- can hand off
         # authority a genuinely spoken request already earned (H2).
         self._write_authority_evidence_mark = 0
+        # Slot names (and, via _intent_user_fixed, the intent) that a fresh-evidence
+        # (user-origin) proposal has itself supplied a value for. Mirrors
+        # write_intent_retained's provenance idea one level down: write AUTHORITY is
+        # gated on fresh evidence, but until this, the ARGUMENTS of an already-
+        # authorized write were not -- a tool-result-triggered replan could not create
+        # permission to write, but could silently rewrite which value a permitted
+        # write actually used (A17-1). A slot/intent name enters this set the first
+        # time a fresh proposal sets it and is never removed (matching
+        # slot_revisions' session-lifetime scope); a non-fresh proposal may still
+        # freely SET a name that is not in this set at all -- that is a delegated
+        # value ("book the first available day") the user never fixed, and a tool
+        # result legitimately supplies it. See the speech_origin block in _apply.
+        self._user_fixed_slots = set()
+        self._intent_user_fixed = False
         # Whether the current request still has an unanswered clarifying question.
         # Blocks write dispatch independently of write_intent_retained so a resolved
         # or still-open information gap is never conflated with the user's underlying
@@ -647,9 +661,35 @@ class Agent:
                     and self._results_admitted == self._write_authority_evidence_mark
                     and self._fresh_plan_cancelled.pop((self.request_id, self.request_input_epoch), False)):
                 self.write_intent_retained = True
+                # This proposal IS the fresh evidence, merely delivered by a
+                # replacement (non-fresh-labelled) planner task rather than the
+                # cancelled original -- see the H2 comment above. Its slot/intent
+                # updates get the same provenance as a directly fresh proposal's
+                # would, or a legitimate correction delivered exactly this way (e.g.
+                # a write cancellation racing the next utterance) would be refused by
+                # the guard below as if it were an unrelated tool result.
+                fresh_evidence = True
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
+            if not fresh_evidence and name in self._user_fixed_slots and old is not None and old.value != value:
+                # A17-1: write AUTHORITY (write_intent_retained, above) is gated on
+                # fresh evidence; the ARGUMENTS of an already-authorized write must be
+                # too. A tool-result-triggered replan cannot rewrite a slot value the
+                # user themselves already fixed with their own speech -- it can still
+                # freely SET a slot the user never fixed (see the comment on
+                # self._user_fixed_slots in run()). Refusing here, rather than
+                # silently applying it, is what stops a dispatched call from later
+                # using the smuggled value: _argument_dependency_error grounds every
+                # call argument against the CURRENT tracked slot value, so keeping the
+                # old value here also keeps any pending write's arguments honest.
+                await self._emit("clarify", text=(
+                    f"A tool result tried to change '{name}' from {old.value!r} to "
+                    f"{value!r} after the user already fixed it; the original value "
+                    "is kept."))
+                continue
+            if fresh_evidence:
+                self._user_fixed_slots.add(name)
             if not self.latest_complete and name not in self.provisional_slots:
                 self.provisional_slots[name] = (source,
                                                 old.model_copy(deep=True) if old else None)
@@ -665,14 +705,25 @@ class Agent:
                                               evidence=[o.event_id for o in self.observations.values()])
             elif self.latest_complete:
                 old.confirmed = True
-        if changed or (proposal.intent is not None and proposal.intent != self.state.intent):
+        intent_conflict = (proposal.intent is not None and not fresh_evidence and self._intent_user_fixed
+                           and proposal.intent != self.state.intent)
+        if changed or (proposal.intent is not None and not intent_conflict
+                       and proposal.intent != self.state.intent):
             self.state.revision += 1
-        if proposal.intent is not None:
+        if intent_conflict:
+            # Same provenance rule as slots, applied to the intent itself.
+            await self._emit("clarify", text=(
+                f"A tool result tried to change the intent from {self.state.intent!r} to "
+                f"{proposal.intent!r} after the user already fixed it; the original "
+                "intent is kept."))
+        elif proposal.intent is not None:
             if not self.latest_complete and self.provisional_intent is None:
                 self.provisional_intent = (source, self.state.intent)
             elif self.latest_complete:
                 self.provisional_intent = None
             self.state.intent = proposal.intent
+            if fresh_evidence:
+                self._intent_user_fixed = True
         await self._invalidate_dependencies(changed, "dependency_changed")
         said_something = bool(proposal.clarification)
         if proposal.clarification and (self.latest_complete or final_correction):
