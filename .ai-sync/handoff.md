@@ -1,15 +1,14 @@
 # Active Handoff
 
 > Last updated by: Claude Code
-> Timestamp: 2026-09-16
-> Branch: `main`. Current status, measured by the orchestrator on 16 September 2026 at
-> commit `71b1bb5`: 543 passed in `tests/engine tests/perception tests/test_contract.py`;
-> full suite 635 passed, 19 failed, 1 xfailed. All 19 failures are in `tests/demo/`,
-> Atishay's, tracked in `docs/INTEGRATION_NOTE_2026-09-16.md` (three are `XPASS(strict)`:
-> engine gaps the repairs closed). Ruff clean, offline dev suite 4/4. An earlier snapshot at
-> commit `fd53aca` recorded 384 tests passed; that number is superseded, see
-> `docs/STATUS.md` "Current status" for the full, sourced fact list and its own historical
-> `fd53aca` section. Do not quote numbers in this header past that section.
+> Timestamp: 2026-09-18
+> Branch: `mridul/engine`, three commits ahead of `main`. Current status, measured by the
+> orchestrator on 18 September 2026 at commit `ef58557`: full suite 818 passed, 1 xfailed,
+> 0 failed. Ruff clean. Offline dev suite 4 passed, 0 failed, oracle pass rate 1.0. The
+> 19 `tests/demo/` failures recorded on 16 September are closed; Workstream B repaired
+> them. Earlier figures of 384, 411, 543, 635, 769 and 799 are historical. Do not quote
+> any number in this header as current except the ones on these lines. See
+> `docs/STATUS.md` "Current status" for the full sourced fact list.
 > Pushed to `origin/mridul/engine` at `2f91d6a` on 16 September 2026 without a security
 > review. Mridul waived the review for that push. That range added a file access boundary
 > in `src/accessflow/corpus.py`: an allowlist, a document name check and a resolved-path

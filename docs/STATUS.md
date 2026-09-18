@@ -7,112 +7,101 @@ submission.
 
 This section is the single authoritative statement of current state. It replaces all older
 headers in this file, including the commit `fd53aca` snapshot below, which is historical.
-Read this section first. The orchestrator measured every fact below on 17 September 2026, on
-branch `main`, at merge commit `de89f55`. Each fact quotes the command that produced it. The
-repository virtualenv at `.venv` supplied the interpreter.
+Read this section first. The orchestrator measured every fact below on 18 September 2026, on
+branch `mridul/engine`, at commit `ef58557`. Each fact quotes the command that produced it.
+The repository virtualenv at `.venv` supplied the interpreter.
 
-Commit `de89f55` merges branch `atishay/perception` into `main`. The merge applied with no
-conflicts. It adds 59 commits of Workstream B work across 24 files.
+Branch `mridul/engine` is three commits ahead of `main`. Workstream A work is committed
+there, not directly on `main`.
 
-- **Full test suite:** 769 passed, 1 xfailed, 0 failed.
+- **Full test suite:** 818 passed, 1 xfailed, 0 failed.
   Command: `./.venv/Scripts/python.exe -m pytest -q`.
-  The 19 `tests/demo/` failures recorded at commit `71b1bb5` are closed. The three
-  `XPASS(strict)` markers in that set are also closed. Workstream B repaired both groups.
+  Earlier figures of 411, 635, 769 and 799 are historical. Do not cite them as current.
 - **Remaining xfail:** one test in `tests/demo/test_app.py`, named
-  `test_conflicting_frames_require_resolution_before_write`.
-  Its stated reason is a controller limitation: the controller does
-  not represent conflicting frame evidence before a write. The test file belongs to
-  Workstream B. The named limitation belongs to the engine. Ownership of the repair is not
-  yet agreed. Do not treat this xfail as closed by the merge.
+  `test_conflicting_frames_require_resolution_before_write`. Read finding A17-3 below before
+  you interpret it. It does not prove what its reason string says.
 - **Lint:** all checks passed.
   Command: `./.venv/Scripts/python.exe -m ruff check .`.
 - **Offline dev suite:** 4 passed, 0 failed, 0 unscored, 0 error. Oracle pass rate 1.0.
   Command: `./.venv/Scripts/python.exe -m accessflow.cli suite scenarios/dev`.
   The report states its own limitation: developer-authored criteria and mock effects. These
   are not official-kit results and not held-out results.
-- **Wrong-action-rate metric:** implemented. `src/accessflow/evaluation/trace_metrics.py`
-  computes `wrong_action_rate`. It counts four categories separately: `unexpected`,
-  `wrong_arguments`, `duplicate_expected` and `missed_expected`. The rate is `None`, not
-  `0.0`, when no denominator exists. Coverage is in `tests/engine/test_trace_metrics.py`.
-  An earlier version of this file said the metric was not implemented. That statement is
-  obsolete.
-- **Security review of `corpus.py`:** run. The review completed on 16 September 2026 and
-  reached a clean verdict after five findings were repaired. An earlier version of this file
-  said the review had never run. That statement is obsolete.
-- **Security review of the Workstream B merge:** run on 17 September 2026 over
-  `git diff 3c1619f de89f55`. The verdict is not clean. The review found one medium and
-  five low findings. All six are in Workstream B files. Mridul decided to push the merge
-  and to triage the findings separately. Branch `atishay/perception` then added 69 more
-  commits, many of which harden the same areas. Those 69 commits are NOT covered by any
-  security review. Treat the whole Workstream B surface as review-pending.
-- **Scenario corpus:** 17 files, 10 distinct tool sets. See
-  [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is generated from the files.
+- **Scenario counts.** Workstream A has **17 executable scenario files**. Workstream B has a
+  **60-entry authored media catalog**. These are different artifacts. Do not add them
+  together and do not use one count where the other belongs.
 - **Evidence bundle:** 57 attempted runs. The quality denominator is **43 of 49**. It is not
-  43 of 46. A 429 admission refusal no longer excuses a run whose model already produced
-  output on an earlier step. Three such runs count in the denominator.
+  43 of 46.
 - **Held-out planner probes:** ran once, on 16 September 2026, on `groq/qwen/qwen3.8-27b`.
-  They passed 4 of 4. They are spent. They are development data now. Do not run them again
-  and call the result unseen evaluation.
-- **Docker:** not installed on this machine. The container execution gate is unmeasured in
-  this environment. This is neither a pass nor a failure.
-- **Endpoint telemetry:** not re-measured at `de89f55`. The last recorded figure is 0 of 161
-  traces carrying `config.endpoint`, in the `fd53aca` snapshot below. Treat it as unverified
-  at the current commit.
+  They passed 4 of 4. They are spent. They are development data now.
+- **Security review status.** A corpus review ran on 16 September 2026 and reached a clean
+  verdict after repairs. A review of the first Workstream B merge ran on 17 September 2026
+  and found one medium and five low findings, which are listed below and are not repaired.
+  A further 69 Workstream B commits, and all Workstream A work on this branch, have had no
+  security review. **No full-surface review has ever run. Do not describe the current
+  surface as reviewed or clean.**
+- **Docker:** not installed on this machine. The container execution gate is unmeasured here.
+- **Endpoint telemetry:** not re-measured. The last recorded figure is 0 of 161 traces
+  carrying `config.endpoint`, in the `fd53aca` snapshot below. Treat it as unverified.
 
-### Findings status at commit `de89f55`
+### Findings status at commit `ef58557`
 
-The findings record is
+The current findings record is
+[reviews/MRIDUL_MERGED_AUDIT_2026-09-17.md](reviews/MRIDUL_MERGED_AUDIT_2026-09-17.md)
+(A17-1 through A17-4), with the companion
+[reviews/ATISHAY_MERGED_AUDIT_2026-09-17.md](reviews/ATISHAY_MERGED_AUDIT_2026-09-17.md).
+Earlier records are
 [reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md](reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md)
-(M1 through M7), which followed
+(M1 through M7) and
 [reviews/MRIDUL_REAUDIT_2026-09-15.md](reviews/MRIDUL_REAUDIT_2026-09-15.md) (A1 through A9).
-Fix evidence is in
-[reviews/REAUDIT_RESOLUTION_2026-09-16.md](reviews/REAUDIT_RESOLUTION_2026-09-16.md). Read the
-second re-audit for the state of any A-numbered finding that it reassessed. Do not treat the
-first audit's verdict as current where the second audit reopened or narrowed it.
 
-- **Closed, with tests:**
-  - M1, the clarification fixture — commit `7b0d373`. See the residual note below.
-  - M4, evidence-to-write authority — commit `6caa889`, repaired again at `09f76d9`. The
-    first fix compared `len(self.results)`, which can decrease when
-    `_invalidate_dependencies` removes entries. A monotonic admitted-result counter replaced
-    it.
-  - M6, 429 run classification — commit `86655f0`.
-  - M2, M3, M5 corpus dispatch, I/O bounding and discovery — commit `71b1bb5`.
-  - M7, documentation consistency — closed by the 16 September update to this file.
-  - All five findings from the corpus security review — closed before the 16 September push.
-  - The 19 `tests/demo/` failures — closed by Workstream B in this merge.
+- **A17-1, argument authority — closed, in two parts.**
+  - Commit `3c59f31` adds controller-only slot provenance. `Agent._user_fixed_slots` records
+    the slot names a fresh-evidence proposal supplied. A tool-result replan can no longer
+    change the value of a slot the user fixed. It can still set a slot the user never fixed,
+    so a delegated value such as "book the first available day" continues to work.
+  - Commit `ef58557` closes a bypass of that guard. The first fix keyed on the slot NAME. An
+    adversarial planner avoided the fixed name completely: it created a new slot and used
+    `ProposedCall.argument_slots` to steer the write's own parameter onto it. The orchestrator
+    reproduced this and recorded a committed Friday effect while the `day` slot still read
+    Wednesday. `_argument_dependency_error` now refuses an alias that redirects a write
+    parameter whose own name is a user-fixed slot.
+  - Regressions: `tests/engine/test_argument_authority.py` (2 tests) and
+    `tests/engine/test_slot_provenance.py`. Both use an adversarial planner that actively
+    proposes the unsafe write. A cooperative planner that refuses on its own would not prove
+    the guard.
+  - No contract change. The provenance state is controller-only, so `Slot` and `Snapshot` in
+    `contracts.py` are untouched and no agreement with Workstream B was needed.
 
-- **Open, with owner and reason:**
-  - **M1 residual, Workstream A.** `proposal.intent` and `proposal.slot_updates` stay
-    ungated on a replan that a tool result triggers. Only the write decision is gated. A
-    tool result can still move the intent and the slot values. The repair is a larger
-    behaviour change, because some legitimate flows refine intent from a tool result. It is
-    not started.
-  - **Corpus harness gap, Workstream A.** `replay()` and `run_suite()` accept no
-    `corpus_root` parameter. The command-line flag reaches `Agent` through an environment
-    variable only. No scenario retrieves a document through the normal harness. The corpus
-    path is therefore covered by unit tests and not by any scenario.
-  - **A2 and B0, vision worker wiring.** Assigned to Atishay by Mridul's decision; see
-    `CONTRACT_PROPOSALS.md`. This merge changed no file under `src/accessflow/adapters/`, so
-    the process adapter still rejects the vision options that the parent sends.
-    `frame_device_panel.json` still cannot run through the process adapter.
-  - **Conflicting frame evidence before a write.** The single remaining xfail, described
-    above. Owner not yet agreed.
-  - **Six security findings in the Workstream B merge, Workstream B.** The 17 September
-    review found them. The medium finding is a denial-of-service path in `demo/app.py`: the
-    per-session media budget refunds a rejected upload, so a PNG that is crafted to fail
-    validation after decompression costs the attacker no budget and can repeat without
-    limit. One measured connection inflated 2442 MiB server-side from 2.38 MiB of upload.
-    The other five findings are low. Workstream A did not repair any of them, because every
-    affected file belongs to Workstream B. Some later Workstream B commits may already close
-    some of these findings. No one has re-verified that. Do not assume any finding is closed
-    without a new review.
-  - **Matched-timing baseline and end-of-speech latency.** This merge adds
-    `src/accessflow/perception/timing.py` and `src/accessflow/turn_policy/timing_replay.py`.
-    Whether these supply the calibrated signal that the baseline needs is not yet assessed.
-  - **Official kit adapter.** Blocked on the organizer.
-  - **Docker.** Unmeasured in this environment.
-  - **Submission materials: deck, video, AI disclosure and tag.** Untouched.
+- **A17-2, corpus harness configuration — partly closed.**
+  - Commit `73f31e9` adds an explicit `corpus_root` parameter to `replay()` and `run_suite()`
+    and passes it from both CLI subcommands. An explicit value wins over
+    `ACCESSFLOW_CORPUS_ROOT`, which stays as a documented fallback. A missing or non-directory
+    root fails once, before any scenario runs. Recorded metadata carries
+    `corpus_root_configured` and `corpus_root_basename` only, never the absolute path.
+  - **Still open:** no scenario retrieves a document through the normal harness. The
+    plumbing is tested; end-to-end retrieval through a scenario is not. This needs a scenario
+    fixture and a small team-authored corpus document. It is held pending Mridul's decision
+    on whether the corpus is kept at all.
+
+- **A17-3, conflicting frames — open, and blocked on a shared decision.**
+  Ownership is not the open question. The engine and engine tests are Mridul's; the demo test
+  is Atishay's. The open question is the design: whether a second frame REPLACES the first,
+  contradicts it, or is an explicit device change. Nothing can be implemented before that is
+  agreed. The existing xfail does not establish the safety gap its reason string claims: it
+  times out at `conflict_seen.wait()`, `tests/demo/test_app.py:3725`, before reaching
+  `assert not executor.calls` and `assert not executor.effects`. Verified by the orchestrator
+  with `--runxfail`. Do not treat that test as a specification.
+
+- **Open, with owner:**
+  - Six security findings in the first Workstream B merge. Workstream B owns every affected
+    file. Some later Workstream B commits may close some of them; nobody has verified which.
+  - A2 and B0, vision worker wiring — Atishay, by Mridul's decision; see `CONTRACT_PROPOSALS.md`.
+  - Matched-timing baseline — `perception/timing.py` and `turn_policy/timing_replay.py` now
+    exist. Whether they supply the calibrated signal the baseline needs is not yet assessed.
+  - C1 through C4 coordination items in the 17 September audits — each needs an agreed
+    example and event trace before any shared schema changes.
+  - Official kit adapter — blocked on the organizer. Docker — unmeasured here.
+  - Submission materials: deck, video, AI disclosure and tag — untouched.
 
 
 Multimodal coverage counts are unchanged from the `fd53aca` snapshot below (2 audio files
