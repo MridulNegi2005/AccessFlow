@@ -21,6 +21,21 @@ from .corpus import (
 )
 
 
+# Bound on any proposal-supplied value interpolated into a spoken/logged `clarify`
+# text. PlanProposal.slot_updates is dict[str, Any] with no length limit, and under
+# prompt injection its values (and proposal.intent) are attacker-controlled; this keeps
+# the emitted text -- and the committed trace evidence it becomes part of -- bounded
+# regardless of what the model proposes (security review LOW finding 2).
+CLARIFY_VALUE_TRUNCATE_LEN = 200
+
+
+def _clarify_repr(value):
+    text = repr(value)
+    if len(text) > CLARIFY_VALUE_TRUNCATE_LEN:
+        return text[:CLARIFY_VALUE_TRUNCATE_LEN] + "...(truncated)"
+    return text
+
+
 class DenyWrites:
     def allows(self, view, call):
         return False
@@ -290,6 +305,12 @@ class Agent:
                     self.speech_ready = False
                     self.write_intent_retained = False
                     self.clarification_outstanding = False
+                    # Request-scoped authority, same lifetime as the two flags above (see
+                    # the identical reset on request rotation below) -- an interrupt must
+                    # not leave a slot/intent the user fixed before the interrupt able to
+                    # permanently outlive it (security review MEDIUM finding 1).
+                    self._user_fixed_slots = set()
+                    self._intent_user_fixed = False
                     self.semantic_correction_event = None
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
@@ -333,6 +354,15 @@ class Agent:
                         self.last_request_finished = False
                         self.write_intent_retained = False
                         self.clarification_outstanding = False
+                        # A new request must not inherit authority over slots/intent the
+                        # user fixed on a now-finished prior request -- otherwise a
+                        # legitimate delegated value on THIS request (the user names no
+                        # day; a later tool result honestly supplies one) is permanently
+                        # refused by a lock left over from an unrelated earlier request
+                        # (security review MEDIUM finding 1). self.state.slots itself is
+                        # untouched here; only the fixed-by-user PROVENANCE resets.
+                        self._user_fixed_slots = set()
+                        self._intent_user_fixed = False
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -683,12 +713,26 @@ class Agent:
                 # using the smuggled value: _argument_dependency_error grounds every
                 # call argument against the CURRENT tracked slot value, so keeping the
                 # old value here also keeps any pending write's arguments honest.
-                await self._emit("clarify", text=(
-                    f"A tool result tried to change '{name}' from {old.value!r} to "
-                    f"{value!r} after the user already fixed it; the original value "
-                    "is kept."))
+                if self.latest_complete or final_correction:
+                    # Gated exactly like the proposal.clarification emit below: a
+                    # mid-partial-utterance refusal would interrupt the speaker over
+                    # something that has not finished being said (security review LOW
+                    # finding 2). The refusal itself (the `continue` below, which keeps
+                    # the original value) is NOT gated -- it must hold every time,
+                    # partial or complete, matching the A17-1 guard this speaks for.
+                    await self._emit("clarify", text=(
+                        f"A tool result tried to change '{name}' from {_clarify_repr(old.value)} to "
+                        f"{_clarify_repr(value)} after the user already fixed it; the original "
+                        "value is kept."))
                 continue
-            if fresh_evidence:
+            if fresh_evidence and self.latest_complete:
+                # Gated on latest_complete: a still-partial hypothesis's slot value can
+                # be discarded wholesale by _rollback_hypothesis, but until this gate,
+                # merely PROPOSING it on fresh (user-origin) evidence already marked the
+                # name permanently fixed here -- even after its value was rolled back,
+                # even for the rest of the session (security review MEDIUM finding 1).
+                # Only a proposal the turn policy considers COMPLETE (or a completed
+                # correction) genuinely fixes a slot's provenance.
                 self._user_fixed_slots.add(name)
             if not self.latest_complete and name not in self.provisional_slots:
                 self.provisional_slots[name] = (source,
@@ -711,11 +755,15 @@ class Agent:
                        and proposal.intent != self.state.intent):
             self.state.revision += 1
         if intent_conflict:
-            # Same provenance rule as slots, applied to the intent itself.
-            await self._emit("clarify", text=(
-                f"A tool result tried to change the intent from {self.state.intent!r} to "
-                f"{proposal.intent!r} after the user already fixed it; the original "
-                "intent is kept."))
+            # Same provenance rule as slots, applied to the intent itself. The refusal
+            # (self.state.intent is simply never reassigned when intent_conflict is
+            # True) is unconditional; only the spoken/logged announcement is gated,
+            # same as the slot-refusal clarify above (security review LOW finding 2).
+            if self.latest_complete or final_correction:
+                await self._emit("clarify", text=(
+                    f"A tool result tried to change the intent from {_clarify_repr(self.state.intent)} to "
+                    f"{_clarify_repr(proposal.intent)} after the user already fixed it; the original "
+                    "intent is kept."))
         elif proposal.intent is not None:
             if not self.latest_complete and self.provisional_intent is None:
                 self.provisional_intent = (source, self.state.intent)

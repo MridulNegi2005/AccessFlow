@@ -217,6 +217,27 @@ def test_cli_replay_subcommand_passes_explicit_corpus_root_through(tmp_path, mon
     assert captured[0]["corpus_root"] == str(root.resolve())
 
 
+# --- Security review finding 3: corpus_root="" must not silently become the CWD ----
+#
+# Path("") and Path("   ") both coerce to Path(".") -- the process CWD -- whose
+# is_dir() is True, so a falsy-but-not-None corpus_root previously sailed through the
+# "must be an existing directory" check and silently became the corpus trust boundary.
+
+
+@pytest.mark.parametrize("bad_root", ["", "   "])
+async def test_replay_rejects_empty_or_blank_corpus_root_instead_of_using_cwd(tmp_path, bad_root):
+    with pytest.raises(ValueError, match="existing directory"):
+        await replay_module.replay(SCENARIO, tmp_path / "trace.jsonl", corpus_root=bad_root)
+
+
+@pytest.mark.parametrize("bad_root", ["", "   "])
+async def test_run_suite_rejects_empty_or_blank_corpus_root_instead_of_using_cwd(tmp_path, bad_root):
+    output_dir = tmp_path / "out"
+    with pytest.raises(ValueError, match="existing directory"):
+        await run_suite([SCENARIO], output_dir, corpus_root=bad_root)
+    assert not output_dir.exists()
+
+
 def test_cli_suite_subcommand_passes_explicit_corpus_root_through(tmp_path, monkeypatch):
     root = tmp_path / "cli_suite_root"
     root.mkdir()

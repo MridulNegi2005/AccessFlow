@@ -52,6 +52,12 @@ async def replay(path, output, reasoner=None, backend="offline-fake", *, percept
     # fallback intact -- this is the only route a programmatic caller has for picking a
     # corpus root without mutating process-global state.
     if corpus_root is not None:
+        # Path("") and Path("   ") both coerce to Path(".") -- the process CWD -- whose
+        # is_dir() is True, so a falsy-but-not-None value would otherwise sail through
+        # the check below and silently become the corpus trust boundary (security
+        # review LOW finding 3). Reject it before it ever reaches Path().
+        if not str(corpus_root).strip():
+            raise ValueError(f"corpus_root must be an existing directory: {corpus_root}")
         corpus_root = Path(corpus_root)
         if not corpus_root.is_dir():
             raise ValueError(f"corpus_root must be an existing directory: {corpus_root}")
