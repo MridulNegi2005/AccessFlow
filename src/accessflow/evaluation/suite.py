@@ -13,6 +13,11 @@ async def run_suite(paths, output_dir, reasoner_factory=None, backend="offline-f
     # front, rather than letting every scenario in the loop fail separately with the
     # same error.
     if corpus_root is not None:
+        # Same falsy-but-not-None trap as replay() (see evaluation/replay.py): Path("")
+        # and Path("   ") both coerce to the process CWD, whose is_dir() is True
+        # (security review LOW finding 3). Reject before Path() ever sees it.
+        if not str(corpus_root).strip():
+            raise ValueError(f"corpus_root must be an existing directory: {corpus_root}")
         corpus_root = Path(corpus_root)
         if not corpus_root.is_dir():
             raise ValueError(f"corpus_root must be an existing directory: {corpus_root}")
