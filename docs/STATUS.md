@@ -54,7 +54,8 @@ Earlier records are
 (M1 through M7) and
 [reviews/MRIDUL_REAUDIT_2026-09-15.md](reviews/MRIDUL_REAUDIT_2026-09-15.md) (A1 through A9).
 
-- **A17-1, argument authority — closed, in two parts.**
+- **A17-1, argument authority — NOT closed. Partly mitigated, and the residual is larger
+  than the mitigation.**
   - Commit `3c59f31` adds controller-only slot provenance. `Agent._user_fixed_slots` records
     the slot names a fresh-evidence proposal supplied. A tool-result replan can no longer
     change the value of a slot the user fixed. It can still set a slot the user never fixed,
@@ -70,7 +71,33 @@ Earlier records are
     proposes the unsafe write. A cooperative planner that refuses on its own would not prove
     the guard.
   - No contract change. The provenance state is controller-only, so `Slot` and `Snapshot` in
-    `contracts.py` are untouched and no agreement with Workstream B was needed.
+    `contracts.py` are untouched.
+  - **Residual, confirmed by probe on 18 September 2026.** Both guards key on a SLOT NAME.
+    Nothing binds a write tool's PARAMETER name to the slot name the planner chose. When the
+    two differ, which is the normal case, neither guard fires. Two demonstrated bypasses:
+    1. The fresh proposal names the slot `requested_day`. The tool-result replan creates a
+       new slot named `day` -- the write parameter's own name, never user-fixed -- sets it to
+       `Friday` and dispatches. The write commits `Friday` while `requested_day` still reads
+       `Wednesday`.
+    2. The same shape through `argument_slots`, aliasing the `day` parameter onto a new slot.
+    The two tests in `tests/engine/test_argument_authority.py` pass only because the fixture
+    in `tests/engine/test_safety.py` declares the parameter `day` AND the fixture's fresh
+    proposal happens to name the slot `day`. Rename either and both tests fail open. Treat
+    those tests as covering one naming coincidence, not the property.
+  - **Why no controller-only fix closes this.** The attack and a legitimate delegated value
+    are structurally identical: in both, a non-fresh replan creates a new slot and grounds
+    the write on it. "Book Wednesday after checking the manual" and "book the first available
+    day" differ only in whether the user's utterance named a day. The controller sees slot
+    names the planner chose, not the utterance. The reviewer's proposed repair -- record the
+    tool/parameter binding from the fresh proposal's write calls -- does not apply, because
+    the documented legitimate read-then-write pattern
+    (`tests/engine/test_write_authority_evidence.py:188`) puts no write call in the fresh
+    proposal at all.
+  - **Decision required before any further work.** Either the planner declares delegation
+    explicitly, which is a shared contract change and a C3 coordination item, or any write
+    grounded on a tool-origin value requires one explicit user confirmation. The second is
+    controller-only and needs no agreement, at the cost of one extra turn on every delegated
+    write. Neither is started.
 
 - **A17-2, corpus harness configuration — partly closed.**
   - Commit `73f31e9` adds an explicit `corpus_root` parameter to `replay()` and `run_suite()`
