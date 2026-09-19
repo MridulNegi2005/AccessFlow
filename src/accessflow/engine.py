@@ -194,6 +194,24 @@ class Agent:
         # result legitimately supplies it. See the speech_origin block in _apply.
         self._user_fixed_slots = set()
         self._intent_user_fixed = False
+        # Origin of each slot's CURRENT value: "user" when a fresh-evidence, complete
+        # (or completed-correction) proposal itself supplied that name in
+        # slot_updates, "tool" when a non-fresh (tool-result-triggered) proposal did.
+        # Distinct from _user_fixed_slots, which only locks a NAME against a non-fresh
+        # CHANGE once the user has fixed it: that guard never fires for a slot the
+        # user never named at all, and a tool-result replan is free to invent a brand
+        # new slot (or alias a write's argument onto one via argument_slots) that no
+        # name-keyed guard protects. This dict instead tracks, per slot, who last
+        # supplied its value, so the write-dispatch path in _apply can require
+        # explicit user confirmation before committing any write argument that
+        # resolves (via ProposedCall.argument_slots) to a tool-supplied slot --
+        # closing A17-1's parameter-alias variant regardless of what either the slot
+        # or the parameter happens to be named (security review HIGH finding).
+        # Session-scoped like slot_revisions would be wrong here: unlike
+        # _user_fixed_slots (permanent once set), this must reset on the same
+        # request-scoped boundaries as _user_fixed_slots below, so a delegated value
+        # from a FINISHED request cannot block a write on an unrelated later one.
+        self._slot_value_origin = {}
         # Whether the current request still has an unanswered clarifying question.
         # Blocks write dispatch independently of write_intent_retained so a resolved
         # or still-open information gap is never conflated with the user's underlying
@@ -311,6 +329,7 @@ class Agent:
                     # permanently outlive it (security review MEDIUM finding 1).
                     self._user_fixed_slots = set()
                     self._intent_user_fixed = False
+                    self._slot_value_origin = {}
                     self.semantic_correction_event = None
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
@@ -363,6 +382,7 @@ class Agent:
                         # untouched here; only the fixed-by-user PROVENANCE resets.
                         self._user_fixed_slots = set()
                         self._intent_user_fixed = False
+                        self._slot_value_origin = {}
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -734,6 +754,26 @@ class Agent:
                 # Only a proposal the turn policy considers COMPLETE (or a completed
                 # correction) genuinely fixes a slot's provenance.
                 self._user_fixed_slots.add(name)
+                # A fresh, complete proposal asserting this name is the user's own
+                # confirmation of its value -- record that even when the value is
+                # unchanged (e.g. the user explicitly confirming a value a tool
+                # already delegated: see the write-dispatch origin check below). This
+                # is the one case that touches origin without a value change, and it
+                # is deliberately NOT symmetric with the non-fresh case just below:
+                # only a fresh, complete assertion can promote a slot to "user".
+                self._slot_value_origin[name] = "user"
+            elif old is None or old.value != value:
+                # A non-fresh (tool-result-triggered) proposal, or a still-partial
+                # fresh one, is about to WRITE a new value for `name` below (see
+                # `old is None or old.value != value` further down, which this
+                # mirrors). That value's provenance is not "the user just fixed
+                # this", so a write dispatch grounding on it must not treat it as
+                # confirmed (see the write-dispatch origin check further down in
+                # _apply). A non-fresh proposal merely REPEATING an unchanged value
+                # (the `else` implicit here) leaves an already-recorded origin alone
+                # -- e.g. a bounded retry replan that resends the same fresh-set slot
+                # verbatim after a failed write must not downgrade it to "tool".
+                self._slot_value_origin[name] = "tool"
             if not self.latest_complete and name not in self.provisional_slots:
                 self.provisional_slots[name] = (source,
                                                 old.model_copy(deep=True) if old else None)
@@ -806,6 +846,47 @@ class Agent:
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
                     blocked_calls += 1
+                    continue
+                # A17-1 (confirm-on-tool-origin): a name-keyed guard cannot stop a
+                # tool-result replan from smuggling a value into an already-authorized
+                # write, because the attack and a legitimate delegated value ("book the
+                # first available day", where a tool result honestly supplies the day)
+                # are structurally identical -- in both, a non-fresh replan sets a slot
+                # the user never fixed and grounds the write on it. The controller
+                # cannot see the user's utterance, only the planner-chosen slot name,
+                # and that name need not match the write's own parameter name (a
+                # planner can invent a brand-new slot, or alias the parameter onto one
+                # via argument_slots, and no NAME the guard above keys on is ever
+                # rewritten). So instead of trusting names, require the value's own
+                # provenance: resolve each argument's EFFECTIVE slot exactly as
+                # _argument_dependency_error does (argument_slots takes priority over
+                # the parameter's own name) and refuse to commit if that slot's current
+                # value was last supplied by a non-fresh (tool-result-triggered)
+                # proposal rather than the user. This still lets a tool legitimately
+                # supply a delegated value -- it just cannot make that value commit
+                # unconfirmed; a later fresh utterance that sets the same slot flips
+                # its origin to "user" and unblocks the write on a subsequent turn.
+                tool_origin_arg = next(
+                    (parameter for parameter in proposed.arguments
+                     if parameter != manifest.idempotency_parameter
+                     and self._slot_value_origin.get(
+                         proposed.argument_slots.get(parameter, parameter)) == "tool"),
+                    None)
+                if tool_origin_arg is not None:
+                    slot_name = proposed.argument_slots.get(tool_origin_arg, tool_origin_arg)
+                    value = proposed.arguments[tool_origin_arg]
+                    if self.latest_complete or final_correction:
+                        # Gated exactly like the neighbouring provenance-refusal emits
+                        # above (security review LOW finding 2): only announced once the
+                        # utterance is actually complete, never mid-partial-speech. The
+                        # refusal itself (the `continue` below) is unconditional.
+                        await self._emit("clarify", text=(
+                            f"'{proposed.tool}' would commit with {tool_origin_arg}="
+                            f"{_clarify_repr(value)}, grounded on '{slot_name}' whose value "
+                            "a tool result supplied rather than the user; please confirm "
+                            "this before it can be committed."))
+                    self.clarification_outstanding = True
+                    said_something = True
                     continue
                 # Unknown/cancelled writes may have committed: no new write until reconciled.
                 if any(c.effect == "write" and c.status in {"unknown", "cancelled"} for c in self.ledger.values()):
