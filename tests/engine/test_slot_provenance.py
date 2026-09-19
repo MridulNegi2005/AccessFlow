@@ -82,24 +82,41 @@ async def test_explicit_user_correction_can_still_change_a_user_fixed_slot(tmp_p
         await end(iq, task)
 
 
-# --- Acceptance point 3: a delegated value a non-fresh tool result may still set ---
+# --- Acceptance point 3: a delegated value a non-fresh tool result may still SET,
+# --- but not silently COMMIT a write on --------------------------------------------
 
-async def test_non_fresh_tool_result_may_freely_set_a_slot_the_user_never_fixed():
+async def test_tool_delegated_value_requires_user_confirmation_before_it_commits():
     """"Book the first available day" delegates the value: the user never said which
     day, so nothing enters self._user_fixed_slots for "day", and a tool-result-
-    triggered (non-fresh) replan legitimately supplies it. The provenance guard must
-    only refuse a CHANGE to an already user-fixed slot, never an initial SET of one
-    the user left open -- otherwise every legitimate read-then-write with a
-    model-resolved argument would break.
+    triggered (non-fresh) replan may still freely SET it -- the provenance guard only
+    refuses a CHANGE to an already user-fixed slot, never an initial SET of one the
+    user left open.
+
+    Under confirm-on-tool-origin (A17-1), though, freely SETTING a slot is no longer
+    the same as being allowed to COMMIT a write grounded on it: the value's origin is
+    "tool", not "user", indistinguishable at the controller from an injected value
+    (see test_argument_authority.py), so the write must ask for confirmation instead
+    of completing silently. This used to commit in one turn; it now takes a second,
+    genuinely fresh turn where the user confirms the delegated value before the write
+    is allowed through.
     """
     read = ToolManifest(name="check_availability", description="Check availability", effect="read",
                         parameters={"type": "object", "properties": {}, "additionalProperties": False})
 
     class Planner:
         async def plan(self, view, manifests):
+            text = view.observations[-1].text if view.observations else ""
+            if "Friday works" in text:
+                # A brand new, fresh-evidence utterance confirming the delegated value.
+                return PlanProposal(intent="service", slot_updates={"day": "Friday"},
+                                    request_complete=True, write_requested=True,
+                                    calls=[ProposedCall(tool="arbitrary_service", arguments={"day": "Friday"},
+                                                        dependencies=["day"])])
             if not view.results:
                 return PlanProposal(intent="service", request_complete=True, write_requested=True,
                                     calls=[ProposedCall(tool="check_availability", arguments={})])
+            # Triggered by the read's own result (non-fresh): legitimately supplies a
+            # day the user never named, but cannot make the write commit on its own.
             return PlanProposal(intent="service", slot_updates={"day": "Friday"}, request_complete=True,
                                 write_requested=True,
                                 calls=[ProposedCall(tool="arbitrary_service", arguments={"day": "Friday"},
@@ -108,6 +125,14 @@ async def test_non_fresh_tool_result_may_freely_set_a_slot_the_user_never_fixed(
     agent, iq, oq, task = await start([], reasoner=Planner(), manifests=[read, manifest()])
     try:
         await iq.put(transcript("Book the first available day"))
+        clarify = await wait_for(oq, lambda e: e.kind == "clarify")
+        assert "day" in clarify.payload["text"] and "Friday" in clarify.payload["text"]
+        # The tool-delegated value is visible on the slot (it was freely SET) but the
+        # write it would ground must not have committed unconfirmed.
+        assert agent.state.slots["day"].value == "Friday"
+        assert not agent.executor.effects
+
+        await iq.put(transcript("Friday works.", revision=1))
         final = await wait_for(oq, lambda e: e.kind == "final")
         assert final.payload["basis"] == "confirmed_tool_effect"
         assert agent.state.slots["day"].value == "Friday"
@@ -125,6 +150,15 @@ async def test_delegated_value_on_a_later_request_is_not_blocked_by_a_prior_requ
     Before the fix, self._user_fixed_slots never shrank and was never cleared on
     request rotation, so this legitimate delegated value was permanently refused by a
     lock "day" earned on the unrelated, already-finished prior request.
+
+    Under confirm-on-tool-origin (A17-1, see test_argument_authority.py and
+    test_tool_delegated_value_requires_user_confirmation_before_it_commits above),
+    that delegated value is no longer enough on its own to COMMIT request 2's write --
+    its origin is "tool", so it must be confirmed by a fresh utterance first. This
+    test still exercises exactly the request-rotation guarantee its name promises
+    (self._user_fixed_slots does not outlive request 1): what changes is only that
+    request 2 now needs one extra, genuinely fresh turn to confirm the notice's
+    delegated day before the write goes through.
     """
     read = ToolManifest(name="check_notice", description="Check notice", effect="read",
                         parameters={"type": "object", "properties": {}, "additionalProperties": False})
@@ -135,6 +169,13 @@ async def test_delegated_value_on_a_later_request_is_not_blocked_by_a_prior_requ
             self.awaiting_notice = False
 
         async def plan(self, view, manifests):
+            text = view.observations[-1].text if view.observations else ""
+            if "Friday works" in text:
+                # A brand new, fresh-evidence utterance confirming the delegated day.
+                return PlanProposal(intent="service", slot_updates={"day": "Friday"},
+                                    request_complete=True, write_requested=True,
+                                    calls=[ProposedCall(tool="arbitrary_service", arguments={"day": "Friday"},
+                                                        dependencies=["day"])])
             if not self.phase1_done:
                 self.phase1_done = True
                 return PlanProposal(intent="service", slot_updates={"day": "Wednesday"},
@@ -166,6 +207,14 @@ async def test_delegated_value_on_a_later_request_is_not_blocked_by_a_prior_requ
             await asyncio.sleep(0)
         assert "day" not in agent._user_fixed_slots
 
+        # The notice's delegated day is set, but its origin is "tool": the write
+        # must ask for confirmation rather than commit on its own.
+        await wait_for(oq, lambda e: e.kind == "clarify" and "Friday" in e.payload.get("text", ""))
+        assert agent.state.slots["day"].value == "Friday"
+        friday_effects = [e for e in agent.executor.effects.values() if e["arguments"].get("day") == "Friday"]
+        assert not friday_effects
+
+        await iq.put(transcript("Friday works.", utterance="u2", revision=1))
         second_final = await wait_for(oq, lambda e: e.kind == "final" and e.payload.get("call_id") !=
                                       first_final.payload.get("call_id"))
         assert second_final.payload["basis"] == "confirmed_tool_effect"
