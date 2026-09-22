@@ -76,20 +76,40 @@ def write_report(path, report):
         handle.write(encoded)
 
 
+def resolve_scenario(kit, *, name=None, external_path=None):
+    """Select evaluator input explicitly; never add scenario data to agent setup."""
+    if (name is None) == (external_path is None):
+        raise ValueError("Choose exactly one public scenario name or external scenario path")
+    if name is not None:
+        candidate = Path(name)
+        if candidate.name != name or candidate.suffix != ".json":
+            raise ValueError("--scenario must be a plain JSON filename")
+        path = (kit / "scenarios" / candidate).resolve()
+        if not path.is_relative_to(kit / "scenarios") or not path.is_file():
+            raise ValueError("Scenario must exist within the selected kit")
+        return path, "public-development"
+    path = Path(external_path).resolve()
+    if path.suffix != ".json" or not path.is_file():
+        raise ValueError("--scenario-path must name an existing JSON file")
+    return path, "external-development"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kit", type=Path, required=True)
-    parser.add_argument("--scenario", required=True, help="Filename inside the kit's scenarios directory")
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--scenario", help="Filename inside the kit's scenarios directory")
+    selection.add_argument("--scenario-path", type=Path,
+                           help="Explicit generated/development JSON path outside the kit")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--tool-documentation", help="Explicit Markdown reference under the kit's docs directory")
     args = parser.parse_args()
     kit = args.kit.resolve()
-    candidate = Path(args.scenario)
-    if candidate.name != args.scenario or candidate.suffix != ".json":
-        parser.error("--scenario must be a plain JSON filename")
-    scenario_path = (kit / "scenarios" / candidate).resolve()
-    if not scenario_path.is_relative_to(kit / "scenarios") or not scenario_path.is_file():
-        parser.error("Scenario must exist within the selected kit")
+    try:
+        scenario_path, source_kind = resolve_scenario(
+            kit, name=args.scenario, external_path=args.scenario_path)
+    except ValueError as exc:
+        parser.error(str(exc))
     if args.output.exists():
         parser.error("Output already exists; choose a new path to retain earlier evidence")
     if not os.getenv("ACCESSFLOW_SAMSUNG_BACKEND"):
@@ -114,15 +134,15 @@ def main():
     provenance = source_evidence(scenario_path)
     report = asyncio.run(execute(harness, participants))
     report.update({
-        "mode": "live/public-development/single-run", "commit": commit_revision(),
+        "mode": f"live/{source_kind}/single-run", "commit": commit_revision(),
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "created_at": dt.datetime.now(dt.timezone.utc).isoformat(), "provenance": provenance,
-        "scenario": candidate.name, "time_scale": 1, "tail_ms": 6000,
+        "scenario": scenario_path.name, "time_scale": 1, "tail_ms": 6000,
         "setup_cap_s": 300, "wall_cap_s": 120,
         "kit_sha256": {str(p.relative_to(kit)): hashlib.sha256(p.read_bytes()).hexdigest()
                        for p in sorted((kit / "harness").glob("*.py"))},
         "score": scorer.score_scenario(scenario, report["trace"]) if not report["failure"] else None,
-        "limitation": "One public development attempt; mock external tools, no median or hidden-set claim.",
+        "limitation": f"One {source_kind} attempt; mock external tools, no median or hidden-set claim.",
     })
     write_report(args.output, report)
     print(json.dumps({"report": str(args.output), "failure": report["failure"],

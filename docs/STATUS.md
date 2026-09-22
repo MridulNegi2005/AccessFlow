@@ -1,5 +1,30 @@
 # Implementation status
 
+## Unfamiliar-tool checkpoint — 22 September 2026
+
+The diagnostic runner accepts explicit external development fixtures while retaining
+public filename restrictions and evaluator/participant separation. Four live hosted
+attempts scored100.0: weather, two rental variants and hotel. These exposed examples
+span three tool names; they are not a hidden-set score or repeated-run median.
+Manual review found an unsupported "per night" claim in the hotel answer despite
+its full score. Generic answer grounding is the next A-owned quality task.
+
+Seven runner tests pass; Ruff clean. First full suite1failed/1046passed/1skip/1xfail;
+final rerun1047passed/1skip/1xfail (60.69s). A different B demo test failed in the
+first full run and one of three isolated reruns. It may accept an image-only final
+before the follow-up question is answered; the causal interleaving is not proven.
+Report: docs/reviews/ATISHAY_WEBSOCKET_CORRELATION_FOLLOWUP_2026-09-22.md.
+Atishay owns B synchronization/demo changes; Mridul owns A output provenance and
+integration, with explicit coordination if a shared-contract defect is found.
+No B source, tests or handoff changed. Prior frame timeout/xfail remain open.
+
+Four unchanged traces, suite XML and hashes are retained in
+`docs/evidence/samsung-unseen-2026-09-22/`. The generated fixture seed is20260922;
+raw organizer fixtures/answers are excluded. Full prompt remains default.
+Completed tested changes are pushed to mridul/engine with configured Git identity.
+No coauthor trailers, signoffs, workflow changes, release or submission.
+Overall goal remains active; this checkpoint supersedes historical status below.
+
 ## Request-final checkpoint — 22 September 2026
 
 Resolved historical writes no longer silence unrelated informational follow-ups.

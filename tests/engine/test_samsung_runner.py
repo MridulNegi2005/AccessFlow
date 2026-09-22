@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from scripts.run_samsung_check import execute, write_report
+from scripts.run_samsung_check import execute, resolve_scenario, write_report
 
 
 def participant():
@@ -71,3 +71,25 @@ def test_reports_redact_keys_and_never_overwrite_prior_evidence(tmp_path, monkey
     with pytest.raises(FileExistsError):
         write_report(target, {"replacement": True})
     assert target.read_bytes() == before
+
+
+def test_external_development_input_has_explicit_origin_without_changing_public_rules(tmp_path):
+    kit = tmp_path / "kit"
+    (kit / "scenarios").mkdir(parents=True)
+    public = kit / "scenarios" / "public.json"
+    public.write_text('{}')
+    generated = tmp_path / "generated.json"
+    generated.write_text('{}')
+    assert resolve_scenario(kit, name="public.json") == (public.resolve(), "public-development")
+    assert resolve_scenario(kit, external_path=generated) == (generated.resolve(), "external-development")
+    for bad in ["../generated.json", str(generated), "missing.json", "public.txt"]:
+        with pytest.raises(ValueError):
+            resolve_scenario(kit, name=bad)
+    with pytest.raises(ValueError):
+        resolve_scenario(kit, external_path=tmp_path)
+
+
+@pytest.mark.parametrize("selection", [{}, {"name": "a.json", "external_path": "b.json"}])
+def test_scenario_selection_requires_exactly_one_input(tmp_path, selection):
+    with pytest.raises(ValueError, match="exactly one"):
+        resolve_scenario(tmp_path, **selection)
