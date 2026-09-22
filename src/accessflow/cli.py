@@ -71,17 +71,16 @@ def main():
             parser.error("--vision-provider requires --components local")
         if args.corpus_root is not None and not args.corpus_root.is_dir():
             parser.error("--corpus-root must be an existing directory")
-        # Threaded to Agent through ACCESSFLOW_CORPUS_ROOT (see engine.Agent.__init__)
-        # rather than a new constructor path here: this is the only normal-harness route
-        # into replay()/run_suite(), which construct Agent themselves and are not part of
-        # this fix's owned files. The resolved absolute path stays only in that env var,
-        # for the process that actually needs it -- never in component_config, which
-        # replay.py copies verbatim into trace metadata and evidence bundles get
-        # committed to git. A committed absolute path is typically a home directory, so
-        # component_config records only what a run's reproducer needs: whether a corpus
-        # was configured, and the directory's own basename -- see
-        # corpus.corpus_manifest, which likewise only ever exposes logical document
-        # names, never a filesystem path.
+        # Threaded explicitly into replay()/run_suite() (corpus_root=...), which is now
+        # the primary route to Agent (see engine.Agent.__init__). ACCESSFLOW_CORPUS_ROOT
+        # is still set alongside it: it is documented behaviour that a child process /
+        # worker may rely on that env var directly, and removing it is out of scope here.
+        # The resolved absolute path never lands in component_config, which replay.py
+        # copies verbatim into trace metadata and evidence bundles get committed to git.
+        # A committed absolute path is typically a home directory, so component_config
+        # records only what a run's reproducer needs: whether a corpus was configured,
+        # and the directory's own basename -- see corpus.corpus_manifest, which likewise
+        # only ever exposes logical document names, never a filesystem path.
         resolved_corpus_root = str(args.corpus_root.resolve()) if args.corpus_root is not None else None
         if resolved_corpus_root is not None:
             os.environ["ACCESSFLOW_CORPUS_ROOT"] = resolved_corpus_root
@@ -144,7 +143,7 @@ def main():
                     backend=backend.name if backend else "offline-fake",
                     perception_factory=perception_factory, turn_policy_factory=policy_factory,
                     component_config=component_config, inference_timeout=args.inference_timeout,
-                    disabled=tuple(args.disable)))
+                    disabled=tuple(args.disable), corpus_root=resolved_corpus_root))
         result = {key: value for key, value in report.items() if key != "cases"}
         result["report"] = str(Path(args.output_dir) / "report.json")
         print(json.dumps(result, indent=2))
@@ -159,7 +158,7 @@ def main():
                             perception=perception_factory() if perception_factory else None,
                             turn_policy=policy_factory() if policy_factory else None,
                             component_config=component_config, inference_timeout=args.inference_timeout,
-                    disabled=tuple(args.disable)))
+                    disabled=tuple(args.disable), corpus_root=resolved_corpus_root))
     print(json.dumps(result, indent=2))
     if args.command == "replay" and (
             result["completion_status"] != "completed" or result["task_oracle"]["passed"] is False):
