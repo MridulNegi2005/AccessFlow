@@ -68,3 +68,15 @@ deprecation warnings. New adapter tests: **13 passed**. Ruff passed. Samsung
 `harness/protocol.py` accepted all five translated action types with synthetic
 data. This is protocol-shape evidence, not a public-scenario or live-model score.
 The existing conflicting-frame expected failure is still unresolved.
+
+## Focused boundary review
+
+A Luna high read-only review of `samsung.py`, `samsung_protocol.py` and their
+13 tests reported no concrete findings in the inspected cancellation, timeout,
+path, shutdown and documented-schema boundaries. The reviewer reran the focused
+suite: 13 passed. This is a limited code review, not a full security audit or
+live/official evaluation. Source checkpoint: `865a266`.
+
+The current shell has no Samsung backend/media-root or Groq credential/model
+configuration loaded. A local `.env` exists but was not loaded during this slice.
+Configuration and warm-up remain to be exercised; no secrets were printed.
