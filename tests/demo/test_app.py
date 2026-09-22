@@ -44,7 +44,7 @@ spec.loader.exec_module(demo_app)
 DemoPerception = demo_app.DemoPerception
 event_from_message = demo_app.event_from_message
 
-def _png_bytes(*, width: int = 2, height: int = 3) -> bytes:
+def _png_bytes(*, width: int = 2, height: int = 3, filter_byte: int = 0) -> bytes:
     def chunk(kind: bytes, data: bytes) -> bytes:
         return (
             struct.pack(">I", len(data))
@@ -53,7 +53,7 @@ def _png_bytes(*, width: int = 2, height: int = 3) -> bytes:
             + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
         )
 
-    row = b"\x00" + b"\x00\x40\x80\xff" * width
+    row = bytes([filter_byte]) + b"\x00\x40\x80\xff" * width
     pixels = row * height
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
     return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(pixels)) + chunk(b"IEND", b"")
@@ -4011,7 +4011,7 @@ def test_browser_media_budget_rejects_overflow_without_materializing(tmp_path: P
     assert len(list(tmp_path.iterdir())) == 1
 
 
-def test_browser_media_budget_releases_failed_validation_reservation(tmp_path: Path):
+def test_browser_media_budget_consumes_failed_validation_reservation(tmp_path: Path):
     invalid_wav = b"RIFF" + b"\x00\x00\x00\x00" + b"WAVE"
     budget = demo_app._SessionMediaBudget(limit=len(invalid_wav))
 
@@ -4029,7 +4029,54 @@ def test_browser_media_budget_releases_failed_validation_reservation(tmp_path: P
             media_budget=budget,
         )
 
-    assert budget.used == 0
+    assert budget.used == len(invalid_wav)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_browser_media_budget_caps_repeated_invalid_png_validation(monkeypatch, tmp_path: Path):
+    invalid_png = _png_bytes(filter_byte=5)
+    budget = demo_app._SessionMediaBudget(limit=len(invalid_png) * 2)
+    validation_calls = 0
+    original_validator = demo_app.validate_png
+
+    def counted_validator(path: Path):
+        nonlocal validation_calls
+        validation_calls += 1
+        return original_validator(path)
+
+    monkeypatch.setattr(demo_app, "validate_png", counted_validator)
+
+    for frame_id in ("invalid-frame-1", "invalid-frame-2"):
+        with pytest.raises(ValueError, match="valid PNG"):
+            event_from_message(
+                "session-1",
+                {
+                    "kind": "frame",
+                    "payload": {
+                        "data_base64": base64.b64encode(invalid_png).decode("ascii"),
+                        "frame_id": frame_id,
+                    },
+                },
+                media_root=tmp_path,
+                media_budget=budget,
+            )
+
+    with pytest.raises(ValueError, match="16 MiB aggregate limit"):
+        event_from_message(
+            "session-1",
+            {
+                "kind": "frame",
+                "payload": {
+                    "data_base64": base64.b64encode(invalid_png).decode("ascii"),
+                    "frame_id": "invalid-frame-3",
+                },
+            },
+            media_root=tmp_path,
+            media_budget=budget,
+        )
+
+    assert validation_calls == 2
+    assert budget.used == len(invalid_png) * 2
     assert list(tmp_path.iterdir()) == []
 
 
@@ -4049,7 +4096,7 @@ def test_browser_media_budget_cleans_unexpected_validation_failure(
         demo_app._materialize_upload("audio", payload, tmp_path, media_budget=budget)
 
     assert list(tmp_path.iterdir()) == []
-    assert budget.used == 0
+    assert budget.used == len(fixture.read_bytes())
 
 
 def test_browser_media_upload_rejects_oversized_encoded_payload(tmp_path: Path):
