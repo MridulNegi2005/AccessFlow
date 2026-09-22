@@ -1054,3 +1054,10 @@ changed.
 2026-09-17 AI-assisted implementation: Closed the owned monotonic media-admission gap after a deterministic invalid-PNG repetition probe. Replaced failed-upload quota refunds with cumulative decoded-byte accounting, retained cleanup, updated assertions and added the aggregate-limit regression. Demo 144 passed, 1 xfailed; full suite 808 passed, 1 xfailed, 2 warnings; Ruff passed.
 
 2026-09-17 AI-assisted security review: Ran a bounded diff scan over the committed media-admission change in `demo/app.py`. The scan reviewed decoded-byte accounting, rejected-upload cleanup and the direct materialization path; it found zero reportable findings. Daybreak access was not granted. Evidence remains local static review plus deterministic tests, with no live service claim.
+
+## 2026-09-22 — Codex branch integration and kit intake
+
+- Prompt: Merge Mridul changes first, then Atishay into main; kit received in parent directory.
+- Outputs: Checkpointed other AI changes (not authored by this session), merged both branches without conflicts, documented actual kit protocol and ownership seams. Updated status and handoff records.
+- Tests: Before integration 833 passed/1 xfailed; after integration 842 passed/1 xfailed, Ruff passed, offline-fake dev suite 4/4. Two dependency deprecation warnings.
+- Limits: No official evaluation, live inference, security certification or Docker execution. No further human review recorded.
