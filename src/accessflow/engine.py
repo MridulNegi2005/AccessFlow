@@ -78,7 +78,7 @@ class Agent:
 
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
                  scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
-                 frame_debounce_s=0.4, disabled=(), corpus_root=None):
+                 frame_debounce_s=0.4, disabled=(), corpus_root=None, fast_read_retry=False):
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
         if frame_debounce_s < 0:
@@ -89,6 +89,9 @@ class Agent:
         # Named components a baseline run may switch off. Every other behaviour, the model,
         # the tools and the scenarios stay identical so only this component is compared.
         self.disabled = frozenset(disabled)
+        if not isinstance(fast_read_retry, bool):
+            raise ValueError("fast_read_retry must be a boolean")
+        self.fast_read_retry = fast_read_retry
         self.perception = perception
         self.turn_policy = turn_policy
         self.reasoner = reasoner
@@ -145,6 +148,8 @@ class Agent:
         self.ledger = {}
         self.seen = set()
         self.dispatched = {}
+        self.call_signatures = {}
+        self.call_input_epochs = {}
         self.generation = 0
         self.request_id = str(uuid4())
         self.last_request_finished = False
@@ -1061,6 +1066,8 @@ class Agent:
             self.dispatched[signature] = call.call_id
             self.attempt_counts[signature] = self.attempt_counts.get(signature, 0) + 1
             self.ledger[call.call_id] = call
+            self.call_signatures[call.call_id] = signature
+            self.call_input_epochs[call.call_id] = self.request_input_epoch
             dispatched_indices[proposal_index] = call.call_id
             self.call_causes[call.call_id] = self.current_event_id
             self.state.status = "working"
@@ -1462,7 +1469,62 @@ class Agent:
                 self.tool_failures.append(result.model_copy(update={"result": {}, "committed": False}, deep=True))
                 del self.tool_failures[:-12]
                 self._results_admitted += 1
-                self._start_plan()
+                if not await self._retry_read(call, result):
+                    self._start_plan()
+
+    async def _retry_read(self, call, result):
+        """One exact transient-read retry; never retry an effect or stale input.
+
+        Shares the existing logical-operation attempt budget with model-driven
+        retries. The controller transfers any current binding's source identity
+        only across this exact same-arguments, same-operation retry.
+        """
+        if (not self.fast_read_retry or call.effect != "read" or call.status != "failed"
+                or result.status != "failed" or result.committed
+                or result.error not in {"timeout", "TimeoutError", "temporary_unavailable"}
+                or call.request_id != self.request_id
+                or self.call_input_epochs.get(call.call_id) != self.request_input_epoch
+                or call.call_id in self.invalidated or not self.latest_complete or not self.speech_ready
+                or self.state.correction_pending or self.last_request_finished
+                or self.state.status in {"stopped", "ended", "no_progress"}
+                or (self.planner is not None and not self.planner.done())):
+            return False
+        if any(n not in self.state.slots or self.state.slots[n].revision != rev
+               for n, rev in call.dependencies.items()):
+            return False
+        signature = self.call_signatures.get(call.call_id)
+        if (signature is None or self.dispatched.get(signature) != call.call_id
+                or self.attempt_counts.get(signature) != 1):
+            return False
+        manifest = self.manifests.get(call.tool)
+        if manifest is None or manifest.effect != "read":
+            return False
+        try:
+            validate(call.arguments, manifest.parameters)
+        except Exception:
+            return False
+        replacement = call.model_copy(deep=True, update={"call_id": str(uuid4()), "status": "pending",
+                                                         "retry_of_call_id": call.call_id})
+        self.attempt_counts[signature] = 2
+        self.dispatched[signature] = replacement.call_id
+        self.ledger[replacement.call_id] = replacement
+        self.call_signatures[replacement.call_id] = signature
+        self.call_input_epochs[replacement.call_id] = self.request_input_epoch
+        self.call_causes[replacement.call_id] = self.call_causes[call.call_id]
+        for bound in self.write_contracts.values():
+            if (bound.request_id != self.request_id or bound.input_epoch != self.request_input_epoch
+                    or bound.intent != self.state.intent
+                    or any(n not in self.state.slots or self.state.slots[n].revision != rev
+                           for n, rev in bound.revisions.items())):
+                continue
+            for rule in bound.contract.delegated_arguments.values():
+                if rule.source_call_id == call.call_id:
+                    rule.source_call_id = replacement.call_id
+        self.state.status = "working"
+        await self._emit("tool_call", **replacement.model_dump(),
+                         caused_by_event_id=self.call_causes[replacement.call_id])
+        self._spawn(self._execute(replacement, manifest.timeout_s))
+        return True
 
     async def _reconcile(self, status_call, result):
         """Executor-normalized status evidence, restricted to the manifest's status tool.

@@ -1093,3 +1093,11 @@ changed.
 **Notes:** Final996passed/1skip/1xfail; Ruff clean; offline dev4/4. Live attempts38.5(validation),15.4(rate limit),100.0(confirmed chain). No isolated ablation/median claim. Astra high agents reviewed authority/integration and implemented isolated telemetry/loader/tests while authorized; user then prohibited further Astra delegation. Luna implemented bounded pure resolver earlier. Root integrated/reviewed/fixed and performed live evaluation. No teammate files edited, no keys retained, no push/release. Next: bounded transient-read recovery and broader public cases.
 
 ---
+
+## [2026-09-22 14:12] — Codex
+**Task:** Continue A-side transient-read recovery without subagents.
+**Changes:** Opt-in controller retry, Samsung default/profile switch, physical retry lineage, controlled binding transfer, runner ledger evidence, 25 tests, retained matched public attempts, and separate B timing follow-up.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final 1021 passed/1 skip/1 xfail; preceding full run had one intermittent B failure, three isolated repeats and final full rerun passed. Ruff clean, fake dev 4/4. Live fast/control totals 100.0/81.5; control final hit quota. Single pair, not broad reliability or pure latency evidence. No B source/test edits, no push/release. Prompt: continue only our portion, no subagents except Luna if needed; root implemented and verified directly. No human modifications recorded. Next: broader public text cases.
+
+---
