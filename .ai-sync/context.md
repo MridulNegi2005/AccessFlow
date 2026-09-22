@@ -1101,3 +1101,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Full1038 passed/1skip/1xfail; focused83 passed; Ruff clean. Live84.3 with validation failure and rate limit, so default stays full. AI-assisted implementation/testing; no human edits recorded. No B source/test changes. Prior completed work pushed through a21067b following user's new push authorization. Future tested commits may be pushed; no coauthor trailers or assistant-name signoffs. No release or submission.
 
 ---
+
+## [2026-09-22 14:47] — Implementation checkpoint
+**Task:** Fix request-scoped informational finals and first-plan unexecuted write claims.
+**Changes:** Historical-write guard scope, internal request completion preserving listening status, newly established write guard, six tests plus revised inherited silence regression, documentation and retained no-tool live evidence.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final1044 passed/1skip/1xfail; focused78 passed; Ruff clean. Initial status regression (1failure) and overbroad guard (2failures) corrected without B edits; history documented. Live public no-tool100.0 preceded the final guard extension; no false claim of live coverage of that guard. AI-assisted changes tested locally; no human edits recorded. Push authorized on mridul/engine, no coauthor trailers/name signoffs, no workflow/release/submission actions. Next: unseen tools and remaining model/packaging work.
+
+---

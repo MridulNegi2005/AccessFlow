@@ -1,5 +1,34 @@
 # Mridul workstream handoff
 
+## Request-final checkpoint — 22 September 2026
+
+Resolved historical writes no longer silence unrelated informational follow-ups.
+Informational finals close their request internally while preserving the demo's
+`listening` status. Current and unresolved effects still require tool evidence.
+A first proposal that establishes write intent cannot substitute a prose success
+claim for dispatch; incomplete waiting-for-input and read-only paths remain valid.
+
+Final suite: **1044 passed, 1 skipped, 1 xfailed**, two dependency warnings,
+54.82 seconds. Six new regression cases and a revised historical silence test;
+focused78 passed. Ruff and diff checks clean. Intermediate regressions in exposed
+status, promised-image waiting and a read-only fixture were corrected in A code;
+no B tests were changed. Full history: `docs/INFORMATIONAL_FOLLOWUPS_2026-09-22.md`.
+
+Live Samsung no-tool case: **100.0**, zero tool calls, final at735ms and both model
+requests successful. This public run preceded the additional first-plan write
+claim guard and does not exercise it; source provenance is retained in
+`docs/evidence/samsung-informational-2026-09-22/README.md`. Follow-up/guard evidence
+is deterministic mock integration, not a live multi-turn claim.
+
+Next A work: unseen-tool public evaluation, compact-profile selection quality and
+input quota, then packaging/remaining boundary review. Full prompt stays default.
+Media, timing and frame semantics still need Atishay coordination. Known skip,
+frame xfail and separately reported intermittent B timing issue remain open.
+No B implementation changes, subagents, workflow changes, submission or release tag.
+Completed tested commits are pushed to mridul/engine using configured Git identity,
+without coauthor trailers or assistant-name signoffs. Overall goal remains active.
+This checkpoint supersedes historical status below.
+
 ## Compact profile checkpoint — 22 September 2026
 
 Added explicit `compact-v1` prompt presentation with condensed guidance, generated
