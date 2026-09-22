@@ -46,6 +46,19 @@ async def _one(adapter: LocalPerception, event):
     return observations[0]
 
 
+class _ObservedSemaphore:
+    def __init__(self, delegate):
+        self.delegate = delegate
+        self.acquire_started = asyncio.Event()
+
+    async def acquire(self):
+        self.acquire_started.set()
+        return await self.delegate.acquire()
+
+    def release(self):
+        self.delegate.release()
+
+
 @pytest.mark.parametrize("timeout_s", [0, -1, math.nan, math.inf, -math.inf, "fast"])
 def test_local_perception_rejects_invalid_timeout(timeout_s):
     with pytest.raises(ValueError, match="timeout_s"):
@@ -197,7 +210,12 @@ async def test_repeated_audio_timeouts_keep_one_native_call_tracked(tmp_path: Pa
             session_id="gated-session",
             payload=Audio(path=str(wav_path), utterance_id=f"gated-{index}"),
         )
-        with pytest.raises(RuntimeError, match=r"audio perception timed out after 0.02s"):
+        expected_timeout = (
+            r"audio perception timed out after 0.02s"
+            if index == 0
+            else r"audio perception timed out waiting for native capacity after 0.02s"
+        )
+        with pytest.raises(RuntimeError, match=expected_timeout):
             [item async for item in adapter.observe(event)]
 
     assert calls == 1
@@ -1052,14 +1070,16 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
         )
     )
     assert await asyncio.to_thread(provider_started.wait, 1)
+    worker = adapter._vision_workers["s1"]
+    observed_slot = _ObservedSemaphore(worker.native_slot)
+    worker.native_slot = observed_slot
     second_task = asyncio.create_task(
         collect(
             adapter,
             FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
         )
     )
-    await asyncio.sleep(0.05)
-    await asyncio.sleep(0.01)
+    await asyncio.wait_for(observed_slot.acquire_started.wait(), timeout=1)
     release_first.set()
 
     first, second = await asyncio.gather(first_task, second_task)
@@ -1068,6 +1088,70 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
     assert second[0].text == "current visual evidence"
     assert calls == paths
     assert await asyncio.to_thread(first_finished.wait, 1)
+
+
+@pytest.mark.asyncio
+async def test_stale_frame_queue_timeout_does_not_admit_native_work(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / "first.png", tmp_path / "second.png"]
+    for path in paths:
+        _write_png(path)
+    provider_started = threading.Event()
+    release_first = threading.Event()
+    first_finished = threading.Event()
+    calls = []
+
+    def provider(path: Path) -> str:
+        calls.append(path)
+        if len(calls) == 1:
+            provider_started.set()
+            try:
+                assert release_first.wait(1)
+            finally:
+                first_finished.set()
+            return "stale visual evidence"
+        return "must not be admitted"
+
+    async def collect(adapter, event):
+        return [observation async for observation in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider, timeout_s=0.05)
+    first_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[0]), frame_id="frame-1")),
+        )
+    )
+    assert await asyncio.to_thread(provider_started.wait, 1)
+    worker = adapter._vision_workers["s1"]
+    observed_slot = _ObservedSemaphore(worker.native_slot)
+    worker.native_slot = observed_slot
+    second_task = asyncio.create_task(
+        collect(
+            adapter,
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
+        )
+    )
+
+    await asyncio.wait_for(observed_slot.acquire_started.wait(), timeout=1)
+    assert await first_task == []
+    with pytest.raises(
+        RuntimeError,
+        match=r"image perception timed out waiting for native capacity after 0.05s",
+    ):
+        await second_task
+    assert calls == [paths[0]]
+    assert adapter.native_work_in_flight == 1
+
+    release_first.set()
+    assert await asyncio.to_thread(first_finished.wait, 1)
+    for _ in range(20):
+        if adapter.native_work_in_flight == 0:
+            break
+        await asyncio.sleep(0)
+    assert adapter.native_work_in_flight == 0
+    await adapter.aclose()
 
 def test_png_validation_returns_structural_metadata(tmp_path: Path):
     image_path = tmp_path / "valid.png"
