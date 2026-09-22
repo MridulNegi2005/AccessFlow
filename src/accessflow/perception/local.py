@@ -561,6 +561,13 @@ class LocalPerception:
         modality: str,
         native_slot: asyncio.Semaphore,
     ) -> str:
+        """Bound admission and provider execution as separate phases.
+
+        ``timeout_s`` historically bounded the provider await. The native slot
+        adds the same bounded wait for admission, but it is not a single total
+        budget. A provider that outlives its execution deadline remains tracked
+        and owns the slot until its underlying thread actually returns.
+        """
         acquired = False
         native: asyncio.Task[str] | None = None
         try:
@@ -571,7 +578,8 @@ class LocalPerception:
                     await asyncio.wait_for(native_slot.acquire(), timeout=self._timeout_s)
                 except TimeoutError as error:
                     raise RuntimeError(
-                        f"{modality} perception timed out after {self._timeout_s:g}s"
+                        f"{modality} perception timed out waiting for native capacity "
+                        f"after {self._timeout_s:g}s"
                     ) from error
             acquired = True
             native = asyncio.create_task(asyncio.to_thread(provider, path))

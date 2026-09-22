@@ -568,3 +568,23 @@ No implementation is implied by this packet. Until each decision is accepted, th
 xfail remains in place, stop policy remains unchanged, whole-file upload remains labeled as lacking
 speech-endpoint evidence, the demo reasoner remains separate, and media replay remains routing/
 observation evidence rather than completed task evaluation.
+
+## 2026-09-23 - Stale-frame timeout boundary
+
+**Task:** Reproduce and repair the intermittent stale-frame timeout reported on 22 September
+without allowing overlapping native work.
+
+**Changes:** Kept one native permit held by each underlying provider thread until its completion
+callback. Documented the existing two-phase timeout semantics: provider execution retains the
+historical `timeout_s` deadline, while permit admission has an independent bounded wait using
+the same configured value. Queue expiry now reports that phase explicitly. Replaced the stale
+frame test's fixed 50ms/10ms sleeps with an observed permit-acquisition gate, and added a
+separate queue-expiry regression proving the second provider is never called while stale native
+work remains in flight. Updated the repeated audio timeout assertion for the same distinction.
+
+**Status:** The repaired stale-frame success test passed 20/20 repeated isolated runs; the
+focused `test_local.py` module passed 58 tests; `tests/perception` passed 218 tests; the full
+suite passed 809 tests with 1 retained xfail and 2 warnings; Ruff and `git diff --check` passed.
+The original failure was scheduler-sensitive deadline timing, not inactivity or evidence that
+native work could safely overlap. No engine, contract, adapter, dependency or media files were
+changed. Live provider latency remains unverified.

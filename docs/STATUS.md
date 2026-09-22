@@ -119,6 +119,17 @@ Multimodal coverage counts are unchanged from the `fd53aca` snapshot below (2 au
 over one recording, 1 visual file blocked on A2). See
 [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is current.
 
+### 2026-09-23 stale-frame timeout checkpoint
+
+The intermittent stale-frame timeout report is covered in the owned perception lane. The
+native timeout boundary now documents two independent phases: `timeout_s` bounds provider
+execution as before, and the same value bounds waiting for the per-session native permit; it
+is not a single total budget. A timed-out native provider keeps its permit and remains tracked
+until the underlying thread returns. The stale-frame success test now waits for observed permit
+acquisition instead of fixed sleeps, and a separate regression proves genuine queue expiry
+does not admit a second native call. Perception: 218 passed; full suite: 809 passed, 1 xfailed,
+2 warnings; Ruff and diff checks pass. This is deterministic local evidence only.
+
 ---
 
 ## Historical current-status snapshot: commit `fd53aca` (16 September 2026)
@@ -668,7 +679,7 @@ Updated 16 September 2026.
   the sender before perception teardown. The sender-lifecycle regression passes; full verification
   passes 784 tests with one retained conflict xfail and Ruff.
 
-## Still required (Workstream B, as recorded 13 September 2026)
+## Still required (Workstream B, reviewed 23 September 2026)
 
 - Broader engine race tests and validation of the normalized status reconciliation route.
 - Live reasoning execution, official-kit adapter after the kit is supplied, replay and metrics.
@@ -677,6 +688,10 @@ Updated 16 September 2026.
 - Manual browser/device smoke proof, a completed voluntary feedback session, demo video and final presentation assembly.
 - Docker/CI verification, live vision/reasoning execution and scoring of the remaining 42 scenarios,
   reviewed disclosure and final release assembly.
+
+The 22 September intermittent stale-frame timeout boundary is no longer an untested item: it
+has explicit admission/expiry coverage and repeated isolated success evidence. It does not
+certify live provider latency or eliminate the remaining coordination and release gaps above.
 
 No live model, official compatibility, latency or completion target is currently certified.
 
