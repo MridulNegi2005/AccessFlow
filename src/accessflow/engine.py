@@ -128,7 +128,8 @@ class Agent:
         self.observations = {}
         self.sources = {}
         self.results = []
-        # Monotonic count of every append ever made to self.results, across the whole
+        self.tool_failures = []
+        # Monotonic count of admitted tool outcomes (results and failures), across the whole
         # session. Unlike len(self.results), never decreases: _invalidate_dependencies
         # removes stale entries FROM self.results (so a dependent slot update can drop
         # its own read's evidence), but must not be able to rewind this counter (H1).
@@ -476,6 +477,10 @@ class Agent:
         return SessionView(session_id=self.session_id, state=self.state.model_copy(deep=True),
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
+                           tool_failures=[r.model_copy(deep=True) for r in self.tool_failures
+                               if self.ledger[r.call_id].request_id == self.request_id
+                               and all(self.state.slots.get(key) and self.state.slots[key].revision == revision
+                                   for key, revision in self.ledger[r.call_id].dependencies.items())],
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
                            write_pending=self.write_intent_retained,
                            repeated_completed_call=self.repeated_completed_call,
@@ -1371,6 +1376,18 @@ class Agent:
             if call.effect == "write":
                 self.last_request_finished = True
             await self._emit("error", code="tool_failed", call_id=call.call_id, detail=result.error)
+            if call.effect == "read":
+                # A failed read is planning evidence, not a dead end or a write
+                # authorization. Let the reasoner correct its query, use the
+                # existing one-retry budget, or explain the failure. Count this
+                # admission just like successful results so failure-triggered
+                # replanning cannot masquerade as fresh user speech.
+                # Keep refused corpus contents and incidental failed-tool fields
+                # out of the usable-result evidence channel.
+                self.tool_failures.append(result.model_copy(update={"result": {}, "committed": False}, deep=True))
+                del self.tool_failures[:-12]
+                self._results_admitted += 1
+                self._start_plan()
 
     async def _reconcile(self, status_call, result):
         """Executor-normalized status evidence, restricted to the manifest's status tool.

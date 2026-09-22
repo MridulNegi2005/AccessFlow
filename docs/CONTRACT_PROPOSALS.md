@@ -179,3 +179,21 @@ talk over a question that was already coming.
 "Conflicting visual evidence requires resolution" stays open. Replacement frames are handled
 by source and revision freshness, but the controller does not represent two frames that
 disagree.
+
+## A-side additive planner failure context — 22 September 2026
+
+`SessionView.tool_failures: list[ToolResult] = []` is an optional internal planner
+field. Existing callers can omit it. It does not change the official queue
+protocol, output snapshots, or perception/worker inputs.
+
+The controller records a failed current read separately from usable `results`,
+strips its result payload and committed flag, and offers the reasoner another
+planning step. The existing call-signature attempt budget still permits at most
+two identical attempts. Errors are not successful evidence and never create
+write authority. Every admitted failure advances the monotonic outcome counter
+used by authority guards. At most 12 failures are retained, and planner views
+filter them by active request and current dependency revisions.
+
+Ownership: Mridul's contracts/controller and engine tests. Atishay need not
+change perception, policy or demo files for this field. This is not resolution
+of C1-C4 media/endpoint coordination or of delegated tool-argument authority.

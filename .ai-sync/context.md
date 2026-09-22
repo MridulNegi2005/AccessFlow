@@ -1053,3 +1053,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Reviewer found no concrete scoped findings and reran13 tests successfully. Full suite855pass/1xfail previously measured on same source. No official/live evaluation, no push of this slice. Next: grounded chained tool use and error recovery before public evaluation.
 
 ---
+
+## [2026-09-22 12:41] — Codex
+**Task:** Recover from failed reads without weakening corpus or write-authority invariants.
+**Changes:** Added optional SessionView.tool_failures, separate sanitized error history and replanning, four regression tests, contract note and handoff updates.
+**Status:** Completed slice; full objective remains in progress.
+**Notes:** Final suite859 passed/1 xfailed, Ruff clean, offline dev4/4. Initial direct-results approach caused three corpus failures; corrected implementation keeps original tests intact. No teammate source edits, live model run, public kit score or push.
+
+---

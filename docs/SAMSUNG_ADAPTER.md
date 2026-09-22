@@ -80,3 +80,11 @@ live/official evaluation. Source checkpoint: `865a266`.
 The current shell has no Samsung backend/media-root or Groq credential/model
 configuration loaded. A local `.env` exists but was not loaded during this slice.
 Configuration and warm-up remain to be exercised; no secrets were printed.
+
+## Read-failure recovery follow-up
+
+The controller now replans on a current failed read using separate sanitized
+`tool_failures` rather than admitting failure payloads into usable results.
+The existing two-attempt limit is preserved and errors cannot establish write
+permission. Final suite:859 passed/1 xfailed; Ruff clean; offline dev4/4.
+Official transport/live-model retry behavior still needs scored-scenario evidence.

@@ -1,5 +1,27 @@
 # Mridul workstream handoff
 
+## Read-failure recovery checkpoint — 22 September 2026
+
+Latest Workstream A validation: **859 passed, 1 xfailed**, with two dependency
+deprecation warnings; Ruff passed; offline-fake development scenarios **4/4**.
+Commands: `uv run --offline --frozen --extra dev pytest -q` (68.11 seconds),
+`uv run --offline --frozen --extra dev ruff check .`, and
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+
+Fixed a reproduced silence after failed read-only tools: the reasoner now gets
+sanitized `tool_failures` separately from usable results, and can use the existing
+one-retry allowance or explain the failure. Four new tests cover recovery,
+repeated failure, the retry cap, and refusal to create write permission.
+The first implementation broke three corpus invariants; separation of failures
+restored all three original tests without weakening their assertions.
+
+No Atishay-owned files changed. No live model, public Samsung score or full
+security audit was run. The existing conflicting-frame xfail remains unresolved.
+Next: legitimate tool-derived argument grounding and real Samsung configuration;
+media/endpoint work remains coordinated with Atishay. Current work is local on
+`mridul/engine`; main remains the earlier verified merge.
+
+
 ## Samsung boundary checkpoint — 22 September 2026
 
 This checkpoint supersedes older statements that the official adapter is entirely
