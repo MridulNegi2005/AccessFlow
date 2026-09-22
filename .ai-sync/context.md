@@ -1029,3 +1029,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 2026-09-17 verification: Rechecked live vision availability before attempting another benchmark. Ollama executable and loopback service were unavailable, the vision-model setting was absent, and no hosted key was configured; no live run was started. Recorded the fail-closed result in docs/feedback/VISION_MEASUREMENTS.md. No source or protected files changed.
 
 2026-09-17 verification: Reproduced the owned browser media-budget refund path with a CRC-valid, decompression-complete invalid PNG. Made decoded upload admission monotonic for each session, retained file cleanup, and added a regression proving repeated invalid validation is capped before the third validator call. Demo: 144 passed, 1 xfailed; full suite: 808 passed, 1 xfailed, 2 warnings; Ruff clean. No protected files changed or pushed.
+
+## [2026-09-22 12:14] — Codex
+**Task:** Merge Mridul first, then Atishay; inspect received Samsung kit.
+**Changes:** Preserved pre-existing engine fixes in 93afd57; merge commits 5c84976 and a0c36c5; integration note and current handoff/status/AI-use records.
+**Status:** Completed integration; official adapter remains next.
+**Notes:** 842 passed, 1 xfailed; Ruff passed; offline-fake dev 4/4. Kit README is Theme 5 despite Theme02 ZIP name. No official score or live-model result. No new source implementation. Coordinate media seams with Atishay.
+
+---

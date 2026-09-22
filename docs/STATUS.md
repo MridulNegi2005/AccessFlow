@@ -1,5 +1,28 @@
 # Implementation status
 
+## Current integration checkpoint — 22 September 2026
+
+This dated checkpoint supersedes older current-state, branch and kit-availability
+claims below; those sections are historical records, not fresh verification.
+Mridul merged first (`5c84976`), then Atishay (`a0c36c5`), without conflicts.
+The other AI's pending engine/test changes were preserved in `93afd57`.
+
+- Combined suite: **842 passed, 1 xfailed**, with two dependency deprecation warnings.
+  Command: `uv run --offline --frozen --extra dev pytest -q`.
+- Ruff: passed (`uv run --offline --frozen --extra dev ruff check .`).
+- Offline-fake development suite: **4/4 passed** (`python -m accessflow.cli suite scenarios/dev`).
+- The retained conflicting-frame xfail is not proof of safe conflict handling.
+- Both branch tips are ancestors of main. No implementation added by this merge session.
+- Samsung kit is now available outside the repository. Its README says Theme 5;
+  the enclosing ZIP name says Theme02. Official adapter is still unimplemented.
+- No live inference, official evaluation, Docker test or fresh security audit was run.
+  Prior issue-closure statements are not independently certified by these tests.
+- Workflow remains manual-only; no workflow enabled or dispatched.
+
+Next: implement Mridul's official queue adapter, coordinating MP3/timing/frame
+interfaces with Atishay. Details and ownership: docs/INTEGRATION_2026-09-22.md.
+
+
 Workstream A remains in progress. This is implementation evidence, not an evaluated
 submission.
 
