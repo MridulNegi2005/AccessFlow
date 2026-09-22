@@ -3,12 +3,14 @@
 import asyncio
 import json
 import os
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
 from jsonschema import Draft202012Validator, validate
 from jsonschema.exceptions import ValidationError as PlanSchemaViolation
+from pydantic import ValidationError as PlanModelViolation
 
 from .clock import RealClock
 from .contracts import (
@@ -19,6 +21,9 @@ from .contracts import (
 from .corpus import (
     CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
 )
+from .result_binding import BindingError
+from .write_binding import capture, validate_binding
+from .validation_diagnostics import validation_summary
 
 
 # Bound on any proposal-supplied value interpolated into a spoken/logged `clarify`
@@ -65,6 +70,7 @@ class WorkerMessage:
     # (new/partial speech or an image). False for a plan triggered internally by a
     # tool result, retry, or reconciliation continuation for the same request.
     fresh_evidence: bool = False
+    evidence_mark: int | None = None
 
 
 class Agent:
@@ -128,6 +134,8 @@ class Agent:
         self.observations = {}
         self.sources = {}
         self.results = []
+        self.write_contracts = {}
+        self.last_plan_error = None
         self.tool_failures = []
         # Monotonic count of admitted tool outcomes (results and failures), across the whole
         # session. Unlike len(self.results), never decreases: _invalidate_dependencies
@@ -477,6 +485,11 @@ class Agent:
         return SessionView(session_id=self.session_id, state=self.state.model_copy(deep=True),
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
+                           write_contracts=[b.contract.model_copy(deep=True)
+                               for b in self.write_contracts.values()
+                               if b.request_id == self.request_id
+                               and b.input_epoch == self.request_input_epoch],
+                           last_plan_error=deepcopy(self.last_plan_error),
                            tool_failures=[r.model_copy(deep=True) for r in self.tool_failures
                                if self.ledger[r.call_id].request_id == self.request_id
                                and all(self.state.slots.get(key) and self.state.slots[key].revision == revision
@@ -560,6 +573,7 @@ class Agent:
             # Partial plans may prepare reads but may never authorize writes.
             self._start_plan(source=key)
         elif message.kind == "plan":
+            self.last_plan_error = None
             self.current_event_id = self.source_events.get(message.source)
             # Stashed on self (rather than an _apply parameter) so subclasses that
             # override _apply(self, plan, source=None) -- its signature before this
@@ -567,18 +581,27 @@ class Agent:
             self._fresh_evidence = message.fresh_evidence
             await self._apply(message.value, message.source)
         elif message.kind == "plan_rejected":
+            self.last_plan_error = message.value
             await self._emit("error", code="plan_schema_rejected", detail=message.value)
-            await self._offer_recovery(self.schema_rejection_recoveries)
+            # Retrying a rejected fresh plan reinterprets the SAME input. It may
+            # keep that provenance only if no result has since been admitted.
+            retry_fresh = (message.fresh_evidence and message.source == self.planning_source
+                           and message.evidence_mark == self._results_admitted)
+            await self._offer_recovery(self.schema_rejection_recoveries, retry_fresh=retry_fresh)
 
-    def _start_plan(self, source=None):
+    def _start_plan(self, source=None, *, retry_fresh=False):
         self.generation += 1
         # A source given here comes from _worker's observation handling and means new
         # user evidence (fresh/partial speech, or an image) just arrived. Every other
         # caller reuses the existing planning_source to continue reasoning about the
         # same request (a tool result, a bounded retry, a reconciliation step) and
         # must not be mistaken for new evidence about user intent.
-        fresh_evidence = source is not None
+        fresh_evidence = source is not None or retry_fresh
         if source is not None:
+            self.last_plan_error = None
+            # Epoch expiry revokes the exception but retains its write barrier.
+            # Dropping the record here would let a frame fall back to legacy
+            # image-origin arguments and evade the pinned parameter mappings.
             self.planning_source = source
             # Genuinely new evidence about this still-open request earns its own
             # bounded recovery budget instead of inheriting an exhausted one from
@@ -613,6 +636,7 @@ class Agent:
                 # _apply (H2). Consumed there the one time it is used.
                 self._fresh_plan_cancelled[self._planner_key] = True
         view = self._view()
+        evidence_mark = self._results_admitted
         generation = self.generation
         lone_frame = source is not None and source[0] == "image" and self.active_speech is None
         self._planner_fresh = fresh_evidence
@@ -629,17 +653,20 @@ class Agent:
                                                self.inference_timeout)
                 await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True),
                                                    source=source, fresh_evidence=fresh_evidence))
-            except PlanSchemaViolation as exc:
+            except (PlanSchemaViolation, PlanModelViolation, json.JSONDecodeError) as exc:
                 # The reasoner's own generation failed the exact schema built for this
                 # request (dynamic tool/effect restrictions, forced null response, ...).
                 # This is a rejection, not a generic backend outage: route it into a
                 # bounded correction attempt instead of a silent stall.
-                await self.inbox.put(WorkerMessage("plan_rejected", generation, str(exc)))
+                diagnostic = validation_summary(exc) or {"kind": "invalid_json"}
+                await self.inbox.put(WorkerMessage("plan_rejected", generation, diagnostic,
+                                                   source=source, fresh_evidence=fresh_evidence,
+                                                   evidence_mark=evidence_mark))
             except Exception as exc:
                 await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
         self.planner = self._spawn(plan())
 
-    async def _offer_recovery(self, compat_bucket):
+    async def _offer_recovery(self, compat_bucket, *, retry_fresh=False):
         """Grant one bounded re-plan for the active (request, input revision), or fail explicitly.
 
         Every no-progress mechanism -- schema rejection, a stalled owed write, a repeated or
@@ -660,7 +687,7 @@ class Agent:
             self.recovery_budget[key] = used + 1
             if compat_bucket is not None:
                 compat_bucket[self.request_id] = compat_bucket.get(self.request_id, 0) + 1
-            self._start_plan()
+            self._start_plan(retry_fresh=retry_fresh)
             return
         if not self.last_request_finished:
             self.last_request_finished = True
@@ -769,6 +796,11 @@ class Agent:
         # fresh_evidence=True inside `if speech_origin:`, so by the time it fires
         # speech_origin is already True and user_origin correctly follows fresh_evidence.
         user_origin = fresh_evidence and speech_origin
+        if (self._fresh_evidence and user_origin and self.latest_complete
+                and proposal.request_complete and not proposal.clarification):
+            # Only a new complete spoken request may replace the earlier argument
+            # contract (including with a newly explicit direct write).
+            self.write_contracts.clear()
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
@@ -901,7 +933,8 @@ class Agent:
             # previously missing information (spoken or supplied by an image) is now
             # resolved for this request.
             self.clarification_outstanding = False
-        for proposed in proposal.calls:
+        dispatched_indices = {}
+        for proposal_index, proposed in enumerate(proposal.calls):
             manifest = self.manifests.get(proposed.tool)
             if not manifest:
                 await self._emit("error", code="unknown_tool", tool=proposed.tool)
@@ -920,6 +953,23 @@ class Agent:
                     blocked_calls += 1
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
+                    blocked_calls += 1
+                    continue
+                covered_parameters = set()
+                bound = self.write_contracts.get(proposed.tool)
+                if bound is not None:
+                    try:
+                        covered_parameters = validate_binding(
+                            bound, proposed, state=self.state, ledger=self.ledger,
+                            results=self.results, invalidated=self.invalidated,
+                            manifest=manifest, request_id=self.request_id,
+                            input_epoch=self.request_input_epoch)
+                    except BindingError as exc:
+                        await self._emit("error", code="invalid_result_binding", detail=str(exc))
+                        blocked_calls += 1
+                        continue
+                elif proposed.result_sources:
+                    await self._emit("error", code="invalid_result_binding", detail="No spoken contract")
                     blocked_calls += 1
                     continue
                 # A17-1 (confirm-on-tool-origin): a name-keyed guard cannot stop a
@@ -944,6 +994,7 @@ class Agent:
                 tool_origin_arg = next(
                     (parameter for parameter in proposed.arguments
                      if parameter != manifest.idempotency_parameter
+                     and parameter not in covered_parameters
                      and self._slot_value_origin.get(
                          proposed.argument_slots.get(parameter, parameter)) == "tool"),
                     None)
@@ -972,6 +1023,10 @@ class Agent:
             # (see _argument_dependency_error); those carry no slot revision to track.
             dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies
                             if name in self.state.slots}
+            if manifest.effect == "write" and bound is not None:
+                # Selection constraints remain execution dependencies even when the
+                # planner lists only the arguments sent to the downstream tool.
+                dependencies.update(bound.revisions)
             args = dict(proposed.arguments)
             # This field belongs to the controller, including when a model supplies
             # a different value on each retry. It cannot split a logical operation.
@@ -1006,11 +1061,31 @@ class Agent:
             self.dispatched[signature] = call.call_id
             self.attempt_counts[signature] = self.attempt_counts.get(signature, 0) + 1
             self.ledger[call.call_id] = call
+            dispatched_indices[proposal_index] = call.call_id
             self.call_causes[call.call_id] = self.current_event_id
             self.state.status = "working"
             dispatched_any = True
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
+        if (self._fresh_evidence and user_origin and self.latest_complete and self.speech_ready
+                and proposal.request_complete and proposal.write_requested
+                and self.write_intent_retained and not proposal.clarification
+                and not self.state.correction_pending):
+            # These rules are committed before this controller can accept any
+            # result from the dispatched workers. Non-fresh replans cannot add rules.
+            duplicate_targets = {c.tool for c in proposal.write_contracts
+                                 if sum(other.tool == c.tool for other in proposal.write_contracts) > 1}
+            for contract in proposal.write_contracts:
+                try:
+                    if contract.tool in duplicate_targets:
+                        raise BindingError("duplicate target contracts")
+                    self.write_contracts[contract.tool] = capture(
+                        contract, proposal_calls=proposal.calls, dispatched=dispatched_indices,
+                        ledger=self.ledger, manifests=self.manifests, state=self.state,
+                        origins=self._slot_value_origin, request_id=self.request_id,
+                        input_epoch=self.request_input_epoch)
+                except BindingError as exc:
+                    await self._emit("error", code="invalid_write_contract", detail=str(exc))
         pending_now = any(c.status == "pending" for c in self.ledger.values())
         history_has_write = any(c.effect == "write" for c in self.ledger.values())
         # --- Outcome classification --------------------------------------------------

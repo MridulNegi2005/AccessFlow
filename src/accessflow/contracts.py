@@ -191,6 +191,36 @@ class TurnDecision(Model):
     uncertainty: float = Field(default=0, ge=0, le=1)
 
 
+class ResultBinding(Model):
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"oneOf": [
+        {"properties": {"source_call_index": {"type": "integer", "minimum": 0},
+                        "source_call_id": {"type": "null"}}, "required": ["source_call_index"]},
+        {"properties": {"source_call_index": {"type": "null"},
+                        "source_call_id": {"type": "string", "minLength": 1}}, "required": ["source_call_id"]},
+    ]})
+    slot: str
+    source_call_index: int | None = Field(default=None, ge=0, strict=True)
+    source_call_id: str | None = Field(default=None, min_length=1)
+    collection_pointer: str = Field(max_length=512)
+    value_pointer: str = Field(max_length=512)
+    # Candidate field JSON pointer -> user-controlled slot name.
+    match_slots: dict[str, str] = Field(min_length=1, max_length=16)
+
+    @model_validator(mode="after")
+    def one_source(self):
+        if (self.source_call_index is None) == (self.source_call_id is None):
+            raise ValueError("Exactly one read source is required")
+        if not self.match_slots or len(self.match_slots) > 16:
+            raise ValueError("Between one and sixteen match constraints are required")
+        return self
+
+
+class WriteContract(Model):
+    tool: str
+    fixed_arguments: dict[str, str] = Field(default_factory=dict)
+    delegated_arguments: dict[str, ResultBinding]
+
+
 class ProposedCall(Model):
     tool: str
     arguments: dict[str, Any]
@@ -200,6 +230,8 @@ class ProposedCall(Model):
     # Optional parameter -> slot aliases; omitted parameters use their own names.
     # Aliases do not replace dependencies or authorize unmatched argument values.
     argument_slots: dict[str, str] = Field(default_factory=dict)
+    # Exact accepted read call IDs for parameters covered by a spoken contract.
+    result_sources: dict[str, str] = Field(default_factory=dict)
 
 
 class PlanProposal(Model):
@@ -212,6 +244,7 @@ class PlanProposal(Model):
     # A model assertion alone is not execution authority; controller also requires
     # a completed utterance and an explicit, externally supplied authorization gate.
     write_requested: bool = False
+    write_contracts: list[WriteContract] = Field(default_factory=list, max_length=4)
 
 
 class SessionView(Model):
@@ -222,6 +255,9 @@ class SessionView(Model):
     # Error observations are separate from usable result evidence. Older callers
     # may omit this additive field. Never use failure payloads as successful data.
     tool_failures: list[ToolResult] = Field(default_factory=list)
+    write_contracts: list[WriteContract] = Field(default_factory=list)
+    # Bounded controller-generated shape diagnostics, never raw model/tool text.
+    last_plan_error: dict[str, Any] | None = None
     calls: list["ToolCall"] = Field(default_factory=list)
     write_pending: bool = False
     # Set when the previous proposal only repeated calls that already completed.

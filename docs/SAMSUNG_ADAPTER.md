@@ -1,5 +1,44 @@
 # Samsung adapter work — 22 September 2026
 
+## Current A-side checkpoint — 22 September 2026
+
+**996 passed, 1 skipped, 1 xfailed**, two dependency deprecation warnings, in
+82.99 seconds. Ruff passed; offline-fake development scenarios 4/4. Commands:
+`uv run --offline --frozen --extra dev pytest -q`,
+`uv run --offline --frozen --extra dev ruff check .`,
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+The skip is native Windows symlink creation without the required privilege;
+mocked resolved-escape tests pass. The existing conflicting-frame xfail remains
+unresolved. Neither is counted as a passing safety test.
+
+Implemented explicit spoken result bindings, fixed argument mappings and source
+revision checks. A scoped review reproduced and closed an image-induced contract
+removal bypass and acceptance of success-labelled evidence carrying an error.
+Malformed Pydantic/JSON/schema outputs now get one bounded same-input retry with
+sanitized shape feedback; non-fresh retries cannot gain spoken write authority.
+Optional tool documentation is explicitly loaded below kit/docs, hashed and kept
+separate from observations/results/permissions. Verbatim return examples are
+selected with line/hash provenance to reduce repeated input tokens.
+
+One live Qwen Samsung chained-booking attempt completed: **100.0/100**, one search,
+one booking, confirmed final at 6250 ms, normal tail unchanged. Earlier new attempts
+failed validation (38.5) and hit input quota (15.4); all reports are retained in
+`docs/evidence/samsung-binding-2026-09-22/README.md`. These are individual exposed
+public development runs, not medians, an ablation or release certification.
+The successful explicit profile uses a 32768-character hosted cap, output cap950,
+1.0-second speculative partial debounce and docs/TOOLS.md. Defaults/local limits
+were not silently changed. The provider reported a 7000 input-token/minute quota;
+the successful run used 3013+3615 planning input tokens, so headroom remains tight.
+
+Next A-side work: bounded transient-read retry to save a model roundtrip and final
+answer time; then additional public interruption/unseen/no-tool cases and repeated
+measurements under declared quota conditions. MP3/vision/timing/frame coordination
+still requires Atishay; no B-owned implementation or handoff changed. Docker,
+unrelated file-boundary security review and submission materials remain outstanding.
+Current work stays local on mridul/engine. No push, workflow dispatch, release tag
+or submission. User's latest steering: no more Astra subagents; Luna only if needed.
+This checkpoint supersedes current-state wording in historical sections below.
+
 ## Current validation checkpoint — 22 September 2026
 
 Fresh rerun: **863 passed, 1 xfailed**, two dependency deprecation warnings

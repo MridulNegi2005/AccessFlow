@@ -197,3 +197,27 @@ unverified:
 An absent field is not evidence that a particular value was used. Do not substitute a
 default and do not report a profile as confirmed for that run. Make a new run to verify
 the endpoint and the output cap.
+
+
+## Samsung documented text profile — measured 22 September 2026
+
+For the recorded live Qwen chain, explicitly set `ACCESSFLOW_SAMSUNG_BACKEND=groq`,
+`ACCESSFLOW_MAX_OUTPUT_TOKENS=950`, `ACCESSFLOW_MAX_CONTEXT_CHARS=32768`, and
+`ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S=1.0`; supply the chosen key/model/URL locally.
+Use `python -m scripts.run_samsung_check --kit ../participant-kit/participant-kit
+--tool-documentation docs/TOOLS.md --scenario pub_03_text_chained_booking.json
+--output artifacts/samsung/a-new-report.json` on one line.
+
+Context characters default14000, with an explicit permitted range1024–65536;
+Ollama's 4096-token profile refuses limits above14000. Partial debounce defaults
+0.08s, accepts finite0–5s, and affects speculative incomplete-speech planning,
+not completed requests. The document option may also be set through
+`ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION`. It must name one UTF-8 Markdown file
+under kit/docs, at most32768bytes. No document discovery or links are followed.
+Return examples remain untrusted interface evidence, not live results or permission.
+
+Full/selected document hashes and line provenance, actual context cap and partial
+debounce are recorded. The exposed case completed once; no repeated reliability
+claim. A previous attempt hit HTTP429 at the observed7000 input-token/minute quota.
+Run serially with quota recovery; no automatic paid fallback. The environment
+variables above were scoped to test child processes, not persisted into .env.

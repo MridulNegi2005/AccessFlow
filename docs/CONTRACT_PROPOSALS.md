@@ -197,3 +197,47 @@ filter them by active request and current dependency revisions.
 Ownership: Mridul's contracts/controller and engine tests. Atishay need not
 change perception, policy or demo files for this field. This is not resolution
 of C1-C4 media/endpoint coordination or of delegated tool-argument authority.
+
+
+## 22 September 2026 — A-side delegated argument contract
+
+Additive internal fields: `PlanProposal.write_contracts`,
+`ProposedCall.result_sources`, and `SessionView.write_contracts`. All default
+empty, preserving the original proposals and B-side callers. Model generation
+still requires every original completion/action decision; the extensions are
+optional. No official wire schema changes.
+
+A fresh complete speech plan may declare a target write, fixed parameter-to-slot
+mappings, and delegated parameters selected from a specific read. Source references
+are either a call index in that same proposal (resolved only if dispatched) or an
+explicit current read call ID. The controller exposes captured contracts with
+actual call IDs. A continuation must supply each delegated parameter's source ID
+and the selected value in its tracked slot. It cannot create or broaden a contract.
+
+Selection uses bounded JSON pointers and one unique row with exact typed scalar
+matches to user-fixed slots. `True`, `1`, and `1.0` are distinct. No time/fuzzy
+normalization or positional selection exists. New observations clear the exception;
+fresh speech can replace it, explicitly reusing a current read when appropriate.
+The controller checks source success, accepted evidence, revisions, all fixed
+mappings and existing authorization gates. Bound constraints are added to actual
+write dependencies even when omitted by the planner.
+
+Owner: Mridul. Atishay needs no implementation change for these defaulted fields.
+Tool result structures must be known to declare selectors; runtime public manifests
+may omit them. Live generality remains to be verified; this contract is not proof
+that the model understood the original speech or that a tool's data is truthful.
+
+
+### Validation and lifecycle follow-up, 22 September
+
+`SessionView.last_plan_error` is optional bounded controller-generated shape
+feedback. It is deep-copied into views and cleared on new evidence or a valid plan.
+Pydantic, JSON parsing and dynamic-schema failures share the existing single retry
+budget. A rejected fresh plan retains its speech provenance only with the same
+source and admitted-result counter; no input epoch bump grants extra retries.
+Non-fresh retries cannot create spoken authority. The generated ResultBinding
+schema now exposes the same exclusive-source and match-count limits as Pydantic.
+
+Expired contracts remain target barriers across images and partial speech; only
+fresh complete spoken supersession clears/replaces them. This closes a reproduced
+fallback into legacy image-origin argument aliases. No B-side changes are needed.

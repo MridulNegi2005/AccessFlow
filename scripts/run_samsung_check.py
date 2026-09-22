@@ -57,6 +57,7 @@ async def execute(harness, participants, *, setup_cap=300, wall_cap=120):
         "model_evidence": agent.reasoner.evidence() if agent else None,
         "plans": agent.reasoner.plans if agent else [],
         "adapter_diagnostics": participant.diagnostics if participant else [],
+        "participant_config": {"partial_debounce_s": getattr(participant, "partial_debounce_s", None)},
     }
 
 
@@ -77,6 +78,7 @@ def main():
     parser.add_argument("--kit", type=Path, required=True)
     parser.add_argument("--scenario", required=True, help="Filename inside the kit's scenarios directory")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--tool-documentation", help="Explicit Markdown reference under the kit's docs directory")
     args = parser.parse_args()
     kit = args.kit.resolve()
     candidate = Path(args.scenario)
@@ -101,7 +103,7 @@ def main():
     participants = []
 
     def factory(incoming, outgoing):
-        instance = RecordedParticipant(incoming, outgoing)
+        instance = RecordedParticipant(incoming, outgoing, tool_documentation=args.tool_documentation)
         participants.append(instance)
         return instance
 

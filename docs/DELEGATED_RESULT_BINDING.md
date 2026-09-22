@@ -1,6 +1,6 @@
 # Next A-side slice: explicit delegated result bindings
 
-Status: design for implementation, **not implemented or certified**. Date:
+Status: implemented; one live public chained case completed. Broader reliability remains unproven. Date:
 22 September 2026. Owner: Mridul. Luna high reviewed the mechanism read-only;
 Codex refined the selection and validation boundaries below.
 
@@ -78,7 +78,9 @@ check all of these again before allowing a tool-origin argument:
    and unknown-outcome checks still pass. The binding is an argument-provenance
    exception, not a substitute for these checks.
 
-Request rotation clears contracts. Corrections must invalidate or explicitly
+Request/observation epoch changes expire delegation. The old target record remains
+as a write barrier until fresh complete speech supersedes it; simply deleting it
+would let an image fall back to legacy argument rules. Corrections must explicitly
 replace affected contracts. Cancellation is still not rollback. Preserve all
 existing authority and conflicting-write-result regressions unchanged.
 
@@ -113,3 +115,36 @@ transient reads using the same validated arguments and operation identity, only
 while the source/request remains current. Keep that change separate from write
 binding and from retries of uncertain writes. Measure it without extending the
 tail or replacing model-grounded answers with canned output.
+
+
+## Implementation and review checkpoint
+
+Implemented in `contracts.py`, `result_binding.py`, `write_binding.py`, `engine.py`
+and `adapters/models.py`. Selection bounds: at most 256 rows, 16 match constraints,
+16 pointer components, 512 characters per pointer, 4096 JSON nodes and depth 16.
+Typed equality distinguishes booleans, integers and floating-point numbers. Missing,
+ambiguous, malformed, nonfinite or over-limit evidence is rejected.
+
+The initial implementation passed 936 tests / one existing xfail after two scoped
+Astra findings were repaired: an image could remove the contract barrier, and a
+success-labelled result with a non-null error could supply a value. Both have
+reproductions and regressions. This was a bounded binding review, not certification
+of the complete application, documentation loader or corpus file boundary.
+
+A subsequent live public attempt scored 38.5 with zero task credit: no model plan
+validated, so no tool executed. The retained trace records ValidationError but lacks
+field details; do not infer its cause from the exception name. Follow-up work adds
+sanitized validation diagnostics, one same-input recovery attempt, an explicit
+exclusive-source JSON Schema, and optional provenance-labelled interface documentation.
+The published tool document contains return shapes absent from public runtime
+manifests. Documents are interface evidence, never results or authorization.
+
+
+## Latest measured outcome
+
+The complete chain now succeeded in one retained public run using documented
+return examples, a one-second speculative partial debounce and the explicit hosted
+context cap. See `docs/evidence/samsung-binding-2026-09-22/README.md` for all three
+new attempts, including failures, timings and configuration differences. Final
+source validation: 996 passed, one Windows symlink skip, one existing frame xfail.
+Do not interpret one public success as broader generality or safety certification.

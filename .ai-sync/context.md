@@ -1069,3 +1069,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Fresh suite 863 passed / 1 xfailed, Ruff passed, fake dev 4/4. Live Groq Qwen public attempts 100.0 / 56.9 / 81.5 expose chaining and final-response timing gaps. Cases are exposed development evidence, not medians or multimodal certification. No keys copied; evidence hashes verified. Next: A-side binding implementation and bounded read recovery. No push or release.
 
 ---
+
+## [2026-09-22 13:55] — Codex
+**Task:** Implement A-side delegated result bindings and make the recorded Samsung chained case execute.
+**Changes:** ResultBinding/WriteContract and source references; bounded resolver and write validation; retained expired contract barriers; safe model validation telemetry/retry; explicit bounded tool documentation and excerpt provenance; runtime/runner configuration; new owned tests and three retained live attempts. Updated status/spec/profiles and own handoff.
+**Status:** Completed slice; overall implementation goal remains active.
+**Notes:** Final996passed/1skip/1xfail; Ruff clean; offline dev4/4. Live attempts38.5(validation),15.4(rate limit),100.0(confirmed chain). No isolated ablation/median claim. Astra high agents reviewed authority/integration and implemented isolated telemetry/loader/tests while authorized; user then prohibited further Astra delegation. Luna implemented bounded pure resolver earlier. Root integrated/reviewed/fixed and performed live evaluation. No teammate files edited, no keys retained, no push/release. Next: bounded transient-read recovery and broader public cases.
+
+---

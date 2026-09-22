@@ -6,6 +6,7 @@ assembly remains an explicit perception integration dependency.
 
 import asyncio
 import inspect
+import math
 import os
 import time
 from pathlib import Path
@@ -43,11 +44,15 @@ class ParticipantAgent:
     Use the harness at time_scale=1: accelerated runs are not supported yet.
     """
 
-    def __init__(self, in_queue, out_queue, *, agent_factory=None, media_root=None):
+    def __init__(self, in_queue, out_queue, *, agent_factory=None, media_root=None,
+                 tool_documentation=None):
         self.in_queue = in_queue
         self.out_queue = out_queue
         self.agent_factory = agent_factory
         self.media_root = media_root
+        self.tool_documentation = tool_documentation
+        self.documentation_evidence = None
+        self.partial_debounce_s = 0.08
         self.agent = None
         self.protocol = None
         self.tasks = set()
@@ -66,6 +71,14 @@ class ParticipantAgent:
             if root is None or not str(root).strip() or not Path(root).is_dir():
                 raise ValueError("Set ACCESSFLOW_SAMSUNG_MEDIA_ROOT to the kit media root")
             protocol = SamsungProtocol(media_root=Path(root))
+            self.partial_debounce_s = float(os.getenv("ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S", "0.08"))
+            if not math.isfinite(self.partial_debounce_s) or not 0 <= self.partial_debounce_s <= 5:
+                raise ValueError("Samsung partial debounce must be between 0 and 5 seconds")
+            documentation = (self.tool_documentation if self.tool_documentation is not None
+                             else os.getenv("ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION"))
+            if documentation is not None:
+                from .tool_metadata import load_tool_documentation
+                self.documentation_evidence = load_tool_documentation(Path(root), documentation)
             agent = await self.agent_factory() if self.agent_factory else await self._build_agent()
             if agent.executor is not None:
                 raise ValueError("Samsung adapter requires executor=None; the harness executes tools")
@@ -87,8 +100,10 @@ class ParticipantAgent:
             raise ValueError("Set ACCESSFLOW_SAMSUNG_BACKEND explicitly; no model fallback is enabled")
         backend = JsonBackend(backend_name)
         await backend.warmup()
-        return Agent(LocalPerception(), HeuristicTurnPolicy(), ModelReasoner(backend),
-                     executor=None, authorization=HarnessAuthorization())
+        return Agent(LocalPerception(), HeuristicTurnPolicy(),
+                     ModelReasoner(backend, tool_documentation=self.documentation_evidence),
+                     executor=None, authorization=HarnessAuthorization(),
+                     partial_debounce_s=self.partial_debounce_s)
 
     async def _pump_input(self, incoming):
         while True:
