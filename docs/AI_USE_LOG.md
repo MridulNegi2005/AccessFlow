@@ -1141,3 +1141,11 @@ changed.
 **Notes:** Final1070passed/1skip/1xfail, focused36passed, Ruff clean. First new startup fixture omitted schema_version; fixed the fixture, preserving strict validation. Fresh online install21pins after offline cache miss; package stages1-2 pass and one public case100.0. Full repeated official evaluation/media/Docker remain unverified. AI-assisted implementation and live evaluation; no human edits recorded. No B edits/subagents/workflow/release/submission. Push authorized with configured identity and no attribution trailers.
 
 ---
+
+## [2026-09-22 15:34] — Implementation checkpoint
+**Task:** Finish a documentation checkpoint and pause after pushing, at the user's explicit request.
+**Changes:** Consolidated September22 summary, incomplete corpus-review status and resume checklist, own handoff/status. No implementation changes or new token-budget profile.
+**Status:** Work stopped; push this checkpoint then mark the goal paused.
+**Notes:** The read-only review worker was interrupted without an accepted findings report. No matching corpus-review Python/uv process remained in the process check. Latest code9a3eb84; existing1070pass/1skip/1xfail and clean Ruff evidence retained, no redundant test run for documentation. AI-assisted inspection and documentation only. Resume requires an explicit user request. No teammate edits, external messages, workflow, release or submission actions.
+
+---

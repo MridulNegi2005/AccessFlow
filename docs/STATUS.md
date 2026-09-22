@@ -1,5 +1,29 @@
 # Implementation status
 
+## User-requested pause checkpoint — 22 September 2026
+
+The user requested a pause after this checkpoint is pushed. Implementation and
+model evaluation have stopped. The incomplete read-only corpus review worker was
+interrupted; no completed findings or test results are claimed from it. No new
+compact/token-budget profile was implemented. No matching corpus-review Python/uv
+process was found in the final process check.
+
+Latest implemented code:9a3eb84 on mridul/engine. Main holds the earlier combined
+merge438b91b. Final software validation remains1070passed/1skip/1xfail and Ruff clean;
+this checkpoint only adds documentation, so those checks were not repeated.
+The package passed official import/setup and one public text scenario, not the
+full repeated official procedure or multimodal certification.
+
+Read docs/WORK_SUMMARY_2026-09-22.md for the consolidated work and remaining tasks.
+Corpus review remains open at
+`docs/reviews/CORPUS_BOUNDARY_REVIEW_STATUS_2026-09-22.md`.
+Atishay's ownership and his existing timing/correlation follow-ups remain unchanged.
+
+After pushing this documentation checkpoint, set the active goal to paused.
+Do not continue coding, testing, provider calls or worker tasks until the user
+explicitly resumes. No release tag, submission or workflow change. Use configured
+Git identity without coauthor trailers or attribution signoffs.
+
 ## Package/startup checkpoint — 22 September 2026
 
 Added a local Samsung package assembler, declared Groq model profile, portal-secret
