@@ -1,5 +1,28 @@
 # Mridul workstream handoff
 
+## Samsung boundary checkpoint — 22 September 2026
+
+This checkpoint supersedes older statements that the official adapter is entirely
+unimplemented. Development is on `mridul/engine`, based on merged main `438b91b`.
+The new queue adapter is partial; it is not full official-kit compatibility.
+
+- Full suite: **855 passed, 1 xfailed**, two dependency deprecation warnings.
+  `uv run --offline --frozen --extra dev pytest -q` (95.19 seconds).
+- New adapter tests: **13 passed**. Ruff and diff checks passed.
+- Supplied Samsung validator accepted all five output kinds using synthetic data.
+  No public scenario scores or live inference were run in this slice.
+- Added in-process runtime, translated manifests/text/corrections/results/actions,
+  tail-window handling, uncertain-write status, and media-failure invalidation.
+- Default entry point is text-only. MP3 assembly and real vision configuration
+  are not complete. Failed media is explicit and invalidates pending writes.
+- No Atishay-owned files changed. No workflow enabled, release tagged or submission made.
+
+Next: reconcile legitimate tool-derived arguments with authority guards; verify
+read-error recovery and frame-as-context behavior, then run recorded official
+scenarios after real configuration. Coordinate media/C1–C4 seams with Atishay.
+See `docs/SAMSUNG_ADAPTER.md` for configuration, limits and ownership.
+
+
 ## Current integration checkpoint — 22 September 2026
 
 This dated checkpoint supersedes older current-state, branch and kit-availability

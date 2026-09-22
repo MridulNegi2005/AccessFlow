@@ -1037,3 +1037,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** 842 passed, 1 xfailed; Ruff passed; offline-fake dev 4/4. Kit README is Theme 5 despite Theme02 ZIP name. No official score or live-model result. No new source implementation. Coordinate media seams with Atishay.
 
 ---
+
+## [2026-09-22 12:29] — Codex
+**Task:** Continue Workstream A after both branches merged; implement Samsung boundary.
+**Changes:** New Samsung translator/runtime and 13 adapter tests; explicit media failure, tail window, uncertain write status; updated legacy placeholder and adapter documentation. Luna drafted isolated translator; root reviewed/integrated runtime.
+**Status:** In progress; 855 passed, 1 xfailed; Ruff passed.
+**Notes:** Synthetic validator shape check 5/5, no official score. Text-only default; media integration and legitimate derived-argument authority remain open. No Atishay-owned implementation changes.
+
+---
