@@ -1109,3 +1109,11 @@ changed.
 **Notes:** Final 1029 passed/1 skip/1 xfail; Ruff clean. Feedback-only full run 1027 passed; final only changed finished-correction debounce and added gated tests. Live scores65.3/84.3/89.6; final useful answer remains blocked by measured provider quota, not claimed complete. No B implementation/test edits or pushes. Human modifications: none recorded. Next: repeated model-input overhead and broader text coverage.
 
 ---
+
+## [2026-09-22 14:34] — Implementation checkpoint
+**Task:** Reduce repeated planner-input overhead and clarify Samsung model rules.
+**Changes:** Explicit compact profile, annotation-aware schema presentation, per-plan size/hash telemetry, nine tests, retained failed live attempt, model-rules note and handoff.
+**Status:** Experimental slice validated; overall goal active.
+**Notes:** Full1038 passed/1skip/1xfail; focused83 passed; Ruff clean. Live84.3 with validation failure and rate limit, so default stays full. AI-assisted implementation/testing; no human edits recorded. No B source/test changes. Prior completed work pushed through a21067b following user's new push authorization. Future tested commits may be pushed; no coauthor trailers or assistant-name signoffs. No release or submission.
+
+---

@@ -54,6 +54,7 @@ class ParticipantAgent:
         self.documentation_evidence = None
         self.partial_debounce_s = 0.08
         self.fast_read_retry = True
+        self.prompt_profile = "full"
         self.agent = None
         self.protocol = None
         self.tasks = set()
@@ -79,6 +80,9 @@ class ParticipantAgent:
             if fast_read_retry not in {"0", "1"}:
                 raise ValueError("Samsung fast read retry must be 0 or 1")
             self.fast_read_retry = fast_read_retry == "1"
+            self.prompt_profile = os.getenv("ACCESSFLOW_SAMSUNG_PROMPT_PROFILE", "full")
+            if self.prompt_profile not in {"full", "compact-v1"}:
+                raise ValueError("Samsung prompt profile must be full or compact-v1")
             documentation = (self.tool_documentation if self.tool_documentation is not None
                              else os.getenv("ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION"))
             if documentation is not None:
@@ -106,7 +110,8 @@ class ParticipantAgent:
         backend = JsonBackend(backend_name)
         await backend.warmup()
         return Agent(LocalPerception(), HeuristicTurnPolicy(),
-                     ModelReasoner(backend, tool_documentation=self.documentation_evidence),
+                     ModelReasoner(backend, tool_documentation=self.documentation_evidence,
+                                   prompt_profile=self.prompt_profile),
                      executor=None, authorization=HarnessAuthorization(),
                      partial_debounce_s=self.partial_debounce_s, fast_read_retry=self.fast_read_retry)
 
