@@ -6,14 +6,21 @@ assembly remains an explicit perception integration dependency.
 
 import asyncio
 import inspect
+import json
 import math
 import os
 import time
+from collections.abc import Mapping
 from pathlib import Path
 
 from accessflow.engine import Agent
 
-from .samsung_protocol import MediaInputError, SamsungProtocol
+from .samsung_protocol import MediaInputError, SamsungProtocol, SamsungProtocolError
+
+
+PRE_MANIFEST_EVENT_LIMIT = 32
+PRE_MANIFEST_BYTE_LIMIT = 65536
+PRE_MANIFEST_INPUTS = {"user_speech_chunk", "user_audio_chunk", "video_frame", "interruption", "scenario_end"}
 
 
 class HarnessAuthorization:
@@ -116,22 +123,49 @@ class ParticipantAgent:
                      partial_debounce_s=self.partial_debounce_s, fast_read_retry=self.fast_read_retry)
 
     async def _pump_input(self, incoming):
+        manifest_seen = False
+        pending = []
+        pending_bytes = 0
         while True:
             raw = await self.in_queue.get()
-            # scenario_end translates to no event: tools may return in the tail
-            # window. The harness cancels run() when that window ends.
-            try:
-                events = self.protocol.translate_input(raw)
-            except MediaInputError:
-                self.diagnostics.append({"code": "media_unavailable"})
-                del self.diagnostics[:-128]
-                for event in self.protocol.media_failure_events(raw):
-                    await incoming.put(event)
-                await self.out_queue.put({"action": "clarification_request", "payload": {
-                    "text": "I couldn't process that media. Please describe it or provide another recording or image."}})
+            if (not manifest_seen and isinstance(raw, Mapping)
+                    and raw.get("event_type") in PRE_MANIFEST_INPUTS):
+                # The official contract probe sends speech before any manifest.
+                # Retain bounded user input, but give the controller no authority
+                # or observations until its actual tool registry is initialized.
+                try:
+                    encoded = json.dumps(raw, ensure_ascii=False, allow_nan=False)
+                except (TypeError, ValueError) as exc:
+                    raise SamsungProtocolError("Invalid input before tool_manifest") from exc
+                pending_bytes += len(encoded.encode("utf-8"))
+                if len(pending) >= PRE_MANIFEST_EVENT_LIMIT or pending_bytes > PRE_MANIFEST_BYTE_LIMIT:
+                    raise SamsungProtocolError("Input before tool_manifest exceeds the startup buffer")
+                pending.append(json.loads(encoded))
                 continue
-            for event in events:
+            # The strict translator still validates the manifest before any held
+            # input. Unknown event types and unsolicited tool results still fail.
+            batch = [raw, *pending] if not manifest_seen else [raw]
+            for item in batch:
+                await self._deliver_input(item, incoming)
+            manifest_seen = True
+            pending.clear()
+            pending_bytes = 0
+
+    async def _deliver_input(self, raw, incoming):
+        # scenario_end translates to no event: tools may return in the tail
+        # window. The harness cancels run() when that window ends.
+        try:
+            events = self.protocol.translate_input(raw)
+        except MediaInputError:
+            self.diagnostics.append({"code": "media_unavailable"})
+            del self.diagnostics[:-128]
+            for event in self.protocol.media_failure_events(raw):
                 await incoming.put(event)
+            await self.out_queue.put({"action": "clarification_request", "payload": {
+                "text": "I couldn't process that media. Please describe it or provide another recording or image."}})
+            return
+        for event in events:
+            await incoming.put(event)
 
     async def _pump_output(self, outgoing):
         while True:
