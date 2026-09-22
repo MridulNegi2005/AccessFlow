@@ -166,3 +166,13 @@ Measured pub_08 with the documented hosted profile: 100.0 with retry enabled,
 81.5 in the matched configuration control. The control's final request hit rate
 limit; do not characterize the difference as solely a tail/latency improvement.
 See `docs/evidence/samsung-retry-2026-09-22/README.md` for all evidence and limits.
+
+
+## Correction response follow-up — 22 September 2026
+
+Known processing-failure diagnostics now also produce bounded clarification;
+other diagnostics stay internal. Repeated fillers are suppressed per session,
+while explicit stop-output acknowledgments remain. The engine reports accepted
+spoken corrections with current state and does not delay final possible corrections
+through partial-input debounce. No new internal contract or official action kind.
+See `CORRECTION_FEEDBACK_2026-09-22.md` and the retained interruption evidence.

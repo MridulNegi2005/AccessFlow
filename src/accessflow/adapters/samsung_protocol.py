@@ -104,6 +104,8 @@ class SamsungProtocol:
         self._manifest_seen = False
         self._tools: dict[str, ToolManifest] = {}
         self._calls: dict[str, dict[str, str]] = {}
+        self._spoken_fillers: set[str] = set()
+        self._spoken_failures: set[tuple[str, str | None]] = set()
         self.diagnostics: list[dict[str, Any]] = []
 
     @property
@@ -157,10 +159,10 @@ class SamsungProtocol:
     def translate_output(self, event: OutputEvent) -> dict[str, Any] | None:
         """Translate one internal output event into an official action.
 
-        Internal diagnostics are not an official action kind.  ``error`` output
-        is recorded in :attr:`diagnostics` and returns ``None`` so the runtime
-        can expose it to its own trace without sending an invalid action to the
-        organizer harness.
+        Internal diagnostics are not an official action kind. Errors are retained
+        separately; known processing failures produce a bounded clarification,
+        and other diagnostics return ``None``. Tool/backend prose is never echoed
+        as a user-facing instruction. Repeated filler text is suppressed per session.
         """
         if not isinstance(event, OutputEvent):
             raise SamsungProtocolError("translate_output expects an OutputEvent")
@@ -170,12 +172,28 @@ class SamsungProtocol:
 
         if kind == "error":
             self._diagnose({"kind": "error", **payload})
+            code = payload.get("code")
+            if code in {"backend_failure", "no_progress_exhausted"}:
+                key = (code, payload.get("caused_by_event_id"))
+                if key not in self._spoken_failures and len(self._spoken_failures) < 128:
+                    self._spoken_failures.add(key)
+                    # Do not repeat arbitrary backend/tool text or claim that a
+                    # pending/unknown write had no effect. Diagnostics stay separate.
+                    return {"action": "clarification_request", "payload": {"text":
+                        "I couldn't finish processing the request. Any action already started "
+                        "may still be pending; please check its status before trying again."},
+                        "state_snapshot": snapshot}
             return None
         if kind == "acknowledge":
             text = self._spoken_text(payload, "acknowledge")
             if text is None:
                 self._diagnose({"kind": "suppressed_acknowledge", "reason": "tool_evidence"})
                 return None
+            if text in self._spoken_fillers and not payload.get("stop_output"):
+                self._diagnose({"kind": "suppressed_acknowledge", "reason": "repeated_filler"})
+                return None
+            if len(self._spoken_fillers) < 128:
+                self._spoken_fillers.add(text)
             return {"action": "filler_speech", "payload": {"text": text},
                     "state_snapshot": snapshot}
         if kind == "clarify":

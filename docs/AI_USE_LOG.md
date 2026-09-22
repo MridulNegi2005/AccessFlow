@@ -1101,3 +1101,11 @@ changed.
 **Notes:** Final 1021 passed/1 skip/1 xfail; preceding full run had one intermittent B failure, three isolated repeats and final full rerun passed. Ruff clean, fake dev 4/4. Live fast/control totals 100.0/81.5; control final hit quota. Single pair, not broad reliability or pure latency evidence. No B source/test edits, no push/release. Prompt: continue only our portion, no subagents except Luna if needed; root implemented and verified directly. No human modifications recorded. Next: broader public text cases.
 
 ---
+
+## [2026-09-22 14:23] — Codex
+**Task:** Continue A-side interruption recovery and spoken feedback directly, without subagents.
+**Changes:** Accepted correction acknowledgment, bounded Samsung filler/error feedback, final-correction debounce fix, eight tests, three retained live attempts and implementation/evidence documentation.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final 1029 passed/1 skip/1 xfail; Ruff clean. Feedback-only full run 1027 passed; final only changed finished-correction debounce and added gated tests. Live scores65.3/84.3/89.6; final useful answer remains blocked by measured provider quota, not claimed complete. No B implementation/test edits or pushes. Human modifications: none recorded. Next: repeated model-input overhead and broader text coverage.
+
+---

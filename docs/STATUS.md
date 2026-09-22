@@ -1,5 +1,32 @@
 # Implementation status
 
+## Correction-response checkpoint — 22 September 2026
+
+Implemented accepted user-correction speech with current state, Samsung repeated
+filler suppression and bounded honest failure clarification. Finished possible
+corrections now bypass the partial debounce; partial speech still waits. No change
+to B perception/policy semantics, write permission or actual tool-effect reporting.
+Details: `docs/CORRECTION_FEEDBACK_2026-09-22.md`.
+
+Final suite: **1029 passed, 1 skipped, 1 xfailed**, two dependency warnings in
+53.64 seconds. Eight new tests; Ruff clean. Prior feedback-only full run also
+passed (1027 tests). Existing skip/xfail and separate intermittent B timing issue
+remain open. No B source, tests or handoff edits; no subagents used.
+
+Live public interruption attempts: **65.3 -> 84.3 -> 89.6**. The latest trace
+passes corrected-city acknowledgment, current-state, cancellation, latency and
+safety checks; the final useful answer is still missing because the third planning
+request exceeds provider input quota. All failures are retained in
+`docs/evidence/samsung-interruption-2026-09-22/README.md`. This is exposed incremental
+development, not repeated reliability, a completion percentage or certification.
+
+Next A work: reduce repeated model-input overhead without changing enforcement,
+then retest correction completion and broaden public text coverage. Also inspect
+the documented inherited follow-up-answer suppression after a completed write.
+B media/endpoint/frame work needs coordination. Changes remain local; no push,
+workflow dispatch, release tag or submission. Overall goal remains active.
+This checkpoint supersedes historical current-state descriptions below.
+
 ## Read-retry checkpoint — 22 September 2026
 
 Implemented a bounded fast retry for current transient read failures. It preserves
