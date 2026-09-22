@@ -1125,3 +1125,11 @@ changed.
 **Notes:** Final1044 passed/1skip/1xfail; focused78 passed; Ruff clean. Initial status regression (1failure) and overbroad guard (2failures) corrected without B edits; history documented. Live public no-tool100.0 preceded the final guard extension; no false claim of live coverage of that guard. AI-assisted changes tested locally; no human edits recorded. Push authorized on mridul/engine, no coauthor trailers/name signoffs, no workflow/release/submission actions. Next: unseen tools and remaining model/packaging work.
 
 ---
+
+## [2026-09-22 14:59] — Implementation checkpoint
+**Task:** Extend unfamiliar-tool evidence and generated-scenario diagnostics.
+**Changes:** Explicit external fixture selector, three new runner tests, four retained live reports with hashes, two suite reports, separate B correlation follow-up and own handoff.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final1047passed/1skip/1xfail; first full run and one isolated rerun exposed an intermittent B demo failure, retained without B edits. Four100.0 scorer totals do not certify answer quality: hotel output adds an unsupported pricing period. AI-assisted implementation and manual evidence review; no human edits recorded. Push authorized, configured identity only, no coauthor trailers or signoffs. Next A work: generic result-grounding quality, quota and packaging. No subagents, workflow, release or submission actions.
+
+---
