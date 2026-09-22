@@ -219,6 +219,9 @@ class SessionView(Model):
     state: Snapshot
     observations: list[Observation]
     results: list[ToolResult]
+    # Error observations are separate from usable result evidence. Older callers
+    # may omit this additive field. Never use failure payloads as successful data.
+    tool_failures: list[ToolResult] = Field(default_factory=list)
     calls: list["ToolCall"] = Field(default_factory=list)
     write_pending: bool = False
     # Set when the previous proposal only repeated calls that already completed.

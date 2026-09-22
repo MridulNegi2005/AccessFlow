@@ -1070,3 +1070,10 @@ changed.
 - Human modifications/review: Not recorded for this slice. Full objective remains in progress.
 
 - Initial adapter follow-up: Luna high performed a read-only bounded boundary review and reran13 adapter tests; no concrete scoped findings. Root recorded the limited conclusion, not full certification. Source checkpoint865a266.
+
+## 2026-09-22 — Codex read-failure recovery
+
+- Prompt: Continue only Mridul workstream under active goal.
+- Output: Root reproduced silent failed-read behavior, implemented failure-triggered replanning through separate sanitized planner context, and added four regression tests. No worker used for this slice.
+- Human modifications: None recorded.
+- Validation: Original reproductions timed out. First implementation caused three corpus regressions; revised implementation preserves the original security assertions. Final full suite859 passed/1 xfailed, Ruff clean, offline development suite4/4. No live or official score.
