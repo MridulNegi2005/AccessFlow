@@ -644,6 +644,11 @@ class Agent:
         evidence_mark = self._results_admitted
         generation = self.generation
         lone_frame = source is not None and source[0] == "image" and self.active_speech is None
+        source_observation = self.observations.get(source)
+        finished_correction = bool(
+            source == ("speech", self.active_speech) and source_observation
+            and source_observation.final
+            and source_observation.event_id == self.semantic_correction_event)
         self._planner_fresh = fresh_evidence
         self._planner_key = (self.request_id, self.request_input_epoch)
 
@@ -651,7 +656,8 @@ class Agent:
             try:
                 if lone_frame and self.frame_debounce_s:
                     await self.clock.sleep(self.frame_debounce_s)
-                elif view.state.correction_pending and self.partial_debounce_s:
+                elif (view.state.correction_pending and not finished_correction
+                      and self.partial_debounce_s):
                     await self.clock.sleep(self.partial_debounce_s)
                 proposal = await self._bounded(self.reasoner.plan(view, [m.model_copy(deep=True)
                                                                         for m in self.manifests.values()]),
@@ -807,6 +813,7 @@ class Agent:
             # contract (including with a newly explicit direct write).
             self.write_contracts.clear()
         changed = set()
+        previous_slot_names = set(self.state.slots)
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
             if not user_origin and name in self._user_fixed_slots and old is not None and old.value != value:
@@ -925,6 +932,18 @@ class Agent:
                 # (security review HIGH finding 2).
                 self._intent_user_fixed = True
         await self._invalidate_dependencies(changed, "dependency_changed")
+        corrected = changed.intersection(previous_slot_names)
+        if (corrected and user_origin and self.latest_complete and self.speech_ready
+                and not self.state.correction_pending and not proposal.clarification
+                and proposal.calls):
+            # Speak only accepted user-origin changes, after cancelling dependent
+            # work. This reports our interpretation, never a completed tool effect.
+            details = "; ".join(
+                f"{_clarify_name(name)} to {_clarify_repr(self.state.slots[name].value)}"
+                for name in sorted(corrected)[:4]
+                if isinstance(self.state.slots[name].value, (str, int, float, bool)))
+            text = f"Updated {details}." if details else "I've updated the request details."
+            await self._emit("acknowledge", text=text, basis="accepted_user_correction")
         said_something = bool(proposal.clarification)
         if proposal.clarification and (self.latest_complete or final_correction):
             # Required information is now outstanding for this request. This is tracked
