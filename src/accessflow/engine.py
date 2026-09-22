@@ -1113,24 +1113,40 @@ class Agent:
                 except BindingError as exc:
                     await self._emit("error", code="invalid_write_contract", detail=str(exc))
         pending_now = any(c.status == "pending" for c in self.ledger.values())
-        history_has_write = any(c.effect == "write" for c in self.ledger.values())
+        # Resolved writes on older requests must not silence a later question.
+        # Unresolved effects remain a session-wide barrier to model-only finals;
+        # current-request effects still finish only through confirmed tool evidence.
+        final_requires_tool_evidence = any(
+            c.effect == "write" and (c.request_id == self.request_id
+                                     or c.status in {"unknown", "cancelled"})
+            for c in self.ledger.values())
         # --- Outcome classification --------------------------------------------------
         # Every accepted plan is exactly one of: dispatched work (dispatched_any),
         # emitted an answer/clarification (said_something), legitimately waiting on
         # existing pending work (pending_now), or made no progress at all. Only the
         # last case needs a diagnostic and a bounded recovery attempt.
         write_owed_unmet = False
+        newly_claimed_write = (self.write_intent_retained
+                               and any(m.effect == "write" for m in self.manifests.values())
+                               and (proposal.request_complete or bool(proposal.response)))
         if not proposal.calls and not pending_now and self.latest_complete:
-            if history_has_write:
-                pass  # A write call already exists in this session; unchanged prior behaviour.
-            elif prior_write_owed and not proposal.clarification:
+            if final_requires_tool_evidence:
+                pass  # Do not replace a current or unresolved effect with model prose.
+            elif (prior_write_owed or newly_claimed_write) and not proposal.clarification:
                 # The accepted request still owes a state-changing effect. A completed read,
                 # an omitted response, or a change of mind in this proposal's flags is
                 # evidence, never a substitute for the effect: neither a prose claim nor
-                # total silence may finish it.
+                # total silence may finish it. Include intent established by THIS plan,
+                # not only prior plans, so a first-plan success claim cannot bypass dispatch.
+                # An incomplete plan with no response may still be waiting for promised
+                # input, and read-only environments can explain unavailable capabilities.
                 write_owed_unmet = True
             elif proposal.response:
                 said_something = True
+                # The informational request ended, but the conversation remains
+                # listening for another turn (the existing demo status contract).
+                self.state.status = "listening"
+                self.last_request_finished = True
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
         if write_owed_unmet and not self.last_request_finished:
             # This proposal silently dropped the write intent a prior proposal established
@@ -1145,13 +1161,12 @@ class Agent:
         elif ((self.latest_complete or final_correction) and not dispatched_any and not said_something
                 and not pending_now and not self.last_request_finished
                 and (repeated or blocked_calls
-                     or (not proposal.calls and proposal.request_complete and not history_has_write))):
+                     or (not proposal.calls and proposal.request_complete and not final_requires_tool_evidence))):
             # An empty plan on a request the model itself does not yet consider complete
             # (no calls, no clarification, request_complete=False) is legitimately still
             # awaiting more input (e.g. a spoken write request waiting on a promised
-            # image) -- the same as partial speech, not a stall. Likewise, a write that
-            # already exists elsewhere in this session keeps the prior informational-
-            # answer restraint (see the pass branch above) rather than a new diagnostic.
+            # image) -- the same as partial speech, not a stall. A current or unresolved
+            # write still requires tool evidence rather than model prose.
             # Dropping this silently ends the turn with no output and nothing left to wake
             # the loop, so the session would otherwise stall until the scenario deadline.
             if repeated and not blocked_calls:
