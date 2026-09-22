@@ -1,6 +1,7 @@
 """Explicit backend selection, one async worker, bounded requests, no automatic fallback."""
 import asyncio
 import copy
+import hashlib
 import json
 import math
 import os
@@ -16,6 +17,7 @@ from jsonschema import Draft202012Validator
 from accessflow.contracts import PlanProposal
 from accessflow.validation_diagnostics import validation_summary
 from .tool_metadata import select_return_documentation
+from .prompt_profile import COMPACT_SYSTEM, compact_schema
 
 SYSTEM = """You propose plans for AccessFlow. Return only JSON matching the supplied schema.
 Use session.last_plan_error only to correct output shape; preserve the user's intent and authority.
@@ -566,8 +568,12 @@ def validate_reasoner_evidence(evidence, strict=True):
 
 
 class ModelReasoner:
-    def __init__(self, backend, *, tool_documentation=None):
+    def __init__(self, backend, *, tool_documentation=None, prompt_profile="full"):
+        if prompt_profile not in {"full", "compact-v1"}:
+            raise ValueError("Planner prompt profile must be full or compact-v1")
         self.backend = backend
+        self.prompt_profile = prompt_profile
+        self._prompt_measurements = deque(maxlen=128)
         self.tool_documentation = copy.deepcopy(tool_documentation)
         self._documentation_selection = None
         if self.tool_documentation is not None and len(json.dumps(self.tool_documentation)) > 40000:
@@ -640,7 +646,19 @@ class ModelReasoner:
                 raise errors[0]
 
         kwargs = {"_validator": _validate} if isinstance(self.backend, JsonBackend) else {}
-        result = await self.backend.generate(SYSTEM, request, schema, **kwargs)
+        system = COMPACT_SYSTEM if self.prompt_profile == "compact-v1" else SYSTEM
+        presented_schema = compact_schema(schema) if self.prompt_profile == "compact-v1" else schema
+        encoded_schema = json.dumps(presented_schema, separators=(",", ":"))
+        self._prompt_measurements.append({
+            "instruction_chars": len(system),
+            "data_chars": len(json.dumps(request, ensure_ascii=False, separators=(",", ":"))),
+            "schema_chars": len(encoded_schema),
+            "instruction_sha256": hashlib.sha256(system.encode()).hexdigest(),
+            "presented_schema_sha256": hashlib.sha256(encoded_schema.encode()).hexdigest(),
+            "enforced_schema_sha256": hashlib.sha256(
+                json.dumps(schema, separators=(",", ":")).encode()).hexdigest(),
+        })
+        result = await self.backend.generate(system, request, presented_schema, **kwargs)
         if not isinstance(self.backend, JsonBackend):
             # Non-JsonBackend reasoners (test doubles, alternative adapters) do not
             # accept the _validator hook; enforce the same two layers here instead.
@@ -731,6 +749,8 @@ class ModelReasoner:
 
     def evidence(self):
         evidence = self.backend.evidence()
+        evidence["prompt_profile"] = self.prompt_profile
+        evidence["prompt_measurements"] = copy.deepcopy(list(self._prompt_measurements))
         if self.tool_documentation is not None:
             evidence["tool_documentation"] = copy.deepcopy(self._documentation_selection or {
                 key: value for key, value in self.tool_documentation.items() if key != "text"})

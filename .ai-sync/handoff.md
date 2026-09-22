@@ -1,5 +1,32 @@
 # Active Handoff
 
+## Compact profile checkpoint — 22 September 2026
+
+Added explicit `compact-v1` prompt presentation with condensed guidance, generated
+schema annotation removal and bounded size/hash telemetry. Full schema enforcement
+and session/tool evidence are preserved. Default remains `full`.
+
+Validation: **1038 passed, 1 skipped, 1 xfailed**, two dependency warnings,
+64.86 seconds. Nine new tests; focused model/validation suite83 passed; Ruff clean.
+Live compact interruption score84.3: initial plan validation failed, one retry was
+superseded, corrected search succeeded, final request hit input quota. Lower initial
+input tokens (2321 versus previous3004) did not establish better reliability. This
+is an opt-in experiment, not a default upgrade or a closed quota issue. Evidence:
+`docs/evidence/samsung-compact-2026-09-22/README.md`.
+
+Samsung's kit explicitly allows hosted APIs and open/local models, with no published
+Theme5 parameter ceiling found. The observed7000 ITPM cap is Groq's quota. Model,
+runtime and submission rules are in `docs/SAMSUNG_MODEL_RULES_2026-09-22.md`.
+Atishay's intermittent frame issue remains separately documented; no B source edited.
+
+Next: improve compact binding selection and broaden live cases; inspect the inherited
+follow-up-answer suppression after writes. Keep the full profile until experiments
+justify adopting another. User authorized continuing pushes of completed tested
+commits on mridul/engine. Use configured Git identities; no co-author trailers or
+assistant-name sign-offs in new commits/documents. Previously completed work through
+a21067b has been pushed. No release tag, submission or workflow changes.
+Overall goal remains active. This supersedes historical status below.
+
 ## Correction-response checkpoint — 22 September 2026
 
 Implemented accepted user-correction speech with current state, Samsung repeated

@@ -235,3 +235,16 @@ Measured pub_08 with the documented hosted profile: 100.0 with retry enabled,
 81.5 in the matched configuration control. The control's final request hit rate
 limit; do not characterize the difference as solely a tail/latency improvement.
 See `docs/evidence/samsung-retry-2026-09-22/README.md` for all evidence and limits.
+
+
+## Experimental compact planner profile — 22 September 2026
+
+Set `ACCESSFLOW_SAMSUNG_PROMPT_PROFILE=compact-v1` explicitly to test condensed
+instructions and annotation-free output-schema presentation. Default is `full`;
+unknown values fail setup. Full local output validation and controller checks stay
+unchanged. Session, manifests and evidence are not truncated. Model evidence now
+includes actual `prompt_profile` and up to128 size/hash measurements for initiated
+plans. These exclude warm-up and do not establish provider delivery by themselves.
+The first compact public attempt used fewer tokens but failed validation and later
+hit quota, so it is not adopted as the default. See the retained report in
+`docs/evidence/samsung-compact-2026-09-22/README.md`.

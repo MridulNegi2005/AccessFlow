@@ -176,3 +176,16 @@ while explicit stop-output acknowledgments remain. The engine reports accepted
 spoken corrections with current state and does not delay final possible corrections
 through partial-input debounce. No new internal contract or official action kind.
 See `CORRECTION_FEEDBACK_2026-09-22.md` and the retained interruption evidence.
+
+
+## Experimental compact planner profile — 22 September 2026
+
+Set `ACCESSFLOW_SAMSUNG_PROMPT_PROFILE=compact-v1` explicitly to test condensed
+instructions and annotation-free output-schema presentation. Default is `full`;
+unknown values fail setup. Full local output validation and controller checks stay
+unchanged. Session, manifests and evidence are not truncated. Model evidence now
+includes actual `prompt_profile` and up to128 size/hash measurements for initiated
+plans. These exclude warm-up and do not establish provider delivery by themselves.
+The first compact public attempt used fewer tokens but failed validation and later
+hit quota, so it is not adopted as the default. See the retained report in
+`docs/evidence/samsung-compact-2026-09-22/README.md`.

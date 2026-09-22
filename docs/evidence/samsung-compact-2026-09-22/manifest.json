@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "file": "pub_02_compact_prompt_attempt1.json",
+      "sha256": "7e67b3be5aabb9752a9d6f8d84cf30eaab513efdbb2320efdce610b31e4cbe54",
+      "total": 84.3,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    }
+  ]
+}

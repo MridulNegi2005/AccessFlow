@@ -1,0 +1,543 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 422.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Please book a flight to ",
+        "end_of_turn": false
+      },
+      "t_ms": 109.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Boston for tomorrow.",
+        "end_of_turn": true
+      },
+      "t_ms": 812.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 812.0
+    },
+    {
+      "kind": "event",
+      "event_type": "interruption",
+      "payload": {
+        "text": "Wait, actually make it New York."
+      },
+      "t_ms": 1906.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 1906.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'm listening."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 1906.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "092a876c-b9d0-4767-8b36-1beee49aae6c",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "New York",
+        "date": "tomorrow"
+      },
+      "t_ms": 2640.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "092a876c-b9d0-4767-8b36-1beee49aae6c",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "New York",
+        "date": "tomorrow"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "flights": [
+          {
+            "flight_id": "FL-NYC-8AM",
+            "depart": "08:00",
+            "price_usd": 129
+          },
+          {
+            "flight_id": "FL-NYC-2PM",
+            "depart": "14:00",
+            "price_usd": 99
+          }
+        ]
+      },
+      "t_ms": 5422.0
+    },
+    {
+      "kind": "action",
+      "action": "clarification_request",
+      "payload": {
+        "text": "I couldn't finish processing the request. Any action already started may still be pending; please check its status before trying again."
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "New York",
+          "date": "tomorrow"
+        }
+      },
+      "t_ms": 5593.0
+    }
+  ],
+  "wall_s": 8.343999999999141,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 5,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 2,
+      "failure": 2,
+      "cancelled": 1
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.4219999999986612,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.0490305,
+        "prompt_tokens": 49,
+        "prompt_time": 0.00315924,
+        "completion_tokens": 6,
+        "completion_time": 0.011558729,
+        "total_tokens": 55,
+        "total_time": 0.014717969
+      },
+      {
+        "elapsed_seconds": 0.8910000000014406,
+        "outcome": "failure",
+        "exception_type": "ValidationError",
+        "validation_summary": {
+          "source": "pydantic",
+          "error_count": 1,
+          "truncated": false,
+          "errors": [
+            {
+              "category": "constraint",
+              "path": [
+                "write_contracts",
+                0,
+                "delegated_arguments",
+                "<key>",
+                "match_slots"
+              ]
+            }
+          ]
+        },
+        "finish_reason": "stop",
+        "queue_time": 0.052004424,
+        "prompt_tokens": 2321,
+        "prompt_time": 0.160483151,
+        "completion_tokens": 274,
+        "completion_time": 0.520875195,
+        "total_tokens": 2595,
+        "total_time": 0.681358346
+      },
+      {
+        "elapsed_seconds": 0.2039999999997235,
+        "outcome": "cancelled",
+        "exception_type": "CancelledError"
+      },
+      {
+        "elapsed_seconds": 0.7180000000007567,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.051665839,
+        "prompt_tokens": 2407,
+        "prompt_time": 0.166628435,
+        "completion_tokens": 172,
+        "completion_time": 0.32752038,
+        "total_tokens": 2579,
+        "total_time": 0.494148815
+      },
+      {
+        "elapsed_seconds": 0.1710000000002765,
+        "outcome": "failure",
+        "exception_type": "HTTPStatusError",
+        "status_code": 429,
+        "category": "rate_limit",
+        "quota": {
+          "unit": "ITPM",
+          "limit": 7000,
+          "requested": 2920,
+          "used": 6555
+        }
+      }
+    ],
+    "prompt_profile": "compact-v1",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 2704,
+        "data_chars": 4549,
+        "schema_chars": 2313,
+        "instruction_sha256": "ce2cccc1bb2bec1252a88723eb86da55aa671364f661a7e7072dd4e8adac6917",
+        "presented_schema_sha256": "5fbaaa10351224e04a30fd6674fee93c045c7d6ddb5eee978576fcb78229f1ea",
+        "enforced_schema_sha256": "b8062d814cb3efd4c99aa0e60fddd7d6c98b057240f6b824a3c1615550557c83"
+      },
+      {
+        "instruction_chars": 2704,
+        "data_chars": 4710,
+        "schema_chars": 2313,
+        "instruction_sha256": "ce2cccc1bb2bec1252a88723eb86da55aa671364f661a7e7072dd4e8adac6917",
+        "presented_schema_sha256": "5fbaaa10351224e04a30fd6674fee93c045c7d6ddb5eee978576fcb78229f1ea",
+        "enforced_schema_sha256": "b8062d814cb3efd4c99aa0e60fddd7d6c98b057240f6b824a3c1615550557c83"
+      },
+      {
+        "instruction_chars": 2704,
+        "data_chars": 4784,
+        "schema_chars": 2313,
+        "instruction_sha256": "ce2cccc1bb2bec1252a88723eb86da55aa671364f661a7e7072dd4e8adac6917",
+        "presented_schema_sha256": "5fbaaa10351224e04a30fd6674fee93c045c7d6ddb5eee978576fcb78229f1ea",
+        "enforced_schema_sha256": "b8062d814cb3efd4c99aa0e60fddd7d6c98b057240f6b824a3c1615550557c83"
+      },
+      {
+        "instruction_chars": 2704,
+        "data_chars": 6041,
+        "schema_chars": 2434,
+        "instruction_sha256": "ce2cccc1bb2bec1252a88723eb86da55aa671364f661a7e7072dd4e8adac6917",
+        "presented_schema_sha256": "e48874a1919a719a379661c15f2f9a81eef0c476b18bff3637737187c6b7f9e3",
+        "enforced_schema_sha256": "d613afd6adb65f3ce6763ecf450ea6e094b07e851e655bbcc6d90e3961ea5ebc"
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "f3bf9ece-0846-4f2c-87aa-2ae6ede3880f",
+        "2941eb52-aa31-4eda-8631-5ef75d355d04"
+      ],
+      "proposal": {
+        "intent": "book_flight",
+        "slot_updates": {
+          "destination": "New York",
+          "date": "tomorrow"
+        },
+        "calls": [
+          {
+            "tool": "flight_search",
+            "arguments": {
+              "destination": "New York",
+              "date": "tomorrow"
+            },
+            "dependencies": [
+              "destination",
+              "date"
+            ],
+            "argument_slots": {
+              "destination": "destination",
+              "date": "date"
+            },
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "request_complete": true,
+        "write_requested": true,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "092a876c-b9d0-4767-8b36-1beee49aae6c",
+      "operation_id": "623b9c7d-6261-478d-ab8e-704c537640ad",
+      "tool": "flight_search",
+      "arguments": {
+        "destination": "New York",
+        "date": "tomorrow"
+      },
+      "dependencies": {
+        "destination": 1,
+        "date": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "fa12b065-f4e0-48a0-a79c-037f40ac78ab",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [
+    {
+      "contract_version": "0.1",
+      "session_id": "samsung-session",
+      "event_id": "bb6e74ce-8d51-4ee3-a54f-035c6ba4988b",
+      "timestamp": 1.7030000000013388,
+      "sequence": 2,
+      "kind": "error",
+      "payload": {
+        "code": "plan_schema_rejected",
+        "detail": {
+          "source": "pydantic",
+          "error_count": 1,
+          "truncated": false,
+          "errors": [
+            {
+              "category": "constraint",
+              "path": [
+                "write_contracts",
+                0,
+                "delegated_arguments",
+                "<key>",
+                "match_slots"
+              ]
+            }
+          ]
+        },
+        "caused_by_event_id": "f3bf9ece-0846-4f2c-87aa-2ae6ede3880f"
+      },
+      "state": {
+        "intent": null,
+        "revision": 0,
+        "slots": {},
+        "pending_call_ids": [],
+        "status": "listening",
+        "correction_pending": false
+      }
+    },
+    {
+      "contract_version": "0.1",
+      "session_id": "samsung-session",
+      "event_id": "e79990c1-91e7-4dc1-a12d-f9446377eb81",
+      "timestamp": 5.593000000000757,
+      "sequence": 7,
+      "kind": "error",
+      "payload": {
+        "code": "backend_failure",
+        "detail": "HTTPStatusError",
+        "caused_by_event_id": "a945b2a2-0395-4e9d-845c-698c58206625"
+      },
+      "state": {
+        "intent": "book_flight",
+        "revision": 1,
+        "slots": {
+          "destination": {
+            "value": "New York",
+            "confirmed": true,
+            "evidence": [
+              "f3bf9ece-0846-4f2c-87aa-2ae6ede3880f",
+              "2941eb52-aa31-4eda-8631-5ef75d355d04"
+            ],
+            "revision": 1
+          },
+          "date": {
+            "value": "tomorrow",
+            "confirmed": true,
+            "evidence": [
+              "f3bf9ece-0846-4f2c-87aa-2ae6ede3880f",
+              "2941eb52-aa31-4eda-8631-5ef75d355d04"
+            ],
+            "revision": 1
+          }
+        },
+        "pending_call_ids": [],
+        "status": "working",
+        "correction_pending": false
+      }
+    }
+  ],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "a21067b87c3a209543da392950002e41ace697f2",
+  "runner_sha256": "689b213975e00b2c83a86d5c7695bacdc8b63b1a4fbf32639a7be852fcfd8685",
+  "created_at": "2026-09-22T09:02:02.983808+00:00",
+  "provenance": {
+    "source_sha256": "566e60a77781c3cb68d260787cdc9cc60790cd3bb1521b563677cba15a7b9e02",
+    "scenario_sha256": "a5ebddfa520550fa41d66eaa44cf7ed614bc41d1868c1f4603ae997706f1da1d",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_02_text_interrupt.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_02_text_interrupt",
+    "total": 84.3,
+    "breakdown": {
+      "task": {
+        "weight": 40.0,
+        "fraction": 0.609,
+        "points": 24.3,
+        "detail": {
+          "fraction": 0.6086956521739131,
+          "checkpoints": [
+            {
+              "id": "search_nyc",
+              "type": "tool_called",
+              "weight": 0.4,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "final_nyc",
+              "type": "final_response_contains",
+              "weight": 0.3,
+              "passed": false,
+              "note": "no final_response matched any_of"
+            },
+            {
+              "id": "no_new_boston_calls",
+              "type": "tool_not_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "0 forbidden matching call(s) found"
+            },
+            {
+              "id": "ack_mentions_new_city",
+              "type": "spoken_contains",
+              "weight": 0.15,
+              "passed": false,
+              "note": "no spoken action matched in window"
+            }
+          ]
+        }
+      },
+      "recovery": {
+        "weight": 35.0,
+        "fraction": 1.0,
+        "points": 35.0,
+        "detail": {
+          "fraction": 1.0,
+          "checks": [
+            {
+              "check": "invalidated:flight_search",
+              "passed": true,
+              "note": "all stale work aborted or finished pre-interrupt"
+            },
+            {
+              "check": "state:slots.destination",
+              "passed": true,
+              "note": "snapshot value = 'New York'"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 15.0,
+        "fraction": 1.0,
+        "points": 15.0,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 12.0,
+              "fraction": 1.0
+            },
+            {
+              "event_index": 2,
+              "delta_ms": 6.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 10.0,
+        "fraction": 1.0,
+        "points": 10.0,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public development attempt; mock external tools, no median or hidden-set claim."
+}
