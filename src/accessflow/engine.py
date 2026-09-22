@@ -36,6 +36,19 @@ def _clarify_repr(value):
     return text
 
 
+# Slot/parameter NAMES interpolated into a clarify are just as planner-controlled and
+# unbounded as the values _clarify_repr guards (PlanProposal.slot_updates keys,
+# ProposedCall.arguments keys, and argument_slots values all come from the model's own
+# proposal). The origin check that emits these clarifies runs before manifest
+# validation, so a schema's additionalProperties:False cannot filter an oversized name
+# in time (security review LOW finding 3).
+def _clarify_name(name):
+    text = str(name)
+    if len(text) > CLARIFY_VALUE_TRUNCATE_LEN:
+        return text[:CLARIFY_VALUE_TRUNCATE_LEN] + "...(truncated)"
+    return text
+
+
 class DenyWrites:
     def allows(self, view, call):
         return False
@@ -329,7 +342,19 @@ class Agent:
                     # permanently outlive it (security review MEDIUM finding 1).
                     self._user_fixed_slots = set()
                     self._intent_user_fixed = False
-                    self._slot_value_origin = {}
+                    # _slot_value_origin is NOT the same kind of state as the two flags
+                    # above. A "user" mark is request-scoped authority (the user fixed
+                    # THIS slot on THIS request) and must keep being wiped here. A
+                    # "tool"/"image" mark is taint ON A VALUE, and that value is not
+                    # request-scoped -- self.state.slots is untouched by an interrupt, so
+                    # the tainted value survives it. Wiping the whole dict unconditionally
+                    # discarded the mark while the value it described lived on: the very
+                    # next dispatch check then saw origin=None (not "tool") for that slot
+                    # and let the interrupted turn's planner-injected value commit
+                    # (security review HIGH finding 1). Keep every non-"user" mark whose
+                    # slot still exists; only "user" marks reset here.
+                    self._slot_value_origin = {name: origin for name, origin in self._slot_value_origin.items()
+                                               if origin != "user" and name in self.state.slots}
                     self.semantic_correction_event = None
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
@@ -382,7 +407,15 @@ class Agent:
                         # untouched here; only the fixed-by-user PROVENANCE resets.
                         self._user_fixed_slots = set()
                         self._intent_user_fixed = False
-                        self._slot_value_origin = {}
+                        # Same reasoning as the identical reset on InterruptEvent above:
+                        # only "user" marks are request-scoped authority. A "tool"/"image"
+                        # mark describes the surviving VALUE (self.state.slots is not
+                        # touched by a rotation either), so wiping it here while the value
+                        # lives on let a rotation-triggered replan launder a tool-origin
+                        # value straight past the dispatch check on the new request
+                        # (security review HIGH finding 1).
+                        self._slot_value_origin = {name: origin for name, origin in self._slot_value_origin.items()
+                                                   if origin != "user" and name in self.state.slots}
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -719,10 +752,22 @@ class Agent:
                 # a write cancellation racing the next utterance) would be refused by
                 # the guard below as if it were an unrelated tool result.
                 fresh_evidence = True
+        # Origin classification (security review HIGH finding 2): fresh_evidence alone
+        # conflates "the user just said this" with "a camera frame just showed this" --
+        # both an image and fresh speech set fresh_evidence=True. user_origin is the
+        # strictly narrower predicate the three slot/intent provenance sites below
+        # actually need: fresh AND speech-sourced. An image proposal has
+        # fresh_evidence=True but speech_origin=False, so user_origin is False for it --
+        # it can still SET a slot (as "image" origin, in the loop below) but can never
+        # overwrite a slot the user already fixed by speech, and can never itself mark a
+        # slot/intent "user"-fixed. The H2 hand-off above only ever sets
+        # fresh_evidence=True inside `if speech_origin:`, so by the time it fires
+        # speech_origin is already True and user_origin correctly follows fresh_evidence.
+        user_origin = fresh_evidence and speech_origin
         changed = set()
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
-            if not fresh_evidence and name in self._user_fixed_slots and old is not None and old.value != value:
+            if not user_origin and name in self._user_fixed_slots and old is not None and old.value != value:
                 # A17-1: write AUTHORITY (write_intent_retained, above) is gated on
                 # fresh evidence; the ARGUMENTS of an already-authorized write must be
                 # too. A tool-result-triggered replan cannot rewrite a slot value the
@@ -733,6 +778,12 @@ class Agent:
                 # using the smuggled value: _argument_dependency_error grounds every
                 # call argument against the CURRENT tracked slot value, so keeping the
                 # old value here also keeps any pending write's arguments honest.
+                #
+                # Gated on user_origin, not merely fresh_evidence (security review HIGH
+                # finding 2): fresh_evidence is also True for an image proposal, which
+                # is not a user assertion and must be refused here exactly like a
+                # tool-result replan -- otherwise a camera frame could overwrite a slot
+                # the user fixed by speech and then get relabelled "user" below.
                 if self.latest_complete or final_correction:
                     # Gated exactly like the proposal.clarification emit below: a
                     # mid-partial-utterance refusal would interrupt the speaker over
@@ -741,11 +792,12 @@ class Agent:
                     # the original value) is NOT gated -- it must hold every time,
                     # partial or complete, matching the A17-1 guard this speaks for.
                     await self._emit("clarify", text=(
-                        f"A tool result tried to change '{name}' from {_clarify_repr(old.value)} to "
-                        f"{_clarify_repr(value)} after the user already fixed it; the original "
-                        "value is kept."))
+                        f"A tool result tried to change '{_clarify_name(name)}' from "
+                        f"{_clarify_repr(old.value)} to {_clarify_repr(value)} after the "
+                        "user already fixed it; the original value is kept."))
                 continue
-            if fresh_evidence and self.latest_complete:
+            value_changed = old is None or old.value != value
+            if user_origin and self.latest_complete:
                 # Gated on latest_complete: a still-partial hypothesis's slot value can
                 # be discarded wholesale by _rollback_hypothesis, but until this gate,
                 # merely PROPOSING it on fresh (user-origin) evidence already marked the
@@ -754,25 +806,39 @@ class Agent:
                 # Only a proposal the turn policy considers COMPLETE (or a completed
                 # correction) genuinely fixes a slot's provenance.
                 self._user_fixed_slots.add(name)
-                # A fresh, complete proposal asserting this name is the user's own
-                # confirmation of its value -- record that even when the value is
-                # unchanged (e.g. the user explicitly confirming a value a tool
-                # already delegated: see the write-dispatch origin check below). This
-                # is the one case that touches origin without a value change, and it
-                # is deliberately NOT symmetric with the non-fresh case just below:
-                # only a fresh, complete assertion can promote a slot to "user".
+                # A fresh, complete, SPEECH-origin proposal asserting this name is the
+                # user's own confirmation of its value -- record that even when the
+                # value is unchanged (e.g. the user explicitly confirming a value a
+                # tool already delegated: see the write-dispatch origin check below).
+                # This is the one case that touches origin without a value change, and
+                # it is deliberately NOT symmetric with the "image"/"tool" cases below:
+                # only a fresh, complete, speech-origin assertion can promote a slot to
+                # "user" (security review HIGH finding 2).
                 self._slot_value_origin[name] = "user"
-            elif old is None or old.value != value:
-                # A non-fresh (tool-result-triggered) proposal, or a still-partial
-                # fresh one, is about to WRITE a new value for `name` below (see
-                # `old is None or old.value != value` further down, which this
-                # mirrors). That value's provenance is not "the user just fixed
-                # this", so a write dispatch grounding on it must not treat it as
-                # confirmed (see the write-dispatch origin check further down in
-                # _apply). A non-fresh proposal merely REPEATING an unchanged value
-                # (the `else` implicit here) leaves an already-recorded origin alone
-                # -- e.g. a bounded retry replan that resends the same fresh-set slot
-                # verbatim after a failed write must not downgrade it to "tool".
+            elif fresh_evidence and not speech_origin and value_changed:
+                # Fresh, non-speech evidence (a frame) changed this slot's value. It is
+                # weaker than a user assertion -- it never fixes the slot name (the
+                # guard above still refuses it against an already user-fixed slot) and
+                # never marks itself "user" -- but it is not planner-invented the way a
+                # tool result is either, so it may dispatch a write unconfirmed (see the
+                # write-dispatch origin check further down). The one exception: a slot
+                # already tainted "tool" must not be laundered back to a dispatchable
+                # origin just because a later image turn re-asserts the same
+                # planner-supplied value, so a "tool" mark is never downgraded here
+                # (security review HIGH finding 2).
+                if self._slot_value_origin.get(name) != "tool":
+                    self._slot_value_origin[name] = "image"
+            elif not fresh_evidence and value_changed:
+                # A non-fresh (tool-result-triggered) proposal is about to WRITE a new
+                # value for `name` below (see `value_changed`, which this mirrors).
+                # That value's provenance is not "the user just fixed this" nor "a
+                # frame just showed this", so a write dispatch grounding on it must not
+                # treat it as confirmed (see the write-dispatch origin check further
+                # down in _apply). A non-fresh proposal merely REPEATING an unchanged
+                # value, or a still-partial fresh one, leaves an already-recorded
+                # origin alone -- e.g. a bounded retry replan that resends the same
+                # fresh-set slot verbatim after a failed write must not downgrade it to
+                # "tool".
                 self._slot_value_origin[name] = "tool"
             if not self.latest_complete and name not in self.provisional_slots:
                 self.provisional_slots[name] = (source,
@@ -781,7 +847,7 @@ class Agent:
                 self.provisional_slots[name] = (source, self.provisional_slots[name][1])
             elif self.latest_complete:
                 self.provisional_slots.pop(name, None)
-            if old is None or old.value != value:
+            if value_changed:
                 changed.add(name)
                 self.slot_revisions[name] = self.slot_revisions.get(name, 0) + 1
                 self.state.slots[name] = Slot(value=value, confirmed=self.latest_complete,
@@ -810,7 +876,11 @@ class Agent:
             elif self.latest_complete:
                 self.provisional_intent = None
             self.state.intent = proposal.intent
-            if fresh_evidence:
+            if user_origin:
+                # Gated on user_origin, not merely fresh_evidence, for the same reason
+                # as the slot-provenance sites above: an image proposal must not be able
+                # to mark the intent "user"-fixed on the strength of a camera frame
+                # (security review HIGH finding 2).
                 self._intent_user_fixed = True
         await self._invalidate_dependencies(changed, "dependency_changed")
         said_something = bool(proposal.clarification)
@@ -881,9 +951,9 @@ class Agent:
                         # utterance is actually complete, never mid-partial-speech. The
                         # refusal itself (the `continue` below) is unconditional.
                         await self._emit("clarify", text=(
-                            f"'{proposed.tool}' would commit with {tool_origin_arg}="
-                            f"{_clarify_repr(value)}, grounded on '{slot_name}' whose value "
-                            "a tool result supplied rather than the user; please confirm "
+                            f"'{proposed.tool}' would commit with {_clarify_name(tool_origin_arg)}="
+                            f"{_clarify_repr(value)}, grounded on '{_clarify_name(slot_name)}' whose "
+                            "value a tool result supplied rather than the user; please confirm "
                             "this before it can be committed."))
                     self.clarification_outstanding = True
                     said_something = True
