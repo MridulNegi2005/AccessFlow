@@ -1061,3 +1061,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Final suite859 passed/1 xfailed, Ruff clean, offline dev4/4. Initial direct-results approach caused three corpus failures; corrected implementation keeps original tests intact. No teammate source edits, live model run, public kit score or push.
 
 ---
+
+## [2026-09-22 13:05] — Codex
+**Task:** Verify current integrated code and retain Samsung public diagnostic evidence.
+**Changes:** Repeatable explicit-profile runner, four runner tests, three scored traces with hash manifest, proposed delegated-binding spec and status/handoff updates. Earlier read-only design review informed the proposal; no teammate source edits.
+**Status:** Validation completed; implementation objective remains in progress.
+**Notes:** Fresh suite 863 passed / 1 xfailed, Ruff passed, fake dev 4/4. Live Groq Qwen public attempts 100.0 / 56.9 / 81.5 expose chaining and final-response timing gaps. Cases are exposed development evidence, not medians or multimodal certification. No keys copied; evidence hashes verified. Next: A-side binding implementation and bounded read recovery. No push or release.
+
+---

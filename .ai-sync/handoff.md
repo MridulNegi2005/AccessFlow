@@ -1,6 +1,35 @@
 # Active Handoff
 
-## Read-failure recovery checkpoint — 22 September 2026
+Last updated by: Codex. Current task: merged-code validation and Samsung diagnostics.
+In progress: delegated-result binding and retry latency.
+Key files: diagnostic runner, runner tests, evidence reports and A-side documentation.
+
+## Current validation checkpoint â€” 22 September 2026
+
+Fresh rerun: **863 passed, 1 xfailed**, two dependency deprecation warnings
+(63.64 seconds); Ruff passed; offline-fake development suite **4/4**.
+Commands: `uv run --offline --frozen --extra dev pytest -q`,
+`uv run --offline --frozen --extra dev ruff check .`, and
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+The merged-main baseline previously measured 842 passed / 1 xfailed; the current
+local Mridul branch additionally includes adapter, recovery and runner tests.
+The conflicting-frame expected failure remains unresolved, not a passing safety test.
+
+Three recorded live Qwen public text attempts: simple search **100.0**, chained
+booking **56.9**, failed-read recovery **81.5**. These are individual development
+scores, not task completion percentages or final benchmark results. Booking was
+blocked by tool-derived argument authority; recovery succeeded but final inference
+missed the normal tail window. Full evidence and provenance:
+`docs/evidence/samsung-text-2026-09-22/README.md`.
+
+Next A-side work: implement and test the proposed delegated-result binding in
+`docs/DELEGATED_RESULT_BINDING.md`, then optimize bounded read recovery timing.
+That spec is not implemented or certified. Coordinate MP3/vision/timing with
+Atishay; no B-owned implementation changed. No new dependencies. Current work
+remains local on `mridul/engine`; no release, submission or workflow dispatch.
+This checkpoint supersedes current-state claims in historical sections below.
+
+## Read-failure recovery checkpoint â€” 22 September 2026
 
 Latest Workstream A validation: **859 passed, 1 xfailed**, with two dependency
 deprecation warnings; Ruff passed; offline-fake development scenarios **4/4**.
@@ -26,7 +55,7 @@ Last updated by: Codex. Current task: Samsung integration, Workstream A.
 In progress: partial queue adapter; remaining work is listed below.
 Key files modified: samsung.py, samsung_protocol.py, adapter tests and documentation.
 
-## Samsung boundary checkpoint — 22 September 2026
+## Samsung boundary checkpoint â€” 22 September 2026
 
 This checkpoint supersedes older statements that the official adapter is entirely
 unimplemented. Development is on `mridul/engine`, based on merged main `438b91b`.
@@ -45,7 +74,7 @@ The new queue adapter is partial; it is not full official-kit compatibility.
 
 Next: reconcile legitimate tool-derived arguments with authority guards; verify
 read-error recovery and frame-as-context behavior, then run recorded official
-scenarios after real configuration. Coordinate media/C1–C4 seams with Atishay.
+scenarios after real configuration. Coordinate media/C1â€“C4 seams with Atishay.
 See `docs/SAMSUNG_ADAPTER.md` for configuration, limits and ownership.
 
 
@@ -53,7 +82,7 @@ Last updated by: Codex. Current task: branch integration completed.
 In progress: none in this session; official adapter remains next.
 Key files modified: integration note and status/handoff/AI-use records.
 
-## Current integration checkpoint — 22 September 2026
+## Current integration checkpoint â€” 22 September 2026
 
 This dated checkpoint supersedes older current-state, branch and kit-availability
 claims below; those sections are historical records, not fresh verification.
@@ -154,7 +183,7 @@ reading either document.
 here). A spoken write request, a clarifying question, then the answering image now completes.
 The stall was gated on `speech_write_requested` and `latest_complete`; that field no longer
 exists. The controller session object now carries `write_intent_retained` and
-`clarification_outstanding` as its own attributes (`src/accessflow/engine.py`) — these are
+`clarification_outstanding` as its own attributes (`src/accessflow/engine.py`) â€” these are
 **not** `SessionView` fields. `SessionView` (`src/accessflow/contracts.py`) exposes only
 `write_pending`, which the controller sets from `write_intent_retained` inside `_view()`;
 `clarification_outstanding` does not reach the view at all. The former strict-xfail
@@ -291,20 +320,20 @@ The ablation is done and returned a negative result. Multimodal evidence is the 
 
 ## Key Files Modified
 
-- `src/accessflow/adapters/models.py` — backends, error detail, think flag, continuation rule
-- `src/accessflow/contracts.py` — additive `SessionView.write_pending`
-- `src/accessflow/engine.py` — sets `write_pending` on the view; also owns
+- `src/accessflow/adapters/models.py` â€” backends, error detail, think flag, continuation rule
+- `src/accessflow/contracts.py` â€” additive `SessionView.write_pending`
+- `src/accessflow/engine.py` â€” sets `write_pending` on the view; also owns
   `write_intent_retained` and `clarification_outstanding` (finding A1 fix)
-- `src/accessflow/cli.py` — deadline flags, `groq` and `nvidia` choices, `vision_provider_requested`
-- `src/accessflow/evaluation/replay.py` — deadline plumbing
-- `scripts/start-local-ollama.ps1` — `-FlashAttention`, `-KvCacheType`, `-ContextLength`
-- `tests/engine/test_models.py` — backend, think, continuation and diagnostics coverage
-- `tests/engine/test_component_integration.py` — the clarify-then-image acceptance test
+- `src/accessflow/cli.py` â€” deadline flags, `groq` and `nvidia` choices, `vision_provider_requested`
+- `src/accessflow/evaluation/replay.py` â€” deadline plumbing
+- `scripts/start-local-ollama.ps1` â€” `-FlashAttention`, `-KvCacheType`, `-ContextLength`
+- `tests/engine/test_models.py` â€” backend, think, continuation and diagnostics coverage
+- `tests/engine/test_component_integration.py` â€” the clarify-then-image acceptance test
   (finding A1); `tests/engine/test_known_defects.py` is now empty by design
-- `.env.example` — Groq, NVIDIA, think and layer-placement guidance
-- `src/accessflow/evaluation/scenarios.py` — `event_gaps_s` per-pair pacing
+- `.env.example` â€” Groq, NVIDIA, think and layer-placement guidance
+- `src/accessflow/evaluation/scenarios.py` â€” `event_gaps_s` per-pair pacing
 - `scenarios/live_dev/stale_read_after_correction.json`, `stale_read_after_device_correction.json`
-- `docs/results/` — HOSTED_MODEL, LOCAL_REPEAT, MODEL_SWEEP, CONTINUATION, INFERENCE_TUNING, ABLATION
+- `docs/results/` â€” HOSTED_MODEL, LOCAL_REPEAT, MODEL_SWEEP, CONTINUATION, INFERENCE_TUNING, ABLATION
 - `docs/handoffs/mridul.md`, `.ai-sync/context.md`
 
 ## Historical: Workstream B handoff log

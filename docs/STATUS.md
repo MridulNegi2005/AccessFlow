@@ -1,5 +1,30 @@
 # Implementation status
 
+## Current validation checkpoint — 22 September 2026
+
+Fresh rerun: **863 passed, 1 xfailed**, two dependency deprecation warnings
+(63.64 seconds); Ruff passed; offline-fake development suite **4/4**.
+Commands: `uv run --offline --frozen --extra dev pytest -q`,
+`uv run --offline --frozen --extra dev ruff check .`, and
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+The merged-main baseline previously measured 842 passed / 1 xfailed; the current
+local Mridul branch additionally includes adapter, recovery and runner tests.
+The conflicting-frame expected failure remains unresolved, not a passing safety test.
+
+Three recorded live Qwen public text attempts: simple search **100.0**, chained
+booking **56.9**, failed-read recovery **81.5**. These are individual development
+scores, not task completion percentages or final benchmark results. Booking was
+blocked by tool-derived argument authority; recovery succeeded but final inference
+missed the normal tail window. Full evidence and provenance:
+`docs/evidence/samsung-text-2026-09-22/README.md`.
+
+Next A-side work: implement and test the proposed delegated-result binding in
+`docs/DELEGATED_RESULT_BINDING.md`, then optimize bounded read recovery timing.
+That spec is not implemented or certified. Coordinate MP3/vision/timing with
+Atishay; no B-owned implementation changed. No new dependencies. Current work
+remains local on `mridul/engine`; no release, submission or workflow dispatch.
+This checkpoint supersedes current-state claims in historical sections below.
+
 ## Read-failure recovery checkpoint — 22 September 2026
 
 Latest Workstream A validation: **859 passed, 1 xfailed**, with two dependency
