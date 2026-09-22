@@ -4,7 +4,9 @@ import asyncio
 
 import pytest
 
-from accessflow.adapters.samsung import HarnessAuthorization, ParticipantAgent
+from accessflow.adapters.samsung import (
+    HarnessAuthorization, ParticipantAgent, PRE_MANIFEST_BYTE_LIMIT, PRE_MANIFEST_EVENT_LIMIT,
+)
 from accessflow.contracts import PlanProposal, ProposedCall
 from accessflow.engine import Agent
 from accessflow.fakes import FakePerception, FinalFlagPolicy, ScriptedReasoner
@@ -71,6 +73,84 @@ async def test_input_failure_stops_all_pumps_instead_of_silently_hanging(tmp_pat
     with pytest.raises(ValueError):
         await asyncio.wait_for(task, 2)
     assert not participant.tasks
+    assert not participant.agent.running
+
+
+async def test_early_speech_waits_for_manifest_then_replays_in_order(tmp_path):
+    participant, source, outgoing = await prepared(tmp_path, [])
+    internal = asyncio.Queue()
+    waiting_again = asyncio.Event()
+    original_get = source.get
+    gets = 0
+
+    async def observed_get():
+        nonlocal gets
+        gets += 1
+        if gets == 3:
+            waiting_again.set()  # Both earlier chunks have been processed by the input pump.
+        return await original_get()
+
+    source.get = observed_get
+    pump = asyncio.create_task(participant._pump_input(internal))
+    try:
+        first = event("user_speech_chunk", {"text": "Reserve ", "end_of_turn": False}, 10)
+        await source.put(first)
+        await source.put(event("user_speech_chunk", {"text": "Wednesday", "end_of_turn": True}, 20))
+        await asyncio.wait_for(waiting_again.wait(), 2)
+        first["payload"]["text"] = "mutated after admission"
+        assert internal.empty() and outgoing.empty()
+        assert not participant.protocol.tools
+        await source.put(event("tool_manifest", {"schema_version": "1.0", "tools": {"reserve_slot": {
+            "kind": "state_modifying", "args": {"day": {"type": "string", "required": True}}}}}, 30))
+        async with asyncio.timeout(2):
+            start, partial, final = [await internal.get() for _ in range(3)]
+        assert start.kind == "session_start"
+        assert partial.payload.text == "Reserve "
+        assert final.payload.text == "Reserve Wednesday"
+        assert (partial.timestamp, final.timestamp) == (0.01, 0.02)
+        assert partial.sequence < final.sequence
+    finally:
+        if pump.done() and not pump.cancelled():
+            pump.result()
+        pump.cancel()
+        await asyncio.gather(pump, return_exceptions=True)
+
+
+@pytest.mark.parametrize("overflow", ["count", "bytes"])
+async def test_startup_buffer_overflow_stops_runtime_without_actions(tmp_path, overflow):
+    participant, incoming, outgoing = await prepared(tmp_path, [])
+    task = asyncio.create_task(participant.run())
+    message = event("user_speech_chunk", {"text": "hello", "end_of_turn": False})
+    count = PRE_MANIFEST_EVENT_LIMIT + 1
+    if overflow == "bytes":
+        count = 1
+        message["payload"]["text"] = "x" * PRE_MANIFEST_BYTE_LIMIT
+    for _ in range(count):
+        await incoming.put(message)
+    with pytest.raises(ValueError, match="startup buffer"):
+        await asyncio.wait_for(task, 2)
+    assert outgoing.empty()
+    assert not participant.tasks and not participant.agent.running
+
+
+async def test_early_tool_result_is_not_admitted_as_buffered_evidence(tmp_path):
+    participant, incoming, outgoing = await prepared(tmp_path, [])
+    task = asyncio.create_task(participant.run())
+    await incoming.put(event("tool_result", {"status": "success", "result": {"approved": True}}))
+    with pytest.raises(ValueError, match="tool_manifest"):
+        await asyncio.wait_for(task, 2)
+    assert outgoing.empty() and not participant.tasks
+
+
+async def test_cancel_before_manifest_cleans_up_without_model_work(tmp_path):
+    participant, incoming, outgoing = await prepared(tmp_path, [])
+    task = asyncio.create_task(participant.run())
+    await incoming.put(event("user_speech_chunk", {"text": "hello", "end_of_turn": False}))
+    # Give run() the event loop so its managed pumps exist before cancellation.
+    await asyncio.sleep(0)
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    assert outgoing.empty() and not participant.tasks
     assert not participant.agent.running
 
 

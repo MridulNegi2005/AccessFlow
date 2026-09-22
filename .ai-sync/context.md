@@ -1117,3 +1117,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Final1047passed/1skip/1xfail; first full run and one isolated rerun exposed an intermittent B demo failure, retained without B edits. Four100.0 scorer totals do not certify answer quality: hotel output adds an unsupported pricing period. AI-assisted implementation and manual evidence review; no human edits recorded. Push authorized, configured identity only, no coauthor trailers or signoffs. Next A work: generic result-grounding quality, quota and packaging. No subagents, workflow, release or submission actions.
 
 ---
+
+## [2026-09-22 15:21] — Implementation checkpoint
+**Task:** Evaluate result-grounding instructions and make the Samsung package import/start successfully.
+**Changes:** Retained two failed prompt experiments and reverted both; added local assembler/entry template, exact dependencies/profile/hash manifests, bounded early-input runtime buffering and23 tests; retained official failed/fixed smoke, fresh-environment package evidence and public trace. Updated README and own handoff.
+**Status:** Completed engineering slice; overall goal active.
+**Notes:** Final1070passed/1skip/1xfail, focused36passed, Ruff clean. First new startup fixture omitted schema_version; fixed the fixture, preserving strict validation. Fresh online install21pins after offline cache miss; package stages1-2 pass and one public case100.0. Full repeated official evaluation/media/Docker remain unverified. AI-assisted implementation and live evaluation; no human edits recorded. No B edits/subagents/workflow/release/submission. Push authorized with configured identity and no attribution trailers.
+
+---

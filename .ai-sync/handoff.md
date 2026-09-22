@@ -1,5 +1,36 @@
 # Active Handoff
 
+## Package/startup checkpoint — 22 September 2026
+
+Added a local Samsung package assembler, declared Groq model profile, portal-secret
+mapping, pinned requirements and exact file manifests. Generated packages remain
+ignored local artifacts. A fresh Python3.11.15 environment installed21 pins from
+public PyPI; the initial offline attempt failed on missing cache entries.
+
+Official import passed, but the first contract smoke crashed because Samsung sends
+speech before a manifest. Fixed A runtime with bounded early-input buffering
+(32events/64KiB); no controller input or action precedes the real manifest. Unknown
+inputs/tool results remain rejected and cancellation/overflow are explicit.
+The rebuilt package passes official import/setup checks and one public no-tool
+case100.0, final703ms. This is not the full three-repetition evaluation or media proof.
+
+Final1070passed/1skip/1xfail, two warnings,55.27s; focused36passed; Ruff clean.
+Twenty-three new tests across packaging and startup. No B implementation/tests
+changed. Evidence and exact reproduction: docs/SAMSUNG_PACKAGE.md and
+`docs/evidence/samsung-package-2026-09-22/`. Package label AccessFlow is provisional
+until the registered team spelling is confirmed for final submission.
+
+Two prompt-only grounding changes both failed to remove the unsupported hotel
+pricing period and were reverted. Both attempts are retained in
+`docs/evidence/samsung-grounding-2026-09-22/`; the production model prompts are
+unchanged. Grounded claims and provider quota remain A work. Both teammates must
+coordinate media/vision/timing; Atishay retains B ownership. Existing B follow-ups,
+frame xfail, Docker/Linux verification and final submission gates remain open.
+
+Completed verified changes are pushed to mridul/engine under configured Git identity,
+without coauthor trailers or signoffs. No workflow, release tag or submission action.
+Overall goal remains active; this checkpoint supersedes historical status below.
+
 ## Unfamiliar-tool checkpoint — 22 September 2026
 
 The diagnostic runner accepts explicit external development fixtures while retaining
