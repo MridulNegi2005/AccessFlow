@@ -293,14 +293,16 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - The browser adapter now translates typed `speech` and `task` interruption events, and the demo
   exposes separate Stop speaking and Stop task controls. Demo route coverage preserves session
   usability after a speech interruption; no engine or shared-contract change was needed.
-- Demo media intake now enforces a 16 MiB per-session aggregate budget in addition to the 8 MiB
-  per-file bound, releases reservations after failed validation, and applies backpressure with a
-  16-item incoming queue. Focused and full checks pass; live device behavior remains unverified.
+- Demo media intake now enforces a monotonic 16 MiB per-session decoded-byte budget in addition to
+  the 8 MiB per-file bound, so rejected decoded uploads still consume admission quota and cannot
+  repeat expensive validation without limit; it also applies backpressure with a 16-item incoming
+  queue. The repeated-invalid-PNG regression passes; the current demo suite has 144 passed and one
+  retained conflict xfail, and live device behavior remains unverified.
 - Browser input now reports malformed JSON as a recoverable `demo/input` error, and PNG validation
   rejects unknown critical chunks before a vision provider is called. The full branch passes 673
   tests with one retained conflict example; Ruff and diff checks pass.
 - Failed browser media writes and unexpected validation errors now remove partial session files while
-  releasing their aggregate budget reservation. The full branch passes 673 tests with one retained
+  retaining their aggregate budget admission. The full branch passes 673 tests with one retained
   conflict example; live vision and device behavior remain unverified.
 - The demo now keeps the detailed event trace out of live announcements and exposes a concise
   screen-reader status region. A fresh local browser smoke confirmed the page rendered without
@@ -349,6 +351,19 @@ person and every AI agent on the project. Record evidence in your own handoff fi
 - PNG validation now requires all compressed image data chunks to be consecutive, rejecting ancillary
   data between `IDAT` chunks before a vision provider is called. The focused regression passes; full
   verification passes 799 tests with one retained conflict xfail and Ruff.
+- Timed-out local perception now retains one real native-work permit per session worker until the
+  underlying thread returns, so repeated timeouts cannot launch concurrent replacement calls. The
+  gated three-call probe now reports one native call, peak concurrency one, and one tracked call after
+  close; owned perception coverage passes 217 tests and full verification passes 807 tests with one
+  retained conflict xfail and Ruff.
+- The assigned JSONL perception worker now accepts `none` or `ollama` plus model, base URL and timeout
+  options, constructs the agreed A-side provider and preserves its `ollama/<model>` identity through
+  `LocalPerception`. A real child-process loopback regression covers a configured frame, while the
+  default builder remains audio-only; full verification passes 807 tests with one retained conflict
+  xfail and Ruff.
+- The committed monotonic media-admission fix was reviewed with a bounded security diff scan over
+  `demo/app.py`; it found zero reportable findings. Deterministic invalid-PNG repetition coverage
+  confirms the quota is consumed after decoded admission and failed temporary files are removed.
 - Direct WAV perception now rejects files above 8 MiB and declared PCM payloads above 64 MiB before
   validation or loading can process them. This closes the unbounded local-path seam while preserving
   the existing small fixtures; the full branch passes 673 tests with one retained conflict example.
@@ -389,11 +404,13 @@ person and every AI agent on the project. Record evidence in your own handoff fi
   unknown data can be treated as metadata. Focused local-perception coverage passes 51 tests; the full
   branch passes 684 tests with one retained conflict example and Ruff passes.
 - Live vision backend and a real multimodal benchmark on declared hardware.
-- Accept the optional vision-provider options in `src/accessflow/adapters/perception_worker.py`
-  and pass the constructed provider to `LocalPerception(vision_provider=...)`, keeping the
-  default `none` so audio-only behaviour is unchanged. This is finding A2; see the ownership
-  note in `CONTRACT_PROPOSALS.md` for why this file stays with Atishay despite the general
-  directory rule.
+- **Completed:** the assigned perception worker now accepts `none` or `ollama` with model, URL and
+  timeout options, passes the configured provider to `LocalPerception`, preserves audio-only
+  defaults and closes the backend at EOF. Actual child-process coverage is in
+  `tests/perception/test_perception_worker.py`.
+- **Completed:** repeated native perception timeouts retain one real in-flight permit per session
+  worker and track the underlying work through completion; the gated regression covers the
+  timeout/close lifecycle boundary.
 - Voluntary feedback notes and live microphone/device validation.
 - Demo video and presentation draft.
 

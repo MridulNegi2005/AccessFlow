@@ -479,3 +479,92 @@ measurements only; it does not construct a `TurnDecision`, authorize tools or mu
 tests; demo coverage passes 132 tests with one retained conflict xfail; the full suite passes 690 tests
 with one retained xfail and two dependency deprecation warnings. Ruff passes. Commits: `378d178`,
 `5fd2f91`, `fce7e62`. Live endpoint quality and live vision quality remain unverified.
+
+## 2026-09-17 - Native lifecycle and assigned vision worker
+
+**Task:** Reproduce and close the native-work timeout/close defect, then complete the explicitly assigned process-worker vision wiring.
+
+**Changes:** A gated transcriber reproduced three timed-out awaits leaving three active native calls with peak concurrency three after `aclose()`. `LocalPerception` now holds one native-work permit per session worker until the underlying thread returns, detaches timed-out wrappers without canceling the thread, and tracks outstanding native tasks through completion. Independent sessions retain independent audio/image concurrency. The assigned JSONL worker now accepts `none` or `ollama`, model, base URL and timeout options, builds the A-side `OllamaVisionProvider`, preserves its `ollama/<model>` identity, and closes the perception backend at EOF. The default path constructs the same audio-only perception object as before.
+
+**Status:** Owned perception coverage: 217 passed. Demo coverage: 143 passed, 1 retained conflict xfail. Full merged suite: 807 passed, 1 xfailed, 2 dependency deprecation warnings. Ruff and git diff --check pass. Commits are local: `f50bd60` and `430103a`; not pushed per instruction.
+
+**Evidence mode:** Native lifecycle evidence uses an injected gated thread and records actual active calls and peak concurrency: fixed result is one native call, peak one, one tracked after close, then zero after release. Vision-worker evidence uses an actual child process and a deterministic loopback HTTP `/api/chat` service; it verifies model, image payload, observation provenance and backend identity. No live ASR, live vision, live reasoning or microphone session was run.
+
+**Notes:** C1-C4 remain coordination items; no controller, shared contract, other adapter, evaluation, engine-test, corpus or root configuration file was changed. A separate frame-conflict xfail remains untouched. Next work requires the four written decisions and their exact file splits before implementing B-side changes.
+
+## 2026-09-17 - Verified continuation checkpoint
+
+**Task:** Revalidate the merged branch after the native lifecycle and worker slices, then correct stale Workstream B status wording.
+
+**Changes:** Confirmed `origin/main` was integrated without conflicts and that the current branch retains the newer lifecycle and worker implementations. Updated `docs/STATUS.md` so the owned Workstream B required-work list records both slices as completed.
+
+**Status:** `tests/perception`: 217 passed; `tests/demo`: 143 passed, 1 xfailed; full suite: 807 passed, 1 xfailed, 2 warnings; Ruff and `git diff --check` pass. Branch is clean and ahead of `origin/atishay/perception` by 9 commits. No push, CI, release tag or protected-file edits.
+
+**Notes:** Remaining B17-3 through B17-7 work is gated by written C1-C4 decisions. Sol was consulted for an architecture review and remains the single persistent advisor; no additional reviewer was started.
+
+## 2026-09-17 - Live vision availability recheck
+
+**Task:** Check whether live vision/reasoning evidence could proceed without fabricating a result.
+
+**Changes:** Rechecked the executable, loopback Ollama endpoint, vision-model setting and hosted key. Recorded the result in `docs/feedback/VISION_MEASUREMENTS.md`.
+
+**Status:** `ollama` is missing, `127.0.0.1:11434` is unavailable, no vision model is configured and no Groq key is present. No live benchmark was started. The branch remains clean before this documentation checkpoint; no source or protected files changed.
+
+**Notes:** Deterministic loopback child-process evidence remains protocol/provenance evidence only. Live vision quality and C1-C4 decisions remain open.
+
+## 2026-09-17 - Monotonic browser media admission budget
+
+**Task:** Reproduce and close the owned media-budget refund path that allowed repeated invalid PNG validation work within one WebSocket session.
+
+**Changes:** A deterministic CRC-valid PNG with an invalid filter byte was rejected repeatedly while the old budget returned to zero. `_SessionMediaBudget` now accounts decoded bytes monotonically for the session: every non-empty, per-file-valid decoded upload consumes quota even when media validation or materialization fails. Cleanup still removes failed temporary files, and pre-decode shape/base64/size failures consume no quota. Updated the old refund assertion and added a regression proving the aggregate limit rejects the third invalid PNG before validation.
+
+**Status:** Focused budget tests: 4 passed. Demo suite: 144 passed, 1 xfailed, 2 warnings. Full suite: 808 passed, 1 xfailed, 2 warnings. Ruff and diff checks pass. Committed as `127a2c8`; no push or protected-file edits.
+
+**Evidence:** Deterministic local invalid-PNG probe and test double only; no live service or user media. This bounds repeated decoded upload validation by session quota but does not claim a separate decompressed CPU budget.
+
+## 2026-09-17 - Media admission security diff review
+
+**Task:** Review the committed monotonic media-admission fix and its direct upload/materialization path.
+
+**Result:** A bounded Codex Security diff scan reviewed `demo/app.py` for decoded-byte accounting, rejected-upload cleanup and cancellation-adjacent materialization behavior. It found zero reportable findings. Daybreak access was not granted, so this remains a local static review backed by deterministic tests; it does not claim live service evidence or a separate decompressed CPU budget.
+
+**Scan:** `263348fe-a430-4ba6-bee6-f91882c33126`, commit `127a2c8`, base `5acfaeb`. No source or protected-file changes were made by the scan.
+
+## 2026-09-17 - C1-C4 coordination packet
+
+The remaining B17-3 through B17-7 changes are still pending written agreement with Mridul.
+The smallest proposals and ownership split are:
+
+- **C1 — image evidence and action authority.** Trace: spoken request `Book Wednesday` → frame
+  `F1` → replacement frame `F2`; ordinary replacement keeps only `F2`, while a declared conflict
+  produces `correction_pending` and no call/effect → spoken clarification resolves the evidence →
+  exactly one authorized write. Decision needed: whether a new frame supersedes the prior frame by
+  default, and how a user-fixed slot conflict is represented and resolved. Mridul owns the shared
+  provenance/conflict contract, controller guard and engine tests; Atishay owns frame metadata,
+  perception/UI translation and `tests/demo/` integration coverage.
+
+- **C2 — speech timing and stop scope.** Trace: capture start → partial speech → acoustic pause →
+  continuation or final; separately, `stop speaking` interrupts output while `cancel this booking`
+  cancels the task, and a device command remains a device command. Decision needed: the clock domain,
+  speech-end evidence and continued-pause rule, plus typed output-stop versus task-cancel scope for
+  partial hypotheses. Mridul owns the additive contract, controller interpretation and timing
+  harness; Atishay owns capture/activity evidence, turn policy and browser input events/tests.
+
+- **C3 — one configured agent path.** Trace: CLI provider/model/endpoint/deadline → process worker
+  and browser use the same configured factory → shared reasoner/provider protocol and tool manifest
+  → deterministic mock tool call → effect result with backend labels. Decision needed: the canonical
+  provider/reasoner interfaces, factory ownership and manifest source. Mridul owns the shared factory,
+  execution contract and A-side configuration; Atishay owns demo wiring, the assigned perception
+  worker and their child-process/browser tests.
+
+- **C4 — media catalog into task evaluation.** Trace: media ID and SHA-256 provenance → isolated
+  task mapping → ASR/vision observation → planner decision → terminal/effect oracle; consumed media
+  remains consumed and is never relabeled unseen. Decision needed: which media IDs map to independent
+  executable tasks, the terminal/effect oracle and exposure bookkeeping. Mridul owns executable
+  scenarios, evaluation metrics and oracle packaging; Atishay owns media assets, capture/ASR/vision
+  provenance, fixtures and labels.
+
+No implementation is implied by this packet. Until each decision is accepted, the frame-conflict
+xfail remains in place, stop policy remains unchanged, whole-file upload remains labeled as lacking
+speech-endpoint evidence, the demo reasoner remains separate, and media replay remains routing/
+observation evidence rather than completed task evaluation.
