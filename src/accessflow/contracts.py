@@ -280,6 +280,8 @@ class ToolCall(Model):
     arguments: dict[str, Any]
     dependencies: dict[str, int]
     effect: Literal["read", "write"]
+    # Controller-created retry lineage; never a reasoner permission claim.
+    retry_of_call_id: str | None = None
     # Which accepted request produced this call. Additive/optional: history in the
     # ledger is never deleted, but continuation logic can project only the calls
     # belonging to the currently active request instead of the whole session.

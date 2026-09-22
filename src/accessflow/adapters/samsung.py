@@ -53,6 +53,7 @@ class ParticipantAgent:
         self.tool_documentation = tool_documentation
         self.documentation_evidence = None
         self.partial_debounce_s = 0.08
+        self.fast_read_retry = True
         self.agent = None
         self.protocol = None
         self.tasks = set()
@@ -74,6 +75,10 @@ class ParticipantAgent:
             self.partial_debounce_s = float(os.getenv("ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S", "0.08"))
             if not math.isfinite(self.partial_debounce_s) or not 0 <= self.partial_debounce_s <= 5:
                 raise ValueError("Samsung partial debounce must be between 0 and 5 seconds")
+            fast_read_retry = os.getenv("ACCESSFLOW_SAMSUNG_FAST_READ_RETRY", "1")
+            if fast_read_retry not in {"0", "1"}:
+                raise ValueError("Samsung fast read retry must be 0 or 1")
+            self.fast_read_retry = fast_read_retry == "1"
             documentation = (self.tool_documentation if self.tool_documentation is not None
                              else os.getenv("ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION"))
             if documentation is not None:
@@ -103,7 +108,7 @@ class ParticipantAgent:
         return Agent(LocalPerception(), HeuristicTurnPolicy(),
                      ModelReasoner(backend, tool_documentation=self.documentation_evidence),
                      executor=None, authorization=HarnessAuthorization(),
-                     partial_debounce_s=self.partial_debounce_s)
+                     partial_debounce_s=self.partial_debounce_s, fast_read_retry=self.fast_read_retry)
 
     async def _pump_input(self, incoming):
         while True:

@@ -65,7 +65,10 @@ check all of these again before allowing a tool-origin argument:
 1. Contract was captured from fresh complete speech, remains in the same active
    request, and names this exact write tool and parameter.
 2. Source call was a read, succeeded, remains accepted/current, and was neither
-   invalidated nor replaced. Failed/error payloads cannot supply values.
+   invalidated nor superseded. An exact controller-issued transient-read retry
+   may transfer a current contract to its new call ID as described below;
+   a planner may not choose an arbitrary replacement. Failed/error payloads
+   cannot supply values.
 3. Source dependency revisions and every declared match slot still match the
    contract/current state. Do not rely only on the read's original dependencies;
    a selection preference may not have been an argument to the read.
@@ -148,3 +151,19 @@ context cap. See `docs/evidence/samsung-binding-2026-09-22/README.md` for all th
 new attempts, including failures, timings and configuration differences. Final
 source validation: 996 passed, one Windows symlink skip, one existing frame xfail.
 Do not interpret one public success as broader generality or safety certification.
+
+## Exact transient-read replacement — 22 September follow-up
+
+The optional fast read retry transfers source references only for still-current
+contracts matching request, input epoch, intent and slot revisions. The failed
+read must be current and not invalidated, its original arguments must still
+validate against a read-only manifest, and its operation has only one attempt
+used. The replacement keeps arguments, dependencies and operation ID, adds
+`retry_of_call_id`, and consumes the second and final identical-attempt allowance.
+Selectors, fixed mappings, constraints and authority are unchanged. Expired
+contract records are retained without transfer. No automatic write retry exists.
+
+The old failed result never supplies a value. Any eventual write must reference
+the replacement's actual successful accepted result and pass all normal checks.
+Deterministic tests cover this continuation and stale/failed-result refusal.
+Live read-only evidence is in `evidence/samsung-retry-2026-09-22/README.md`.

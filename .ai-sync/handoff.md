@@ -1,8 +1,41 @@
 # Active Handoff
 
-Last updated by: Codex. Current task: A-side Samsung integration.
-In progress: read-retry latency and broader public evaluation.
-Key files modified: binding/resolver, model diagnostics, documentation loader, runtime/runner, tests and evidence.
+## Read-retry checkpoint — 22 September 2026
+
+Implemented a bounded fast retry for current transient read failures. It preserves
+arguments, dependency revisions and operation identity, uses a new physical call
+ID with retry lineage, and shares the existing two-attempt budget with model retries.
+Current write bindings follow only this controller-issued replacement; stale
+contracts and failed payloads cannot gain authority. No automatic write retry.
+Base Agent remains opt-in; Samsung's default factory enables it (flag 0 disables).
+
+Final full suite: **1021 passed, 1 skipped, 1 xfailed**, two dependency warnings,
+71.79 seconds. New retry tests: 25 passed; Ruff clean; fake dev 4/4. The previous
+full run failed one B-owned stale-frame timing test; three isolated reruns and the
+final full run passed on unchanged B files. The failure remains documented for
+Atishay in `docs/reviews/ATISHAY_TIMING_FOLLOWUP_2026-09-22.md`. The native symlink
+skip and existing conflicting-frame xfail are not passing safety evidence.
+
+Live Samsung pub_08: fast retry **100.0**, matched configuration control **81.5**.
+Error-to-retry emission: 15 ms versus 922 ms. Fast mode returned a grounded final
+at 5734 ms; the control's final model call hit HTTP 429. Same source/configuration
+apart from retry flag, but provider quota/timing are not controlled. This pair
+supports reduced round trips and token demand, not repeated reliability or a pure
+latency ablation. Reports, provenance and hashes are retained in
+`docs/evidence/samsung-retry-2026-09-22/README.md`.
+
+Next A work: broader public text interruption/unfamiliar-tool/no-tool cases and
+repeat measurements under declared quota conditions. B media/endpoint/frame
+semantics need Atishay coordination; no B source, tests or handoff edited. Docker,
+remaining security review and submission work stay open. Changes remain local on
+mridul/engine; no push, workflow dispatch, release tag or submission. No subagents
+used for this slice. Overall user goal stays active.
+
+This checkpoint supersedes the historical current-state descriptions below.
+
+Last updated by: Codex. Current task: A-side Samsung text evaluation.
+In progress: broader public cases after completed transient-read retry slice.
+Key files modified: contracts, controller, Samsung runtime/runner, retry tests and evidence.
 
 ## Current A-side checkpoint — 22 September 2026
 

@@ -56,8 +56,11 @@ async def execute(harness, participants, *, setup_cap=300, wall_cap=120):
         "failure": failure, "trace": trace, "wall_s": time.monotonic() - started,
         "model_evidence": agent.reasoner.evidence() if agent else None,
         "plans": agent.reasoner.plans if agent else [],
+        "execution_ledger": [call.model_dump(mode="json")
+                             for call in getattr(agent, "ledger", {}).values()],
         "adapter_diagnostics": participant.diagnostics if participant else [],
-        "participant_config": {"partial_debounce_s": getattr(participant, "partial_debounce_s", None)},
+        "participant_config": {"partial_debounce_s": getattr(participant, "partial_debounce_s", None),
+                               "fast_read_retry": getattr(agent, "fast_read_retry", None)},
     }
 
 

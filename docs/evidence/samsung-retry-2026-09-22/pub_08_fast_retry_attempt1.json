@@ -1,0 +1,409 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 844.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find me flights to Seattle please.",
+        "end_of_turn": true
+      },
+      "t_ms": 125.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 125.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 140.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "52d68829-e061-4543-b0c8-1d004039cc24",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Seattle"
+      },
+      "t_ms": 937.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "52d68829-e061-4543-b0c8-1d004039cc24",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Seattle"
+      },
+      "status": "error",
+      "result": {
+        "status": "error",
+        "error": "timeout",
+        "detail": "upstream flight API timed out"
+      },
+      "t_ms": 3125.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "e61e2851-b5a8-4aea-a84b-221628fb5697",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Seattle"
+      },
+      "t_ms": 3140.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "e61e2851-b5a8-4aea-a84b-221628fb5697",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Seattle"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "flights": [
+          {
+            "flight_id": "FL-SEA-8AM",
+            "depart": "08:00",
+            "price_usd": 129
+          },
+          {
+            "flight_id": "FL-SEA-2PM",
+            "depart": "14:00",
+            "price_usd": 99
+          }
+        ]
+      },
+      "t_ms": 4984.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "I found two flights to Seattle: FL-SEA-8AM departing at 08:00 for $129 and FL-SEA-2PM departing at 14:00 for $99. Which one would you like to book, or would you like to search for a different date?"
+      },
+      "state_snapshot": {
+        "intent": "search_flights",
+        "slots": {
+          "destination": "Seattle"
+        }
+      },
+      "t_ms": 5734.0
+    }
+  ],
+  "wall_s": 6.984000000000378,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 3,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 3,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.8440000000009604,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.046612965,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003107901,
+        "completion_tokens": 6,
+        "completion_time": 0.011584586,
+        "total_tokens": 55,
+        "total_time": 0.014692487
+      },
+      {
+        "elapsed_seconds": 0.7819999999992433,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.049307463,
+        "prompt_tokens": 3004,
+        "prompt_time": 0.214714075,
+        "completion_tokens": 133,
+        "completion_time": 0.277616712,
+        "total_tokens": 3137,
+        "total_time": 0.492330787
+      },
+      {
+        "elapsed_seconds": 0.75,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.051583321,
+        "prompt_tokens": 3524,
+        "prompt_time": 0.253725587,
+        "completion_tokens": 121,
+        "completion_time": 0.233521773,
+        "total_tokens": 3645,
+        "total_time": 0.48724736
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "f55907ba-18ef-4792-a352-34e54053f2f2"
+      ],
+      "proposal": {
+        "intent": "search_flights",
+        "slot_updates": {
+          "destination": "Seattle"
+        },
+        "calls": [
+          {
+            "tool": "flight_search",
+            "arguments": {
+              "destination": "Seattle"
+            },
+            "dependencies": [
+              "destination"
+            ],
+            "argument_slots": {},
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 1,
+      "observation_event_ids": [
+        "f55907ba-18ef-4792-a352-34e54053f2f2"
+      ],
+      "proposal": {
+        "intent": "search_flights",
+        "slot_updates": {},
+        "calls": [],
+        "clarification": null,
+        "response": "I found two flights to Seattle: FL-SEA-8AM departing at 08:00 for $129 and FL-SEA-2PM departing at 14:00 for $99. Which one would you like to book, or would you like to search for a different date?",
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "52d68829-e061-4543-b0c8-1d004039cc24",
+      "operation_id": "c8eeee1c-a4b5-43a0-91ea-c29682d36d10",
+      "tool": "flight_search",
+      "arguments": {
+        "destination": "Seattle"
+      },
+      "dependencies": {
+        "destination": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "10142fa8-a332-49f7-aaab-a6b777148e99",
+      "status": "failed"
+    },
+    {
+      "call_id": "e61e2851-b5a8-4aea-a84b-221628fb5697",
+      "operation_id": "c8eeee1c-a4b5-43a0-91ea-c29682d36d10",
+      "tool": "flight_search",
+      "arguments": {
+        "destination": "Seattle"
+      },
+      "dependencies": {
+        "destination": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": "52d68829-e061-4543-b0c8-1d004039cc24",
+      "request_id": "10142fa8-a332-49f7-aaab-a6b777148e99",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [
+    {
+      "contract_version": "0.1",
+      "session_id": "samsung-session",
+      "event_id": "5a0123d5-a3d1-462b-b736-606572d1bed8",
+      "timestamp": 3.139999999999418,
+      "sequence": 3,
+      "kind": "error",
+      "payload": {
+        "code": "tool_failed",
+        "call_id": "52d68829-e061-4543-b0c8-1d004039cc24",
+        "detail": "timeout",
+        "caused_by_event_id": "d2ac316b-3630-4c76-92c6-ba825da143d3"
+      },
+      "state": {
+        "intent": "search_flights",
+        "revision": 1,
+        "slots": {
+          "destination": {
+            "value": "Seattle",
+            "confirmed": true,
+            "evidence": [
+              "f55907ba-18ef-4792-a352-34e54053f2f2"
+            ],
+            "revision": 1
+          }
+        },
+        "pending_call_ids": [],
+        "status": "working",
+        "correction_pending": false
+      }
+    }
+  ],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "01d271c7248d17cc31b2c5eadd112742a3782a2d",
+  "runner_sha256": "689b213975e00b2c83a86d5c7695bacdc8b63b1a4fbf32639a7be852fcfd8685",
+  "created_at": "2026-09-22T08:35:50.079978+00:00",
+  "provenance": {
+    "source_sha256": "f01815b03d9f1aaf172b554bd26e66c2e9a4bd156271430f505e4fb6d180ae3a",
+    "scenario_sha256": "ebdbe988b525ea3861dab9dd74db6a55d13c3f9b1a850b2df0049b2e0dc2c8ca",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_08_text_tool_failure.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_08_text_tool_failure",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "retried_after_failure",
+              "type": "tool_called",
+              "weight": 0.4,
+              "passed": true,
+              "note": "2/2 matching call(s) emitted"
+            },
+            {
+              "id": "eventual_success",
+              "type": "tool_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "final_useful",
+              "type": "final_response_contains",
+              "weight": 0.3,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 0,
+              "delta_ms": 40.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public development attempt; mock external tools, no median or hidden-set claim."
+}

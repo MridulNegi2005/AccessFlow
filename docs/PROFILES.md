@@ -221,3 +221,17 @@ debounce are recorded. The exposed case completed once; no repeated reliability
 claim. A previous attempt hit HTTP429 at the observed7000 input-token/minute quota.
 Run serially with quota recovery; no automatic paid fallback. The environment
 variables above were scoped to test child processes, not persisted into .env.
+
+
+## Samsung transient-read retry — 22 September follow-up
+
+`ACCESSFLOW_SAMSUNG_FAST_READ_RETRY` accepts only `1` (default Samsung factory)
+or `0` (model-directed control). It enables one exact current transient-read
+retry without inference. Generic Agent defaults remain unchanged (opt-in).
+The runner records the actual agent flag and execution ledger with operation IDs
+and `retry_of_call_id`. No additional official action fields are required.
+
+Measured pub_08 with the documented hosted profile: 100.0 with retry enabled,
+81.5 in the matched configuration control. The control's final request hit rate
+limit; do not characterize the difference as solely a tail/latency improvement.
+See `docs/evidence/samsung-retry-2026-09-22/README.md` for all evidence and limits.
