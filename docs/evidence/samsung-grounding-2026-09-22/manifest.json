@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "file": "grounding_hotel_attempt1.json",
+      "sha256": "27755f979773e3b34d9c9a9e3684003dd402b1bb428dba8147a416890653934f"
+    },
+    {
+      "file": "grounding_hotel_attempt2.json",
+      "sha256": "38b07a683eea7d5a174818bbc0c60eecd108cd6f7a131a1864636d9cf5155789"
+    },
+    {
+      "file": "result-grounding-validation.xml",
+      "sha256": "ee16e75a6a48be4b01a80f90f8773021d40f02809dfbd68635ec4ae407071752"
+    }
+  ],
+  "production_changes_retained": false
+}

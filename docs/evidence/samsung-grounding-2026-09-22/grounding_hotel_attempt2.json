@@ -1,0 +1,382 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 547.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "hotel_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find me a hotel ",
+        "end_of_turn": false
+      },
+      "t_ms": 109.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "in Boston for two nights.",
+        "end_of_turn": true
+      },
+      "t_ms": 1171.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 1171.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 1171.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "5ad456dc-2170-4598-a0d1-4fc0772eda7d",
+      "api_name": "hotel_search",
+      "args": {
+        "city": "Boston",
+        "nights": 2
+      },
+      "t_ms": 2265.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "5ad456dc-2170-4598-a0d1-4fc0772eda7d",
+      "api_name": "hotel_search",
+      "args": {
+        "city": "Boston",
+        "nights": 2
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "hotels": [
+          {
+            "hotel_id": "HT-0001",
+            "name": "Harbor Inn",
+            "price_usd": 189
+          }
+        ]
+      },
+      "t_ms": 4312.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "I found one hotel in Boston for two nights: Harbor Inn at $189 per night. Would you like to see more options or proceed with a booking?"
+      },
+      "state_snapshot": {
+        "intent": "hotel_search",
+        "slots": {
+          "city": "Boston",
+          "nights": 2
+        }
+      },
+      "t_ms": 5015.0
+    }
+  ],
+  "wall_s": 7.718000000000757,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 4,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 3,
+      "failure": 0,
+      "cancelled": 1
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.5470000000004802,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.049557891,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003223246,
+        "completion_tokens": 6,
+        "completion_time": 0.011515593,
+        "total_tokens": 55,
+        "total_time": 0.014738839
+      },
+      {
+        "elapsed_seconds": 0.046000000000276486,
+        "outcome": "cancelled",
+        "exception_type": "CancelledError"
+      },
+      {
+        "elapsed_seconds": 1.0630000000001019,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.049121447,
+        "prompt_tokens": 3211,
+        "prompt_time": 0.221726424,
+        "completion_tokens": 145,
+        "completion_time": 0.28070064,
+        "total_tokens": 3356,
+        "total_time": 0.502427064
+      },
+      {
+        "elapsed_seconds": 0.6869999999998981,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050371526,
+        "prompt_tokens": 3536,
+        "prompt_time": 0.272689212,
+        "completion_tokens": 88,
+        "completion_time": 0.166815218,
+        "total_tokens": 3624,
+        "total_time": 0.43950443
+      }
+    ],
+    "prompt_profile": "full",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 5009,
+        "data_chars": 4872,
+        "schema_chars": 4044,
+        "instruction_sha256": "016341bdb9cfcee5c3754b4acddb4a7379ee41e68f332adf9c814d99af56256c",
+        "presented_schema_sha256": "415b44d169b2335a06c926e756f1604760c87be123641cf015ed07a9ae6df96f",
+        "enforced_schema_sha256": "415b44d169b2335a06c926e756f1604760c87be123641cf015ed07a9ae6df96f"
+      },
+      {
+        "instruction_chars": 5009,
+        "data_chars": 4897,
+        "schema_chars": 4044,
+        "instruction_sha256": "016341bdb9cfcee5c3754b4acddb4a7379ee41e68f332adf9c814d99af56256c",
+        "presented_schema_sha256": "415b44d169b2335a06c926e756f1604760c87be123641cf015ed07a9ae6df96f",
+        "enforced_schema_sha256": "415b44d169b2335a06c926e756f1604760c87be123641cf015ed07a9ae6df96f"
+      },
+      {
+        "instruction_chars": 5009,
+        "data_chars": 5630,
+        "schema_chars": 4044,
+        "instruction_sha256": "016341bdb9cfcee5c3754b4acddb4a7379ee41e68f332adf9c814d99af56256c",
+        "presented_schema_sha256": "415b44d169b2335a06c926e756f1604760c87be123641cf015ed07a9ae6df96f",
+        "enforced_schema_sha256": "415b44d169b2335a06c926e756f1604760c87be123641cf015ed07a9ae6df96f"
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "03a2b769-29a4-4191-bbf0-9d0078b6aa1a"
+      ],
+      "proposal": {
+        "intent": "hotel_search",
+        "slot_updates": {
+          "city": "Boston",
+          "nights": 2
+        },
+        "calls": [
+          {
+            "tool": "hotel_search",
+            "arguments": {
+              "city": "Boston",
+              "nights": 2
+            },
+            "dependencies": [
+              "city",
+              "nights"
+            ],
+            "argument_slots": {},
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 1,
+      "observation_event_ids": [
+        "03a2b769-29a4-4191-bbf0-9d0078b6aa1a"
+      ],
+      "proposal": {
+        "intent": "hotel_search",
+        "slot_updates": {},
+        "calls": [],
+        "clarification": null,
+        "response": "I found one hotel in Boston for two nights: Harbor Inn at $189 per night. Would you like to see more options or proceed with a booking?",
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "5ad456dc-2170-4598-a0d1-4fc0772eda7d",
+      "operation_id": "ad2721ff-3cea-4cab-be67-a6e076c3c761",
+      "tool": "hotel_search",
+      "arguments": {
+        "city": "Boston",
+        "nights": 2
+      },
+      "dependencies": {
+        "city": 1,
+        "nights": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "711c4472-bcaf-4b5b-b0d0-e03178ff9757",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true
+  },
+  "mode": "live/external-development/single-run",
+  "commit": "7fae2b6694c07cc59127b72b1909746a8c37bbb8",
+  "runner_sha256": "fb99d27b656500873f03a8efd969221466e403e4acbb697900d2f9fed036107a",
+  "created_at": "2026-09-22T09:33:10.427454+00:00",
+  "provenance": {
+    "source_sha256": "19b7afe636984d365609b38de12993386fc6de7277ed7cd7ceb7790edb6fb3bf",
+    "scenario_sha256": "a8465a4a31132a4950b3306060155ce5affc66bf44fc7517492755fe7beffb53",
+    "worktree_dirty": true
+  },
+  "scenario": "gen_unseen_001.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "gen_unseen_001",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "unseen_tool_called",
+              "type": "tool_called",
+              "weight": 0.5,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "not_forced_into_known_tool",
+              "type": "tool_not_called",
+              "weight": 0.15,
+              "passed": true,
+              "note": "0 forbidden matching call(s) found"
+            },
+            {
+              "id": "final_grounded_in_result",
+              "type": "final_response_contains",
+              "weight": 0.35,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 3.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One external-development attempt; mock external tools, no median or hidden-set claim."
+}
