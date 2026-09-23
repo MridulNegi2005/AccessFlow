@@ -1157,3 +1157,11 @@ changed.
 **Notes:** Inspected current demo without editing it. Seven Markdown files/thirteen relative links and two asset hashes validated. No application tests or live-model results claimed. Atishay implements frontend/perception; shared seams need both teammates. AI-assisted drafting from user corrections and approved synthetic references; human input was design selection and scope, no human code changes in this slice. Official Google sources checked; no Stitch project created. Documentation-only push follows existing authorization, no workflow dispatch, deployment, release or submission.
 
 ---
+
+## [2026-09-23 20:43] — Stitch-first handoff
+**Task:** Make Stitch the required first stage of Atishay's frontend prompt, as requested.
+**Changes:** Updated ATISHAY_AGENT_PROMPT.md, STITCH_PROMPTS.md and design README; synchronized current handoffs. Prompt remains in Atishay's first person and requires Stitch prompts 1–5, reference review, exports, then owned implementation. Documents the manual handoff if access is unavailable.
+**Status:** Completed documentation update; push requested.
+**Notes:** No frontend/backend changes, application tests, Stitch execution or direct message sent. Implementation goal remains paused. AI-assisted documentation edit from the user's explicit workflow choice; no human code edits. Checked Markdown links/fences and Git whitespace before committing.
+
+---
