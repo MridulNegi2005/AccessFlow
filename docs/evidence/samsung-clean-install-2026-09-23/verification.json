@@ -1,0 +1,169 @@
+{
+  "mode": "fresh-venv/windows/text-package-development",
+  "python": "3.11.15",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "isolated_python": true,
+  "base_commit": "cd53bc23cdd1f9f540551ea8964df67219480588",
+  "package_source_dirty": false,
+  "package_hashes_verified": true,
+  "adapter_import": "accessflow\\adapters\\samsung.py",
+  "installed_packages": [
+    "annotated-doc==0.0.5",
+    "annotated-types==0.8.0",
+    "anyio==4.15.1",
+    "attrs==26.1.0",
+    "certifi==2026.7.22",
+    "click==8.5.0",
+    "fastapi==0.141.1",
+    "h11==0.16.0",
+    "httpcore==1.0.9",
+    "httpx==0.28.1",
+    "idna==3.19",
+    "jsonschema-specifications==2025.9.1",
+    "jsonschema==4.26.0",
+    "pydantic==2.13.5",
+    "pydantic_core==2.46.5",
+    "referencing==0.37.0",
+    "rpds-py==2026.6.3",
+    "starlette==1.6.0",
+    "typing-inspection==0.4.4",
+    "typing_extensions==4.16.0",
+    "uvicorn==0.52.4"
+  ],
+  "validation_errors": [],
+  "contract_errors": [],
+  "failure": null,
+  "runtime_profile": {
+    "ACCESSFLOW_SAMSUNG_BACKEND": "groq",
+    "ACCESSFLOW_GROQ_MODEL": "qwen/qwen3.8-27b",
+    "ACCESSFLOW_GROQ_URL": "https://api.groq.com/openai/v1",
+    "ACCESSFLOW_GROQ_STRUCTURED": "0",
+    "ACCESSFLOW_MAX_OUTPUT_TOKENS": "950",
+    "ACCESSFLOW_MAX_CONTEXT_CHARS": "32768",
+    "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
+    "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1",
+    "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": "full"
+  },
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 484.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Hey, what can you help me with?",
+        "end_of_turn": true
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 110.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "I can help you search for and book flights, look up device manual pages, create support tickets for device issues, and cancel existing flight bookings. What would you like to do?"
+      },
+      "state_snapshot": {
+        "intent": "general_inquiry",
+        "slots": {}
+      },
+      "t_ms": 735.0
+    }
+  ],
+  "score": {
+    "scenario_id": "pub_04_text_no_tool",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "no_tools",
+              "type": "no_tool_calls",
+              "weight": 0.5,
+              "passed": true,
+              "note": "0 tool call(s) emitted (expected none)"
+            },
+            {
+              "id": "helpful_answer",
+              "type": "final_response_contains",
+              "weight": 0.5,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 0,
+              "delta_ms": 10.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "wall_s": 9.014999999999418,
+  "limitations": [
+    "One exposed no-tool text attempt; not full official repeated evaluation.",
+    "Cached-wheel installation on the same Windows host; not a clean machine or Docker.",
+    "Base package profile full/prose; optional ASR and vision runtimes not included."
+  ]
+}

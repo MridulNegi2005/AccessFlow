@@ -1189,3 +1189,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Final1186pass/2skip/1xfail in64.47s, Ruff clean. Intermediate1184pass and booking100 retained; final-source booking100 with explicit mock wording,3 successful provider calls/4794 input tokens,one mock write. Not repeated reliability or voice validation. AI-assisted implementation and review corrections; no human code edits recorded. Previous status-only turn produced no code progress; current source was revalidated before edits. No B edits, workflow, release, submission or real effects. Push authorized; configured identity only, no attribution trailers.
 
 ---
+
+## [2026-09-23 23:58] — Implementation checkpoint
+**Task:** Verify a cleanly installed base submission package and identify actual next media integration work.
+**Changes:** Fresh cached-wheel Python3.11 venv, isolated import/hash checks, official package/contract/no-tool validation, retained verification evidence and A-owned media follow-up document.
+**Status:** Scoped base installation verified; multimedia/Docker/repeated gates remain open; overall goal active.
+**Notes:** 21 compatible pinned packages,78 package files verified,validation/smoke no errors,no-tool100/final735ms. Same Windows host,not clean OS/Docker; no audio or vision score. Read-only source review confirmed stale vision-flag rejection notes and current Samsung factory/MP3/model-path gaps. MP3 ownership question pending; independent runtime/profile work available. AI-assisted inspection and verification; no human code edits. No application/B edits,workflow,release,submission or model downloads. Prior full1186pass/2skip/1xfail remains applicable source evidence,not a rerun. Push authorized.
+
+---

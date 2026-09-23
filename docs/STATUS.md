@@ -1,5 +1,24 @@
 # Implementation status
 
+## Isolated package validation and media follow-up — 23 September 2026
+
+Built a clean cd53bc2 base package (78 files), installed all21 pinned dependencies
+into a new Python3.11.15 environment from cached wheels, verified hashes/import
+location under Python -I and passed dependency consistency. Samsung validation and
+contract smoke returned no errors; one no-tool text run scored100 with final735ms.
+This is the same Windows host, full/prose profile; not a clean machine, Docker,
+repeated score or media validation. Docker command is unavailable in PATH.
+Evidence: docs/evidence/samsung-clean-install-2026-09-23/README.md.
+
+Source inspection confirmed the worker already accepts vision flags: old rejection
+notes are stale. Samsung's factory still configures no real ASR/vision; MP3 events
+remain rejected, and vision via the process worker requires an installed ASR path.
+Read docs/SAMSUNG_MEDIA_NEXT_2026-09-23.md for the exact A tasks and B seams.
+User ownership question for the MP3 bridge remains pending; do not infer approval.
+Continue independent runtime/profile work; do not fabricate model paths or edit B.
+Goal active. No application source changed since the verified confirmation slice;
+no repeated full suite is claimed for these evidence/docs-only changes.
+
 ## Readable confirmation checkpoint — 23 September 2026
 
 Confirmed writes and reconciled committed effects now provide bounded literal text
