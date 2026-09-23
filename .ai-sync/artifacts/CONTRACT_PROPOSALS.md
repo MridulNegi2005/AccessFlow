@@ -258,3 +258,26 @@ Selectors, mappings and spoken authority do not change; expired records remain
 barriers. The old failed result and late duplicate deliveries are never accepted.
 This additive internal field requires no B implementation or official wire change.
 Owned tests cover late results, guard permutations, retry budget and bound writes.
+
+
+## 23 September 2026 — opt-in evidence-selected read finals
+
+Owner: Mridul. Additive `PlanProposal.evidence_answer` defaults null; older producers
+may omit it. `EvidenceAnswer.selections` holds bounded `ReadSelection(call_id, pointer)`
+references, never model-provided values. The answer-only variant excludes prose,
+clarification, intent/slot changes, calls and write intent/contracts. Controller
+validation precedes state mutation and checks source status/request/dependencies.
+
+Internal final payload adds `basis=read_evidence`, `backend=literal_renderer` and
+`evidence_sources`; existing text and state remain. No Samsung wire changes. The
+experiment is explicitly enabled through `ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE=evidence`;
+prose remains the default. The same mode must reach ModelReasoner and Agent.
+
+Both Mridul and Atishay must coordinate before enabling this in the browser or
+introducing cards/voice formatting. Mridul supplies the checked result and metadata;
+Atishay renders existing text safely and owns frontend/voice treatment. No B source
+or test changes were required or made in this slice. The proposal does not ask either
+person to duplicate the other's implementation.
+
+See READ_ANSWER_EXPERIMENT_2026-09-23.md for limits: source fidelity is not factual
+truth, completeness, relevance or validation of free-form clarifications.

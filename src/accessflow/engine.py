@@ -22,6 +22,7 @@ from .corpus import (
     CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
 )
 from .result_binding import BindingError
+from .read_answer import READ_ANSWER_MODES, ReadAnswerError, has_read_attempt, render_answer
 from .write_binding import capture, validate_binding
 from .validation_diagnostics import validation_summary
 
@@ -78,7 +79,13 @@ class Agent:
 
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
                  scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
-                 frame_debounce_s=0.4, disabled=(), corpus_root=None, fast_read_retry=False):
+                 frame_debounce_s=0.4, disabled=(), corpus_root=None, fast_read_retry=False,
+                 read_answer_mode="prose"):
+        if read_answer_mode not in READ_ANSWER_MODES:
+            raise ValueError("Invalid read answer mode")
+        if getattr(reasoner, "read_answer_mode", read_answer_mode) != read_answer_mode:
+            raise ValueError("Controller and reasoner read answer modes must match")
+        self.read_answer_mode = read_answer_mode
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
         if frame_debounce_s < 0:
@@ -708,6 +715,16 @@ class Agent:
                                      "request will not retry again on its own.")
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        if proposal.evidence_answer is not None:
+            # Recheck the answer-only variant before any state mutation. Custom
+            # reasoners can return model_copy/model_construct without validation.
+            try:
+                PlanProposal.model_validate(proposal.model_dump())
+            except PlanModelViolation:
+                await self._emit("error", code="invalid_read_answer", detail="mixed_answer_proposal")
+                if self.latest_complete:
+                    await self._emit("clarify", text="I couldn't validate that lookup answer. Please try again.")
+                return
         fresh_evidence = self._fresh_evidence
         # Snapshot before this proposal can mutate write_intent_retained below. Mirrors
         # ModelReasoner.write_outstanding: true when the CURRENT request's spoken write
@@ -1128,7 +1145,8 @@ class Agent:
         write_owed_unmet = False
         newly_claimed_write = (self.write_intent_retained
                                and any(m.effect == "write" for m in self.manifests.values())
-                               and (proposal.request_complete or bool(proposal.response)))
+                               and (proposal.request_complete or bool(proposal.response)
+                                    or proposal.evidence_answer is not None))
         if not proposal.calls and not pending_now and self.latest_complete:
             if final_requires_tool_evidence:
                 pass  # Do not replace a current or unresolved effect with model prose.
@@ -1141,6 +1159,22 @@ class Agent:
                 # An incomplete plan with no response may still be waiting for promised
                 # input, and read-only environments can explain unavailable capabilities.
                 write_owed_unmet = True
+            elif proposal.evidence_answer is not None or (
+                    proposal.response and self.read_answer_mode == "evidence" and has_read_attempt(self._view())):
+                said_something = True
+                try:
+                    if self.read_answer_mode != "evidence" or proposal.evidence_answer is None:
+                        raise ReadAnswerError("read_answer_required")
+                    text, sources = render_answer(proposal.evidence_answer, self._view())
+                except ReadAnswerError as exc:
+                    await self._emit("error", code="invalid_read_answer", detail=str(exc))
+                    await self._emit("clarify", text="I couldn't form an answer from verified lookup fields. "
+                                     "Please narrow the question or ask me to look it up again.")
+                else:
+                    self.state.status = "listening"
+                    self.last_request_finished = True
+                    await self._emit("final", text=text, basis="read_evidence", backend="literal_renderer",
+                                     evidence_sources=sources)
             elif proposal.response:
                 said_something = True
                 # The informational request ended, but the conversation remains

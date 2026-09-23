@@ -1,5 +1,34 @@
 # Mridul workstream handoff
 
+## Evidence-selected read-answer checkpoint — 23 September 2026
+
+Added an opt-in evidence-selection final-answer path for current successful reads.
+The controller renders actual fields and rejects stale/failed/write sources,
+oversized selections and mixed answer/state/action proposals. The default remains
+prose; full remains the default prompt profile. No B implementation/tests changed.
+
+The compact-v2 baseline again invented a hotel billing period despite scorer100.
+Final-source evidence mode returned the actual name/price without that qualifier,
+with scorer100 and a final at4937ms. Two final-source synthetic model probes also
+preserved explicit billing units, physical units, false and zero. These are exposed
+single development attempts, not a hidden-set result, repeated reliability score or
+proof of source truth/completeness. Free-form clarifications remain unverified.
+
+Final1144passed/2skipped/1xfail in65.71s; Ruff clean. Fifty-two new test cases cover
+source admission, bounded rendering, model restrictions, controller enforcement,
+legacy compatibility and unfinished-speech rejection. Read-only review found an
+answer/state-mutation gap; it was fixed before final validation. Both full-suite
+reports and every live iteration are retained with byte hashes and source provenance.
+
+Read docs/READ_ANSWER_EXPERIMENT_2026-09-23.md and its evidence bundle. Both teammates
+must coordinate browser/card/voice adoption: A owns validated results, B owns display
+and speech. No one should duplicate the other's authority or presentation code.
+
+Next A work: broader profile/read-answer evaluation and relevance/completeness checks,
+then remaining official repeatability, packaging/platform and integration gates.
+Overall goal remains active. Push this completed checkpoint with configured identity;
+no attribution trailers, workflow changes, release tag, submission or real effects.
+
 ## Compact-v2 experiment checkpoint — 23 September 2026
 
 Added explicit compact-v2 input presentation: typed protocol-default elision and

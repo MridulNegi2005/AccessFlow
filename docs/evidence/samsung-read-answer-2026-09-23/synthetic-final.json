@@ -1,0 +1,274 @@
+{
+  "probes": [
+    {
+      "probe": "explicit_rate",
+      "input": {
+        "session_id": "explicit_rate",
+        "state": {
+          "intent": null,
+          "revision": 0,
+          "slots": {},
+          "pending_call_ids": [],
+          "status": "listening",
+          "correction_pending": false
+        },
+        "observations": [
+          {
+            "event_id": "e",
+            "source_id": "u",
+            "revision": 0,
+            "modality": "text",
+            "text": "What did the rate lookup return, including its billing basis?",
+            "final": true,
+            "speech_start": 0.0,
+            "speech_end": 0.0,
+            "backend": "synthetic-text"
+          }
+        ],
+        "results": [
+          {
+            "call_id": "read-1",
+            "status": "success",
+            "result": {
+              "name": "Example rental",
+              "amount_usd": 189,
+              "billing_period": "per night"
+            },
+            "error": null,
+            "committed": false
+          }
+        ],
+        "tool_failures": [],
+        "write_contracts": [],
+        "last_plan_error": null,
+        "calls": [
+          {
+            "call_id": "read-1",
+            "operation_id": "op-1",
+            "tool": "catalog_lookup",
+            "arguments": {},
+            "dependencies": {},
+            "effect": "read",
+            "retry_of_call_id": null,
+            "request_id": "current",
+            "status": "success"
+          }
+        ],
+        "write_pending": false,
+        "repeated_completed_call": false,
+        "no_progress": false,
+        "active_request_id": "current"
+      },
+      "passed": true,
+      "proposal": {
+        "intent": null,
+        "slot_updates": {},
+        "calls": [],
+        "clarification": null,
+        "response": null,
+        "evidence_answer": {
+          "selections": [
+            {
+              "call_id": "read-1",
+              "pointer": ""
+            }
+          ]
+        },
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      },
+      "text": "Selected lookup fields:\nResult 1\nName: \"Example rental\"\nAmount usd: 189\nBilling period: \"per night\"",
+      "sources": [
+        {
+          "call_id": "read-1",
+          "pointer": ""
+        }
+      ],
+      "checks": {
+        "Name: \"Example rental\"": true,
+        "Amount usd: 189": true,
+        "Billing period: \"per night\"": true
+      },
+      "wall_s": 0.8130000000001019
+    },
+    {
+      "probe": "inventory_units",
+      "input": {
+        "session_id": "inventory_units",
+        "state": {
+          "intent": null,
+          "revision": 0,
+          "slots": {},
+          "pending_call_ids": [],
+          "status": "listening",
+          "correction_pending": false
+        },
+        "observations": [
+          {
+            "event_id": "e",
+            "source_id": "u",
+            "revision": 0,
+            "modality": "text",
+            "text": "Tell me the item's mass, stock availability and handling fee.",
+            "final": true,
+            "speech_start": 0.0,
+            "speech_end": 0.0,
+            "backend": "synthetic-text"
+          }
+        ],
+        "results": [
+          {
+            "call_id": "read-1",
+            "status": "success",
+            "result": {
+              "item": "Example sensor",
+              "mass_kg": 2.5,
+              "in_stock": false,
+              "handling_fee_usd": 0
+            },
+            "error": null,
+            "committed": false
+          }
+        ],
+        "tool_failures": [],
+        "write_contracts": [],
+        "last_plan_error": null,
+        "calls": [
+          {
+            "call_id": "read-1",
+            "operation_id": "op-1",
+            "tool": "catalog_lookup",
+            "arguments": {},
+            "dependencies": {},
+            "effect": "read",
+            "retry_of_call_id": null,
+            "request_id": "current",
+            "status": "success"
+          }
+        ],
+        "write_pending": false,
+        "repeated_completed_call": false,
+        "no_progress": false,
+        "active_request_id": "current"
+      },
+      "passed": true,
+      "proposal": {
+        "intent": null,
+        "slot_updates": {},
+        "calls": [],
+        "clarification": null,
+        "response": null,
+        "evidence_answer": {
+          "selections": [
+            {
+              "call_id": "read-1",
+              "pointer": ""
+            }
+          ]
+        },
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      },
+      "text": "Selected lookup fields:\nResult 1\nItem: \"Example sensor\"\nMass kg: 2.5\nIn stock: false\nHandling fee usd: 0",
+      "sources": [
+        {
+          "call_id": "read-1",
+          "pointer": ""
+        }
+      ],
+      "checks": {
+        "Mass kg: 2.5": true,
+        "In stock: false": true,
+        "Handling fee usd: 0": true
+      },
+      "wall_s": 0.5309999999990396
+    }
+  ],
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 2,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 2,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.8130000000001019,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.052476497,
+        "prompt_tokens": 1589,
+        "prompt_time": 0.112995442,
+        "completion_tokens": 104,
+        "completion_time": 0.197148865,
+        "total_tokens": 1693,
+        "total_time": 0.310144307
+      },
+      {
+        "elapsed_seconds": 0.5149999999994179,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.049840017,
+        "prompt_tokens": 1595,
+        "prompt_time": 0.113211152,
+        "completion_tokens": 104,
+        "completion_time": 0.205513955,
+        "total_tokens": 1699,
+        "total_time": 0.318725107
+      }
+    ],
+    "prompt_profile": "compact-v2",
+    "read_answer_mode": "evidence",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 3003,
+        "data_chars": 1320,
+        "protocol_data_chars_before_elision": 1119,
+        "protocol_data_chars_after_elision": 707,
+        "schema_chars": 3042,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "f68dea6fc02cd9dd5541be3f72dd1b2b433afdb66e4086be1ca5be8e589103dd",
+        "enforced_schema_sha256": "7b6b78c6feec184cd2eafccf38ad95641ecb482fa4a8a7c54dfecfe416e30f76"
+      },
+      {
+        "instruction_chars": 3003,
+        "data_chars": 1328,
+        "protocol_data_chars_before_elision": 1127,
+        "protocol_data_chars_after_elision": 715,
+        "schema_chars": 3042,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "f68dea6fc02cd9dd5541be3f72dd1b2b433afdb66e4086be1ca5be8e589103dd",
+        "enforced_schema_sha256": "7b6b78c6feec184cd2eafccf38ad95641ecb482fa4a8a7c54dfecfe416e30f76"
+      }
+    ]
+  },
+  "passed": true,
+  "mode": "live/synthetic-read-answer/single-attempt",
+  "commit": "1a20938f6728ed2014bed5782f335d3ecbe09cf8",
+  "created_at": "2026-09-23T17:46:42.411201+00:00",
+  "provenance": {
+    "source_sha256": "74880bbf4732929e7d2a2d955dc4063bfc6620e01668f685e00bd6fe10ca1bd4",
+    "scenario_sha256": "79814beade533cc08c9549613dbe22ebfd25b20609d3e403db2493cecf16c64f",
+    "worktree_dirty": true
+  },
+  "script_sha256": "79814beade533cc08c9549613dbe22ebfd25b20609d3e403db2493cecf16c64f",
+  "limitation": "Two exposed developer-authored read-only probes. Not end-to-end, held-out, Samsung evaluation or universal factual/semantic verification."
+}

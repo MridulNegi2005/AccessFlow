@@ -234,17 +234,37 @@ class ProposedCall(Model):
     result_sources: dict[str, str] = Field(default_factory=dict)
 
 
+class ReadSelection(Model):
+    call_id: str = Field(min_length=1, max_length=128)
+    pointer: str = Field(max_length=512)
+
+
+class EvidenceAnswer(Model):
+    selections: list[ReadSelection] = Field(min_length=1, max_length=8)
+
+
 class PlanProposal(Model):
     intent: str | None = None
     slot_updates: dict[str, Any] = Field(default_factory=dict)
     calls: list[ProposedCall] = Field(default_factory=list)
     clarification: str | None = None
     response: str | None = None
+    # Optional v0.1 extension. Values are resolved by the controller, never supplied
+    # by the model. Existing producers may omit it.
+    evidence_answer: EvidenceAnswer | None = None
     request_complete: bool = False
     # A model assertion alone is not execution authority; controller also requires
     # a completed utterance and an explicit, externally supplied authorization gate.
     write_requested: bool = False
     write_contracts: list[WriteContract] = Field(default_factory=list, max_length=4)
+
+    @model_validator(mode="after")
+    def exclusive_answer(self):
+        if self.evidence_answer is not None and (
+                self.response is not None or self.clarification is not None or self.calls
+                or self.write_requested or self.write_contracts or self.slot_updates or self.intent is not None):
+            raise ValueError("An evidence answer cannot be combined with prose, actions or state updates")
+        return self
 
 
 class SessionView(Model):

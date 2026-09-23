@@ -60,7 +60,8 @@ async def execute(harness, participants, *, setup_cap=300, wall_cap=120):
                              for call in getattr(agent, "ledger", {}).values()],
         "adapter_diagnostics": participant.diagnostics if participant else [],
         "participant_config": {"partial_debounce_s": getattr(participant, "partial_debounce_s", None),
-                               "fast_read_retry": getattr(agent, "fast_read_retry", None)},
+                               "fast_read_retry": getattr(agent, "fast_read_retry", None),
+                               "read_answer_mode": getattr(agent, "read_answer_mode", None)},
     }
 
 

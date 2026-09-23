@@ -1165,3 +1165,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Focused75pass; first full1fail/1091pass/2skip/1xfail; three isolated passes; final1092pass/2skip/1xfail in85.48s; Ruff clean. V2 interruption89.6 with useful clarification/all calls successful; full89.6 with quota rejection; v2 chain100.0. Initial input2057 versus3008 tokens, not a generalized quota/latency guarantee. AI-assisted implementation/verification under user resume; no human code edits. No B edits, workflow, release or submission. Push authorized, configured identity only.
 
 ---
+
+## [2026-09-23 23:17] — Implementation checkpoint
+**Task:** Add and measure an opt-in evidence-selected read final without changing the default or B code.
+**Changes:** Optional answer-only contract, bounded literal renderer with current read provenance, controller/model gates, Samsung configuration, synthetic probe command,52 regressions and retained evidence. Updated ownership/coordination proposal and own handoff.
+**Status:** Completed experimental slice; overall goal active.
+**Notes:** Final1144pass/2skip/1xfail in65.71s; Ruff clean. Earlier full1143pass followed by one partial-speech regression and a new full run. Baseline invented billing period despite scorer100; final-source selection100 retained actual fields, two exposed synthetic probes passed. Successful hotel planning tokens4924 vs baseline4580 (+7.5%), same planning call count. AI-assisted implementation and permitted read-only review found/fixed mixed state-update issue; no human edits recorded. Not universal grounding; clarifications, relevance and omitted qualifiers remain limits. No B edits, workflow, release, submission or real effects. Push authorized, no attribution trailers.
+
+---
