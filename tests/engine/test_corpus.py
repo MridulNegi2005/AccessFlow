@@ -415,7 +415,7 @@ async def test_corpus_filesystem_error_becomes_failed_tool_result_not_a_crash(tm
     def raise_permission(self, *args, **kwargs):
         raise PermissionError(f"Access is denied: {self}")
 
-    monkeypatch.setattr(Path, "read_text", raise_permission)
+    monkeypatch.setattr(Path, "open", raise_permission)
     agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path)
     try:
         await iq.put(transcript("How do I reset it?"))
@@ -429,14 +429,14 @@ async def test_corpus_filesystem_error_becomes_failed_tool_result_not_a_crash(tm
 
 async def test_oversized_document_refused_before_full_read(tmp_path, monkeypatch):
     """A document over the configured size limit is refused via a stat() check, before
-    Path.read_text is ever called -- not merely truncated after a full read. Fixes M2.
+    the document is opened -- not merely truncated after a full read. Fixes M2.
     """
     (tmp_path / "manual.txt").write_bytes(b"x" * (MAX_DOCUMENT_BYTES + 1))
 
     def fail_if_called(*args, **kwargs):
-        raise AssertionError("read_text must not run once the size limit is already exceeded")
+        raise AssertionError("open must not run once the size limit is already exceeded")
 
-    monkeypatch.setattr(Path, "read_text", fail_if_called)
+    monkeypatch.setattr(Path, "open", fail_if_called)
     agent, iq, oq, task = await start_with_corpus(LookupOnce("manual.txt", "reset"), ["manual.txt"], tmp_path)
     try:
         await iq.put(transcript("How do I reset it?"))
