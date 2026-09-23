@@ -17,7 +17,9 @@ from jsonschema import Draft202012Validator
 from accessflow.contracts import PlanProposal
 from accessflow.validation_diagnostics import validation_summary
 from .tool_metadata import select_return_documentation
-from .prompt_profile import COMPACT_SYSTEM, compact_schema
+from .prompt_profile import (
+    COMPACT_SYSTEM, COMPACT_V2_SYSTEM, PROMPT_PROFILES, compact_documentation, compact_inputs, compact_schema,
+)
 
 SYSTEM = """You propose plans for AccessFlow. Return only JSON matching the supplied schema.
 Use session.last_plan_error only to correct output shape; preserve the user's intent and authority.
@@ -569,8 +571,8 @@ def validate_reasoner_evidence(evidence, strict=True):
 
 class ModelReasoner:
     def __init__(self, backend, *, tool_documentation=None, prompt_profile="full"):
-        if prompt_profile not in {"full", "compact-v1"}:
-            raise ValueError("Planner prompt profile must be full or compact-v1")
+        if prompt_profile not in PROMPT_PROFILES:
+            raise ValueError("Planner prompt profile must be " + ", ".join(sorted(PROMPT_PROFILES)))
         self.backend = backend
         self.prompt_profile = prompt_profile
         self._prompt_measurements = deque(maxlen=128)
@@ -582,9 +584,13 @@ class ModelReasoner:
     async def plan(self, view, manifests):
         request = {"session": view.model_dump(mode="json"),
                    "manifests": [m.model_dump(mode="json") for m in manifests]}
+        original_data_chars = len(json.dumps(request, ensure_ascii=False, separators=(",", ":")))
+        if self.prompt_profile == "compact-v2":
+            request = compact_inputs(view, manifests)
         if self.tool_documentation is not None:
             selected = select_return_documentation(self.tool_documentation, {m.name for m in manifests})
-            request["tool_documentation_evidence"] = copy.deepcopy(selected)
+            request["tool_documentation_evidence"] = (
+                compact_documentation(selected) if self.prompt_profile == "compact-v2" else copy.deepcopy(selected))
             self._documentation_selection = {key: value for key, value in selected.items() if key != "text"}
         unresolved = self.reconciliation_context(view, manifests)
         outstanding = (getattr(view, "write_pending", False) and not unresolved
@@ -647,11 +653,17 @@ class ModelReasoner:
 
         kwargs = {"_validator": _validate} if isinstance(self.backend, JsonBackend) else {}
         system = COMPACT_SYSTEM if self.prompt_profile == "compact-v1" else SYSTEM
-        presented_schema = compact_schema(schema) if self.prompt_profile == "compact-v1" else schema
+        if self.prompt_profile == "compact-v2":
+            system = COMPACT_V2_SYSTEM
+        presented_schema = compact_schema(schema) if self.prompt_profile != "full" else schema
         encoded_schema = json.dumps(presented_schema, separators=(",", ":"))
         self._prompt_measurements.append({
             "instruction_chars": len(system),
             "data_chars": len(json.dumps(request, ensure_ascii=False, separators=(",", ":"))),
+            "protocol_data_chars_before_elision": original_data_chars,
+            "protocol_data_chars_after_elision": len(json.dumps(
+                {key: request[key] for key in ("session", "manifests")},
+                ensure_ascii=False, separators=(",", ":"))),
             "schema_chars": len(encoded_schema),
             "instruction_sha256": hashlib.sha256(system.encode()).hexdigest(),
             "presented_schema_sha256": hashlib.sha256(encoded_schema.encode()).hexdigest(),

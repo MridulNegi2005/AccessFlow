@@ -1,0 +1,481 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 718.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find a flight to Denver and ",
+        "end_of_turn": false
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "book the 8 AM one for Alice.",
+        "end_of_turn": true
+      },
+      "t_ms": 907.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 907.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 922.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "8206330e-6fca-4d06-b409-ca842005b61f",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Denver"
+      },
+      "t_ms": 1953.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "8206330e-6fca-4d06-b409-ca842005b61f",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Denver"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "flights": [
+          {
+            "flight_id": "FL-DEN-8AM",
+            "depart": "08:00",
+            "price_usd": 129
+          },
+          {
+            "flight_id": "FL-DEN-2PM",
+            "depart": "14:00",
+            "price_usd": 99
+          }
+        ]
+      },
+      "t_ms": 3875.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "7ebfd306-cc81-48fc-9f05-860edb1fee63",
+      "api_name": "book_flight",
+      "args": {
+        "flight_id": "FL-DEN-8AM",
+        "passenger_name": "Alice"
+      },
+      "t_ms": 5172.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "7ebfd306-cc81-48fc-9f05-860edb1fee63",
+      "api_name": "book_flight",
+      "args": {
+        "flight_id": "FL-DEN-8AM",
+        "passenger_name": "Alice"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "booking_id": "BK-0001",
+        "flight_id": "FL-DEN-8AM"
+      },
+      "t_ms": 6500.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "The requested action completed with result: {\"booking_id\": \"BK-0001\", \"flight_id\": \"FL-DEN-8AM\", \"status\": \"success\"}"
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "Denver",
+          "passenger_name": "Alice",
+          "depart_time": "08:00",
+          "flight_id": "FL-DEN-8AM"
+        }
+      },
+      "t_ms": 6500.0
+    }
+  ],
+  "wall_s": 7.639999999999418,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 3,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 3,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.7030000000013388,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.047981321,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003289459,
+        "completion_tokens": 6,
+        "completion_time": 0.011555202,
+        "total_tokens": 55,
+        "total_time": 0.014844661
+      },
+      {
+        "elapsed_seconds": 1.014999999999418,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050056442,
+        "prompt_tokens": 2059,
+        "prompt_time": 0.146595447,
+        "completion_tokens": 291,
+        "completion_time": 0.552718742,
+        "total_tokens": 2350,
+        "total_time": 0.699314189
+      },
+      {
+        "elapsed_seconds": 1.2809999999990396,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050554386,
+        "prompt_tokens": 2656,
+        "prompt_time": 0.182134648,
+        "completion_tokens": 393,
+        "completion_time": 0.7522569,
+        "total_tokens": 3049,
+        "total_time": 0.934391548
+      }
+    ],
+    "prompt_profile": "compact-v2",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 3003,
+        "data_chars": 3724,
+        "protocol_data_chars_before_elision": 3277,
+        "protocol_data_chars_after_elision": 2666,
+        "schema_chars": 2313,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "5fbaaa10351224e04a30fd6674fee93c045c7d6ddb5eee978576fcb78229f1ea",
+        "enforced_schema_sha256": "b8062d814cb3efd4c99aa0e60fddd7d6c98b057240f6b824a3c1615550557c83"
+      },
+      {
+        "instruction_chars": 3003,
+        "data_chars": 5339,
+        "protocol_data_chars_before_elision": 4512,
+        "protocol_data_chars_after_elision": 3933,
+        "schema_chars": 2434,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "e48874a1919a719a379661c15f2f9a81eef0c476b18bff3637737187c6b7f9e3",
+        "enforced_schema_sha256": "d613afd6adb65f3ce6763ecf450ea6e094b07e851e655bbcc6d90e3961ea5ebc"
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "4ccb387d-e574-46ef-9ab3-586b614a09d3"
+      ],
+      "proposal": {
+        "intent": "book_flight",
+        "slot_updates": {
+          "destination": "Denver",
+          "passenger_name": "Alice",
+          "depart_time": "08:00"
+        },
+        "calls": [
+          {
+            "tool": "flight_search",
+            "arguments": {
+              "destination": "Denver"
+            },
+            "dependencies": [
+              "destination"
+            ],
+            "argument_slots": {
+              "destination": "destination"
+            },
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "request_complete": true,
+        "write_requested": true,
+        "write_contracts": [
+          {
+            "tool": "book_flight",
+            "fixed_arguments": {
+              "passenger_name": "passenger_name"
+            },
+            "delegated_arguments": {
+              "flight_id": {
+                "slot": "flight_id",
+                "source_call_index": 0,
+                "source_call_id": null,
+                "collection_pointer": "/flights",
+                "value_pointer": "/flight_id",
+                "match_slots": {
+                  "/depart": "depart_time"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "state_revision": 1,
+      "observation_event_ids": [
+        "4ccb387d-e574-46ef-9ab3-586b614a09d3"
+      ],
+      "proposal": {
+        "intent": "book_flight",
+        "slot_updates": {
+          "flight_id": "FL-DEN-8AM"
+        },
+        "calls": [
+          {
+            "tool": "book_flight",
+            "arguments": {
+              "flight_id": "FL-DEN-8AM",
+              "passenger_name": "Alice"
+            },
+            "dependencies": [
+              "flight_id",
+              "passenger_name"
+            ],
+            "argument_slots": {
+              "flight_id": "flight_id",
+              "passenger_name": "passenger_name"
+            },
+            "result_sources": {
+              "flight_id": "8206330e-6fca-4d06-b409-ca842005b61f"
+            }
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "request_complete": true,
+        "write_requested": true,
+        "write_contracts": [
+          {
+            "tool": "book_flight",
+            "fixed_arguments": {
+              "passenger_name": "passenger_name"
+            },
+            "delegated_arguments": {
+              "flight_id": {
+                "slot": "flight_id",
+                "source_call_index": null,
+                "source_call_id": "8206330e-6fca-4d06-b409-ca842005b61f",
+                "collection_pointer": "/flights",
+                "value_pointer": "/flight_id",
+                "match_slots": {
+                  "/depart": "depart_time"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "8206330e-6fca-4d06-b409-ca842005b61f",
+      "operation_id": "195313f9-e502-410a-b8b9-3409645c61a7",
+      "tool": "flight_search",
+      "arguments": {
+        "destination": "Denver"
+      },
+      "dependencies": {
+        "destination": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "27a0b5ca-b713-449f-adae-22d36b3de7bc",
+      "status": "success"
+    },
+    {
+      "call_id": "7ebfd306-cc81-48fc-9f05-860edb1fee63",
+      "operation_id": "2d5a666a-1c9c-40f6-9d6a-c29e50eaecfa",
+      "tool": "book_flight",
+      "arguments": {
+        "flight_id": "FL-DEN-8AM",
+        "passenger_name": "Alice"
+      },
+      "dependencies": {
+        "flight_id": 1,
+        "passenger_name": 1,
+        "destination": 1,
+        "depart_time": 1
+      },
+      "effect": "write",
+      "retry_of_call_id": null,
+      "request_id": "27a0b5ca-b713-449f-adae-22d36b3de7bc",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "4b2908d04e88b15e9720cd17fa3fbbfe52d00259",
+  "runner_sha256": "fb99d27b656500873f03a8efd969221466e403e4acbb697900d2f9fed036107a",
+  "created_at": "2026-09-23T17:16:42.564739+00:00",
+  "provenance": {
+    "source_sha256": "626e8a91650e079e3c15afb0af4dd1c6955494f393dab68784aff9eb82391063",
+    "scenario_sha256": "afbf76d070c10857ae8cfacf5b682633727e26ab0bdc054ad5beba0440a553a0",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_03_text_chained_booking.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_03_text_chained_booking",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "search_called",
+              "type": "tool_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "book_called",
+              "type": "tool_called",
+              "weight": 0.45,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "final_confirms",
+              "type": "final_response_contains",
+              "weight": 0.25,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 22.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public-development attempt; mock external tools, no median or hidden-set claim."
+}

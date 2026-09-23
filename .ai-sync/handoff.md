@@ -1,5 +1,33 @@
 # Active Handoff
 
+## Compact-v2 experiment checkpoint — 23 September 2026
+
+Added explicit compact-v2 input presentation: typed protocol-default elision and
+model-facing audit-metadata removal, with literal evidence/full-schema enforcement
+preserved. Full remains the default, including the submission-package profile.
+
+Live Qwen interruption pair: both scorer89.6, but v2 completed all model calls and
+returned a useful selection clarification; full's final call hit provider quota.
+Initial input tokens2057 versus3008 (31.6% fewer for the combined profile). One v2
+chained-booking attempt scored100.0 with a confirmed mock action at6500ms. These are
+single exposed development attempts, not repeated evaluation or a general quota fix.
+
+Final1092passed/2skipped/1xfail in85.48s; Ruff clean. First full run had one B-owned
+session-isolation test failure, followed by three isolated passes and the green full
+rerun. Both suite XMLs and all live reports are retained with exact-byte hashes.
+Atishay's remote includes newer worker fixes not merged here; the follow-up makes
+that source distinction explicit. No B implementation/tests changed.
+
+Read docs/COMPACT_INPUT_PROFILE_2026-09-23.md and the linked evidence bundle.
+B follow-up: docs/reviews/ATISHAY_SESSION_ISOLATION_FOLLOWUP_2026-09-23.md.
+Corpus scoped review was completed in4b2908d with explicit platform/deployment limits.
+
+Next A work: broader/repeated profile evaluation and evidence-grounded read answers.
+The unsupported hotel price qualifier remains open. Coordinate newer B work before
+shared media/timing validation; Docker/platform and human submission gates remain.
+Overall goal active after explicit resume. Completed checkpoints are pushed with
+configured identity, no attribution trailers, workflow change, release or submission.
+
 ## Resumed A-side corpus review — 23 September 2026
 
 The user explicitly resumed Mridul's implementation work after the design handoff.

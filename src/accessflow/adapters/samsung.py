@@ -15,6 +15,7 @@ from pathlib import Path
 
 from accessflow.engine import Agent
 
+from .prompt_profile import PROMPT_PROFILES
 from .samsung_protocol import MediaInputError, SamsungProtocol, SamsungProtocolError
 
 
@@ -88,8 +89,8 @@ class ParticipantAgent:
                 raise ValueError("Samsung fast read retry must be 0 or 1")
             self.fast_read_retry = fast_read_retry == "1"
             self.prompt_profile = os.getenv("ACCESSFLOW_SAMSUNG_PROMPT_PROFILE", "full")
-            if self.prompt_profile not in {"full", "compact-v1"}:
-                raise ValueError("Samsung prompt profile must be full or compact-v1")
+            if self.prompt_profile not in PROMPT_PROFILES:
+                raise ValueError("Samsung prompt profile must be " + ", ".join(sorted(PROMPT_PROFILES)))
             documentation = (self.tool_documentation if self.tool_documentation is not None
                              else os.getenv("ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION"))
             if documentation is not None:

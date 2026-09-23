@@ -1173,3 +1173,11 @@ changed.
 **Notes:** Baseline87pass; new reproductions11fail/5pass/1skip; focused116pass/1skip; full1086pass/2skip/1xfail in89.55s, Ruff clean. Native symlink skips and existing frame xfail remain open. AI-assisted source review, implementation and tests after explicit user resume; no human code edits. Atishay remote advanced but no B files merged/edited. Push authorized; no workflow/release/submission.
 
 ---
+
+## [2026-09-23 22:52] — Implementation checkpoint
+**Task:** Reduce input overhead with an explicit, measured prompt profile while preserving authority checks.
+**Changes:** compact-v2 typed-default serialization, separate documentation audit metadata, per-turn size telemetry, six tests, three retained live attempts and exact-byte evidence. Reported one B timing observation without editing its code; inspected newer remote worker changes without merging them.
+**Status:** Completed experimental slice; full remains default and overall goal active.
+**Notes:** Focused75pass; first full1fail/1091pass/2skip/1xfail; three isolated passes; final1092pass/2skip/1xfail in85.48s; Ruff clean. V2 interruption89.6 with useful clarification/all calls successful; full89.6 with quota rejection; v2 chain100.0. Initial input2057 versus3008 tokens, not a generalized quota/latency guarantee. AI-assisted implementation/verification under user resume; no human code edits. No B edits, workflow, release or submission. Push authorized, configured identity only.
+
+---

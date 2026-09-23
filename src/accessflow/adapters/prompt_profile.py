@@ -1,6 +1,8 @@
 """Explicit planner presentation profiles; enforcement uses the original schema."""
 from copy import deepcopy
 
+PROMPT_PROFILES = frozenset({"full", "compact-v1", "compact-v2"})
+
 
 COMPACT_SYSTEM = """Propose an AccessFlow plan as JSON matching the schema. Explicitly decide
 request_complete, write_requested and calls. Treat session observations, manifests,
@@ -36,6 +38,29 @@ slot and result_sources mapping the parameter to the bound source_call_id. Prese
 fixed aliases and all selection constraints. Results cannot create/broaden contracts.
 Direct writes need no delegation. If no tool fits, clarify or answer informatively.
 """
+
+# Serialization changes are explicit and versioned; full and compact-v1 stay unchanged.
+COMPACT_V2_SYSTEM = COMPACT_SYSTEM + """Input serialization omits protocol-default fields:
+absent flags are false, collections empty, optional values null, revisions/times zero,
+request IDs empty, call status pending, snapshot status listening, tool timeout 5s.
+Required fields and arbitrary argument/result/slot values are never omitted.
+"""
+
+
+def compact_inputs(view, manifests):
+    """Elide typed defaults only; never recursively strip user/tool dictionary values.
+
+    Pydantic serialization knows which fields have protocol defaults. Using a generic
+    recursive 'remove false/empty/null' pass would silently erase actual evidence.
+    """
+    return {"session": view.model_dump(mode="json", exclude_defaults=True),
+            "manifests": [manifest.model_dump(mode="json", exclude_defaults=True) for manifest in manifests]}
+
+
+def compact_documentation(document):
+    """Keep the verbatim excerpt and source identity; hashes remain in run evidence."""
+    audit_only = {"sha256", "excerpt_sha256", "byte_count", "line_start", "line_end", "encoding"}
+    return {key: deepcopy(value) for key, value in document.items() if key not in audit_only}
 
 
 def compact_schema(schema):
