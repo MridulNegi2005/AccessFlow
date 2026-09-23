@@ -1218,3 +1218,11 @@ changed.
 
 ---
 2026-09-23 AI-assisted implementation and verification: Clarified the native perception timeout boundary, distinguished provider execution timeout from native-permit queue expiry, and preserved permit ownership until the underlying thread returns. Replaced stale-frame wall-clock sleeps with an observed admission gate and added a queue-expiry regression. Repeated isolated success passed 20/20; perception passed 218; full suite passed 809 with 1 xfailed and 2 warnings; Ruff and diff checks passed. No engine, contract, adapter, dependency or media files changed.
+
+## [2026-09-24 00:05] — Integration checkpoint
+**Task:** Merge both fetched branches into main in the explicitly requested order and validate together before pushing.
+**Changes:** Mridul c9136eb merged in a40cffd; Atishay ed9d581 merged in8c609d9. Preserved both handoff histories,only content conflict. Added integration/evidence report and own handoffs; no implementation edits.
+**Status:** Merge and checks completed; push main then fast-forward/push Mridul branch; general goal active.
+**Notes:** Initial full1fail/1187pass/2skip/1xfail; four isolated passes; final1188pass/2skip/1xfail in55.42s. Vision-recovery ordering issue remains open,not hidden by passing repeats. Ruff,JS parser and offline4/4 passed; same B blobs as remote branch,workflow unchanged. AI-assisted merge resolution and validation; no new author trailers,no B branch rewrite,no deployment/submission/tag. Raw evidence retained with hashes. MP3 bridge ownership still pending; independent A runtime work remains available.
+
+---

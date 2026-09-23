@@ -1,5 +1,24 @@
 # Active Handoff
 
+## Combined branch checkpoint — 24 September 2026
+
+Merged Mridul c9136eb into main first (a40cffd), then Atishay ed9d581 (8c609d9).
+Only .ai-sync/handoff.md conflicted; both histories retained. No application conflict
+or source repair. B-owned source/tests remain identical to Atishay's branch.
+
+Final combined suite1188pass/2skip/1xfail in55.42s; Ruff clean,JS syntax passed,
+offline dev4/4. Initial suite had1 failure in vision-failure recovery (image context
+absent from first audio final); four isolated repeats and final suite passed with
+unchanged source. This is an open timing/correlation issue,not fixed or established
+as a merge regression. Both full reports and repeats retained. See
+ docs/INTEGRATION_2026-09-24.md and docs/evidence/merge-main-2026-09-24/README.md.
+
+Push verified merged main; fast-forward Mridul's branch for continued owned work.
+Do not update Atishay's branch or reinterpret old branch-specific evidence as new
+combined-tree live verification. Workflow unchanged/manual-only; no deployment/tag.
+Goal active. Next A work remains runtime/profile configuration, coordinating the
+pending MP3 ownership decision and the documented multimodal ordering follow-up.
+
 ## Isolated package validation and media follow-up — 23 September 2026
 
 Built a clean cd53bc2 base package (78 files), installed all21 pinned dependencies

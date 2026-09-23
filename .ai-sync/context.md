@@ -1204,3 +1204,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 
 ---
 2026-09-23 verification: Repaired the intermittent stale-frame timeout boundary without permitting overlapping native work. `timeout_s` remains the provider execution deadline and independently bounds native-permit admission; queue expiry has an explicit diagnostic. Replaced fixed sleeps with an observed permit gate and added genuine queue-expiry coverage. Repeated isolated success: 20/20; perception: 218 passed; full suite: 809 passed, 1 xfailed, 2 warnings; Ruff and diff checks pass. No engine, contract, adapter, dependency or media files changed.
+
+## [2026-09-24 00:05] — Integration checkpoint
+**Task:** Merge both fetched branches into main in the explicitly requested order and validate together before pushing.
+**Changes:** Mridul c9136eb merged in a40cffd; Atishay ed9d581 merged in8c609d9. Preserved both handoff histories,only content conflict. Added integration/evidence report and own handoffs; no implementation edits.
+**Status:** Merge and checks completed; push main then fast-forward/push Mridul branch; general goal active.
+**Notes:** Initial full1fail/1187pass/2skip/1xfail; four isolated passes; final1188pass/2skip/1xfail in55.42s. Vision-recovery ordering issue remains open,not hidden by passing repeats. Ruff,JS parser and offline4/4 passed; same B blobs as remote branch,workflow unchanged. AI-assisted merge resolution and validation; no new author trailers,no B branch rewrite,no deployment/submission/tag. Raw evidence retained with hashes. MP3 bridge ownership still pending; independent A runtime work remains available.
+
+---
