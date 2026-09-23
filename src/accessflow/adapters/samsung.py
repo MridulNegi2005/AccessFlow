@@ -63,6 +63,7 @@ class ParticipantAgent:
         self.partial_debounce_s = 0.08
         self.fast_read_retry = True
         self.prompt_profile = "full"
+        self.read_answer_mode = "prose"
         self.agent = None
         self.protocol = None
         self.tasks = set()
@@ -91,6 +92,11 @@ class ParticipantAgent:
             self.prompt_profile = os.getenv("ACCESSFLOW_SAMSUNG_PROMPT_PROFILE", "full")
             if self.prompt_profile not in PROMPT_PROFILES:
                 raise ValueError("Samsung prompt profile must be " + ", ".join(sorted(PROMPT_PROFILES)))
+            from accessflow.read_answer import READ_ANSWER_MODES
+
+            self.read_answer_mode = os.getenv("ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE", "prose")
+            if self.read_answer_mode not in READ_ANSWER_MODES:
+                raise ValueError("Invalid Samsung read answer mode")
             documentation = (self.tool_documentation if self.tool_documentation is not None
                              else os.getenv("ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION"))
             if documentation is not None:
@@ -119,9 +125,10 @@ class ParticipantAgent:
         await backend.warmup()
         return Agent(LocalPerception(), HeuristicTurnPolicy(),
                      ModelReasoner(backend, tool_documentation=self.documentation_evidence,
-                                   prompt_profile=self.prompt_profile),
+                                   prompt_profile=self.prompt_profile, read_answer_mode=self.read_answer_mode),
                      executor=None, authorization=HarnessAuthorization(),
-                     partial_debounce_s=self.partial_debounce_s, fast_read_retry=self.fast_read_retry)
+                     partial_debounce_s=self.partial_debounce_s, fast_read_retry=self.fast_read_retry,
+                     read_answer_mode=self.read_answer_mode)
 
     async def _pump_input(self, incoming):
         manifest_seen = False

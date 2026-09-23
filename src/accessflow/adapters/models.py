@@ -570,7 +570,12 @@ def validate_reasoner_evidence(evidence, strict=True):
 
 
 class ModelReasoner:
-    def __init__(self, backend, *, tool_documentation=None, prompt_profile="full"):
+    def __init__(self, backend, *, tool_documentation=None, prompt_profile="full", read_answer_mode="prose"):
+        from accessflow.read_answer import READ_ANSWER_MODES
+
+        if read_answer_mode not in READ_ANSWER_MODES:
+            raise ValueError("Invalid read answer mode")
+        self.read_answer_mode = read_answer_mode
         if prompt_profile not in PROMPT_PROFILES:
             raise ValueError("Planner prompt profile must be " + ", ".join(sorted(PROMPT_PROFILES)))
         self.backend = backend
@@ -634,8 +639,25 @@ class ModelReasoner:
         # Bind model generation to the caller's manifest.  An unresolved write is
         # deliberately a read-only planning turn; the controller remains the final
         # authority even when a backend does not enforce this JSON schema.
+        from accessflow.read_answer import accepted_reads, has_read_attempt
+
+        grounding = (self.read_answer_mode == "evidence" and has_read_attempt(view)
+                     and not outstanding and not unresolved)
+        selectable = list(accepted_reads(view)) if grounding else []
+        if grounding:
+            request["read_answer_rule"] = {
+                "allowed_call_ids": selectable,
+                "instruction": "To finish this lookup, use evidence_answer.selections with call_id and "
+                               "RFC6901 pointer (empty string selects the whole result). Select the smallest "
+                               "relevant record including its identity and explicit units/qualifiers. Array "
+                               "indices are allowed. Do not supply values or labels: the controller renders "
+                               "the selected data. Set intent, response and clarification null, slot_updates "
+                               "empty and calls empty for "
+                               "an evidence answer. If more input is needed, ask clarification instead; "
+                               "it must not invent facts. This does not complete an outstanding write."}
         schema = self.output_schema(manifests, allow_write_calls=not bool(unresolved),
-                                    allow_final_response=not outstanding,
+                                    allow_final_response=not outstanding and not grounding,
+                                    allow_evidence_answer=bool(selectable),
                                     require_progress=outstanding or repeating or no_progress)
 
         def _validate(result):
@@ -699,12 +721,23 @@ class ModelReasoner:
 
     @staticmethod
     def output_schema(manifests=None, *, allow_write_calls=True, allow_final_response=True,
-                      require_progress=False):
+                      require_progress=False, allow_evidence_answer=False):
         # Internal proposals retain defaults for fixtures and backwards compatibility.
         # Model generation must make each safety/action decision explicitly rather than
         # satisfying an all-optional schema with only extracted slots (or an empty object).
         schema = PlanProposal.model_json_schema()
-        schema["required"] = [p for p in schema["properties"] if p != "write_contracts"]
+        schema["required"] = [p for p in schema["properties"] if p not in {"write_contracts", "evidence_answer"}]
+        if not allow_evidence_answer:
+            schema["properties"]["evidence_answer"] = {"type": "null"}
+            schema["$defs"].pop("EvidenceAnswer", None)
+            schema["$defs"].pop("ReadSelection", None)
+        else:
+            schema["allOf"] = [{
+                "if": {"properties": {"evidence_answer": {"type": "object"}}, "required": ["evidence_answer"]},
+                "then": {"properties": {"response": {"type": "null"}, "clarification": {"type": "null"},
+                                        "calls": {"maxItems": 0}, "write_requested": {"const": False},
+                                        "intent": {"type": "null"}, "slot_updates": {"maxProperties": 0},
+                                        "write_contracts": {"maxItems": 0}}}}]
         for field in schema["properties"].values():
             field.pop("default", None)
         proposed_call = schema["$defs"]["ProposedCall"]
@@ -734,7 +767,7 @@ class ModelReasoner:
             # the model a tool call or an explicit clarification, which the controller can act on.
             schema["properties"]["response"] = {
                 "type": "null",
-                "description": "Must be null while a requested state-changing effect is outstanding."}
+                "description": "Must be null: this turn requires a tool action, clarification or evidence answer."}
         if require_progress:
             # A fully expanded PlanProposal() -- empty calls, null clarification, null
             # response -- otherwise validates cleanly even here: nothing in the plain
@@ -746,6 +779,9 @@ class ModelReasoner:
                            {"properties": {"clarification": {"type": "string"}}, "required": ["clarification"]}]
             if allow_final_response:
                 alternatives.append({"properties": {"response": {"type": "string"}}, "required": ["response"]})
+            if allow_evidence_answer:
+                alternatives.append({"properties": {"evidence_answer": {"type": "object"}},
+                                     "required": ["evidence_answer"]})
             schema["anyOf"] = alternatives
         if manifests is not None:
             calls = schema["properties"]["calls"]
@@ -762,6 +798,7 @@ class ModelReasoner:
     def evidence(self):
         evidence = self.backend.evidence()
         evidence["prompt_profile"] = self.prompt_profile
+        evidence["read_answer_mode"] = self.read_answer_mode
         evidence["prompt_measurements"] = copy.deepcopy(list(self._prompt_measurements))
         if self.tool_documentation is not None:
             evidence["tool_documentation"] = copy.deepcopy(self._documentation_selection or {
