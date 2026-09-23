@@ -5,16 +5,16 @@ turns those approvals into an implementable brief for Atishay and a Stitch promp
 No frontend, perception, controller or shared contract implementation was changed.
 Mridul's implementation/evaluation goal remains paused.
 
-## Choose a route
+## Selected route: Stitch first
 
 | Route | Best use | Recommendation |
 |---|---|---|
-| Approved PNGs + DESIGN.md → Atishay's coding agent | Build within the existing demo, preserve event handling, test real behavior | Start here |
-| Same references + DESIGN.md → Stitch → Atishay's coding agent | Explore missing visual states or inspect an interactive visual prototype | Optional design pass |
+| Same references + DESIGN.md → Stitch → Atishay's coding agent | Generate consistent states, review the prototype, then implement in the existing demo | Selected by the user |
+| Approved PNGs + DESIGN.md → Atishay's coding agent directly | Implement without the Stitch stage | Earlier recommendation; not the selected workflow |
 
-Direct implementation is the recommended route for this project because the visual
-direction is already approved and an existing FastAPI/JavaScript demo needs integration.
-This is an engineering recommendation, not a measured comparison of coding agents.
+The user's follow-up selects Stitch first. Atishay should follow STITCH_PROMPTS.md
+in order, retain accepted exports, and then implement them in the existing demo.
+The earlier direct-first recommendation is superseded.
 Stitch is useful for visual exploration but does not establish correct microphone,
 turn-taking, cancellation, state provenance or controller integration.
 
@@ -32,16 +32,16 @@ development tools. These capabilities were checked against official sources on
 2. [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md): implementation sequence, inspected baseline,
    ownership, coordination and acceptance checks.
 3. [ATISHAY_AGENT_PROMPT.md](ATISHAY_AGENT_PROMPT.md): complete prompt written in Atishay's voice.
-4. [STITCH_PROMPTS.md](STITCH_PROMPTS.md): optional generation, state variants and export handoff.
+4. [STITCH_PROMPTS.md](STITCH_PROMPTS.md): required first stage, state variants and export handoff.
 5. [Photo reference](references/approved-photo-conversation.png) and
    [meeting reference](references/approved-meeting-correction.png).
 
-For direct implementation, open ATISHAY_AGENT_PROMPT.md, copy the prompt, and give it
+To start, open ATISHAY_AGENT_PROMPT.md, copy the prompt, and give it
 to the coding agent from Atishay's own checkout. The agent must inspect the current
 branch instead of relying on the historical checkout instructions in old handoffs.
 Do not switch or overwrite Mridul's working checkout to perform B-owned development.
 
-For Stitch, upload both references and import/paste DESIGN.md, then use the prompts
+In Stitch, upload both references and import/paste DESIGN.md, then use the prompts
 in order. Review the first two screens before generating the additional states.
 Export accepted work as references for the coding agent; retain the same design rules.
 Do not publish/deploy simply to pass the design between teammates.

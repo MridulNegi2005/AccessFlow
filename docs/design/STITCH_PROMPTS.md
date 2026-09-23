@@ -1,6 +1,8 @@
 # Google Stitch prompt pack — 23 September 2026
 
-Purpose: explore views of the approved AccessFlow interface before Atishay implements them.
+Selected workflow: Atishay follows this pack in order, reviews and retains the Stitch
+results, then implements them in his owned frontend. The user's follow-up makes this
+the first stage, superseding the earlier optional-Stitch recommendation.
 This pack has not been run in Stitch. Screen generation and click prototypes do not
 verify the real model, microphone timing, engine integration or tool cancellation.
 
@@ -188,6 +190,10 @@ Give the agent ATISHAY_AGENT_PROMPT.md plus the accepted exports. It should reus
 assets/tokens where useful while retaining existing transport, validation, ownership and
 tests. It must not replace working protocol code with an unreviewed generated app.
 
-Recommendation: do Prompt 1 and a small Prompt 2 pass only if you want further visual
-review. Atishay can already implement from the two approved anchors and DESIGN.md.
-Generating every optional state is not a prerequisite to starting his work.
+Follow Prompts 1–5 in order, checking the anchors before expanding the screen set.
+Only the alternative waveform treatments explicitly marked optional may be skipped
+without changing the selected workflow. Missing Stitch access/export must be reported
+with the exact manual step Atishay needs to perform; do not silently bypass this stage.
+Independent repository inspection, event mapping and test preparation can proceed
+while waiting. After the accepted exports are available, continue into implementation
+and verification using ATISHAY_AGENT_PROMPT.md and FRONTEND_HANDOFF.md.

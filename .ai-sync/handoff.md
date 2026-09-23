@@ -19,7 +19,8 @@ The existing browser captures WAV then uploads on stop; the approved continuous
 voice experience remains implementation work, not a claimed existing capability.
 
 Next: give Atishay docs/design/ATISHAY_AGENT_PROMPT.md in his own checkout.
-Direct implementation is recommended; Stitch prompts are optional visual exploration.
+User-selected route: Atishay follows STITCH_PROMPTS.md first, saves accepted exports,
+then implements his frontend. This supersedes the earlier direct-first recommendation.
 No Stitch project was generated or published. No workflow/release/submission change.
 Use configured Git identity without assistant attribution or coauthor trailers.
 

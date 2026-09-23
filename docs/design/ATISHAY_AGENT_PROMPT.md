@@ -10,6 +10,8 @@ Mridul is my teammate and owns the engine, shared contracts, execution, evaluati
 root configuration/lockfile and packaging. He has prepared and approved a frontend
 design brief with two reference screenshots. I want you to implement my portion of
 that design carefully, not invent a different look or do Mridul's work.
+Mridul and I are using the Stitch-first route: follow docs/design/STITCH_PROMPTS.md
+before implementing the frontend. This replaces the earlier direct-first recommendation.
 
 First inspect my current Git branch and working tree, read AGENTS.md, the latest
 .ai-sync/handoff.md and .ai-sync/context.md, docs/STATUS.md and my existing handoff.
@@ -24,11 +26,36 @@ Read these as the design/implementation brief:
 4. docs/design/references/approved-meeting-correction.png
 5. docs/reviews/ATISHAY_WEBSOCKET_CORRELATION_FOLLOWUP_2026-09-22.md
 6. docs/reviews/ATISHAY_TIMING_FOLLOWUP_2026-09-22.md
+7. docs/design/STITCH_PROMPTS.md
 
 Actually view both PNGs. They are approved synthetic design references, not screenshots
 of working features. DESIGN.md resolves their behavioral omissions. If I have supplied
 additional approved Stitch exports, treat those as supplemental views of the same design.
 Keep the reference identity; do not reinterpret it as a generic dashboard or landing page.
+
+Start with the Google Stitch workflow, not a fresh design of your own:
+
+1. Use one Stitch project. Supply DESIGN.md and both approved reference PNGs, then
+   execute Prompt 1 from STITCH_PROMPTS.md to establish the two anchor screens.
+2. Inspect the generated screens against the approved references. Use the correction
+   prompt if the layout, palette, voice priority or typography drifts. Keep the original
+   approved direction; ask me only if a material design choice remains unresolved.
+3. Follow Prompts 2 and 3 for the conversation, correction, information, image and
+   recovery states; follow Prompt 4 for responsive/reduced-motion views. Alternative
+   waveform treatments remain optional, and the approved bars remain the default.
+4. Follow Prompt 5 to connect the preview and export the accepted designs and available
+   assets/code. Save them under docs/design/stitch/ with the source project reference,
+   export date, screen index and a clear list of simulated interactions.
+5. Then implement those designs in my existing demo, following the slices below and
+   FRONTEND_HANDOFF.md. Inspect exported code before reusing it; keep the existing
+   transport and safeguards. A Stitch prototype is not a finished live frontend.
+
+If this agent has an available authorized Stitch connector or browser access, use it.
+If Stitch access, sign-in or export requires me, state the exact step I need to perform
+and give me the relevant prepared prompt. Do not claim Stitch ran, silently skip it,
+or substitute a different design generator. Continue independent code inspection,
+event-mapping and test preparation while waiting for the real Stitch exports.
+Do not publish or deploy the Stitch project. Do not upload private recordings or secrets.
 
 Build the same voice-first shell: warm ivory conversation panel on the left, prominent
 green waveform, clear voice status, session/mic controls, compact live captions and
@@ -93,6 +120,7 @@ identity; no assistant-name attribution or coauthor trailers. Do not publish/dep
 create a submission tag, send messages, or perform real external actions as part of
 this frontend work. Follow my existing repository workflow for commits and pushes.
 
-Begin with the inspected baseline and a short slice plan, then implement the owned work.
+Begin with the inspected baseline and a short Stitch-first slice plan, execute the
+Stitch prompt pack, then implement the owned work from the accepted results.
 Do not stop after describing a plan, and do not ask me to choose a new design: these two
 references and DESIGN.md are the approved direction.
