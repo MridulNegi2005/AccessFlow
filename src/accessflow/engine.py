@@ -3,14 +3,17 @@
 import asyncio
 import json
 import os
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
 from jsonschema import Draft202012Validator, validate
 from jsonschema.exceptions import ValidationError as PlanSchemaViolation
+from pydantic import ValidationError as PlanModelViolation
 
 from .clock import RealClock
+from .confirmation_text import confirmation_payload
 from .contracts import (
     AudioEvent, EndEvent, FrameEvent, InterruptEvent, Observation, OutputEvent,
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
@@ -19,6 +22,10 @@ from .contracts import (
 from .corpus import (
     CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
 )
+from .result_binding import BindingError
+from .read_answer import READ_ANSWER_MODES, ReadAnswerError, has_read_attempt, render_answer
+from .write_binding import capture, validate_binding
+from .validation_diagnostics import validation_summary
 
 
 # Bound on any proposal-supplied value interpolated into a spoken/logged `clarify`
@@ -65,6 +72,7 @@ class WorkerMessage:
     # (new/partial speech or an image). False for a plan triggered internally by a
     # tool result, retry, or reconciliation continuation for the same request.
     fresh_evidence: bool = False
+    evidence_mark: int | None = None
 
 
 class Agent:
@@ -72,7 +80,13 @@ class Agent:
 
     def __init__(self, perception, turn_policy, reasoner, executor=None, authorization=None,
                  scenario_timeout=115, inference_timeout=25, partial_debounce_s=0.08,
-                 frame_debounce_s=0.4, disabled=(), corpus_root=None):
+                 frame_debounce_s=0.4, disabled=(), corpus_root=None, fast_read_retry=False,
+                 read_answer_mode="prose"):
+        if read_answer_mode not in READ_ANSWER_MODES:
+            raise ValueError("Invalid read answer mode")
+        if getattr(reasoner, "read_answer_mode", read_answer_mode) != read_answer_mode:
+            raise ValueError("Controller and reasoner read answer modes must match")
+        self.read_answer_mode = read_answer_mode
         if scenario_timeout <= 0 or inference_timeout <= 0 or partial_debounce_s < 0:
             raise ValueError("Timeouts must be positive and debounce nonnegative")
         if frame_debounce_s < 0:
@@ -83,6 +97,9 @@ class Agent:
         # Named components a baseline run may switch off. Every other behaviour, the model,
         # the tools and the scenarios stay identical so only this component is compared.
         self.disabled = frozenset(disabled)
+        if not isinstance(fast_read_retry, bool):
+            raise ValueError("fast_read_retry must be a boolean")
+        self.fast_read_retry = fast_read_retry
         self.perception = perception
         self.turn_policy = turn_policy
         self.reasoner = reasoner
@@ -128,7 +145,10 @@ class Agent:
         self.observations = {}
         self.sources = {}
         self.results = []
-        # Monotonic count of every append ever made to self.results, across the whole
+        self.write_contracts = {}
+        self.last_plan_error = None
+        self.tool_failures = []
+        # Monotonic count of admitted tool outcomes (results and failures), across the whole
         # session. Unlike len(self.results), never decreases: _invalidate_dependencies
         # removes stale entries FROM self.results (so a dependent slot update can drop
         # its own read's evidence), but must not be able to rewind this counter (H1).
@@ -136,6 +156,8 @@ class Agent:
         self.ledger = {}
         self.seen = set()
         self.dispatched = {}
+        self.call_signatures = {}
+        self.call_input_epochs = {}
         self.generation = 0
         self.request_id = str(uuid4())
         self.last_request_finished = False
@@ -476,6 +498,15 @@ class Agent:
         return SessionView(session_id=self.session_id, state=self.state.model_copy(deep=True),
                            observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
+                           write_contracts=[b.contract.model_copy(deep=True)
+                               for b in self.write_contracts.values()
+                               if b.request_id == self.request_id
+                               and b.input_epoch == self.request_input_epoch],
+                           last_plan_error=deepcopy(self.last_plan_error),
+                           tool_failures=[r.model_copy(deep=True) for r in self.tool_failures
+                               if self.ledger[r.call_id].request_id == self.request_id
+                               and all(self.state.slots.get(key) and self.state.slots[key].revision == revision
+                                   for key, revision in self.ledger[r.call_id].dependencies.items())],
                            calls=[c.model_copy(deep=True) for c in self.ledger.values()],
                            write_pending=self.write_intent_retained,
                            repeated_completed_call=self.repeated_completed_call,
@@ -555,6 +586,7 @@ class Agent:
             # Partial plans may prepare reads but may never authorize writes.
             self._start_plan(source=key)
         elif message.kind == "plan":
+            self.last_plan_error = None
             self.current_event_id = self.source_events.get(message.source)
             # Stashed on self (rather than an _apply parameter) so subclasses that
             # override _apply(self, plan, source=None) -- its signature before this
@@ -562,18 +594,27 @@ class Agent:
             self._fresh_evidence = message.fresh_evidence
             await self._apply(message.value, message.source)
         elif message.kind == "plan_rejected":
+            self.last_plan_error = message.value
             await self._emit("error", code="plan_schema_rejected", detail=message.value)
-            await self._offer_recovery(self.schema_rejection_recoveries)
+            # Retrying a rejected fresh plan reinterprets the SAME input. It may
+            # keep that provenance only if no result has since been admitted.
+            retry_fresh = (message.fresh_evidence and message.source == self.planning_source
+                           and message.evidence_mark == self._results_admitted)
+            await self._offer_recovery(self.schema_rejection_recoveries, retry_fresh=retry_fresh)
 
-    def _start_plan(self, source=None):
+    def _start_plan(self, source=None, *, retry_fresh=False):
         self.generation += 1
         # A source given here comes from _worker's observation handling and means new
         # user evidence (fresh/partial speech, or an image) just arrived. Every other
         # caller reuses the existing planning_source to continue reasoning about the
         # same request (a tool result, a bounded retry, a reconciliation step) and
         # must not be mistaken for new evidence about user intent.
-        fresh_evidence = source is not None
+        fresh_evidence = source is not None or retry_fresh
         if source is not None:
+            self.last_plan_error = None
+            # Epoch expiry revokes the exception but retains its write barrier.
+            # Dropping the record here would let a frame fall back to legacy
+            # image-origin arguments and evade the pinned parameter mappings.
             self.planning_source = source
             # Genuinely new evidence about this still-open request earns its own
             # bounded recovery budget instead of inheriting an exhausted one from
@@ -608,8 +649,14 @@ class Agent:
                 # _apply (H2). Consumed there the one time it is used.
                 self._fresh_plan_cancelled[self._planner_key] = True
         view = self._view()
+        evidence_mark = self._results_admitted
         generation = self.generation
         lone_frame = source is not None and source[0] == "image" and self.active_speech is None
+        source_observation = self.observations.get(source)
+        finished_correction = bool(
+            source == ("speech", self.active_speech) and source_observation
+            and source_observation.final
+            and source_observation.event_id == self.semantic_correction_event)
         self._planner_fresh = fresh_evidence
         self._planner_key = (self.request_id, self.request_input_epoch)
 
@@ -617,24 +664,28 @@ class Agent:
             try:
                 if lone_frame and self.frame_debounce_s:
                     await self.clock.sleep(self.frame_debounce_s)
-                elif view.state.correction_pending and self.partial_debounce_s:
+                elif (view.state.correction_pending and not finished_correction
+                      and self.partial_debounce_s):
                     await self.clock.sleep(self.partial_debounce_s)
                 proposal = await self._bounded(self.reasoner.plan(view, [m.model_copy(deep=True)
                                                                         for m in self.manifests.values()]),
                                                self.inference_timeout)
                 await self.inbox.put(WorkerMessage("plan", generation, proposal.model_copy(deep=True),
                                                    source=source, fresh_evidence=fresh_evidence))
-            except PlanSchemaViolation as exc:
+            except (PlanSchemaViolation, PlanModelViolation, json.JSONDecodeError) as exc:
                 # The reasoner's own generation failed the exact schema built for this
                 # request (dynamic tool/effect restrictions, forced null response, ...).
                 # This is a rejection, not a generic backend outage: route it into a
                 # bounded correction attempt instead of a silent stall.
-                await self.inbox.put(WorkerMessage("plan_rejected", generation, str(exc)))
+                diagnostic = validation_summary(exc) or {"kind": "invalid_json"}
+                await self.inbox.put(WorkerMessage("plan_rejected", generation, diagnostic,
+                                                   source=source, fresh_evidence=fresh_evidence,
+                                                   evidence_mark=evidence_mark))
             except Exception as exc:
                 await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
         self.planner = self._spawn(plan())
 
-    async def _offer_recovery(self, compat_bucket):
+    async def _offer_recovery(self, compat_bucket, *, retry_fresh=False):
         """Grant one bounded re-plan for the active (request, input revision), or fail explicitly.
 
         Every no-progress mechanism -- schema rejection, a stalled owed write, a repeated or
@@ -655,7 +706,7 @@ class Agent:
             self.recovery_budget[key] = used + 1
             if compat_bucket is not None:
                 compat_bucket[self.request_id] = compat_bucket.get(self.request_id, 0) + 1
-            self._start_plan()
+            self._start_plan(retry_fresh=retry_fresh)
             return
         if not self.last_request_finished:
             self.last_request_finished = True
@@ -665,6 +716,16 @@ class Agent:
                                      "request will not retry again on its own.")
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        if proposal.evidence_answer is not None:
+            # Recheck the answer-only variant before any state mutation. Custom
+            # reasoners can return model_copy/model_construct without validation.
+            try:
+                PlanProposal.model_validate(proposal.model_dump())
+            except PlanModelViolation:
+                await self._emit("error", code="invalid_read_answer", detail="mixed_answer_proposal")
+                if self.latest_complete:
+                    await self._emit("clarify", text="I couldn't validate that lookup answer. Please try again.")
+                return
         fresh_evidence = self._fresh_evidence
         # Snapshot before this proposal can mutate write_intent_retained below. Mirrors
         # ModelReasoner.write_outstanding: true when the CURRENT request's spoken write
@@ -764,7 +825,13 @@ class Agent:
         # fresh_evidence=True inside `if speech_origin:`, so by the time it fires
         # speech_origin is already True and user_origin correctly follows fresh_evidence.
         user_origin = fresh_evidence and speech_origin
+        if (self._fresh_evidence and user_origin and self.latest_complete
+                and proposal.request_complete and not proposal.clarification):
+            # Only a new complete spoken request may replace the earlier argument
+            # contract (including with a newly explicit direct write).
+            self.write_contracts.clear()
         changed = set()
+        previous_slot_names = set(self.state.slots)
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
             if not user_origin and name in self._user_fixed_slots and old is not None and old.value != value:
@@ -883,6 +950,18 @@ class Agent:
                 # (security review HIGH finding 2).
                 self._intent_user_fixed = True
         await self._invalidate_dependencies(changed, "dependency_changed")
+        corrected = changed.intersection(previous_slot_names)
+        if (corrected and user_origin and self.latest_complete and self.speech_ready
+                and not self.state.correction_pending and not proposal.clarification
+                and proposal.calls):
+            # Speak only accepted user-origin changes, after cancelling dependent
+            # work. This reports our interpretation, never a completed tool effect.
+            details = "; ".join(
+                f"{_clarify_name(name)} to {_clarify_repr(self.state.slots[name].value)}"
+                for name in sorted(corrected)[:4]
+                if isinstance(self.state.slots[name].value, (str, int, float, bool)))
+            text = f"Updated {details}." if details else "I've updated the request details."
+            await self._emit("acknowledge", text=text, basis="accepted_user_correction")
         said_something = bool(proposal.clarification)
         if proposal.clarification and (self.latest_complete or final_correction):
             # Required information is now outstanding for this request. This is tracked
@@ -896,7 +975,8 @@ class Agent:
             # previously missing information (spoken or supplied by an image) is now
             # resolved for this request.
             self.clarification_outstanding = False
-        for proposed in proposal.calls:
+        dispatched_indices = {}
+        for proposal_index, proposed in enumerate(proposal.calls):
             manifest = self.manifests.get(proposed.tool)
             if not manifest:
                 await self._emit("error", code="unknown_tool", tool=proposed.tool)
@@ -915,6 +995,23 @@ class Agent:
                     blocked_calls += 1
                     continue
                 if any(not self.state.slots[name].confirmed for name in proposed.dependencies):
+                    blocked_calls += 1
+                    continue
+                covered_parameters = set()
+                bound = self.write_contracts.get(proposed.tool)
+                if bound is not None:
+                    try:
+                        covered_parameters = validate_binding(
+                            bound, proposed, state=self.state, ledger=self.ledger,
+                            results=self.results, invalidated=self.invalidated,
+                            manifest=manifest, request_id=self.request_id,
+                            input_epoch=self.request_input_epoch)
+                    except BindingError as exc:
+                        await self._emit("error", code="invalid_result_binding", detail=str(exc))
+                        blocked_calls += 1
+                        continue
+                elif proposed.result_sources:
+                    await self._emit("error", code="invalid_result_binding", detail="No spoken contract")
                     blocked_calls += 1
                     continue
                 # A17-1 (confirm-on-tool-origin): a name-keyed guard cannot stop a
@@ -939,6 +1036,7 @@ class Agent:
                 tool_origin_arg = next(
                     (parameter for parameter in proposed.arguments
                      if parameter != manifest.idempotency_parameter
+                     and parameter not in covered_parameters
                      and self._slot_value_origin.get(
                          proposed.argument_slots.get(parameter, parameter)) == "tool"),
                     None)
@@ -967,6 +1065,10 @@ class Agent:
             # (see _argument_dependency_error); those carry no slot revision to track.
             dependencies = {name: self.state.slots[name].revision for name in proposed.dependencies
                             if name in self.state.slots}
+            if manifest.effect == "write" and bound is not None:
+                # Selection constraints remain execution dependencies even when the
+                # planner lists only the arguments sent to the downstream tool.
+                dependencies.update(bound.revisions)
             args = dict(proposed.arguments)
             # This field belongs to the controller, including when a model supplies
             # a different value on each retry. It cannot split a logical operation.
@@ -1001,30 +1103,85 @@ class Agent:
             self.dispatched[signature] = call.call_id
             self.attempt_counts[signature] = self.attempt_counts.get(signature, 0) + 1
             self.ledger[call.call_id] = call
+            self.call_signatures[call.call_id] = signature
+            self.call_input_epochs[call.call_id] = self.request_input_epoch
+            dispatched_indices[proposal_index] = call.call_id
             self.call_causes[call.call_id] = self.current_event_id
             self.state.status = "working"
             dispatched_any = True
             await self._emit("tool_call", **call.model_dump())
             self._spawn(self._execute(call, manifest.timeout_s))
+        if (self._fresh_evidence and user_origin and self.latest_complete and self.speech_ready
+                and proposal.request_complete and proposal.write_requested
+                and self.write_intent_retained and not proposal.clarification
+                and not self.state.correction_pending):
+            # These rules are committed before this controller can accept any
+            # result from the dispatched workers. Non-fresh replans cannot add rules.
+            duplicate_targets = {c.tool for c in proposal.write_contracts
+                                 if sum(other.tool == c.tool for other in proposal.write_contracts) > 1}
+            for contract in proposal.write_contracts:
+                try:
+                    if contract.tool in duplicate_targets:
+                        raise BindingError("duplicate target contracts")
+                    self.write_contracts[contract.tool] = capture(
+                        contract, proposal_calls=proposal.calls, dispatched=dispatched_indices,
+                        ledger=self.ledger, manifests=self.manifests, state=self.state,
+                        origins=self._slot_value_origin, request_id=self.request_id,
+                        input_epoch=self.request_input_epoch)
+                except BindingError as exc:
+                    await self._emit("error", code="invalid_write_contract", detail=str(exc))
         pending_now = any(c.status == "pending" for c in self.ledger.values())
-        history_has_write = any(c.effect == "write" for c in self.ledger.values())
+        # Resolved writes on older requests must not silence a later question.
+        # Unresolved effects remain a session-wide barrier to model-only finals;
+        # current-request effects still finish only through confirmed tool evidence.
+        final_requires_tool_evidence = any(
+            c.effect == "write" and (c.request_id == self.request_id
+                                     or c.status in {"unknown", "cancelled"})
+            for c in self.ledger.values())
         # --- Outcome classification --------------------------------------------------
         # Every accepted plan is exactly one of: dispatched work (dispatched_any),
         # emitted an answer/clarification (said_something), legitimately waiting on
         # existing pending work (pending_now), or made no progress at all. Only the
         # last case needs a diagnostic and a bounded recovery attempt.
         write_owed_unmet = False
+        newly_claimed_write = (self.write_intent_retained
+                               and any(m.effect == "write" for m in self.manifests.values())
+                               and (proposal.request_complete or bool(proposal.response)
+                                    or proposal.evidence_answer is not None))
         if not proposal.calls and not pending_now and self.latest_complete:
-            if history_has_write:
-                pass  # A write call already exists in this session; unchanged prior behaviour.
-            elif prior_write_owed and not proposal.clarification:
+            if final_requires_tool_evidence:
+                pass  # Do not replace a current or unresolved effect with model prose.
+            elif (prior_write_owed or newly_claimed_write) and not proposal.clarification:
                 # The accepted request still owes a state-changing effect. A completed read,
                 # an omitted response, or a change of mind in this proposal's flags is
                 # evidence, never a substitute for the effect: neither a prose claim nor
-                # total silence may finish it.
+                # total silence may finish it. Include intent established by THIS plan,
+                # not only prior plans, so a first-plan success claim cannot bypass dispatch.
+                # An incomplete plan with no response may still be waiting for promised
+                # input, and read-only environments can explain unavailable capabilities.
                 write_owed_unmet = True
+            elif proposal.evidence_answer is not None or (
+                    proposal.response and self.read_answer_mode == "evidence" and has_read_attempt(self._view())):
+                said_something = True
+                try:
+                    if self.read_answer_mode != "evidence" or proposal.evidence_answer is None:
+                        raise ReadAnswerError("read_answer_required")
+                    text, sources = render_answer(proposal.evidence_answer, self._view())
+                except ReadAnswerError as exc:
+                    await self._emit("error", code="invalid_read_answer", detail=str(exc))
+                    await self._emit("clarify", text="I couldn't form an answer from verified lookup fields. "
+                                     "Please narrow the question or ask me to look it up again.")
+                else:
+                    self.state.status = "listening"
+                    self.last_request_finished = True
+                    await self._emit("final", text=text, basis="read_evidence", backend="literal_renderer",
+                                     evidence_sources=sources)
             elif proposal.response:
                 said_something = True
+                # The informational request ended, but the conversation remains
+                # listening for another turn (the existing demo status contract).
+                self.state.status = "listening"
+                self.last_request_finished = True
                 await self._emit("final", text=proposal.response, basis="informational", backend="reasoner")
         if write_owed_unmet and not self.last_request_finished:
             # This proposal silently dropped the write intent a prior proposal established
@@ -1039,13 +1196,12 @@ class Agent:
         elif ((self.latest_complete or final_correction) and not dispatched_any and not said_something
                 and not pending_now and not self.last_request_finished
                 and (repeated or blocked_calls
-                     or (not proposal.calls and proposal.request_complete and not history_has_write))):
+                     or (not proposal.calls and proposal.request_complete and not final_requires_tool_evidence))):
             # An empty plan on a request the model itself does not yet consider complete
             # (no calls, no clarification, request_complete=False) is legitimately still
             # awaiting more input (e.g. a spoken write request waiting on a promised
-            # image) -- the same as partial speech, not a stall. Likewise, a write that
-            # already exists elsewhere in this session keeps the prior informational-
-            # answer restraint (see the pass branch above) rather than a new diagnostic.
+            # image) -- the same as partial speech, not a stall. A current or unresolved
+            # write still requires tool evidence rather than model prose.
             # Dropping this silently ends the turn with no output and nothing left to wake
             # the loop, so the session would otherwise stall until the scenario deadline.
             if repeated and not blocked_calls:
@@ -1361,7 +1517,9 @@ class Agent:
                 self.state.status = "completed"
                 self.last_request_finished = True
                 await self._emit("final", result=result.result, call_id=call.call_id, operation_id=call.operation_id,
-                                 basis="confirmed_tool_effect", caused_by_event_id=self.call_causes[call.call_id])
+                                 basis="confirmed_tool_effect", caused_by_event_id=self.call_causes[call.call_id],
+                                 **confirmation_payload(result.result, effect_environment=getattr(
+                                     self.authorization, "effect_environment", "unspecified")))
             else:
                 await self._emit("acknowledge", result=result.result, call_id=call.call_id, basis="tool_evidence",
                                  caused_by_event_id=self.call_causes[call.call_id])
@@ -1371,6 +1529,73 @@ class Agent:
             if call.effect == "write":
                 self.last_request_finished = True
             await self._emit("error", code="tool_failed", call_id=call.call_id, detail=result.error)
+            if call.effect == "read":
+                # A failed read is planning evidence, not a dead end or a write
+                # authorization. Let the reasoner correct its query, use the
+                # existing one-retry budget, or explain the failure. Count this
+                # admission just like successful results so failure-triggered
+                # replanning cannot masquerade as fresh user speech.
+                # Keep refused corpus contents and incidental failed-tool fields
+                # out of the usable-result evidence channel.
+                self.tool_failures.append(result.model_copy(update={"result": {}, "committed": False}, deep=True))
+                del self.tool_failures[:-12]
+                self._results_admitted += 1
+                if not await self._retry_read(call, result):
+                    self._start_plan()
+
+    async def _retry_read(self, call, result):
+        """One exact transient-read retry; never retry an effect or stale input.
+
+        Shares the existing logical-operation attempt budget with model-driven
+        retries. The controller transfers any current binding's source identity
+        only across this exact same-arguments, same-operation retry.
+        """
+        if (not self.fast_read_retry or call.effect != "read" or call.status != "failed"
+                or result.status != "failed" or result.committed
+                or result.error not in {"timeout", "TimeoutError", "temporary_unavailable"}
+                or call.request_id != self.request_id
+                or self.call_input_epochs.get(call.call_id) != self.request_input_epoch
+                or call.call_id in self.invalidated or not self.latest_complete or not self.speech_ready
+                or self.state.correction_pending or self.last_request_finished
+                or self.state.status in {"stopped", "ended", "no_progress"}
+                or (self.planner is not None and not self.planner.done())):
+            return False
+        if any(n not in self.state.slots or self.state.slots[n].revision != rev
+               for n, rev in call.dependencies.items()):
+            return False
+        signature = self.call_signatures.get(call.call_id)
+        if (signature is None or self.dispatched.get(signature) != call.call_id
+                or self.attempt_counts.get(signature) != 1):
+            return False
+        manifest = self.manifests.get(call.tool)
+        if manifest is None or manifest.effect != "read":
+            return False
+        try:
+            validate(call.arguments, manifest.parameters)
+        except Exception:
+            return False
+        replacement = call.model_copy(deep=True, update={"call_id": str(uuid4()), "status": "pending",
+                                                         "retry_of_call_id": call.call_id})
+        self.attempt_counts[signature] = 2
+        self.dispatched[signature] = replacement.call_id
+        self.ledger[replacement.call_id] = replacement
+        self.call_signatures[replacement.call_id] = signature
+        self.call_input_epochs[replacement.call_id] = self.request_input_epoch
+        self.call_causes[replacement.call_id] = self.call_causes[call.call_id]
+        for bound in self.write_contracts.values():
+            if (bound.request_id != self.request_id or bound.input_epoch != self.request_input_epoch
+                    or bound.intent != self.state.intent
+                    or any(n not in self.state.slots or self.state.slots[n].revision != rev
+                           for n, rev in bound.revisions.items())):
+                continue
+            for rule in bound.contract.delegated_arguments.values():
+                if rule.source_call_id == call.call_id:
+                    rule.source_call_id = replacement.call_id
+        self.state.status = "working"
+        await self._emit("tool_call", **replacement.model_dump(),
+                         caused_by_event_id=self.call_causes[replacement.call_id])
+        self._spawn(self._execute(replacement, manifest.timeout_s))
+        return True
 
     async def _reconcile(self, status_call, result):
         """Executor-normalized status evidence, restricted to the manifest's status tool.
@@ -1404,7 +1629,9 @@ class Agent:
                     self.last_request_finished = True
                     await self._emit("final", basis="reconciled_tool_effect", call_id=original.call_id,
                                      operation_id=original.operation_id, result=result.result,
-                                     caused_by_event_id=self.call_causes[original.call_id])
+                                     caused_by_event_id=self.call_causes[original.call_id],
+                                     **confirmation_payload(result.result, reconciled=True, effect_environment=getattr(
+                                         self.authorization, "effect_environment", "unspecified")))
 
     async def _shutdown(self, reason):
         if self.session_id is None:

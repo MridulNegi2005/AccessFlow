@@ -112,12 +112,8 @@ async def test_completed_request_does_not_disable_a_later_read_then_write_reques
         await end(iq, task)
 
 
-async def test_information_only_follow_up_after_a_completed_write_is_not_finalized():
-    # Documents the existing, INHERITED whole-session behaviour noted by the
-    # reviewer: the "prose-only final" guard in _apply refuses to answer once any
-    # write call exists anywhere in the ledger, regardless of request. This is not
-    # part of the R2 fix (fixing it is out of scope here); this test exists so a
-    # future change to that guard is a deliberate, visible decision.
+async def test_information_only_follow_up_after_completed_write_gets_its_own_final():
+    # Historical whole-session guard suppressed this reply after an unrelated write.
     class Planner:
         def __init__(self):
             self.n = 0
@@ -135,14 +131,13 @@ async def test_information_only_follow_up_after_a_completed_write_is_not_finaliz
         await iq.put(transcript("What are your hours", utterance="request-b"))
         ack = await wait_for(oq, lambda e: e.kind == "acknowledge" and "text" in e.payload)
         assert ack.payload["text"] == "I'll check that."
-        # No further output arrives for this informational follow-up: the whole-
-        # session write check silently drops it instead of answering.
-        try:
-            async with asyncio.timeout(0.5):
-                stray = await oq.get()
-                assert False, f"unexpected output: {stray.kind} {stray.payload}"
-        except asyncio.TimeoutError:
-            pass
+        final = await wait_for(oq, lambda e: e.kind == "final")
+        assert final.payload["basis"] == "informational"
+        assert final.payload["text"] == "Our hours are nine to five."
+        assert agent.last_request_finished
+        assert agent.state.status == "listening"
+        assert len(agent.executor.effects) == 1
+        assert agent.request_id != next(iter(agent.ledger.values())).request_id
     finally:
         await end(iq, task)
 
