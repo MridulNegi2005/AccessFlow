@@ -439,6 +439,40 @@ async def test_demo_perception_labels_mock_image_and_preserves_frame_id(tmp_path
     assert "device.png" in observation.text
 
 
+@pytest.mark.asyncio
+async def test_demo_perception_publishes_display_only_observation_notice():
+    notices = []
+    perception = DemoPerception()
+    perception.observation_callback = notices.append
+    event = event_from_message(
+        "session-1",
+        {
+            "kind": "transcript",
+            "sequence": 4,
+            "payload": {
+                "utterance_id": "browser-4",
+                "revision": 2,
+                "text": "Find the accessibility settings",
+                "final": True,
+            },
+        },
+    )
+
+    observations = [item async for item in perception.observe(event)]
+
+    assert len(observations) == 1
+    assert notices == [
+        {
+            "modality": "text",
+            "source_id": "browser-4",
+            "revision": 2,
+            "text": "Find the accessibility settings",
+            "backend": "demo/mock-text",
+            "final": True,
+        }
+    ]
+
+
 def test_demo_perception_environment_can_enable_local_audio(monkeypatch, tmp_path: Path):
     monkeypatch.setenv("ACCESSFLOW_DEMO_WHISPER_MODEL", str(tmp_path))
 
@@ -487,19 +521,26 @@ def test_demo_recorder_worklet_is_served():
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = Path("demo/index.html").read_text(encoding="utf-8")
 
-    assert 'id="text-form"' in html
-    assert '<label for="text">Transcript</label>' in html
-    assert '<label for="audio">WAV audio file</label>' in html
-    assert '<label for="image">PNG image file</label>' in html
+    assert 'id="task-text"' in html
+    assert '<textarea class="task-input" id="task-text"' in html
+    assert 'id="run-task"' in html
+    assert 'id="voice-toggle"' in html
+    assert 'id="drop-zone"' in html
+    assert 'id="follow-form"' in html
+    assert 'id="tts-toggle"' in html
     assert 'accept="audio/wav,.wav"' in html
     assert 'accept="image/png,.png"' in html
-    assert 'id="mic"' in html
-    assert 'id="stop-mic"' in html
-    assert 'id="stop-speaking"' in html
-    assert 'id="stop-task"' in html
     assert 'id="announcements" class="sr-only" aria-live="polite"' in html
-    assert 'id="events" aria-live="off"' in html
-    assert 'id="restart-session"' in html
+    assert 'id="answer-wrap"' in html
+    assert 'id="answer-image"' in html
+    assert 'id="image-dialog"' in html
+    assert 'prefers-reduced-motion: reduce' in html
+    assert 'Drop a PNG image' in html
+    assert 'up to 8 MiB' in html
+    assert 'document.querySelector(\'#partial\')' not in html
+    assert 'OutputEvent stream' not in html
+    assert 'Stop task' not in html
+    assert 'JSON.stringify(event, null, 2)' not in html
     assert 'const maxAnnouncementChars = 240' in html
     assert 'const maxMediaBytes = 8 * 1024 * 1024' in html
     assert 'const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2)' in html
@@ -510,10 +551,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'function sendSerialized(message)' in html
     assert 'The session closed before the event could be sent.' in html
     assert "sendInterrupt('speech')" in html
-    assert "sendInterrupt('task')" in html
-    assert 'id="backend-label"' in html
-    assert "Perception and reasoning backends:" in html
-    assert 'event.payload.reasoner_backend' in html
+    assert "sendInterrupt('speech')" in html
+    assert 'payload.reasoner_backend' in html
     assert 'getUserMedia' in html
     assert 'encodeWav' in html
     assert 'AudioWorkletNode' in html
@@ -528,16 +567,19 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'activeUtteranceId' in html
     assert 'revision += 1' in html
     assert 'typeof payloadOrFactory === \'function\'' in html
-    assert "send('transcript', () => transcript(true))" in html
+    assert "const finalTranscript = transcript(true)" in html
     assert "send('transcript', () => transcript(false))" in html
     assert 'function nextMediaId(prefix)' in html
     assert 'mediaSequence += 1' in html
     assert 'let mediaSendChain = Promise.resolve()' in html
     assert 'mediaSendChain = mediaSendChain.then(action, action)' in html
-    assert 'await enqueueMediaAction(() => send(\'audio\'' in html
+    assert "recordedWavBytes = encodeWav(current.chunks, current.sampleRate)" in html
+    assert "It will be sent with your task" in html
     assert "nextMediaId('mic-audio')" in html
-    assert "nextMediaId('upload-audio')" in html
-    assert "nextMediaId('upload-frame')" in html
+    assert "kind === 'audio' ? 'upload-audio' : 'upload-frame'" in html
+    assert "event.kind === 'demo_observation'" in html
+    assert "payload.source_id === finalSourceId" in html
+    assert "demo/mock mode does not transcribe audio." in html
     assert 'Date.now()' not in html
 
 
@@ -555,17 +597,17 @@ def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
     assert "microphoneLimitReached = true" in html[recorder_handler:stop_function]
     assert "void stopMicrophone('limit')" in html[recorder_handler:stop_function]
     assert stop_body.index("if (!microphone) return;") < stop_body.index("microphone = null;")
-    assert "await enqueueMediaAction(() => send('audio'" in stop_body
+    assert "recordedWavBytes = encodeWav(current.chunks, current.sampleRate)" in stop_body
+    assert "send('audio'" not in stop_body[:stop_body.index('function enqueueMediaAction')]
     assert "Microphone recording reached the 8 MiB limit and was stopped." in stop_body
-    assert 'card.innerHTML' not in html
     assert "function announce(event)" in html
     assert "function compactAnnouncement(value)" in html
     assert "function restartSession()" in html
     assert "window.location.reload()" in html
     assert "compactAnnouncement(payload.text)" in html
     assert "textContent = announce(event)" in html
-    assert 'heading.textContent = event.kind' in html
-    assert 'details.textContent = JSON.stringify(event, null, 2)' in html
+    assert 'JSON.stringify(event, null, 2)' not in html
+    assert 'function setVoiceCaption(title, detail)' in html
 
 
 def test_demo_selected_media_size_preflight_rejects_before_reading_or_sending():
@@ -862,6 +904,17 @@ def _receive_controller_outputs(socket):
     return received
 
 
+def _receive_media_status(socket):
+    while True:
+        event = socket.receive_json()
+        if (
+            event.get("kind") == "demo_status"
+            and isinstance(event.get("payload"), dict)
+            and event["payload"].get("media_received")
+        ):
+            return event
+
+
 def _assert_backend_failure(error):
     assert error["payload"]["code"] == "backend_failure"
     assert error["payload"]["detail"] == "RuntimeError"
@@ -882,6 +935,13 @@ def test_websocket_audio_upload_reaches_mock_controller():
 
     assert status["payload"]["perception_backend"] == "demo/mock"
     assert media_status["payload"] == {"media_received": "audio", "source_id": "ws-audio"}
+    observation = next(item for item in received if item["kind"] == "demo_observation")
+    assert observation["payload"]["modality"] == "audio"
+    assert observation["payload"]["source_id"] == "ws-audio"
+    assert observation["payload"]["revision"] == 0
+    assert observation["payload"]["text"].startswith("Mock audio input received:")
+    assert observation["payload"]["backend"] == "demo/mock-audio"
+    assert observation["payload"]["final"] is True
     final = next(item for item in received if item["kind"] == "final")
     assert "Mock agent received audio input" in final["payload"]["text"]
     assert final["payload"]["backend"] == "reasoner"
@@ -1226,7 +1286,7 @@ def test_websocket_concurrent_sessions_do_not_share_multimodal_context():
                         "payload": {"data_base64": encoded_audio, "utterance_id": "first-audio"},
                     }
                 )
-                first_audio_status = first_socket.receive_json()
+                first_audio_status = _receive_media_status(first_socket)
 
                 second_socket.send_json(
                     {"kind": "transcript", "payload": {"text": "Fresh session"}}
@@ -1277,7 +1337,7 @@ def test_websocket_image_before_audio_context_is_visible():
                     "payload": {"data_base64": encoded_audio, "utterance_id": "ws-audio-after-frame"},
                 }
             )
-            audio_status = socket.receive_json()
+            audio_status = _receive_media_status(socket)
             outputs = _receive_controller_outputs(socket)
 
     final = next(item for item in outputs if item["kind"] == "final")
@@ -2370,7 +2430,7 @@ def test_websocket_vision_failure_recovers_to_multimodal_session(monkeypatch):
                     },
                 }
             )
-            audio_status = socket.receive_json()
+            audio_status = _receive_media_status(socket)
             multimodal_outputs = _receive_controller_outputs(socket)
 
     error = next(item for item in failed_outputs if item["kind"] == "error")
@@ -2841,7 +2901,7 @@ def test_websocket_new_frame_replaces_previous_frame():
                     "payload": {"data_base64": encoded_image, "frame_id": "ws-frame-2"},
                 }
             )
-            second_status = socket.receive_json()
+            second_status = _receive_media_status(socket)
             socket.send_json(
                 {"kind": "transcript", "payload": {"text": "What is on this screen?"}}
             )
