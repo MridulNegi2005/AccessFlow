@@ -1173,3 +1173,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Final1144pass/2skip/1xfail in65.71s; Ruff clean. Earlier full1143pass followed by one partial-speech regression and a new full run. Baseline invented billing period despite scorer100; final-source selection100 retained actual fields, two exposed synthetic probes passed. Successful hotel planning tokens4924 vs baseline4580 (+7.5%), same planning call count. AI-assisted implementation and permitted read-only review found/fixed mixed state-update issue; no human edits recorded. Not universal grounding; clarifications, relevance and omitted qualifiers remain limits. No B edits, workflow, release, submission or real effects. Push authorized, no attribution trailers.
 
 ---
+
+## [2026-09-23 23:34] — Implementation checkpoint
+**Task:** Screen the candidate configuration across all six public text scenarios and preserve failure-aware evidence.
+**Changes:** Sequential screening driver,19 reporting tests, six raw live reports, original/corrected summaries, hashed evidence and results/ownership handoff. No engine, model, protocol or B implementation changes.
+**Status:** Completed development screen; overall goal active, defaults unchanged.
+**Notes:** Five100/one89.6; all18 provider requests succeeded. Boston cancellation observed875ms after interruption; missing passenger/flight choice led to clarification, no invented booking. Final focused26pass/0.94s, Ruff clean; previous full1144pass/2skip/1xfail is not rerun evidence. Initial reporting tests7fail/1pass exposed summary/retention gaps; fixed and original driver/reports retained. AI-assisted reporting/evaluation plus permitted read-only confirmed-reply review; no human code edits recorded. Next A: evidence-faithful readable committed/reconciled confirmations. No B edits, workflow, release, submission or real effects. Push authorized without attribution trailers.
+
+---

@@ -1,5 +1,31 @@
 # Mridul workstream handoff
 
+## Six-case public text screen — 23 September 2026
+
+Screened all six public text cases once on frozen7086d6e implementation with
+compact-v2 and evidence read answers. Five scored100; interruption89.6. All18
+provider requests succeeded,29112 reported input tokens including six warm-ups.
+These are exposed development attempts, not an official aggregate or three-run median.
+
+The interruption trace confirms Boston cancellation875ms after the signal, followed
+by New York search and a request for missing flight/passenger details. No booking
+was invented. The chained case made exactly one confirmed mock booking. Substantive
+text-turn response delays ranged718–5953ms; filler latency is a different metric.
+
+Added a sequential screen driver with failure retention, fresh output paths,
+explicit model configuration and source-drift detection. Corrected summary extraction
+for official clarification/cancellation trace names; all original raw reports and
+the first driver remain retained. Final focused reporting tests26pass, Ruff clean.
+No application source or B source/tests changed. Existing1144pass/2skip/1xfail is
+previous engine evidence, not a newly run full suite for this reporting-only slice.
+
+Read docs/TEXT_PROFILE_SCREEN_2026-09-23.md. Defaults remain full/prose. Next A work:
+make confirmed-action replies readable for voice while preserving committed/unknown/
+cancelled outcome gates and raw provenance; then broader/repeated official evidence.
+A read-only review identified both direct-commit and reconciliation final paths;
+no implementation from that review has been made yet. B display/speech adoption
+requires coordination, not teammate-file edits. Goal active; push completed checkpoint.
+
 ## Evidence-selected read-answer checkpoint — 23 September 2026
 
 Added an opt-in evidence-selection final-answer path for current successful reads.

@@ -1,0 +1,35 @@
+{
+  "scenario": "pub_02_text_interrupt.json",
+  "runner_exit": 0,
+  "failure": null,
+  "scorer_total": 89.6,
+  "provider_outcomes": [
+    "success",
+    "success",
+    "success",
+    "success"
+  ],
+  "reported_input_tokens": 7392,
+  "usage_missing_count": 0,
+  "finals": [],
+  "tool_calls": [
+    {
+      "tool": "flight_search",
+      "call_id": "99d68dbc-9fe2-41bb-b1c0-a0b1c09053e1",
+      "args": {
+        "destination": "Boston",
+        "date": "tomorrow"
+      }
+    },
+    {
+      "tool": "flight_search",
+      "call_id": "6eb4f915-ce34-4115-91dd-e555e03bb6b3",
+      "args": {
+        "destination": "New York",
+        "date": "tomorrow"
+      }
+    }
+  ],
+  "clarifications": [],
+  "report_sha256": "40a92b4739deaa4e1232f47fba14d83a2474e414fb7bfcadee68d680c0248c06"
+}

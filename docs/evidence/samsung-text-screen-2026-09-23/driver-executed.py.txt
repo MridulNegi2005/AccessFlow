@@ -1,0 +1,108 @@
+"""Sequential public development screen; never an official aggregate or hidden score.
+
+Environment credentials/backend/model must already be configured. Each child uses
+the existing recorded runner with unchanged scenario timing. Failures are retained,
+never silently retried or replaced. The directory must not exist before the run.
+"""
+
+import argparse
+import datetime as dt
+import hashlib
+import json
+import math
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+from accessflow.evaluation.replay import commit_revision, source_evidence
+from scripts.run_samsung_check import resolve_scenario, write_report
+
+
+def summarize(report):
+    requests = (report.get("model_evidence") or {}).get("requests", [])
+    trace = report.get("trace", [])
+    return {
+        "failure": report.get("failure"),
+        "scorer_total": (report.get("score") or {}).get("total"),
+        "provider_outcomes": [r.get("outcome") for r in requests],
+        "reported_input_tokens": sum(r.get("prompt_tokens") or 0 for r in requests),
+        "usage_missing_count": sum(r.get("prompt_tokens") is None for r in requests),
+        "finals": [{"t_ms": e.get("t_ms"), "text": e.get("payload", {}).get("text")}
+                   for e in trace if e.get("kind") == "action" and e.get("action") == "final_response"],
+        "tool_calls": [{"tool": e.get("api_name"), "call_id": e.get("call_id"), "args": e.get("args")}
+                       for e in trace if e.get("kind") == "action" and e.get("action") == "tool_call"],
+        "clarifications": [e.get("payload", {}).get("text") for e in trace
+                           if e.get("kind") == "action" and e.get("action") == "clarification"],
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kit", type=Path, required=True)
+    parser.add_argument("--scenarios", nargs="+", required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--cooldown", type=float, default=70)
+    parser.add_argument("--tool-documentation", default="docs/TOOLS.md")
+    args = parser.parse_args()
+    if not math.isfinite(args.cooldown) or not 0 <= args.cooldown <= 300:
+        parser.error("Cooldown must be between 0 and 300 seconds")
+    if len(set(args.scenarios)) != len(args.scenarios):
+        parser.error("Screen each scenario once; use a new directory for a separate repetition")
+    kit = args.kit.resolve()
+    try:
+        paths = [resolve_scenario(kit, name=name)[0] for name in args.scenarios]
+    except ValueError as exc:
+        parser.error(str(exc))
+    args.output.mkdir(parents=True, exist_ok=False)
+    provenance = source_evidence(__file__)
+    plan = {"mode": "live/public-development/screen", "commit": commit_revision(),
+            "created_at": dt.datetime.now(dt.timezone.utc).isoformat(), "provenance": provenance,
+            "driver_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "scenarios": [{"name": p.name, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths],
+            "cooldown_s": args.cooldown, "attempts": [], "state": "running",
+            "limitation": "One attempt per exposed public scenario; no aggregate, median or hidden-set claim. "
+                          "Cooldown is outside each scenario, not a guarantee against provider quotas."}
+    write_report(args.output / "plan.json", plan)
+    for index, path in enumerate(paths):
+        if index:
+            print(f"Cooldown before {path.name}", flush=True)
+            until = time.monotonic() + args.cooldown
+            while time.monotonic() < until:
+                time.sleep(min(30, max(0, until - time.monotonic())))
+        if source_evidence(__file__)["source_sha256"] != provenance["source_sha256"]:
+            plan["state"] = "source_changed"
+            break
+        output = args.output / path.name
+        command = [sys.executable, "-m", "scripts.run_samsung_check", "--kit", str(kit),
+                   "--scenario", path.name, "--output", str(output),
+                   "--tool-documentation", args.tool_documentation]
+        attempt = {"scenario": path.name, "runner_exit": None}
+        try:
+            result = subprocess.run(command, capture_output=True, timeout=450)
+            attempt["runner_exit"] = result.returncode
+        except subprocess.TimeoutExpired:
+            attempt["runner_failure"] = "child_timeout"
+        if output.exists():
+            try:
+                report = json.loads(output.read_text(encoding="utf-8"))
+                attempt.update(summarize(report))
+                attempt["report_sha256"] = hashlib.sha256(output.read_bytes()).hexdigest()
+            except (ValueError, KeyError, TypeError):
+                attempt["runner_failure"] = "invalid_report"
+        else:
+            attempt["runner_failure"] = "missing_report"
+        plan["attempts"].append(attempt)
+        write_report(args.output / f"attempt-{index + 1:02d}.json", attempt)
+        print(json.dumps({k: attempt.get(k) for k in ("scenario", "runner_exit", "failure", "scorer_total",
+                                                    "runner_failure")}), flush=True)
+    else:
+        plan["state"] = "finished"
+    write_report(args.output / "summary.json", plan)
+    if plan["state"] != "finished" or any(a.get("runner_exit") != 0 or a.get("runner_failure")
+                                           for a in plan["attempts"]):
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

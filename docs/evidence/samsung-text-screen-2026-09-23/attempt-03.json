@@ -1,0 +1,31 @@
+{
+  "scenario": "pub_01_text_simple.json",
+  "runner_exit": 0,
+  "failure": null,
+  "scorer_total": 100.0,
+  "provider_outcomes": [
+    "success",
+    "success",
+    "success"
+  ],
+  "reported_input_tokens": 4878,
+  "usage_missing_count": 0,
+  "finals": [
+    {
+      "t_ms": 4422.0,
+      "text": "Selected lookup fields:\nResult 1 — Flights\nItem 1 / Flight id: \"FL-CHI-8AM\"\nItem 1 / Depart: \"08:00\"\nItem 1 / Price usd: 129\nItem 2 / Flight id: \"FL-CHI-2PM\"\nItem 2 / Depart: \"14:00\"\nItem 2 / Price usd: 99"
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool": "flight_search",
+      "call_id": "d841f247-0a51-4321-ab7c-2350a259eef3",
+      "args": {
+        "destination": "Chicago",
+        "date": "Friday"
+      }
+    }
+  ],
+  "clarifications": [],
+  "report_sha256": "bf490879f7418456a4f35b83700deead9140efc2848d1f499e7ee62fc4afd82f"
+}

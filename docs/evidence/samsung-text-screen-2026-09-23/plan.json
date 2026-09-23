@@ -1,0 +1,41 @@
+{
+  "mode": "live/public-development/screen",
+  "commit": "7086d6e6b888ab737fd9f59346e3b9193dc53ad6",
+  "created_at": "2026-09-23T17:52:25.698337+00:00",
+  "provenance": {
+    "source_sha256": "74880bbf4732929e7d2a2d955dc4063bfc6620e01668f685e00bd6fe10ca1bd4",
+    "scenario_sha256": "40f1afbf31d35a6a2c14c034084410fb044bec2b7f61bb8e00fa31a8339d8022",
+    "worktree_dirty": true
+  },
+  "driver_sha256": "40f1afbf31d35a6a2c14c034084410fb044bec2b7f61bb8e00fa31a8339d8022",
+  "scenarios": [
+    {
+      "name": "pub_09_text_unseen_tool.json",
+      "sha256": "27fd3a8f996fa876d18d287b724fdbf18daf6f4842df29162cd3c99c7bdce171"
+    },
+    {
+      "name": "pub_08_text_tool_failure.json",
+      "sha256": "ebdbe988b525ea3861dab9dd74db6a55d13c3f9b1a850b2df0049b2e0dc2c8ca"
+    },
+    {
+      "name": "pub_01_text_simple.json",
+      "sha256": "f4eab7da75213e7101838c9e82e47d1e8c2a7c12c054981d198c81bd90b72450"
+    },
+    {
+      "name": "pub_03_text_chained_booking.json",
+      "sha256": "afbf76d070c10857ae8cfacf5b682633727e26ab0bdc054ad5beba0440a553a0"
+    },
+    {
+      "name": "pub_02_text_interrupt.json",
+      "sha256": "a5ebddfa520550fa41d66eaa44cf7ed614bc41d1868c1f4603ae997706f1da1d"
+    },
+    {
+      "name": "pub_04_text_no_tool.json",
+      "sha256": "1438a0600978306e2e1a6344b99f32fd258c54037412ba76418fde8e024ab66f"
+    }
+  ],
+  "cooldown_s": 70,
+  "attempts": [],
+  "state": "running",
+  "limitation": "One attempt per exposed public scenario; no aggregate, median or hidden-set claim. Cooldown is outside each scenario, not a guarantee against provider quotas."
+}
