@@ -27,6 +27,8 @@ PRE_MANIFEST_INPUTS = {"user_speech_chunk", "user_audio_chunk", "video_frame", "
 class HarnessAuthorization:
     """Only for organizer mock tools; the controller still checks spoken intent."""
 
+    effect_environment = "mock"
+
     def allows(self, view, call):
         return True
 

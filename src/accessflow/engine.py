@@ -13,6 +13,7 @@ from jsonschema.exceptions import ValidationError as PlanSchemaViolation
 from pydantic import ValidationError as PlanModelViolation
 
 from .clock import RealClock
+from .confirmation_text import confirmation_payload
 from .contracts import (
     AudioEvent, EndEvent, FrameEvent, InterruptEvent, Observation, OutputEvent,
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
@@ -1516,7 +1517,9 @@ class Agent:
                 self.state.status = "completed"
                 self.last_request_finished = True
                 await self._emit("final", result=result.result, call_id=call.call_id, operation_id=call.operation_id,
-                                 basis="confirmed_tool_effect", caused_by_event_id=self.call_causes[call.call_id])
+                                 basis="confirmed_tool_effect", caused_by_event_id=self.call_causes[call.call_id],
+                                 **confirmation_payload(result.result, effect_environment=getattr(
+                                     self.authorization, "effect_environment", "unspecified")))
             else:
                 await self._emit("acknowledge", result=result.result, call_id=call.call_id, basis="tool_evidence",
                                  caused_by_event_id=self.call_causes[call.call_id])
@@ -1626,7 +1629,9 @@ class Agent:
                     self.last_request_finished = True
                     await self._emit("final", basis="reconciled_tool_effect", call_id=original.call_id,
                                      operation_id=original.operation_id, result=result.result,
-                                     caused_by_event_id=self.call_causes[original.call_id])
+                                     caused_by_event_id=self.call_causes[original.call_id],
+                                     **confirmation_payload(result.result, reconciled=True, effect_environment=getattr(
+                                         self.authorization, "effect_environment", "unspecified")))
 
     async def _shutdown(self, reason):
         if self.session_id is None:
