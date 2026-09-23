@@ -1,5 +1,26 @@
 # Mridul workstream handoff
 
+## Readable confirmation checkpoint — 23 September 2026
+
+Confirmed writes and reconciled committed effects now provide bounded literal text
+while preserving raw evidence/call/operation IDs. Mock-only runtimes explicitly say
+"mock action" from trusted authorization metadata, never from model/result guesses.
+Unknown, cancelled, failed and invalidated outcomes keep existing gates. Unsupported
+or oversized details produce an explicit summary omission without a second action.
+No B source/tests changed; cards/playback remain B-owned coordination work.
+
+Final full suite: 1186 passed / 2 skipped / 1 xfailed in 64.47s; focused 23 passed;
+Ruff clean. Final-source live Samsung booking: 100, all 3 provider calls successful,
+one read/one mock write, final at 6407ms (5500ms after last text-turn input). This is
+one development attempt, not repeated official or voice-usability evidence.
+Both intermediate and final traces/suites retained with hashes. Read
+CONFIRMATION_TEXT_2026-09-23.md and evidence/confirmation-text-2026-09-23/README.md.
+
+Next A: repeated Samsung/profile evidence and final profile selection, A-side media
+integration with B, clean-install/platform/Docker verification and submission assembly.
+Compact/evidence defaults remain opt-in. Goal active; completed checkpoint pushed
+using configured identity, no workflow changes, release tag, submission or real effects.
+
 ## Six-case public text screen — 23 September 2026
 
 Screened all six public text cases once on frozen7086d6e implementation with

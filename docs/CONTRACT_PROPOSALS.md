@@ -281,3 +281,26 @@ person to duplicate the other's implementation.
 
 See READ_ANSWER_EXPERIMENT_2026-09-23.md for limits: source fidelity is not factual
 truth, completeness, relevance or validation of free-form clarifications.
+
+
+## 23 September 2026 — readable confirmed-effect text
+
+Owner: Mridul. Both existing confirmed-effect final branches now populate the
+existing text field and add result_presentation metadata (complete, or omitted with
+a fixed reason). Raw result/call/operation/causal identifiers and basis are preserved.
+No proposal, input queue or official Samsung wire fields change.
+
+Only already-admitted committed effects reach this formatter; unknown, no-effect,
+cancelled and invalidated outcomes retain their existing paths. Rendering failure
+keeps the effect confirmed and preserves full raw evidence instead of retrying it.
+
+Both teammates coordinate cards/playback: A supplies authoritative outcome and text;
+B owns safe display, voice playback and any detail UI. No B source or tests changed.
+See CONFIRMATION_TEXT_2026-09-23.md for bounds and verification limits.
+
+Runtime provenance is additive too: trusted authorization adapters can declare
+`effect_environment="mock"`; missing/other values render as `unspecified`, never
+as verified real effects. Final payloads retain this marker and mock confirmations
+explicitly say "mock action". Model/tool-result fields cannot select the marker.
+Samsung's mock harness and the mock-only authorizer declare it. B can display this
+metadata but must not infer action authority or real integrations from it.

@@ -1,0 +1,76 @@
+{
+  "booking-intermediate.json": {
+    "failure": null,
+    "scorer_total": 100.0,
+    "provider_outcomes": [
+      "success",
+      "success",
+      "success"
+    ],
+    "reported_input_tokens": 4786,
+    "usage_missing_count": 0,
+    "last_text_turn_to_response_ms": 5422.0,
+    "finals": [
+      {
+        "t_ms": 6328.0,
+        "text": "The action is confirmed. Status: \"success\". Booking ID: \"BK-0001\". Flight ID: \"FL-DEN-8AM\"."
+      }
+    ],
+    "tool_calls": [
+      {
+        "tool": "flight_search",
+        "call_id": "af9a7451-2a33-4a43-ac87-143d44a8085f",
+        "args": {
+          "destination": "Denver"
+        }
+      },
+      {
+        "tool": "book_flight",
+        "call_id": "68249de6-55f5-47c4-945f-c8ab0dc31e45",
+        "args": {
+          "flight_id": "FL-DEN-8AM",
+          "passenger_name": "Alice"
+        }
+      }
+    ],
+    "clarifications": [],
+    "cancellations": []
+  },
+  "booking-final.json": {
+    "failure": null,
+    "scorer_total": 100.0,
+    "provider_outcomes": [
+      "success",
+      "success",
+      "success"
+    ],
+    "reported_input_tokens": 4794,
+    "usage_missing_count": 0,
+    "last_text_turn_to_response_ms": 5500.0,
+    "finals": [
+      {
+        "t_ms": 6407.0,
+        "text": "The mock action is confirmed. Status: \"success\". Booking ID: \"BK-0001\". Flight ID: \"FL-DEN-8AM\"."
+      }
+    ],
+    "tool_calls": [
+      {
+        "tool": "flight_search",
+        "call_id": "bd7d4829-af2a-410c-ba27-cee21a12bed7",
+        "args": {
+          "destination": "Denver"
+        }
+      },
+      {
+        "tool": "book_flight",
+        "call_id": "81a09394-f6b3-4daa-a3a6-ebda8d49bca4",
+        "args": {
+          "flight_id": "FL-DEN-8AM",
+          "passenger_name": "Alice"
+        }
+      }
+    ],
+    "clarifications": [],
+    "cancellations": []
+  }
+}
