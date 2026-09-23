@@ -191,6 +191,36 @@ class TurnDecision(Model):
     uncertainty: float = Field(default=0, ge=0, le=1)
 
 
+class ResultBinding(Model):
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"oneOf": [
+        {"properties": {"source_call_index": {"type": "integer", "minimum": 0},
+                        "source_call_id": {"type": "null"}}, "required": ["source_call_index"]},
+        {"properties": {"source_call_index": {"type": "null"},
+                        "source_call_id": {"type": "string", "minLength": 1}}, "required": ["source_call_id"]},
+    ]})
+    slot: str
+    source_call_index: int | None = Field(default=None, ge=0, strict=True)
+    source_call_id: str | None = Field(default=None, min_length=1)
+    collection_pointer: str = Field(max_length=512)
+    value_pointer: str = Field(max_length=512)
+    # Candidate field JSON pointer -> user-controlled slot name.
+    match_slots: dict[str, str] = Field(min_length=1, max_length=16)
+
+    @model_validator(mode="after")
+    def one_source(self):
+        if (self.source_call_index is None) == (self.source_call_id is None):
+            raise ValueError("Exactly one read source is required")
+        if not self.match_slots or len(self.match_slots) > 16:
+            raise ValueError("Between one and sixteen match constraints are required")
+        return self
+
+
+class WriteContract(Model):
+    tool: str
+    fixed_arguments: dict[str, str] = Field(default_factory=dict)
+    delegated_arguments: dict[str, ResultBinding]
+
+
 class ProposedCall(Model):
     tool: str
     arguments: dict[str, Any]
@@ -200,6 +230,17 @@ class ProposedCall(Model):
     # Optional parameter -> slot aliases; omitted parameters use their own names.
     # Aliases do not replace dependencies or authorize unmatched argument values.
     argument_slots: dict[str, str] = Field(default_factory=dict)
+    # Exact accepted read call IDs for parameters covered by a spoken contract.
+    result_sources: dict[str, str] = Field(default_factory=dict)
+
+
+class ReadSelection(Model):
+    call_id: str = Field(min_length=1, max_length=128)
+    pointer: str = Field(max_length=512)
+
+
+class EvidenceAnswer(Model):
+    selections: list[ReadSelection] = Field(min_length=1, max_length=8)
 
 
 class PlanProposal(Model):
@@ -208,10 +249,22 @@ class PlanProposal(Model):
     calls: list[ProposedCall] = Field(default_factory=list)
     clarification: str | None = None
     response: str | None = None
+    # Optional v0.1 extension. Values are resolved by the controller, never supplied
+    # by the model. Existing producers may omit it.
+    evidence_answer: EvidenceAnswer | None = None
     request_complete: bool = False
     # A model assertion alone is not execution authority; controller also requires
     # a completed utterance and an explicit, externally supplied authorization gate.
     write_requested: bool = False
+    write_contracts: list[WriteContract] = Field(default_factory=list, max_length=4)
+
+    @model_validator(mode="after")
+    def exclusive_answer(self):
+        if self.evidence_answer is not None and (
+                self.response is not None or self.clarification is not None or self.calls
+                or self.write_requested or self.write_contracts or self.slot_updates or self.intent is not None):
+            raise ValueError("An evidence answer cannot be combined with prose, actions or state updates")
+        return self
 
 
 class SessionView(Model):
@@ -219,6 +272,12 @@ class SessionView(Model):
     state: Snapshot
     observations: list[Observation]
     results: list[ToolResult]
+    # Error observations are separate from usable result evidence. Older callers
+    # may omit this additive field. Never use failure payloads as successful data.
+    tool_failures: list[ToolResult] = Field(default_factory=list)
+    write_contracts: list[WriteContract] = Field(default_factory=list)
+    # Bounded controller-generated shape diagnostics, never raw model/tool text.
+    last_plan_error: dict[str, Any] | None = None
     calls: list["ToolCall"] = Field(default_factory=list)
     write_pending: bool = False
     # Set when the previous proposal only repeated calls that already completed.
@@ -241,6 +300,8 @@ class ToolCall(Model):
     arguments: dict[str, Any]
     dependencies: dict[str, int]
     effect: Literal["read", "write"]
+    # Controller-created retry lineage; never a reasoner permission claim.
+    retry_of_call_id: str | None = None
     # Which accepted request produced this call. Additive/optional: history in the
     # ledger is never deleted, but continuation logic can project only the calls
     # belonging to the currently active request instead of the whole session.

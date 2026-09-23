@@ -1,0 +1,37 @@
+{
+  "scenario": "pub_08_text_tool_failure.json",
+  "runner_exit": 0,
+  "failure": null,
+  "scorer_total": 100.0,
+  "provider_outcomes": [
+    "success",
+    "success",
+    "success"
+  ],
+  "reported_input_tokens": 5007,
+  "usage_missing_count": 0,
+  "finals": [
+    {
+      "t_ms": 5656.0,
+      "text": "Selected lookup fields:\nResult 1 — Flights\nItem 1 / Flight id: \"FL-SEA-8AM\"\nItem 1 / Depart: \"08:00\"\nItem 1 / Price usd: 129\nItem 2 / Flight id: \"FL-SEA-2PM\"\nItem 2 / Depart: \"14:00\"\nItem 2 / Price usd: 99"
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool": "flight_search",
+      "call_id": "66bdbe53-c53b-4aaf-85bc-5c1d8136b288",
+      "args": {
+        "destination": "Seattle"
+      }
+    },
+    {
+      "tool": "flight_search",
+      "call_id": "8fa49f6c-0bb4-4c08-a19f-b189bb3fdb45",
+      "args": {
+        "destination": "Seattle"
+      }
+    }
+  ],
+  "clarifications": [],
+  "report_sha256": "b228e54cc3c2416ad9cac2aed9e4beb84d1456a1f7086d2be19728fa401a57ed"
+}

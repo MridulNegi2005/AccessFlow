@@ -84,5 +84,7 @@ class FakeTools:
 
 class MockOnlyAuthorization:
     """Use ONLY when the entire executor is a test double with no external effects."""
+    effect_environment = "mock"
+
     def allows(self, view, call):
         return True

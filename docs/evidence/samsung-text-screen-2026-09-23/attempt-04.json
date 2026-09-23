@@ -1,0 +1,38 @@
+{
+  "scenario": "pub_03_text_chained_booking.json",
+  "runner_exit": 0,
+  "failure": null,
+  "scorer_total": 100.0,
+  "provider_outcomes": [
+    "success",
+    "success",
+    "success"
+  ],
+  "reported_input_tokens": 4790,
+  "usage_missing_count": 0,
+  "finals": [
+    {
+      "t_ms": 6859.0,
+      "text": "The requested action completed with result: {\"booking_id\": \"BK-0001\", \"flight_id\": \"FL-DEN-8AM\", \"status\": \"success\"}"
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool": "flight_search",
+      "call_id": "311ef737-a92d-42bb-a2cf-1d5fa628a7ad",
+      "args": {
+        "destination": "Denver"
+      }
+    },
+    {
+      "tool": "book_flight",
+      "call_id": "83c97884-c9c2-44c3-8ba8-e6109abfea8f",
+      "args": {
+        "flight_id": "FL-DEN-8AM",
+        "passenger_name": "Alice"
+      }
+    }
+  ],
+  "clarifications": [],
+  "report_sha256": "d22b4cda4e733eef208e4bb0e03fb11684d11d43072d3ed6e3a630b057cd6c9f"
+}

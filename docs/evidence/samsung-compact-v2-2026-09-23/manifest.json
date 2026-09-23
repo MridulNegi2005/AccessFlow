@@ -1,0 +1,31 @@
+{
+  "date": "2026-09-23",
+  "source_sha256": "626e8a91650e079e3c15afb0af4dd1c6955494f393dab68784aff9eb82391063",
+  "files": [
+    {
+      "file": "pub_02_compact_v2_2026-09-23_attempt1.json",
+      "bytes": 15857,
+      "sha256": "d865935066ea44e404d3b1b8cec7f062cceda31fc99b06b41f97a80fef5ec7d8"
+    },
+    {
+      "file": "pub_02_full_2026-09-23_control1.json",
+      "bytes": 16028,
+      "sha256": "9002d6acee58e1aecbe1e3f8375f0fa447cf834cf4c64c5e5e0dc752ac89dabb"
+    },
+    {
+      "file": "pub_03_compact_v2_2026-09-23_attempt1.json",
+      "bytes": 13974,
+      "sha256": "1bea098f30cebc67bbc1ed8810268be7719b6a0106c2b870fa1fee1153faacd3"
+    },
+    {
+      "file": "suite-first.xml",
+      "bytes": 171216,
+      "sha256": "1d9712c36603cfcf22c0da57580202fbd7e50578ca8a2164f72fdd151198ebe8"
+    },
+    {
+      "file": "suite-rerun.xml",
+      "bytes": 167733,
+      "sha256": "4000958f3adc8839b1ed3e022a168a9bf36a5d5318d87f10a5a2f17bda6fc31d"
+    }
+  ]
+}

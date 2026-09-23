@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "file": "pub_04_no_tool_attempt1.json",
+      "sha256": "bf180546b771dfbf06972f10e427ff033b022f34876c71ced4210f3687ba0f2b",
+      "total": 100.0,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    }
+  ]
+}

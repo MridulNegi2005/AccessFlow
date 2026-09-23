@@ -1,0 +1,41 @@
+{
+  "files": [
+    {
+      "file": "package-official-smoke.json",
+      "sha256": "1207c7bcadd0075d60ed9de8705c5edf5845f85f19c5d24e569411d3165b751d"
+    },
+    {
+      "file": "package-official-smoke-fixed.json",
+      "sha256": "18be7724bbd179d56a2918e3233c8beb4c74d33818eca94ecb1c58235bac3a31"
+    },
+    {
+      "file": "package-public-no-tool.json",
+      "sha256": "d793d77c219bd0588b873469c5a35065973100d27a1307797da3481b60c27b41"
+    },
+    {
+      "file": "package-validation.xml",
+      "sha256": "44fc217531dea2b0f03dfc43c94a8ef2bb44b0a00124b2f8e146983b7389998f"
+    },
+    {
+      "file": "package-startup-final-validation.xml",
+      "sha256": "5e2a25f2d77c9b600df416bbbbca87dfb298d062a3d37ee357ca1df0efc8bdf3"
+    },
+    {
+      "file": "package-manifest-before.json",
+      "sha256": "1873913361577a18416733c644893e64b5d4c353d58fd246f661100f8c543a7d"
+    },
+    {
+      "file": "package-manifest-after.json",
+      "sha256": "2f9acf019b422a6caba0398d09870ba71169411fa74fb5afd9007960ca464db5"
+    },
+    {
+      "file": "requirements.txt",
+      "sha256": "04d1d5d4fd606c63a55aac7669224121e54356ea55c0632c2b1b2be826809a34"
+    },
+    {
+      "file": "runtime_profile.json",
+      "sha256": "13934f51ced03f2155a35eb37bc8eb131ac7cb836d1c21fd5fbcd9aa1c9402de"
+    }
+  ],
+  "scope": "Fresh Windows environment; official import and smoke stages; one public text case. Not full repeated evaluation."
+}

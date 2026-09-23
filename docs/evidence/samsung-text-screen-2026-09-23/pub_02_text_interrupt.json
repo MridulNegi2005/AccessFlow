@@ -1,0 +1,550 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 453.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Please book a flight to ",
+        "end_of_turn": false
+      },
+      "t_ms": 109.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Boston for tomorrow.",
+        "end_of_turn": true
+      },
+      "t_ms": 797.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 812.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "99d68dbc-9fe2-41bb-b1c0-a0b1c09053e1",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Boston",
+        "date": "tomorrow"
+      },
+      "t_ms": 1703.0
+    },
+    {
+      "kind": "event",
+      "event_type": "interruption",
+      "payload": {
+        "text": "Wait, actually make it New York."
+      },
+      "t_ms": 1922.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 1922.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'm listening."
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "Boston",
+          "date": "tomorrow"
+        }
+      },
+      "t_ms": 1922.0
+    },
+    {
+      "kind": "tool_cancelled",
+      "call_id": "99d68dbc-9fe2-41bb-b1c0-a0b1c09053e1",
+      "t_ms": 2797.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "Updated destination to 'New York'."
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "New York",
+          "date": "tomorrow"
+        }
+      },
+      "t_ms": 2797.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "6eb4f915-ce34-4115-91dd-e555e03bb6b3",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "New York",
+        "date": "tomorrow"
+      },
+      "t_ms": 2797.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "6eb4f915-ce34-4115-91dd-e555e03bb6b3",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "New York",
+        "date": "tomorrow"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "flights": [
+          {
+            "flight_id": "FL-NYC-8AM",
+            "depart": "08:00",
+            "price_usd": 129
+          },
+          {
+            "flight_id": "FL-NYC-2PM",
+            "depart": "14:00",
+            "price_usd": 99
+          }
+        ]
+      },
+      "t_ms": 5016.0
+    },
+    {
+      "kind": "action",
+      "action": "clarification_request",
+      "payload": {
+        "text": "I found two flights to New York for tomorrow: FL-NYC-8AM at 08:00 for $129 and FL-NYC-2PM at 14:00 for $99. Which flight would you like to book, and what is the passenger's full name?"
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "New York",
+          "date": "tomorrow",
+          "passenger_name": null
+        }
+      },
+      "t_ms": 5703.0
+    }
+  ],
+  "wall_s": 8.40599999999904,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 4,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 4,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.4529999999995198,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050433021,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003271825,
+        "completion_tokens": 6,
+        "completion_time": 0.011705743,
+        "total_tokens": 55,
+        "total_time": 0.014977568
+      },
+      {
+        "elapsed_seconds": 0.8590000000003783,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.053114074,
+        "prompt_tokens": 2062,
+        "prompt_time": 0.143574295,
+        "completion_tokens": 170,
+        "completion_time": 0.3280383,
+        "total_tokens": 2232,
+        "total_time": 0.471612595
+      },
+      {
+        "elapsed_seconds": 0.8600000000005821,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.052713856,
+        "prompt_tokens": 2523,
+        "prompt_time": 0.173798079,
+        "completion_tokens": 163,
+        "completion_time": 0.334616948,
+        "total_tokens": 2686,
+        "total_time": 0.508415027
+      },
+      {
+        "elapsed_seconds": 0.6869999999998981,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050150811,
+        "prompt_tokens": 2758,
+        "prompt_time": 0.202597532,
+        "completion_tokens": 135,
+        "completion_time": 0.272009452,
+        "total_tokens": 2893,
+        "total_time": 0.474606984
+      }
+    ],
+    "prompt_profile": "compact-v2",
+    "read_answer_mode": "evidence",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 3003,
+        "data_chars": 3712,
+        "protocol_data_chars_before_elision": 3265,
+        "protocol_data_chars_after_elision": 2654,
+        "schema_chars": 2347,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "1bdf13e4357a5b55d1282f56b0bbebdaa801e75a2ee62a4a1833eb58efb958ae",
+        "enforced_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1"
+      },
+      {
+        "instruction_chars": 3003,
+        "data_chars": 5163,
+        "protocol_data_chars_before_elision": 4106,
+        "protocol_data_chars_after_elision": 3500,
+        "schema_chars": 2317,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "9ae9e30bf74594cb97e3ccf8f02891be379face61ead160e80a01a0478d52656",
+        "enforced_schema_sha256": "c7d1718ac02a20edb85afd1cd203d420325e5b4d87b71eec4bfa759e16f4efd4"
+      },
+      {
+        "instruction_chars": 3003,
+        "data_chars": 5466,
+        "protocol_data_chars_before_elision": 4708,
+        "protocol_data_chars_after_elision": 4060,
+        "schema_chars": 2468,
+        "instruction_sha256": "03294f0b613c1f7a63f036d0ebc468e90968c2d7052c3358e27c3144ee487311",
+        "presented_schema_sha256": "15d2a9a9b40dfac174198bfbd5dec1a8bc54be4fe8a30a3e129194c54f6f27e2",
+        "enforced_schema_sha256": "c2c6bc84526e1df81ece5863dcaad56df696f46cd895b0df07b89e6bd397c8d7"
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "9a5ea9f7-de90-4a9c-b427-7fb7c9114bad"
+      ],
+      "proposal": {
+        "intent": "book_flight",
+        "slot_updates": {
+          "destination": "Boston",
+          "date": "tomorrow"
+        },
+        "calls": [
+          {
+            "tool": "flight_search",
+            "arguments": {
+              "destination": "Boston",
+              "date": "tomorrow"
+            },
+            "dependencies": [
+              "destination",
+              "date"
+            ],
+            "argument_slots": {
+              "destination": "destination",
+              "date": "date"
+            },
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": true,
+        "write_requested": true,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 1,
+      "observation_event_ids": [
+        "9a5ea9f7-de90-4a9c-b427-7fb7c9114bad",
+        "eb761a3e-b333-4c66-9ad7-72368a0cfaa1"
+      ],
+      "proposal": {
+        "intent": "book_flight",
+        "slot_updates": {
+          "destination": "New York"
+        },
+        "calls": [
+          {
+            "tool": "flight_search",
+            "arguments": {
+              "destination": "New York",
+              "date": "tomorrow"
+            },
+            "dependencies": [
+              "destination",
+              "date"
+            ],
+            "argument_slots": {
+              "destination": "destination",
+              "date": "date"
+            },
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": true,
+        "write_requested": true,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 2,
+      "observation_event_ids": [
+        "9a5ea9f7-de90-4a9c-b427-7fb7c9114bad",
+        "eb761a3e-b333-4c66-9ad7-72368a0cfaa1"
+      ],
+      "proposal": {
+        "intent": "book_flight",
+        "slot_updates": {
+          "passenger_name": null
+        },
+        "calls": [],
+        "clarification": "I found two flights to New York for tomorrow: FL-NYC-8AM at 08:00 for $129 and FL-NYC-2PM at 14:00 for $99. Which flight would you like to book, and what is the passenger's full name?",
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": true,
+        "write_requested": true,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "99d68dbc-9fe2-41bb-b1c0-a0b1c09053e1",
+      "operation_id": "170d22aa-094a-4077-b309-cb1ebff60cdd",
+      "tool": "flight_search",
+      "arguments": {
+        "destination": "Boston",
+        "date": "tomorrow"
+      },
+      "dependencies": {
+        "destination": 1,
+        "date": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "c10a247d-5dbf-4dd1-a9d6-88b4c00b4154",
+      "status": "failed"
+    },
+    {
+      "call_id": "6eb4f915-ce34-4115-91dd-e555e03bb6b3",
+      "operation_id": "a5369520-56b8-4f3c-b35a-032197919e7f",
+      "tool": "flight_search",
+      "arguments": {
+        "destination": "New York",
+        "date": "tomorrow"
+      },
+      "dependencies": {
+        "destination": 2,
+        "date": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "c10a247d-5dbf-4dd1-a9d6-88b4c00b4154",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true,
+    "read_answer_mode": "evidence"
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "7086d6e6b888ab737fd9f59346e3b9193dc53ad6",
+  "runner_sha256": "1f81541a3ec2c97b23975e39276950153bc887fbd09c86acf0fecddee1621571",
+  "created_at": "2026-09-23T17:57:54.257867+00:00",
+  "provenance": {
+    "source_sha256": "74880bbf4732929e7d2a2d955dc4063bfc6620e01668f685e00bd6fe10ca1bd4",
+    "scenario_sha256": "a5ebddfa520550fa41d66eaa44cf7ed614bc41d1868c1f4603ae997706f1da1d",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_02_text_interrupt.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_02_text_interrupt",
+    "total": 89.6,
+    "breakdown": {
+      "task": {
+        "weight": 40.0,
+        "fraction": 0.739,
+        "points": 29.6,
+        "detail": {
+          "fraction": 0.7391304347826088,
+          "checkpoints": [
+            {
+              "id": "search_nyc",
+              "type": "tool_called",
+              "weight": 0.4,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "final_nyc",
+              "type": "final_response_contains",
+              "weight": 0.3,
+              "passed": false,
+              "note": "no final_response matched any_of"
+            },
+            {
+              "id": "no_new_boston_calls",
+              "type": "tool_not_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "0 forbidden matching call(s) found"
+            },
+            {
+              "id": "ack_mentions_new_city",
+              "type": "spoken_contains",
+              "weight": 0.15,
+              "passed": true,
+              "note": "matching spoken action found"
+            }
+          ]
+        }
+      },
+      "recovery": {
+        "weight": 35.0,
+        "fraction": 1.0,
+        "points": 35.0,
+        "detail": {
+          "fraction": 1.0,
+          "checks": [
+            {
+              "check": "invalidated:flight_search",
+              "passed": true,
+              "note": "all stale work aborted or finished pre-interrupt"
+            },
+            {
+              "check": "state:slots.destination",
+              "passed": true,
+              "note": "snapshot value = 'New York'"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 15.0,
+        "fraction": 1.0,
+        "points": 15.0,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 12.0,
+              "fraction": 1.0
+            },
+            {
+              "event_index": 2,
+              "delta_ms": 22.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 10.0,
+        "fraction": 1.0,
+        "points": 10.0,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public-development attempt; mock external tools, no median or hidden-set claim."
+}

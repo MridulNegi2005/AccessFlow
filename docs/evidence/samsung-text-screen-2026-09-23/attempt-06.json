@@ -1,0 +1,21 @@
+{
+  "scenario": "pub_04_text_no_tool.json",
+  "runner_exit": 0,
+  "failure": null,
+  "scorer_total": 100.0,
+  "provider_outcomes": [
+    "success",
+    "success"
+  ],
+  "reported_input_tokens": 2107,
+  "usage_missing_count": 0,
+  "finals": [
+    {
+      "t_ms": 828.0,
+      "text": "I can help you search for flights, book or cancel flights, look up device manuals, and create support tickets for device issues. What would you like to do?"
+    }
+  ],
+  "tool_calls": [],
+  "clarifications": [],
+  "report_sha256": "955572deef31aca4ceb9e4e73cc694c744494114e551fa813975339c52d75934"
+}

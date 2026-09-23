@@ -1,0 +1,30 @@
+{
+  "scenario": "pub_09_text_unseen_tool.json",
+  "runner_exit": 0,
+  "failure": null,
+  "scorer_total": 100.0,
+  "provider_outcomes": [
+    "success",
+    "success",
+    "success"
+  ],
+  "reported_input_tokens": 4938,
+  "usage_missing_count": 0,
+  "finals": [
+    {
+      "t_ms": 3266.0,
+      "text": "Selected lookup fields:\nResult 1\nStatus: \"success\"\nCondition: \"sunny\"\nTemp f: 74\nForecast: \"clear skies through Friday\""
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool": "weather_lookup",
+      "call_id": "916301c1-bd4e-4132-bcdc-4276c225d950",
+      "args": {
+        "city": "Denver"
+      }
+    }
+  ],
+  "clarifications": [],
+  "report_sha256": "46dd8257a6026874271e493117391d56c10cbac09edba6aa3031f670b560d84d"
+}

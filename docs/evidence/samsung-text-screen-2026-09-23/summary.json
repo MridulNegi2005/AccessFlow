@@ -1,0 +1,234 @@
+{
+  "mode": "live/public-development/screen",
+  "commit": "7086d6e6b888ab737fd9f59346e3b9193dc53ad6",
+  "created_at": "2026-09-23T17:52:25.698337+00:00",
+  "provenance": {
+    "source_sha256": "74880bbf4732929e7d2a2d955dc4063bfc6620e01668f685e00bd6fe10ca1bd4",
+    "scenario_sha256": "40f1afbf31d35a6a2c14c034084410fb044bec2b7f61bb8e00fa31a8339d8022",
+    "worktree_dirty": true
+  },
+  "driver_sha256": "40f1afbf31d35a6a2c14c034084410fb044bec2b7f61bb8e00fa31a8339d8022",
+  "scenarios": [
+    {
+      "name": "pub_09_text_unseen_tool.json",
+      "sha256": "27fd3a8f996fa876d18d287b724fdbf18daf6f4842df29162cd3c99c7bdce171"
+    },
+    {
+      "name": "pub_08_text_tool_failure.json",
+      "sha256": "ebdbe988b525ea3861dab9dd74db6a55d13c3f9b1a850b2df0049b2e0dc2c8ca"
+    },
+    {
+      "name": "pub_01_text_simple.json",
+      "sha256": "f4eab7da75213e7101838c9e82e47d1e8c2a7c12c054981d198c81bd90b72450"
+    },
+    {
+      "name": "pub_03_text_chained_booking.json",
+      "sha256": "afbf76d070c10857ae8cfacf5b682633727e26ab0bdc054ad5beba0440a553a0"
+    },
+    {
+      "name": "pub_02_text_interrupt.json",
+      "sha256": "a5ebddfa520550fa41d66eaa44cf7ed614bc41d1868c1f4603ae997706f1da1d"
+    },
+    {
+      "name": "pub_04_text_no_tool.json",
+      "sha256": "1438a0600978306e2e1a6344b99f32fd258c54037412ba76418fde8e024ab66f"
+    }
+  ],
+  "cooldown_s": 70,
+  "attempts": [
+    {
+      "scenario": "pub_09_text_unseen_tool.json",
+      "runner_exit": 0,
+      "failure": null,
+      "scorer_total": 100.0,
+      "provider_outcomes": [
+        "success",
+        "success",
+        "success"
+      ],
+      "reported_input_tokens": 4938,
+      "usage_missing_count": 0,
+      "finals": [
+        {
+          "t_ms": 3266.0,
+          "text": "Selected lookup fields:\nResult 1\nStatus: \"success\"\nCondition: \"sunny\"\nTemp f: 74\nForecast: \"clear skies through Friday\""
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "weather_lookup",
+          "call_id": "916301c1-bd4e-4132-bcdc-4276c225d950",
+          "args": {
+            "city": "Denver"
+          }
+        }
+      ],
+      "clarifications": [],
+      "report_sha256": "46dd8257a6026874271e493117391d56c10cbac09edba6aa3031f670b560d84d"
+    },
+    {
+      "scenario": "pub_08_text_tool_failure.json",
+      "runner_exit": 0,
+      "failure": null,
+      "scorer_total": 100.0,
+      "provider_outcomes": [
+        "success",
+        "success",
+        "success"
+      ],
+      "reported_input_tokens": 5007,
+      "usage_missing_count": 0,
+      "finals": [
+        {
+          "t_ms": 5656.0,
+          "text": "Selected lookup fields:\nResult 1 — Flights\nItem 1 / Flight id: \"FL-SEA-8AM\"\nItem 1 / Depart: \"08:00\"\nItem 1 / Price usd: 129\nItem 2 / Flight id: \"FL-SEA-2PM\"\nItem 2 / Depart: \"14:00\"\nItem 2 / Price usd: 99"
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "flight_search",
+          "call_id": "66bdbe53-c53b-4aaf-85bc-5c1d8136b288",
+          "args": {
+            "destination": "Seattle"
+          }
+        },
+        {
+          "tool": "flight_search",
+          "call_id": "8fa49f6c-0bb4-4c08-a19f-b189bb3fdb45",
+          "args": {
+            "destination": "Seattle"
+          }
+        }
+      ],
+      "clarifications": [],
+      "report_sha256": "b228e54cc3c2416ad9cac2aed9e4beb84d1456a1f7086d2be19728fa401a57ed"
+    },
+    {
+      "scenario": "pub_01_text_simple.json",
+      "runner_exit": 0,
+      "failure": null,
+      "scorer_total": 100.0,
+      "provider_outcomes": [
+        "success",
+        "success",
+        "success"
+      ],
+      "reported_input_tokens": 4878,
+      "usage_missing_count": 0,
+      "finals": [
+        {
+          "t_ms": 4422.0,
+          "text": "Selected lookup fields:\nResult 1 — Flights\nItem 1 / Flight id: \"FL-CHI-8AM\"\nItem 1 / Depart: \"08:00\"\nItem 1 / Price usd: 129\nItem 2 / Flight id: \"FL-CHI-2PM\"\nItem 2 / Depart: \"14:00\"\nItem 2 / Price usd: 99"
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "flight_search",
+          "call_id": "d841f247-0a51-4321-ab7c-2350a259eef3",
+          "args": {
+            "destination": "Chicago",
+            "date": "Friday"
+          }
+        }
+      ],
+      "clarifications": [],
+      "report_sha256": "bf490879f7418456a4f35b83700deead9140efc2848d1f499e7ee62fc4afd82f"
+    },
+    {
+      "scenario": "pub_03_text_chained_booking.json",
+      "runner_exit": 0,
+      "failure": null,
+      "scorer_total": 100.0,
+      "provider_outcomes": [
+        "success",
+        "success",
+        "success"
+      ],
+      "reported_input_tokens": 4790,
+      "usage_missing_count": 0,
+      "finals": [
+        {
+          "t_ms": 6859.0,
+          "text": "The requested action completed with result: {\"booking_id\": \"BK-0001\", \"flight_id\": \"FL-DEN-8AM\", \"status\": \"success\"}"
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "flight_search",
+          "call_id": "311ef737-a92d-42bb-a2cf-1d5fa628a7ad",
+          "args": {
+            "destination": "Denver"
+          }
+        },
+        {
+          "tool": "book_flight",
+          "call_id": "83c97884-c9c2-44c3-8ba8-e6109abfea8f",
+          "args": {
+            "flight_id": "FL-DEN-8AM",
+            "passenger_name": "Alice"
+          }
+        }
+      ],
+      "clarifications": [],
+      "report_sha256": "d22b4cda4e733eef208e4bb0e03fb11684d11d43072d3ed6e3a630b057cd6c9f"
+    },
+    {
+      "scenario": "pub_02_text_interrupt.json",
+      "runner_exit": 0,
+      "failure": null,
+      "scorer_total": 89.6,
+      "provider_outcomes": [
+        "success",
+        "success",
+        "success",
+        "success"
+      ],
+      "reported_input_tokens": 7392,
+      "usage_missing_count": 0,
+      "finals": [],
+      "tool_calls": [
+        {
+          "tool": "flight_search",
+          "call_id": "99d68dbc-9fe2-41bb-b1c0-a0b1c09053e1",
+          "args": {
+            "destination": "Boston",
+            "date": "tomorrow"
+          }
+        },
+        {
+          "tool": "flight_search",
+          "call_id": "6eb4f915-ce34-4115-91dd-e555e03bb6b3",
+          "args": {
+            "destination": "New York",
+            "date": "tomorrow"
+          }
+        }
+      ],
+      "clarifications": [],
+      "report_sha256": "40a92b4739deaa4e1232f47fba14d83a2474e414fb7bfcadee68d680c0248c06"
+    },
+    {
+      "scenario": "pub_04_text_no_tool.json",
+      "runner_exit": 0,
+      "failure": null,
+      "scorer_total": 100.0,
+      "provider_outcomes": [
+        "success",
+        "success"
+      ],
+      "reported_input_tokens": 2107,
+      "usage_missing_count": 0,
+      "finals": [
+        {
+          "t_ms": 828.0,
+          "text": "I can help you search for flights, book or cancel flights, look up device manuals, and create support tickets for device issues. What would you like to do?"
+        }
+      ],
+      "tool_calls": [],
+      "clarifications": [],
+      "report_sha256": "955572deef31aca4ceb9e4e73cc694c744494114e551fa813975339c52d75934"
+    }
+  ],
+  "state": "finished",
+  "limitation": "One attempt per exposed public scenario; no aggregate, median or hidden-set claim. Cooldown is outside each scenario, not a guarantee against provider quotas."
+}

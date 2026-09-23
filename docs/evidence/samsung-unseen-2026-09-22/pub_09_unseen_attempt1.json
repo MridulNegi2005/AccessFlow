@@ -1,0 +1,357 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 484.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual",
+          "weather_lookup"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "What's the weather like ",
+        "end_of_turn": false
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "in Denver right now?",
+        "end_of_turn": true
+      },
+      "t_ms": 813.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 813.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 813.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "94e0d5f0-ac05-47d5-81ba-8f0b9d642cdb",
+      "api_name": "weather_lookup",
+      "args": {
+        "city": "Denver"
+      },
+      "t_ms": 1532.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "94e0d5f0-ac05-47d5-81ba-8f0b9d642cdb",
+      "api_name": "weather_lookup",
+      "args": {
+        "city": "Denver"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "condition": "sunny",
+        "temp_f": 74,
+        "forecast": "clear skies through Friday"
+      },
+      "t_ms": 2485.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "It's currently sunny in Denver at 74°F, with clear skies expected through Friday."
+      },
+      "state_snapshot": {
+        "intent": "weather_lookup",
+        "slots": {
+          "city": "Denver"
+        }
+      },
+      "t_ms": 3313.0
+    }
+  ],
+  "wall_s": 7.313000000000102,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 3,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 3,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.4680000000007567,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.052505247,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003184899,
+        "completion_tokens": 6,
+        "completion_time": 0.011554615,
+        "total_tokens": 55,
+        "total_time": 0.014739514
+      },
+      {
+        "elapsed_seconds": 0.7189999999991414,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.048643323,
+        "prompt_tokens": 3103,
+        "prompt_time": 0.224313918,
+        "completion_tokens": 123,
+        "completion_time": 0.232751575,
+        "total_tokens": 3226,
+        "total_time": 0.457065493
+      },
+      {
+        "elapsed_seconds": 0.8130000000001019,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.047209626,
+        "prompt_tokens": 3358,
+        "prompt_time": 0.233498264,
+        "completion_tokens": 74,
+        "completion_time": 0.140438244,
+        "total_tokens": 3432,
+        "total_time": 0.373936508
+      }
+    ],
+    "prompt_profile": "full",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 4503,
+        "data_chars": 4976,
+        "schema_chars": 4046,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "5e3b95a447c9f87552c75f262d382c56ceb1748269e9a7d05badad39d5750ea6",
+        "enforced_schema_sha256": "5e3b95a447c9f87552c75f262d382c56ceb1748269e9a7d05badad39d5750ea6"
+      },
+      {
+        "instruction_chars": 4503,
+        "data_chars": 5590,
+        "schema_chars": 4046,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "5e3b95a447c9f87552c75f262d382c56ceb1748269e9a7d05badad39d5750ea6",
+        "enforced_schema_sha256": "5e3b95a447c9f87552c75f262d382c56ceb1748269e9a7d05badad39d5750ea6"
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "56ad1281-8ae2-4d4b-ae9c-b415aa07b8fc"
+      ],
+      "proposal": {
+        "intent": "weather_lookup",
+        "slot_updates": {
+          "city": "Denver"
+        },
+        "calls": [
+          {
+            "tool": "weather_lookup",
+            "arguments": {
+              "city": "Denver"
+            },
+            "dependencies": [
+              "city"
+            ],
+            "argument_slots": {},
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 1,
+      "observation_event_ids": [
+        "56ad1281-8ae2-4d4b-ae9c-b415aa07b8fc"
+      ],
+      "proposal": {
+        "intent": "weather_lookup",
+        "slot_updates": {},
+        "calls": [],
+        "clarification": null,
+        "response": "It's currently sunny in Denver at 74°F, with clear skies expected through Friday.",
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "94e0d5f0-ac05-47d5-81ba-8f0b9d642cdb",
+      "operation_id": "155e85ba-c033-4fde-8c17-dea461f8ebc4",
+      "tool": "weather_lookup",
+      "arguments": {
+        "city": "Denver"
+      },
+      "dependencies": {
+        "city": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "5762f7bd-1de0-4e6b-873c-b4fe3da11926",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "33a98510192a6f2d9de2518efcaa2980162b4c9f",
+  "runner_sha256": "689b213975e00b2c83a86d5c7695bacdc8b63b1a4fbf32639a7be852fcfd8685",
+  "created_at": "2026-09-22T09:18:19.611816+00:00",
+  "provenance": {
+    "source_sha256": "cfb517298d62f0d6675e809264f40d73a532f3620fb1c5b5166b9ea166bbb1e1",
+    "scenario_sha256": "27fd3a8f996fa876d18d287b724fdbf18daf6f4842df29162cd3c99c7bdce171",
+    "worktree_dirty": false
+  },
+  "scenario": "pub_09_text_unseen_tool.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_09_text_unseen_tool",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "unseen_tool_called",
+              "type": "tool_called",
+              "weight": 0.5,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "not_forced_into_known_tool",
+              "type": "tool_not_called",
+              "weight": 0.15,
+              "passed": true,
+              "note": "0 forbidden matching call(s) found"
+            },
+            {
+              "id": "final_grounded_in_result",
+              "type": "final_response_contains",
+              "weight": 0.35,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 13.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public development attempt; mock external tools, no median or hidden-set claim."
+}

@@ -197,3 +197,54 @@ unverified:
 An absent field is not evidence that a particular value was used. Do not substitute a
 default and do not report a profile as confirmed for that run. Make a new run to verify
 the endpoint and the output cap.
+
+
+## Samsung documented text profile — measured 22 September 2026
+
+For the recorded live Qwen chain, explicitly set `ACCESSFLOW_SAMSUNG_BACKEND=groq`,
+`ACCESSFLOW_MAX_OUTPUT_TOKENS=950`, `ACCESSFLOW_MAX_CONTEXT_CHARS=32768`, and
+`ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S=1.0`; supply the chosen key/model/URL locally.
+Use `python -m scripts.run_samsung_check --kit ../participant-kit/participant-kit
+--tool-documentation docs/TOOLS.md --scenario pub_03_text_chained_booking.json
+--output artifacts/samsung/a-new-report.json` on one line.
+
+Context characters default14000, with an explicit permitted range1024–65536;
+Ollama's 4096-token profile refuses limits above14000. Partial debounce defaults
+0.08s, accepts finite0–5s, and affects speculative incomplete-speech planning,
+not completed requests. The document option may also be set through
+`ACCESSFLOW_SAMSUNG_TOOL_DOCUMENTATION`. It must name one UTF-8 Markdown file
+under kit/docs, at most32768bytes. No document discovery or links are followed.
+Return examples remain untrusted interface evidence, not live results or permission.
+
+Full/selected document hashes and line provenance, actual context cap and partial
+debounce are recorded. The exposed case completed once; no repeated reliability
+claim. A previous attempt hit HTTP429 at the observed7000 input-token/minute quota.
+Run serially with quota recovery; no automatic paid fallback. The environment
+variables above were scoped to test child processes, not persisted into .env.
+
+
+## Samsung transient-read retry — 22 September follow-up
+
+`ACCESSFLOW_SAMSUNG_FAST_READ_RETRY` accepts only `1` (default Samsung factory)
+or `0` (model-directed control). It enables one exact current transient-read
+retry without inference. Generic Agent defaults remain unchanged (opt-in).
+The runner records the actual agent flag and execution ledger with operation IDs
+and `retry_of_call_id`. No additional official action fields are required.
+
+Measured pub_08 with the documented hosted profile: 100.0 with retry enabled,
+81.5 in the matched configuration control. The control's final request hit rate
+limit; do not characterize the difference as solely a tail/latency improvement.
+See `docs/evidence/samsung-retry-2026-09-22/README.md` for all evidence and limits.
+
+
+## Experimental compact planner profile — 22 September 2026
+
+Set `ACCESSFLOW_SAMSUNG_PROMPT_PROFILE=compact-v1` explicitly to test condensed
+instructions and annotation-free output-schema presentation. Default is `full`;
+unknown values fail setup. Full local output validation and controller checks stay
+unchanged. Session, manifests and evidence are not truncated. Model evidence now
+includes actual `prompt_profile` and up to128 size/hash measurements for initiated
+plans. These exclude warm-up and do not establish provider delivery by themselves.
+The first compact public attempt used fewer tokens but failed validation and later
+hit quota, so it is not adopted as the default. See the retained report in
+`docs/evidence/samsung-compact-2026-09-22/README.md`.

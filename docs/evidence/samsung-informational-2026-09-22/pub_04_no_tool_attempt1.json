@@ -1,0 +1,246 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 453.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Hey, what can you help me with?",
+        "end_of_turn": true
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 110.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "I can help you search for and book flights, cancel existing bookings, look up device manual pages, and create support tickets for device issues. What would you like to do?"
+      },
+      "state_snapshot": {
+        "intent": "general_inquiry",
+        "slots": {}
+      },
+      "t_ms": 735.0
+    }
+  ],
+  "wall_s": 6.578000000001339,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 2,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 2,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.43699999999989814,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.047823499,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003429198,
+        "completion_tokens": 6,
+        "completion_time": 0.011531908,
+        "total_tokens": 55,
+        "total_time": 0.014961106
+      },
+      {
+        "elapsed_seconds": 0.625,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.048585425,
+        "prompt_tokens": 3001,
+        "prompt_time": 0.228387922,
+        "completion_tokens": 91,
+        "completion_time": 0.178730436,
+        "total_tokens": 3092,
+        "total_time": 0.407118358
+      }
+    ],
+    "prompt_profile": "full",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 4503,
+        "data_chars": 4536,
+        "schema_chars": 4029,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "b8062d814cb3efd4c99aa0e60fddd7d6c98b057240f6b824a3c1615550557c83",
+        "enforced_schema_sha256": "b8062d814cb3efd4c99aa0e60fddd7d6c98b057240f6b824a3c1615550557c83"
+      }
+    ],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95,
+      "selection": "verbatim_success_lines",
+      "included_line_numbers": [
+        27,
+        36,
+        38,
+        45,
+        55,
+        65
+      ],
+      "excerpt_sha256": "f52f96e6d985ceea7f397e160d6a5b035ecb75b1f8b5989b25138b07164fae85"
+    }
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "f8c66f0b-06eb-428f-bdaa-be32655e1ecc"
+      ],
+      "proposal": {
+        "intent": "general_inquiry",
+        "slot_updates": {},
+        "calls": [],
+        "clarification": null,
+        "response": "I can help you search for and book flights, cancel existing bookings, look up device manual pages, and create support tickets for device issues. What would you like to do?",
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 1.0,
+    "fast_read_retry": true
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "c1ab2af4126e1ad078f6e001eec0382de00320dc",
+  "runner_sha256": "689b213975e00b2c83a86d5c7695bacdc8b63b1a4fbf32639a7be852fcfd8685",
+  "created_at": "2026-09-22T09:11:50.722356+00:00",
+  "provenance": {
+    "source_sha256": "018c719b462142259973f25601f86f7f3e9715aed66010e6541e648911e7df75",
+    "scenario_sha256": "1438a0600978306e2e1a6344b99f32fd258c54037412ba76418fde8e024ab66f",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_04_text_no_tool.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_04_text_no_tool",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "no_tools",
+              "type": "no_tool_calls",
+              "weight": 0.5,
+              "passed": true,
+              "note": "0 tool call(s) emitted (expected none)"
+            },
+            {
+              "id": "helpful_answer",
+              "type": "final_response_contains",
+              "weight": 0.5,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 0,
+              "delta_ms": 10.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public development attempt; mock external tools, no median or hidden-set claim."
+}

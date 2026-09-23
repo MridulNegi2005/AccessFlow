@@ -1,0 +1,121 @@
+[
+  {
+    "scenario_id": "pub_04_text_no_tool",
+    "trace": [
+      {
+        "kind": "agent_setup",
+        "wall_ms": 547.0,
+        "t_ms": 0.0
+      },
+      {
+        "kind": "event",
+        "event_type": "tool_manifest",
+        "payload": {
+          "tools": [
+            "book_flight",
+            "cancel_booking",
+            "create_support_ticket",
+            "flight_search",
+            "lookup_manual"
+          ]
+        },
+        "t_ms": 0.0
+      },
+      {
+        "kind": "event",
+        "event_type": "user_speech_chunk",
+        "payload": {
+          "text": "Hey, what can you help me with?",
+          "end_of_turn": true
+        },
+        "t_ms": 110.0
+      },
+      {
+        "kind": "event",
+        "event_type": "scenario_end",
+        "payload": {},
+        "t_ms": 110.0
+      },
+      {
+        "kind": "action",
+        "action": "filler_speech",
+        "payload": {
+          "text": "I'll check that."
+        },
+        "state_snapshot": {
+          "intent": null,
+          "slots": {}
+        },
+        "t_ms": 110.0
+      },
+      {
+        "kind": "action",
+        "action": "final_response",
+        "payload": {
+          "text": "I can help you search for and book flights, look up device manual pages, open support tickets, or cancel existing bookings. What would you like to do?"
+        },
+        "state_snapshot": {
+          "intent": "general_inquiry",
+          "slots": {}
+        },
+        "t_ms": 703.0
+      }
+    ],
+    "score": {
+      "scenario_id": "pub_04_text_no_tool",
+      "total": 100.0,
+      "breakdown": {
+        "task": {
+          "weight": 61.5,
+          "fraction": 1.0,
+          "points": 61.5,
+          "detail": {
+            "fraction": 1.0,
+            "checkpoints": [
+              {
+                "id": "no_tools",
+                "type": "no_tool_calls",
+                "weight": 0.5,
+                "passed": true,
+                "note": "0 tool call(s) emitted (expected none)"
+              },
+              {
+                "id": "helpful_answer",
+                "type": "final_response_contains",
+                "weight": 0.5,
+                "passed": true,
+                "note": "matched final_response text"
+              }
+            ]
+          }
+        },
+        "latency": {
+          "weight": 23.1,
+          "fraction": 1.0,
+          "points": 23.1,
+          "detail": {
+            "fraction": 1.0,
+            "responses": [
+              {
+                "event_index": 0,
+                "delta_ms": 10.0,
+                "fraction": 1.0
+              }
+            ]
+          }
+        },
+        "safety": {
+          "weight": 15.4,
+          "fraction": 1.0,
+          "points": 15.4,
+          "detail": {
+            "fraction": 1.0,
+            "notes": [
+              "clean"
+            ]
+          }
+        }
+      }
+    }
+  }
+]

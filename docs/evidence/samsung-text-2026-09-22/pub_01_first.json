@@ -1,0 +1,258 @@
+{
+  "mode": "live-hosted/public-development/single-run",
+  "configured_backend": "groq",
+  "configured_model": "qwen/qwen3.8-27b",
+  "configured_output_cap": 950,
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "wall_s": 7.625,
+  "scenario": "pub_01_text_simple.json",
+  "scenario_sha256": "f4eab7da75213e7101838c9e82e47d1e8c2a7c12c054981d198c81bd90b72450",
+  "score": {
+    "scenario_id": "pub_01_text_simple",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "search_called",
+              "type": "tool_called",
+              "weight": 0.5,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "final_grounded",
+              "type": "final_response_contains",
+              "weight": 0.3,
+              "passed": true,
+              "note": "matched final_response text"
+            },
+            {
+              "id": "state_dest",
+              "type": "state_snapshot",
+              "weight": 0.2,
+              "passed": true,
+              "note": "snapshot[slots.destination] = 'Chicago'"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 19.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 890.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Can you find flights to ",
+        "end_of_turn": false
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Chicago for Friday?",
+        "end_of_turn": true
+      },
+      "t_ms": 719.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 719.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 719.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "535dc69b-cb3f-4236-aea6-a51616b3afa0",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Chicago",
+        "date": "Friday"
+      },
+      "t_ms": 1516.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "535dc69b-cb3f-4236-aea6-a51616b3afa0",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Chicago",
+        "date": "Friday"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "flights": [
+          {
+            "flight_id": "FL-CHI-8AM",
+            "depart": "08:00",
+            "price_usd": 129
+          },
+          {
+            "flight_id": "FL-CHI-2PM",
+            "depart": "14:00",
+            "price_usd": 99
+          }
+        ]
+      },
+      "t_ms": 3672.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "I found two flights to Chicago for Friday: FL-CHI-8AM departing at 08:00 for $129 and FL-CHI-2PM departing at 14:00 for $99. Would you like to book one of these?"
+      },
+      "state_snapshot": {
+        "intent": "flight_search",
+        "slots": {
+          "destination": "Chicago",
+          "date": "Friday"
+        }
+      },
+      "t_ms": 4422.0
+    }
+  ],
+  "failure": null,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 4,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 4,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.5,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.067268131,
+        "prompt_tokens": 49,
+        "prompt_time": 0.004275914,
+        "completion_tokens": 6,
+        "completion_time": 0.012014662,
+        "total_tokens": 55,
+        "total_time": 0.016290576
+      },
+      {
+        "elapsed_seconds": 0.5150000000003274,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.049368713,
+        "prompt_tokens": 1828,
+        "prompt_time": 0.134136276,
+        "completion_tokens": 68,
+        "completion_time": 0.12992757,
+        "total_tokens": 1896,
+        "total_time": 0.264063846
+      },
+      {
+        "elapsed_seconds": 0.7969999999995707,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.051134177,
+        "prompt_tokens": 1834,
+        "prompt_time": 0.154658891,
+        "completion_tokens": 144,
+        "completion_time": 0.293807647,
+        "total_tokens": 1978,
+        "total_time": 0.448466538
+      },
+      {
+        "elapsed_seconds": 0.75,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.225280419,
+        "prompt_tokens": 2181,
+        "prompt_time": 0.166230322,
+        "completion_tokens": 112,
+        "completion_time": 0.212071263,
+        "total_tokens": 2293,
+        "total_time": 0.378301585
+      }
+    ]
+  },
+  "adapter_diagnostics": []
+}

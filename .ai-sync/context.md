@@ -1037,3 +1037,163 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** 842 passed, 1 xfailed; Ruff passed; offline-fake dev 4/4. Kit README is Theme 5 despite Theme02 ZIP name. No official score or live-model result. No new source implementation. Coordinate media seams with Atishay.
 
 ---
+
+## [2026-09-22 12:29] — Codex
+**Task:** Continue Workstream A after both branches merged; implement Samsung boundary.
+**Changes:** New Samsung translator/runtime and 13 adapter tests; explicit media failure, tail window, uncertain write status; updated legacy placeholder and adapter documentation. Luna drafted isolated translator; root reviewed/integrated runtime.
+**Status:** In progress; 855 passed, 1 xfailed; Ruff passed.
+**Notes:** Synthetic validator shape check 5/5, no official score. Text-only default; media integration and legitimate derived-argument authority remain open. No Atishay-owned implementation changes.
+
+---
+
+## [2026-09-22 12:33] — Codex
+**Task:** Close initial adapter review checkpoint.
+**Changes:** Recorded limited read-only boundary review and configuration readiness in SAMSUNG_ADAPTER.md.
+**Status:** Initial slice committed locally as 865a266; goal remains in progress.
+**Notes:** Reviewer found no concrete scoped findings and reran13 tests successfully. Full suite855pass/1xfail previously measured on same source. No official/live evaluation, no push of this slice. Next: grounded chained tool use and error recovery before public evaluation.
+
+---
+
+## [2026-09-22 12:41] — Codex
+**Task:** Recover from failed reads without weakening corpus or write-authority invariants.
+**Changes:** Added optional SessionView.tool_failures, separate sanitized error history and replanning, four regression tests, contract note and handoff updates.
+**Status:** Completed slice; full objective remains in progress.
+**Notes:** Final suite859 passed/1 xfailed, Ruff clean, offline dev4/4. Initial direct-results approach caused three corpus failures; corrected implementation keeps original tests intact. No teammate source edits, live model run, public kit score or push.
+
+---
+
+## [2026-09-22 13:05] — Codex
+**Task:** Verify current integrated code and retain Samsung public diagnostic evidence.
+**Changes:** Repeatable explicit-profile runner, four runner tests, three scored traces with hash manifest, proposed delegated-binding spec and status/handoff updates. Earlier read-only design review informed the proposal; no teammate source edits.
+**Status:** Validation completed; implementation objective remains in progress.
+**Notes:** Fresh suite 863 passed / 1 xfailed, Ruff passed, fake dev 4/4. Live Groq Qwen public attempts 100.0 / 56.9 / 81.5 expose chaining and final-response timing gaps. Cases are exposed development evidence, not medians or multimodal certification. No keys copied; evidence hashes verified. Next: A-side binding implementation and bounded read recovery. No push or release.
+
+---
+
+## [2026-09-22 13:55] — Codex
+**Task:** Implement A-side delegated result bindings and make the recorded Samsung chained case execute.
+**Changes:** ResultBinding/WriteContract and source references; bounded resolver and write validation; retained expired contract barriers; safe model validation telemetry/retry; explicit bounded tool documentation and excerpt provenance; runtime/runner configuration; new owned tests and three retained live attempts. Updated status/spec/profiles and own handoff.
+**Status:** Completed slice; overall implementation goal remains active.
+**Notes:** Final996passed/1skip/1xfail; Ruff clean; offline dev4/4. Live attempts38.5(validation),15.4(rate limit),100.0(confirmed chain). No isolated ablation/median claim. Astra high agents reviewed authority/integration and implemented isolated telemetry/loader/tests while authorized; user then prohibited further Astra delegation. Luna implemented bounded pure resolver earlier. Root integrated/reviewed/fixed and performed live evaluation. No teammate files edited, no keys retained, no push/release. Next: bounded transient-read recovery and broader public cases.
+
+---
+
+## [2026-09-22 14:12] — Codex
+**Task:** Continue A-side transient-read recovery without subagents.
+**Changes:** Opt-in controller retry, Samsung default/profile switch, physical retry lineage, controlled binding transfer, runner ledger evidence, 25 tests, retained matched public attempts, and separate B timing follow-up.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final 1021 passed/1 skip/1 xfail; preceding full run had one intermittent B failure, three isolated repeats and final full rerun passed. Ruff clean, fake dev 4/4. Live fast/control totals 100.0/81.5; control final hit quota. Single pair, not broad reliability or pure latency evidence. No B source/test edits, no push/release. Prompt: continue only our portion, no subagents except Luna if needed; root implemented and verified directly. No human modifications recorded. Next: broader public text cases.
+
+---
+
+## [2026-09-22 14:23] — Codex
+**Task:** Continue A-side interruption recovery and spoken feedback directly, without subagents.
+**Changes:** Accepted correction acknowledgment, bounded Samsung filler/error feedback, final-correction debounce fix, eight tests, three retained live attempts and implementation/evidence documentation.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final 1029 passed/1 skip/1 xfail; Ruff clean. Feedback-only full run 1027 passed; final only changed finished-correction debounce and added gated tests. Live scores65.3/84.3/89.6; final useful answer remains blocked by measured provider quota, not claimed complete. No B implementation/test edits or pushes. Human modifications: none recorded. Next: repeated model-input overhead and broader text coverage.
+
+---
+
+## [2026-09-22 14:34] — Implementation checkpoint
+**Task:** Reduce repeated planner-input overhead and clarify Samsung model rules.
+**Changes:** Explicit compact profile, annotation-aware schema presentation, per-plan size/hash telemetry, nine tests, retained failed live attempt, model-rules note and handoff.
+**Status:** Experimental slice validated; overall goal active.
+**Notes:** Full1038 passed/1skip/1xfail; focused83 passed; Ruff clean. Live84.3 with validation failure and rate limit, so default stays full. AI-assisted implementation/testing; no human edits recorded. No B source/test changes. Prior completed work pushed through a21067b following user's new push authorization. Future tested commits may be pushed; no coauthor trailers or assistant-name signoffs. No release or submission.
+
+---
+
+## [2026-09-22 14:47] — Implementation checkpoint
+**Task:** Fix request-scoped informational finals and first-plan unexecuted write claims.
+**Changes:** Historical-write guard scope, internal request completion preserving listening status, newly established write guard, six tests plus revised inherited silence regression, documentation and retained no-tool live evidence.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final1044 passed/1skip/1xfail; focused78 passed; Ruff clean. Initial status regression (1failure) and overbroad guard (2failures) corrected without B edits; history documented. Live public no-tool100.0 preceded the final guard extension; no false claim of live coverage of that guard. AI-assisted changes tested locally; no human edits recorded. Push authorized on mridul/engine, no coauthor trailers/name signoffs, no workflow/release/submission actions. Next: unseen tools and remaining model/packaging work.
+
+---
+
+## [2026-09-22 14:59] — Implementation checkpoint
+**Task:** Extend unfamiliar-tool evidence and generated-scenario diagnostics.
+**Changes:** Explicit external fixture selector, three new runner tests, four retained live reports with hashes, two suite reports, separate B correlation follow-up and own handoff.
+**Status:** Completed slice; overall goal active.
+**Notes:** Final1047passed/1skip/1xfail; first full run and one isolated rerun exposed an intermittent B demo failure, retained without B edits. Four100.0 scorer totals do not certify answer quality: hotel output adds an unsupported pricing period. AI-assisted implementation and manual evidence review; no human edits recorded. Push authorized, configured identity only, no coauthor trailers or signoffs. Next A work: generic result-grounding quality, quota and packaging. No subagents, workflow, release or submission actions.
+
+---
+
+## [2026-09-22 15:21] — Implementation checkpoint
+**Task:** Evaluate result-grounding instructions and make the Samsung package import/start successfully.
+**Changes:** Retained two failed prompt experiments and reverted both; added local assembler/entry template, exact dependencies/profile/hash manifests, bounded early-input runtime buffering and23 tests; retained official failed/fixed smoke, fresh-environment package evidence and public trace. Updated README and own handoff.
+**Status:** Completed engineering slice; overall goal active.
+**Notes:** Final1070passed/1skip/1xfail, focused36passed, Ruff clean. First new startup fixture omitted schema_version; fixed the fixture, preserving strict validation. Fresh online install21pins after offline cache miss; package stages1-2 pass and one public case100.0. Full repeated official evaluation/media/Docker remain unverified. AI-assisted implementation and live evaluation; no human edits recorded. No B edits/subagents/workflow/release/submission. Push authorized with configured identity and no attribution trailers.
+
+---
+
+## [2026-09-22 15:34] — Implementation checkpoint
+**Task:** Finish a documentation checkpoint and pause after pushing, at the user's explicit request.
+**Changes:** Consolidated September22 summary, incomplete corpus-review status and resume checklist, own handoff/status. No implementation changes or new token-budget profile.
+**Status:** Work stopped; push this checkpoint then mark the goal paused.
+**Notes:** The read-only review worker was interrupted without an accepted findings report. No matching corpus-review Python/uv process remained in the process check. Latest code9a3eb84; existing1070pass/1skip/1xfail and clean Ruff evidence retained, no redundant test run for documentation. AI-assisted inspection and documentation only. Resume requires an explicit user request. No teammate edits, external messages, workflow, release or submission actions.
+
+---
+
+## [2026-09-23 20:34] — Design handoff
+**Task:** Prepare both direct-agent and Google Stitch routes from the user's approved voice-first mockups.
+**Changes:** Canonical DESIGN.md, owned implementation/coordination brief, first-person Atishay prompt, staged Stitch prompts, reference PNGs with hashes and shared artifact copies. Updated design-context handoff while retaining the implementation pause.
+**Status:** Completed documentation-only deliverable.
+**Notes:** Inspected current demo without editing it. Seven Markdown files/thirteen relative links and two asset hashes validated. No application tests or live-model results claimed. Atishay implements frontend/perception; shared seams need both teammates. AI-assisted drafting from user corrections and approved synthetic references; human input was design selection and scope, no human code changes in this slice. Official Google sources checked; no Stitch project created. Documentation-only push follows existing authorization, no workflow dispatch, deployment, release or submission.
+
+---
+
+## [2026-09-23 20:43] — Stitch-first handoff
+**Task:** Make Stitch the required first stage of Atishay's frontend prompt, as requested.
+**Changes:** Updated ATISHAY_AGENT_PROMPT.md, STITCH_PROMPTS.md and design README; synchronized current handoffs. Prompt remains in Atishay's first person and requires Stitch prompts 1–5, reference review, exports, then owned implementation. Documents the manual handoff if access is unavailable.
+**Status:** Completed documentation update; push requested.
+**Notes:** No frontend/backend changes, application tests, Stitch execution or direct message sent. Implementation goal remains paused. AI-assisted documentation edit from the user's explicit workflow choice; no human code edits. Checked Markdown links/fences and Git whitespace before committing.
+
+---
+
+## [2026-09-23 22:37] — Implementation checkpoint
+**Task:** Resume Mridul-only work and complete the interrupted scoped corpus review.
+**Changes:** Bounded binary read with overflow refusal, normalized resolution failures, strict configured byte budget,17 new boundary cases and preserved existing open/oversize assertions. Completed review with explicit trust/platform limits.
+**Status:** Completed slice; overall goal active.
+**Notes:** Baseline87pass; new reproductions11fail/5pass/1skip; focused116pass/1skip; full1086pass/2skip/1xfail in89.55s, Ruff clean. Native symlink skips and existing frame xfail remain open. AI-assisted source review, implementation and tests after explicit user resume; no human code edits. Atishay remote advanced but no B files merged/edited. Push authorized; no workflow/release/submission.
+
+---
+
+## [2026-09-23 22:52] — Implementation checkpoint
+**Task:** Reduce input overhead with an explicit, measured prompt profile while preserving authority checks.
+**Changes:** compact-v2 typed-default serialization, separate documentation audit metadata, per-turn size telemetry, six tests, three retained live attempts and exact-byte evidence. Reported one B timing observation without editing its code; inspected newer remote worker changes without merging them.
+**Status:** Completed experimental slice; full remains default and overall goal active.
+**Notes:** Focused75pass; first full1fail/1091pass/2skip/1xfail; three isolated passes; final1092pass/2skip/1xfail in85.48s; Ruff clean. V2 interruption89.6 with useful clarification/all calls successful; full89.6 with quota rejection; v2 chain100.0. Initial input2057 versus3008 tokens, not a generalized quota/latency guarantee. AI-assisted implementation/verification under user resume; no human code edits. No B edits, workflow, release or submission. Push authorized, configured identity only.
+
+---
+
+## [2026-09-23 23:17] — Implementation checkpoint
+**Task:** Add and measure an opt-in evidence-selected read final without changing the default or B code.
+**Changes:** Optional answer-only contract, bounded literal renderer with current read provenance, controller/model gates, Samsung configuration, synthetic probe command,52 regressions and retained evidence. Updated ownership/coordination proposal and own handoff.
+**Status:** Completed experimental slice; overall goal active.
+**Notes:** Final1144pass/2skip/1xfail in65.71s; Ruff clean. Earlier full1143pass followed by one partial-speech regression and a new full run. Baseline invented billing period despite scorer100; final-source selection100 retained actual fields, two exposed synthetic probes passed. Successful hotel planning tokens4924 vs baseline4580 (+7.5%), same planning call count. AI-assisted implementation and permitted read-only review found/fixed mixed state-update issue; no human edits recorded. Not universal grounding; clarifications, relevance and omitted qualifiers remain limits. No B edits, workflow, release, submission or real effects. Push authorized, no attribution trailers.
+
+---
+
+## [2026-09-23 23:34] — Implementation checkpoint
+**Task:** Screen the candidate configuration across all six public text scenarios and preserve failure-aware evidence.
+**Changes:** Sequential screening driver,19 reporting tests, six raw live reports, original/corrected summaries, hashed evidence and results/ownership handoff. No engine, model, protocol or B implementation changes.
+**Status:** Completed development screen; overall goal active, defaults unchanged.
+**Notes:** Five100/one89.6; all18 provider requests succeeded. Boston cancellation observed875ms after interruption; missing passenger/flight choice led to clarification, no invented booking. Final focused26pass/0.94s, Ruff clean; previous full1144pass/2skip/1xfail is not rerun evidence. Initial reporting tests7fail/1pass exposed summary/retention gaps; fixed and original driver/reports retained. AI-assisted reporting/evaluation plus permitted read-only confirmed-reply review; no human code edits recorded. Next A: evidence-faithful readable committed/reconciled confirmations. No B edits, workflow, release, submission or real effects. Push authorized without attribution trailers.
+
+---
+
+## [2026-09-23 23:51] — Implementation checkpoint
+**Task:** Finish confirmed-effect wording after the status-only turn and verify the actual final source.
+**Changes:** Bounded literal formatter, committed/reconciled final text, trusted mock provenance,23 focused cases, exact-byte evidence, ownership proposal and own handoffs.
+**Status:** Completed slice; overall goal active, next work repeated/profile and integration evidence.
+**Notes:** Final1186pass/2skip/1xfail in64.47s, Ruff clean. Intermediate1184pass and booking100 retained; final-source booking100 with explicit mock wording,3 successful provider calls/4794 input tokens,one mock write. Not repeated reliability or voice validation. AI-assisted implementation and review corrections; no human code edits recorded. Previous status-only turn produced no code progress; current source was revalidated before edits. No B edits, workflow, release, submission or real effects. Push authorized; configured identity only, no attribution trailers.
+
+---
+
+## [2026-09-23 23:58] — Implementation checkpoint
+**Task:** Verify a cleanly installed base submission package and identify actual next media integration work.
+**Changes:** Fresh cached-wheel Python3.11 venv, isolated import/hash checks, official package/contract/no-tool validation, retained verification evidence and A-owned media follow-up document.
+**Status:** Scoped base installation verified; multimedia/Docker/repeated gates remain open; overall goal active.
+**Notes:** 21 compatible pinned packages,78 package files verified,validation/smoke no errors,no-tool100/final735ms. Same Windows host,not clean OS/Docker; no audio or vision score. Read-only source review confirmed stale vision-flag rejection notes and current Samsung factory/MP3/model-path gaps. MP3 ownership question pending; independent runtime/profile work available. AI-assisted inspection and verification; no human code edits. No application/B edits,workflow,release,submission or model downloads. Prior full1186pass/2skip/1xfail remains applicable source evidence,not a rerun. Push authorized.
+
+---
