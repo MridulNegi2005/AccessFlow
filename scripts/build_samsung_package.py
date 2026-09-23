@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from accessflow.adapters.prompt_profile import PROMPT_PROFILES
+from accessflow.read_answer import READ_ANSWER_MODES
 
 KIT_ROOT_FILES = ("eval_submission.py", "run_local.py", "README.md", "WALKTHROUGH.md")
 KIT_AREAS = {"harness": {".py"}, "docs": {".md"}, "scenarios": {".json"},
@@ -25,16 +27,19 @@ def pinned_requirements(export):
     return sorted(lines, key=str.lower)
 
 
-def profile_for(model):
+def profile_for(model, *, prompt_profile="full", read_answer_mode="prose"):
     if not isinstance(model, str) or not model.strip() or any(ord(c) < 32 for c in model):
         raise ValueError("Supply a nonempty model identifier without control characters")
+    if prompt_profile not in PROMPT_PROFILES or read_answer_mode not in READ_ANSWER_MODES:
+        raise ValueError("Unsupported prompt profile or read answer mode")
     return {
         "ACCESSFLOW_SAMSUNG_BACKEND": "groq", "ACCESSFLOW_GROQ_MODEL": model,
         "ACCESSFLOW_GROQ_URL": "https://api.groq.com/openai/v1",
         "ACCESSFLOW_GROQ_STRUCTURED": "0", "ACCESSFLOW_MAX_OUTPUT_TOKENS": "950",
         "ACCESSFLOW_MAX_CONTEXT_CHARS": "32768",
         "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
-        "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1", "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": "full",
+        "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1", "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": prompt_profile,
+        "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": read_answer_mode,
     }
 
 
@@ -45,7 +50,7 @@ def checked_bytes(root, path):
     return path.read_bytes()
 
 
-def assemble(repo, kit, output, *, team, model, requirements):
+def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="full", read_answer_mode="prose"):
     repo, kit, output = repo.resolve(), kit.resolve(), output.resolve()
     artifact_root = (repo / "artifacts").resolve()
     if (not artifact_root.is_relative_to(repo) or not output.is_relative_to(artifact_root) or output == artifact_root
@@ -54,7 +59,7 @@ def assemble(repo, kit, output, *, team, model, requirements):
     if (not isinstance(team, str) or not team.strip() or len(team) > 100
             or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 ._-]*", team)):
         raise ValueError("Use a team label of up to100 letters, digits, spaces, dots, underscores or hyphens")
-    profile = profile_for(model)
+    profile = profile_for(model, prompt_profile=prompt_profile, read_answer_mode=read_answer_mode)
     requirements = pinned_requirements("\n".join(requirements))
     tracked = subprocess.check_output(
         ["git", "ls-files", "-z", "--", "src/accessflow"], cwd=repo).decode("utf-8").split("\0")
@@ -118,6 +123,8 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--team", required=True, help="Local package label; confirm registered spelling before submission")
     parser.add_argument("--model", required=True, help="Explicit Groq model; no fallback")
+    parser.add_argument("--prompt-profile", choices=sorted(PROMPT_PROFILES), default="full")
+    parser.add_argument("--read-answer-mode", choices=sorted(READ_ANSWER_MODES), default="prose")
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[1]
     export = subprocess.check_output(
@@ -125,7 +132,8 @@ def main():
          "--no-emit-project", "--no-hashes"], cwd=repo, text=True)
     try:
         manifest = assemble(repo, args.kit, args.output, team=args.team, model=args.model,
-                            requirements=pinned_requirements(export))
+                            requirements=pinned_requirements(export), prompt_profile=args.prompt_profile,
+                            read_answer_mode=args.read_answer_mode)
     except ValueError as exc:
         parser.error(str(exc))
     print(json.dumps({"package": str(args.output.resolve()), "files": len(manifest["files"]),
