@@ -3,73 +3,283 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AccessFlow mock demo</title>
+  <title>AccessFlow | Task workspace</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <style>
-    :root { color-scheme: dark; font: 16px system-ui, sans-serif; }
-    body { max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #10131a; color: #eef1f7; }
-    section { margin: 1rem 0; padding: 1rem; border: 1px solid #303747; border-radius: 12px; background: #171c26; }
-    button { margin: .35rem .25rem .35rem 0; padding: .55rem .8rem; border: 0; border-radius: 8px; cursor: pointer; }
-    button:disabled { cursor: not-allowed; opacity: .55; }
-    label { display: block; margin: .35rem 0; color: #c7d0e3; }
-    input[type=text] { width: min(100%, 620px); padding: .6rem; border-radius: 8px; border: 1px solid #586277; background: #0c0f15; color: inherit; }
-    code { color: #9ee6b3; } small { color: #aab4c8; }
-    pre { white-space: pre-wrap; margin: 0; }
-    .event { margin-top: .75rem; padding: .75rem; border-left: 3px solid #7aa2f7; background: #0d1118; }
+    :root {
+      color-scheme: dark;
+      font: 16px/1.5 Inter, "Segoe UI", system-ui, sans-serif;
+      --canvas: #15171c; --panel: #fbf8f2; --ink: #17191b;
+      --paper: #f7f4ee; --muted: #b3b6ba; --rule: #393c40;
+      --lime: #a8ec59; --pale-lime: #eaf2d5; --coral: #ff6548;
+      --serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--canvas); color: var(--paper); }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex="0"]:focus-visible {
+      outline: 3px solid #7fbd3f; outline-offset: 3px;
+    }
+    .legacy-ui { display: none !important; }
+    .app-header { height: 88px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--paper); text-decoration: none; }
+    .brand-mark { width: 34px; height: 34px; color: var(--lime); }
+    .brand-name { font-size: 28px; font-weight: 750; letter-spacing: -.055em; }
+    .header-right { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: 13px; }
+    .tts-control { display: flex; align-items: center; gap: 10px; }
+    label.tts-control { min-height: 44px; cursor: pointer; }
+    .switch { appearance: none; width: 38px; height: 22px; border-radius: 20px; background: #44474c; position: relative; margin: 0; cursor: pointer; transition: background .18s ease; }
+    .switch::after { content: ""; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform .18s ease; }
+    .switch:checked { background: #72a933; }
+    .switch:checked::after { transform: translateX(16px); }
+    .workspace { width: min(100%, 1600px); margin: 0 auto; padding: 0 20px 32px; display: grid; grid-template-columns: 448px minmax(0, 1fr); gap: 56px; align-items: start; }
+    .input-dock { background: var(--panel); color: var(--ink); border-radius: 24px; padding: 25px 24px 22px; box-shadow: 0 14px 36px #0002; }
+    .dock-title { margin: 0 0 21px; display: flex; align-items: center; gap: 11px; font-size: 21px; letter-spacing: -.035em; }
+    .spark { color: #639523; font-size: 23px; line-height: 1; }
+    .field-label { display: flex; justify-content: space-between; align-items: center; margin: 0 0 9px; font-size: 15px; font-weight: 650; }
+    .field-label span:last-child { color: #7a7b76; font-size: 12px; font-weight: 500; }
+    .task-input { display: block; width: 100%; height: 236px; resize: vertical; min-height: 160px; max-height: 380px; padding: 20px; border: 1px solid #d9d7d0; border-radius: 16px; background: #fffefa; color: var(--ink); font-size: 20px; line-height: 1.45; }
+    .task-input::placeholder { color: #94938d; }
+    .dock-section { margin-top: 21px; }
+    .section-topline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+    .section-topline strong { font-size: 15px; }
+    .subtle { color: #777973; font-size: 11px; }
+    .voice-tile { min-height: 125px; position: relative; border-radius: 17px; background: var(--pale-lime); display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; }
+    .voice-line { position: absolute; display: flex; height: 28px; align-items: center; gap: 3px; left: 21px; right: 21px; justify-content: space-between; pointer-events: none; }
+    .voice-line span { display: block; width: 2px; height: var(--h); background: #a0b67b; border-radius: 2px; opacity: .72; }
+    .voice-action { position: relative; z-index: 1; width: 82px; height: 82px; border-radius: 50%; border: 0; background: #20251c; color: white; display: grid; place-items: center; }
+    .voice-action svg { width: 23px; height: 23px; }
+    .voice-action.recording { background: var(--coral); animation: record-pulse 1.5s ease-in-out infinite; }
+    .voice-caption { margin-top: 7px; font-size: 12px; font-weight: 650; }
+    .voice-caption small { display: block; font-size: 10px; font-weight: 450; color: #70756b; text-align: center; }
+    .mini-action { min-height: 44px; border: 0; background: transparent; color: #526c31; padding: 8px 10px; font-size: 11px; font-weight: 650; }
+    .drop-zone { min-height: 172px; border: 1px dashed #b7b9ae; border-radius: 16px; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; color: #3e423a; background: #fffefa; transition: border .16s ease, background .16s ease; cursor: pointer; }
+    .drop-zone[aria-disabled="true"] { cursor: not-allowed; opacity: .7; }
+    .drop-zone.dragover { background: #f0f7e4; border: 2px dashed #78a83e; }
+    .drop-icon { width: 44px; height: 44px; margin-bottom: 9px; color: #62784b; }
+    .drop-main { font-size: 13px; font-weight: 650; }
+    .drop-hint { color: #7c7d76; font-size: 10px; }
+    .staged-list { display: grid; gap: 7px; margin-top: 9px; }
+    .staged-item { min-width: 0; display: flex; align-items: center; gap: 9px; padding: 8px; border: 1px solid #e4e1d8; border-radius: 11px; background: #fffefa; }
+    .staged-thumb { width: 38px; height: 38px; border-radius: 7px; object-fit: cover; background: #ecece7; }
+    .staged-audio-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 7px; background: var(--pale-lime); color: #4b622d; font-size: 18px; flex: 0 0 auto; }
+    .staged-copy { min-width: 0; flex: 1; }
+    .staged-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 650; }
+    .staged-size { display: block; color: #7e807a; font-size: 10px; }
+    .remove-media { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: #6d7068; padding: 7px; font-size: 17px; }
+    .run-button { display: flex; width: 100%; min-height: 66px; margin-top: 21px; padding: 13px 17px; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 14px; background: var(--lime); color: #192016; font-size: 15px; font-weight: 750; transition: transform .15s ease, filter .15s ease; }
+    .run-button:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
+    .run-button svg { width: 17px; height: 17px; }
+    .dock-note { margin: 14px 2px 0; color: #71736d; font-size: 10px; line-height: 1.5; text-align: center; }
+    .dock-error { margin: 9px 0 0; color: #a93e2a; font-size: 12px; }
+    .voice-tile.is-recording .voice-line span { animation: sound-wave .45s ease-in-out infinite alternate; }
+    .voice-tile.is-recording .voice-line span:nth-child(2n) { animation-delay: .16s; }
+    .voice-tile.is-recording .voice-line span:nth-child(3n) { animation-delay: .28s; }
+    dialog#image-dialog { width: min(92vw, 1100px); max-width: none; max-height: 92vh; padding: 16px; border: 1px solid #4b4e52; border-radius: 18px; background: #1c1e23; color: var(--paper); }
+    dialog#image-dialog::backdrop { background: #08090bcc; backdrop-filter: blur(3px); }
+    #dialog-image { display: block; max-width: 100%; max-height: calc(92vh - 66px); margin: 12px auto 0; object-fit: contain; }
+    #close-image-dialog { min-height: 44px; }
+    #close-image-dialog { display: block; margin-left: auto; padding: 7px 12px; border: 1px solid #55585c; border-radius: 9px; background: #292b30; color: var(--paper); }
+    .answer-stage { min-width: 0; min-height: calc(100vh - 112px); padding: 37px 22px 20px 4px; }
+    .stage-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+    .connection-indicator { min-height: 44px; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid #393c40; border-radius: 22px; background: #202226; color: #c5c8c3; font-size: 11px; }
+    .connection-indicator::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #d1ad54; }
+    .connection-indicator.connected::before { background: var(--lime); box-shadow: 0 0 8px #a8ec5966; }
+    .connection-indicator.disconnected { border-color: #663e34; color: #ffd2c7; }
+    .connection-indicator.disconnected::before { background: var(--coral); }
+    .connection-indicator:disabled { cursor: default; opacity: 1; }
+    .eyebrow { margin: 0 0 8px; color: #aeb1b4; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 700; }
+    .request-summary { max-width: 620px; color: #d4d3ce; font-size: 13px; line-height: 1.55; }
+    .speak-pill { display: none; align-items: center; gap: 9px; flex: 0 0 auto; padding: 8px 11px; border-radius: 30px; background: #282b2f; color: #e5e3dd; font-size: 11px; }
+    .speak-pill.visible { display: flex; }
+    .sound-bars { display: flex; gap: 2px; align-items: center; height: 16px; }
+    .sound-bars i { display: block; width: 2px; height: 7px; border-radius: 2px; background: var(--lime); animation: sound-wave .65s ease-in-out infinite alternate; }
+    .sound-bars i:nth-child(2n) { animation-delay: .2s; height: 12px; }
+    .sound-bars i:nth-child(3n) { animation-delay: .4s; height: 5px; }
+    .stop-speech { min-height: 44px; border: 0; border-radius: 22px; padding: 6px 13px; background: var(--coral); color: #25140f; font-size: 10px; font-weight: 700; }
+    .empty-state { max-width: 730px; padding: clamp(50px, 11vh, 125px) 0 42px; }
+    .empty-kicker { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--lime); font-size: 12px; font-weight: 650; }
+    .empty-kicker::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 14px #a8ec5966; }
+    .empty-state h1 { margin: 0; max-width: 720px; color: var(--paper); font-family: var(--serif); font-size: clamp(40px, 4.1vw, 60px); font-weight: 500; line-height: 1.07; letter-spacing: -.045em; }
+    .empty-state p { max-width: 440px; margin: 20px 0 0; color: #aeb1b4; font-size: 14px; line-height: 1.75; }
+    .answer-wrap { display: none; margin-top: 38px; }
+    .answer-wrap.visible { display: block; animation: rise-in .32s ease both; }
+    .answer-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+    .answer-grid.with-image { grid-template-columns: minmax(260px, .92fr) minmax(300px, 1.08fr); }
+    .answer-image-button { display: block; width: 100%; padding: 0; border: 0; border-radius: 16px; background: transparent; cursor: zoom-in; }
+    .answer-image-button[hidden] { display: none; }
+    .answer-image { width: 100%; max-height: 430px; object-fit: contain; object-position: center; background: #202226; border: 1px solid #393b40; border-radius: 16px; cursor: zoom-in; }
+    .answer-image-button:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
+    .answer-copy h1 { max-width: 760px; margin: 0 0 17px; font: 500 clamp(34px, 3.3vw, 50px)/1.09 var(--serif); letter-spacing: -.04em; color: var(--paper); overflow-wrap: anywhere; }
+    .answer-body { max-width: 760px; color: #d0cfca; font-size: 18px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .answer-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .meta-chip { padding: 5px 9px; border: 1px solid #42454a; border-radius: 20px; color: #bfc0bd; font-size: 10px; }
+    .clarification { border-left: 2px solid var(--lime); padding-left: 17px; }
+    .rule { height: 1px; margin: 27px 0 19px; background: var(--rule); }
+    .explore-title { margin: 0 0 10px; color: #d7d5ce; font-size: 11px; font-weight: 650; }
+    .prompt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .prompt-chip { min-height: 44px; padding: 8px 13px; border: 1px solid #42454a; border-radius: 24px; background: transparent; color: #c1c1bc; font-size: 10px; transition: border-color .15s ease, color .15s ease; }
+    .prompt-chip:hover { border-color: #9eca66; color: var(--paper); }
+    .follow-form { display: flex; gap: 8px; margin-top: 19px; padding: 6px; border: 1px solid #4a4d51; border-radius: 15px; background: #1c1e23; }
+    .follow-input { min-width: 0; flex: 1; padding: 9px 11px; border: 0; outline: 0; background: transparent; color: var(--paper); font-size: 13px; }
+    .follow-input::placeholder { color: #898c90; }
+    .follow-send { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 10px; background: var(--lime); color: #172012; font-size: 11px; font-weight: 750; }
+    .processing { display: none; align-items: center; gap: 10px; margin-top: 23px; color: #c2c3bf; font-size: 12px; }
+    .processing.visible { display: flex; }
+    .spinner { width: 15px; height: 15px; border: 2px solid #51545a; border-top-color: var(--lime); border-radius: 50%; animation: spin .8s linear infinite; }
+    .error-banner { display: none; margin-top: 18px; padding: 12px 14px; border: 1px solid #663e34; border-radius: 12px; background: #30221f; color: #ffd2c7; font-size: 12px; }
+    .error-banner.visible { display: block; }
+    .provenance { margin-top: 18px; color: #85888c; font-size: 10px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    @keyframes record-pulse { 50% { box-shadow: 0 0 0 7px #ff654822; } }
+    @keyframes sound-wave { to { transform: scaleY(.48); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes rise-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    @media (min-width: 1500px) { .workspace { gap: 56px; } }
+    @media (max-width: 1279px) and (min-width: 900px) {
+      .workspace { grid-template-columns: 360px minmax(0, 1fr); gap: 27px; }
+    }
+    @media (max-width: 1120px) {
+      .answer-grid.with-image { grid-template-columns: 1fr; }
+      .answer-image { max-height: 340px; }
+    }
+    @media (max-width: 899px) {
+      .app-header { height: 76px; padding: 0 22px; }
+      .workspace { grid-template-columns: 1fr; gap: 15px; padding: 0 16px 30px; }
+      .input-dock { max-width: none; padding: 21px; }
+      .answer-stage { min-height: 430px; padding: 30px 8px 12px; }
+      .empty-state { padding: 50px 0 25px; }
+    }
+    @media (max-width: 680px) { .answer-grid.with-image { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 639px) {
+      .app-header { height: 68px; padding: 0 17px; }
+      .brand-name { font-size: 22px; }
+      .brand-mark { width: 30px; height: 30px; }
+      .header-right { gap: 10px; }
+      .tts-control > span { display: none; }
+      .tts-control { gap: 0; }
+      #new-task { flex: 0 0 auto; white-space: nowrap; }
+      .header-tagline { display: none; }
+      .workspace { padding: 0 16px 22px; }
+      .input-dock { padding: 18px 16px; border-radius: 20px; }
+      .task-input { height: 142px; font-size: 16px; }
+      .answer-stage { padding: 22px 7px 10px; }
+      .stage-top { flex-direction: column; }
+      .speak-pill { align-self: flex-start; }
+      .empty-state { padding-top: 42px; }
+      .empty-state h1 { font-size: 36px; }
+      .answer-wrap { margin-top: 28px; }
+      .answer-grid.with-image { grid-template-columns: 1fr; }
+      .answer-copy h1 { font-size: 37px; }
+      .answer-body { font-size: 17px; }
+      .follow-form { border-radius: 12px; }
+      .follow-send { padding: 8px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   </style>
 </head>
 <body>
-  <h1>AccessFlow</h1>
-  <p>Minimal queue-driven browser demo. <strong>Perception and reasoning backends: <span id="backend-label">connecting</span></strong>. Inputs and responses are labeled evidence.</p>
-
-  <section>
-    <h2>Text</h2>
-    <form id="text-form">
-      <label for="text">Transcript</label>
-      <input id="text" type="text" placeholder="Try: Book Tues... actually Wednesday" required>
-      <button>Send final transcript</button>
-      <button type="button" id="partial">Send partial</button>
-    </form>
-  </section>
-
-  <section>
-    <h2>Audio</h2>
-    <label for="audio">WAV audio file</label>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="AccessFlow home">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 20 14 5h8l-9 15 9 15h-8L5 20Z" fill="currentColor"/><path d="M18 20 27 5h8l-9 15 9 15h-8l-9-15Z" fill="currentColor" opacity=".68"/></svg>
+      <span class="brand-name">AccessFlow</span>
+    </a>
+    <div class="header-right">
+      <span class="header-tagline">A calmer way to get things done</span>
+      <label class="tts-control" for="tts-toggle"><span>Read answers aloud</span><input class="switch" id="tts-toggle" type="checkbox" aria-label="Read answers aloud"></label>
+      <button class="mini-action" id="new-task" type="button" style="color:#d5d6d2">New task</button>
+    </div>
+  </header>
+  <main class="workspace">
+    <aside class="input-dock" aria-labelledby="dock-heading">
+      <h2 class="dock-title" id="dock-heading"><span class="spark" aria-hidden="true">✳</span>New task</h2>
+      <label class="field-label" for="task-text"><span>What do you need?</span><span id="char-count">0 / 16,384</span></label>
+      <textarea class="task-input" id="task-text" maxlength="16384" placeholder="Tell AccessFlow what you’d like to do…" aria-describedby="dock-note dock-error"></textarea>
+      <section class="dock-section" aria-labelledby="voice-heading">
+        <div class="section-topline"><strong id="voice-heading">Add your voice</strong><span class="subtle">WAV · up to 8 MiB</span></div>
+        <div class="voice-tile" id="voice-tile">
+          <div class="voice-line" aria-hidden="true"><span style="--h:7px"></span><span style="--h:12px"></span><span style="--h:6px"></span><span style="--h:17px"></span><span style="--h:9px"></span><span style="--h:20px"></span><span style="--h:10px"></span><span style="--h:15px"></span><span style="--h:7px"></span><span style="--h:18px"></span><span style="--h:8px"></span><span style="--h:13px"></span><span style="--h:6px"></span></div>
+          <button class="voice-action" id="voice-toggle" type="button" aria-label="Start recording">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <div class="voice-caption" id="voice-caption">Tap to record<small>Or upload an existing recording</small></div>
+        </div>
+        <button class="mini-action" id="choose-audio" type="button">↑ &nbsp;Upload WAV</button>
+      </section>
+      <section class="dock-section" aria-labelledby="image-heading">
+        <div class="section-topline"><strong id="image-heading">Add a screenshot</strong><span class="subtle">PNG · up to 8 MiB</span></div>
+        <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Choose a PNG screenshot or drop it here">
+          <svg class="drop-icon" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="3" y="4" width="22" height="20" rx="4" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="11" r="2.2" stroke="currentColor" stroke-width="1.5"/><path d="m5 21 6-6 4 4 3-3 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="drop-main">Drop a PNG image</span><span class="drop-hint">or click to browse · up to 8 MiB</span>
+        </div>
+      </section>
+      <div class="staged-list" id="staged-list" aria-live="polite"></div>
+      <p class="dock-error" id="dock-error" role="alert"></p>
+      <button class="run-button" id="run-task" type="button" disabled>
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 3.7c0-.8.9-1.3 1.6-.9l9 5.3a1.1 1.1 0 0 1 0 1.9l-9 5.3c-.7.4-1.6-.1-1.6-.9V3.7Z"/></svg>
+        <span>Run task</span>
+      </button>
+      <p class="dock-note" id="dock-note">Combine a request with your voice or one PNG screenshot. This demo keeps everything in the current session.</p>
+    </aside>
+    <section class="answer-stage" aria-label="Task response">
+      <div class="stage-top">
+        <div><p class="eyebrow">Your task</p><div class="request-summary" id="request-summary">Your request and response will appear here.</div></div>
+        <button class="connection-indicator" id="connection-indicator" type="button" disabled>Connecting</button>
+        <div class="speak-pill" id="speak-pill" role="status"><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>AccessFlow is speaking…</span><button class="stop-speech" id="stop-speaking" type="button">Stop</button></div>
+      </div>
+      <div class="empty-state" id="empty-state">
+        <div class="empty-kicker">Ready when you are</div>
+        <h1>One clear next step, from all the things you share.</h1>
+        <p>Describe what you need, add a voice recording or screenshot if it helps, and AccessFlow will bring the details together.</p>
+      </div>
+      <div class="processing" id="processing" role="status"><span class="spinner" aria-hidden="true"></span><span>Bringing your request together…</span></div>
+      <div class="error-banner" id="answer-error" role="alert"></div>
+      <article class="answer-wrap" id="answer-wrap">
+        <div class="answer-grid" id="answer-grid">
+          <button class="answer-image-button" id="answer-image-button" type="button" aria-label="Open screenshot preview" hidden>
+            <img class="answer-image" id="answer-image" alt="Screenshot attached to this task">
+          </button>
+          <div class="answer-copy">
+            <h1 id="answer-title"></h1>
+            <div class="answer-body" id="answer-body"></div>
+            <div class="answer-meta" id="answer-meta"></div>
+          </div>
+        </div>
+        <p class="provenance" id="provenance"></p>
+        <div class="rule"></div>
+        <p class="explore-title">Explore further</p>
+        <div class="prompt-chips">
+          <button class="prompt-chip" type="button">Explain more simply</button>
+          <button class="prompt-chip" type="button">What evidence did you use?</button>
+          <button class="prompt-chip" type="button">What should I do next?</button>
+        </div>
+        <form class="follow-form" id="follow-form">
+          <label class="sr-only" for="follow-input">Ask a follow-up question</label>
+          <input class="follow-input" id="follow-input" maxlength="16384" placeholder="Ask a follow-up…" autocomplete="off">
+          <button class="follow-send" type="submit">Send ↗</button>
+        </form>
+      </article>
+    </section>
+  </main>
+  <dialog id="image-dialog" aria-label="Screenshot preview">
+    <button type="button" id="close-image-dialog" aria-label="Close screenshot preview">Close</button>
+    <img id="dialog-image" alt="Full-size screenshot attached to this task">
+  </dialog>
+  <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <div class="legacy-ui">
+    <form id="text-form"><input id="text" type="text"><button type="submit">Send final</button></form>
     <input id="audio" type="file" accept="audio/wav,.wav">
-    <button type="button" id="send-audio">Upload WAV to selected backend</button>
-    <button type="button" id="mic">Start microphone capture</button>
-    <button type="button" id="stop-mic" disabled>Stop and upload microphone</button>
-    <small>Selected WAV bytes and microphone PCM are uploaded for this session and validated. Audio uses demo/mock by default; an existing local Faster Whisper model can be enabled by configuration.</small>
-  </section>
-
-  <section>
-    <h2>Image</h2>
-    <label for="image">PNG image file</label>
+    <button id="mic" type="button"></button><button id="stop-mic" type="button" disabled></button>
     <input id="image" type="file" accept="image/png,.png">
-    <button type="button" id="send-image">Upload PNG to selected backend</button>
-    <small>Selected PNG bytes are uploaded for this session and validated. Image uses demo/mock by default; an existing local Ollama vision model can be enabled by configuration.</small>
-  </section>
-
-  <section>
-    <h2>Interruption</h2>
-    <button type="button" id="stop-speaking">Stop speaking</button>
-    <button type="button" id="stop-task">Stop task</button>
-    <small>Stop speaking ends current output and keeps the task available. Stop task cancels pending work for this session.</small>
-  </section>
-
-  <section>
-    <h2>OutputEvent stream</h2>
-    <button type="button" id="restart-session">Restart session</button>
-    <small>Starts a fresh browser session and clears the current event trace.</small>
-    <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-    <div id="events" aria-live="off"></div>
-  </section>
+  </div>
 
   <script>
     const socket = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws');
-    const events = document.querySelector('#events');
-    const backendLabel = document.querySelector('#backend-label');
     const micButton = document.querySelector('#mic');
     const stopMicButton = document.querySelector('#stop-mic');
     let revision = 0;
@@ -79,6 +289,22 @@
     let eventSequence = 0;
     let microphone = null;
     let mediaSendChain = Promise.resolve();
+    let draftTimer = null;
+    let microphoneTimer = null;
+    let microphoneStartedAt = 0;
+    let recordedWavBytes = null;
+    let stagedImageUrl = null;
+    let latestMediaSourceId = null;
+    let finalSourceId = null;
+    let finalObservationSeen = false;
+    let runInProgress = false;
+    let responseTimer = null;
+    let responseBackend = 'demo/mock';
+    let ttsUtterance = null;
+    let ttsEnabled = false;
+    let hasRunBefore = false;
+    let lastSubmittedSignature = null;
+    let activeInputKinds = [];
     const pendingMessages = [];
     const maxPendingMessages = 16;
     const maxAnnouncementChars = 240;
@@ -86,21 +312,119 @@
     const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2);
 
     function show(event) {
-      if (event.kind === 'demo_status' && event.payload && event.payload.perception_backend) {
-        const reasoner = event.payload.reasoner_backend;
-        backendLabel.textContent = reasoner
-          ? `${event.payload.perception_backend} | ${reasoner}`
-          : event.payload.perception_backend;
-      }
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       document.querySelector('#announcements').textContent = announce(event);
-      const card = document.createElement('div');
-      card.className = 'event';
-      const heading = document.createElement('strong');
-      heading.textContent = event.kind;
-      const details = document.createElement('pre');
-      details.textContent = JSON.stringify(event, null, 2);
-      card.append(heading, details);
-      events.prepend(card);
+      if (event.kind === 'demo_status' && typeof payload.connected === 'boolean') {
+        const indicator = document.querySelector('#connection-indicator');
+        indicator.classList.toggle('connected', payload.connected);
+        indicator.classList.toggle('disconnected', !payload.connected);
+        indicator.disabled = payload.connected;
+        indicator.textContent = payload.connected ? 'Connected' : 'Reconnect';
+      }
+      if (event.kind === 'demo_status' && payload.perception_backend) {
+        const reasoner = payload.reasoner_backend;
+        responseBackend = reasoner
+          ? payload.perception_backend + ' · ' + reasoner
+          : payload.perception_backend;
+        return;
+      }
+      if (event.kind === 'demo_status' && payload.media_received) {
+        const kind = payload.media_received === 'frame' ? 'Screenshot' : 'Voice recording';
+        document.querySelector('#processing').lastElementChild.textContent = kind + ' received · bringing your request together…';
+        return;
+      }
+      if (event.kind === 'demo_status' && payload.connected === false) {
+        document.querySelector('#answer-error').textContent = 'The session disconnected. Select Reconnect to start a fresh session; the current draft will reset.';
+        document.querySelector('#answer-error').classList.add('visible');
+        if (runInProgress) finishRun();
+        return;
+      }
+      if (event.kind === 'demo_observation') {
+        if (payload.modality === 'text' && typeof payload.text === 'string') {
+          document.querySelector('#request-summary').textContent = payload.text || 'Text request';
+        } else if (payload.modality === 'audio') {
+          const isMockAudio = String(payload.backend || '').includes('mock');
+          document.querySelector('#request-summary').textContent = isMockAudio
+            ? 'Voice input received · demo/mock mode does not transcribe audio.'
+            : payload.text || 'Voice request received.';
+        }
+        if (payload.final === true && payload.source_id === finalSourceId) {
+          finalObservationSeen = true;
+        }
+        return;
+      }
+      if (event.kind === 'final' || event.kind === 'clarify') {
+        if (runInProgress && !finalObservationSeen) return;
+        renderResponse(event);
+        finishRun();
+        return;
+      }
+      if (event.kind === 'error' || event.kind === 'demo_error') {
+        const message = typeof payload.message === 'string' ? payload.message : 'Something went wrong. You can try again.';
+        document.querySelector('#answer-error').textContent = message;
+        document.querySelector('#answer-error').classList.add('visible');
+        if (runInProgress) finishRun();
+      }
+      return;
+    }
+
+    function renderResponse(event) {
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+      const text = typeof payload.text === 'string' ? payload.text.trim() : '';
+      const answer = text || (typeof payload.message === 'string' ? payload.message : 'No response text was returned.');
+      const firstBreak = answer.indexOf('\n');
+      const firstSentence = answer.search(/[.!?](?:\s|$)/);
+      const splitAt = firstBreak >= 0 ? firstBreak : (firstSentence >= 0 ? firstSentence + 1 : answer.length);
+      const title = answer.slice(0, splitAt).trim();
+      const body = answer.slice(splitAt).trim();
+      document.querySelector('#answer-title').textContent = title || answer;
+      document.querySelector('#answer-body').textContent = body;
+      document.querySelector('#answer-title').classList.toggle('clarification', event.kind === 'clarify');
+      const image = document.querySelector('#answer-image');
+      const imageButton = document.querySelector('#answer-image-button');
+      const grid = document.querySelector('#answer-grid');
+      if (stagedImageUrl) {
+        image.src = stagedImageUrl;
+        imageButton.hidden = false;
+        grid.classList.add('with-image');
+      } else {
+        imageButton.hidden = true;
+        grid.classList.remove('with-image');
+      }
+      const meta = document.querySelector('#answer-meta');
+      meta.replaceChildren();
+      for (const kind of activeInputKinds) {
+        const chip = document.createElement('span');
+        chip.className = 'meta-chip';
+        chip.textContent = kind === 'frame' ? 'PNG screenshot' : kind === 'audio' ? 'Voice input' : 'Text request';
+        meta.append(chip);
+      }
+      document.querySelector('#provenance').textContent = 'Demo response · ' + responseBackend;
+      document.querySelector('#answer-error').classList.remove('visible');
+      document.querySelector('#empty-state').hidden = true;
+      document.querySelector('#answer-wrap').classList.add('visible');
+      if (ttsEnabled) speak(answer);
+    }
+
+    function finishRun() {
+      runInProgress = false;
+      finalSourceId = null;
+      finalObservationSeen = false;
+      if (responseTimer) clearTimeout(responseTimer);
+      responseTimer = null;
+      document.querySelector('#processing').classList.remove('visible');
+      hasRunBefore = true;
+      setMediaControlsLocked(false);
+      updateRunButton();
+    }
+
+    function speak(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      ttsUtterance = new SpeechSynthesisUtterance(text);
+      ttsUtterance.onstart = () => document.querySelector('#speak-pill').classList.add('visible');
+      ttsUtterance.onend = ttsUtterance.onerror = () => document.querySelector('#speak-pill').classList.remove('visible');
+      window.speechSynthesis.speak(ttsUtterance);
     }
 
     function announce(event) {
@@ -251,17 +575,51 @@
     function setMicrophoneButtons(recording) {
       micButton.disabled = recording;
       stopMicButton.disabled = !recording;
+      const toggle = document.querySelector('#voice-toggle');
+      toggle.classList.toggle('recording', recording);
+      toggle.setAttribute('aria-label', recording ? 'Finish recording' : 'Start recording');
+      if (recording) {
+        microphoneStartedAt = performance.now();
+        setVoiceCaption('Recording · 00:00', 'Tap again to finish');
+        document.querySelector('#voice-tile').classList.add('is-recording');
+        microphoneTimer = window.setInterval(() => {
+          const elapsed = Math.floor((performance.now() - microphoneStartedAt) / 1000);
+          const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+          const seconds = String(elapsed % 60).padStart(2, '0');
+          setVoiceCaption('Recording · ' + minutes + ':' + seconds, 'Tap again to finish');
+        }, 500);
+      } else {
+        clearInterval(microphoneTimer);
+        microphoneTimer = null;
+        document.querySelector('#voice-tile').classList.remove('is-recording');
+        if (!recordedWavBytes) setVoiceCaption('Tap to record', 'Or upload an existing recording');
+      }
+    }
+
+    function setVoiceCaption(title, detail) {
+      const caption = document.querySelector('#voice-caption');
+      const hint = document.createElement('small');
+      hint.textContent = detail;
+      caption.replaceChildren(document.createTextNode(title), hint);
     }
 
     function restartSession() {
+      if (runInProgress || document.querySelector('#voice-toggle').classList.contains('recording')) {
+        if (!window.confirm('Start a new session? This ends the current task and clears its local draft.')) return;
+      }
       if (microphone) {
         microphone.stream.getTracks().forEach((track) => track.stop());
+        microphone.context.close();
         microphone = null;
       }
+      if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+      window.speechSynthesis?.cancel();
       window.location.reload();
     }
 
     async function startMicrophone() {
+      window.speechSynthesis?.cancel();
+      document.querySelector('#speak-pill').classList.remove('visible');
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: 'This browser does not expose microphone capture.' } });
         return;
@@ -305,6 +663,12 @@
         recorder.connect(silentGain);
         silentGain.connect(context.destination);
         microphone = { stream, context, source, recorder, silentGain, chunks, sampleRate: context.sampleRate };
+        if (document.querySelector('#audio').files[0]) {
+          document.querySelector('#audio').value = '';
+          document.querySelector('#dock-error').textContent = 'Microphone recording selected instead of the uploaded WAV.';
+          renderStagedMedia();
+          updateRunButton();
+        }
         setMicrophoneButtons(true);
         show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: true } });
       } catch (error) {
@@ -331,13 +695,10 @@
           message: 'Microphone recording reached the 8 MiB limit and was stopped.'
         } });
       }
-      const wav = encodeWav(current.chunks, current.sampleRate);
-      const uploaded = await enqueueMediaAction(() => send('audio', () => ({
-          data_base64: bytesToBase64(wav),
-          filename: 'browser-microphone.wav',
-          utterance_id: nextMediaId('mic-audio')
-        })));
-      show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: false, uploaded } });
+      recordedWavBytes = encodeWav(current.chunks, current.sampleRate);
+      setVoiceCaption('Voice recording ready', 'It will be sent with your task');
+      renderStagedMedia();
+      updateRunButton();
     }
 
     function enqueueMediaAction(action) {
@@ -348,10 +709,9 @@
     function sendFile(kind, selector, fallback) {
       const file = document.querySelector(selector).files[0];
       const action = async () => {
-        if (!file) {
-          send(kind, { path: fallback });
-          return;
-        }
+        if (!file) return false;
+        const mediaLabel = kind === 'audio' ? 'voice recording' : 'screenshot';
+        document.querySelector('#processing').lastElementChild.textContent = 'Preparing ' + mediaLabel + '…';
         if (file.size > maxMediaBytes) {
           show({ kind: 'demo_error', payload: {
             backend: 'browser/media',
@@ -361,17 +721,239 @@
         }
         try {
           const dataBase64 = await fileToBase64(file);
-          send(kind, () => ({
+          document.querySelector('#processing').lastElementChild.textContent = 'Sending ' + mediaLabel + '…';
+          const sourceId = nextMediaId(kind === 'audio' ? 'upload-audio' : 'upload-frame');
+          latestMediaSourceId = sourceId;
+          return send(kind, () => ({
             data_base64: dataBase64,
             filename: file.name,
-            utterance_id: kind === 'audio' ? nextMediaId('upload-audio') : undefined,
-            frame_id: kind === 'frame' ? nextMediaId('upload-frame') : undefined
+            utterance_id: kind === 'audio' ? sourceId : undefined,
+            frame_id: kind === 'frame' ? sourceId : undefined
           }));
         } catch (error) {
           show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
         }
       };
       return enqueueMediaAction(action);
+    }
+
+    function canRun() {
+      return Boolean(document.querySelector('#task-text').value.trim()
+        || document.querySelector('#audio').files[0]
+        || recordedWavBytes);
+    }
+
+    function updateRunButton() {
+      const button = document.querySelector('#run-task');
+      button.disabled = !canRun() || runInProgress;
+      if (runInProgress) button.querySelector('span').textContent = 'Working…';
+      else button.querySelector('span').textContent = hasRunBefore && getDraftSignature() !== lastSubmittedSignature ? 'Run updated task' : 'Run task';
+      if (document.querySelector('#image').files[0] && !canRun()) {
+        document.querySelector('#dock-error').textContent = 'Add a text or voice request to run with this screenshot.';
+      }
+    }
+
+    function getDraftSignature() {
+      const audio = document.querySelector('#audio').files[0];
+      const image = document.querySelector('#image').files[0];
+      return JSON.stringify([
+        document.querySelector('#task-text').value,
+        audio ? [audio.name, audio.size, audio.lastModified] : recordedWavBytes ? ['microphone', recordedWavBytes.byteLength] : null,
+        image ? [image.name, image.size, image.lastModified] : null
+      ]);
+    }
+
+    function setMediaControlsLocked(locked) {
+      document.querySelector('#choose-audio').disabled = locked;
+      document.querySelector('#voice-toggle').disabled = locked;
+      const dropZone = document.querySelector('#drop-zone');
+      dropZone.setAttribute('aria-disabled', String(locked));
+      dropZone.tabIndex = locked ? -1 : 0;
+      dropZone.inert = locked;
+    }
+
+    function stageImage(file) {
+      if (!file || runInProgress) return;
+      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+      if (!isPng || file.size > maxMediaBytes) {
+        document.querySelector('#dock-error').textContent = file.size > maxMediaBytes
+          ? 'That PNG is larger than 8 MiB.'
+          : 'Choose a PNG screenshot.';
+        document.querySelector('#image').value = '';
+        if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+        stagedImageUrl = null;
+        document.querySelector('#answer-image').hidden = true;
+        document.querySelector('#answer-grid').classList.remove('with-image');
+        renderStagedMedia();
+        updateRunButton();
+        return;
+      }
+      if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+      stagedImageUrl = URL.createObjectURL(file);
+      document.querySelector('#answer-image-button').hidden = true;
+      document.querySelector('#answer-grid').classList.remove('with-image');
+      document.querySelector('#dock-error').textContent = '';
+      renderStagedMedia();
+      updateRunButton();
+    }
+
+    function renderStagedMedia() {
+      const list = document.querySelector('#staged-list');
+      list.replaceChildren();
+      const audioFile = document.querySelector('#audio').files[0];
+      if (audioFile || recordedWavBytes) {
+        const row = document.createElement('div');
+        row.className = 'staged-item';
+        const icon = document.createElement('span');
+        icon.className = 'staged-audio-icon';
+        icon.textContent = '♫';
+        const copy = document.createElement('span');
+        copy.className = 'staged-copy';
+        const name = document.createElement('span');
+        name.className = 'staged-name';
+        name.textContent = audioFile ? audioFile.name : 'Microphone recording.wav';
+        const size = document.createElement('span');
+        size.className = 'staged-size';
+        size.textContent = formatBytes(audioFile ? audioFile.size : recordedWavBytes.byteLength) + ' · staged locally';
+        copy.append(name, size);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove-media';
+        remove.disabled = runInProgress;
+        remove.setAttribute('aria-label', 'Remove voice recording');
+        remove.textContent = '×';
+        remove.onclick = () => {
+          document.querySelector('#audio').value = '';
+          recordedWavBytes = null;
+          setVoiceCaption('Tap to record', 'Or upload an existing recording');
+          renderStagedMedia();
+          updateRunButton();
+        };
+        row.append(icon, copy, remove);
+        list.append(row);
+      }
+      const imageFile = document.querySelector('#image').files[0];
+      if (imageFile && stagedImageUrl) {
+        const row = document.createElement('div');
+        row.className = 'staged-item';
+        const thumb = document.createElement('img');
+        thumb.className = 'staged-thumb';
+        thumb.src = stagedImageUrl;
+        thumb.alt = '';
+        const copy = document.createElement('span');
+        copy.className = 'staged-copy';
+        const name = document.createElement('span');
+        name.className = 'staged-name';
+        name.textContent = imageFile.name;
+        const size = document.createElement('span');
+        size.className = 'staged-size';
+        size.textContent = formatBytes(imageFile.size) + ' · staged locally';
+        copy.append(name, size);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove-media';
+        remove.disabled = runInProgress;
+        remove.setAttribute('aria-label', 'Remove screenshot');
+        remove.textContent = '×';
+        remove.onclick = () => {
+          document.querySelector('#image').value = '';
+          URL.revokeObjectURL(stagedImageUrl);
+          stagedImageUrl = null;
+          document.querySelector('#answer-image-button').hidden = true;
+          document.querySelector('#answer-grid').classList.remove('with-image');
+          renderStagedMedia();
+          updateRunButton();
+        };
+        row.append(thumb, copy, remove);
+        list.append(row);
+      }
+    }
+
+    function formatBytes(bytes) {
+      return bytes < 1024 * 1024
+        ? Math.max(1, Math.round(bytes / 1024)) + ' KB'
+        : (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    async function runTask() {
+      if (runInProgress) return;
+      const text = document.querySelector('#task-text').value.trim();
+      const audioFile = document.querySelector('#audio').files[0];
+      const imageFile = document.querySelector('#image').files[0];
+      if (!text && !audioFile && !recordedWavBytes) {
+        document.querySelector('#dock-error').textContent = 'Add a text or voice request before running your task.';
+        return;
+      }
+      clearTimeout(draftTimer);
+      draftTimer = null;
+      runInProgress = true;
+      finalObservationSeen = false;
+      finalSourceId = null;
+      activeInputKinds = [];
+      document.querySelector('#answer-error').classList.remove('visible');
+      document.querySelector('#processing').classList.add('visible');
+      document.querySelector('#processing').lastElementChild.textContent = 'Bringing your request together…';
+      document.querySelector('#run-task').disabled = true;
+      document.querySelector('#run-task').querySelector('span').textContent = 'Working…';
+      document.querySelector('#empty-state').hidden = true;
+      setMediaControlsLocked(true);
+      lastSubmittedSignature = getDraftSignature();
+      document.querySelector('#request-summary').textContent = text || (audioFile || recordedWavBytes ? 'Voice request · listening for the details' : 'Preparing your request…');
+      try {
+        if (recordedWavBytes) {
+          const sourceId = nextMediaId('mic-audio');
+          latestMediaSourceId = sourceId;
+          const sent = await enqueueMediaAction(() => send('audio', {
+            data_base64: bytesToBase64(recordedWavBytes),
+            filename: 'browser-microphone.wav',
+            utterance_id: sourceId
+          }));
+          if (!sent) throw new Error('The voice recording could not be sent.');
+          finalSourceId = sourceId;
+          activeInputKinds.push('audio');
+        } else if (audioFile) {
+          latestMediaSourceId = null;
+          const sent = await sendFile('audio', '#audio');
+          if (!sent) throw new Error('The WAV could not be sent.');
+          finalSourceId = latestMediaSourceId;
+          activeInputKinds.push('audio');
+        }
+        if (imageFile) {
+          latestMediaSourceId = null;
+          const sent = await sendFile('frame', '#image');
+          if (!sent) throw new Error('The screenshot could not be sent.');
+          if (!text) finalSourceId = latestMediaSourceId;
+          activeInputKinds.push('frame');
+        }
+        if (text) {
+          document.querySelector('#text').value = text;
+          const finalTranscript = transcript(true);
+          finalSourceId = finalTranscript.utterance_id;
+          const sent = send('transcript', finalTranscript);
+          if (!sent) throw new Error('Your request could not be sent.');
+          activeInputKinds.push('text');
+          document.querySelector('#request-summary').textContent = text;
+        }
+        if (!finalSourceId) throw new Error('No request could be sent. Check your connection and try again.');
+        responseTimer = window.setTimeout(() => {
+          if (!runInProgress) return;
+          document.querySelector('#answer-error').textContent = 'This is taking longer than expected. Your session is still open; you can try again.';
+          document.querySelector('#answer-error').classList.add('visible');
+          finishRun();
+        }, 90000);
+      } catch (error) {
+        document.querySelector('#answer-error').textContent = error.message || 'Your request could not be sent.';
+        document.querySelector('#answer-error').classList.add('visible');
+        lastSubmittedSignature = null;
+        finishRun();
+      }
+    }
+
+    function openImagePreview() {
+      if (!stagedImageUrl) return;
+      const dialog = document.querySelector('#image-dialog');
+      document.querySelector('#dialog-image').src = stagedImageUrl;
+      if (typeof dialog.showModal === 'function') dialog.showModal();
     }
 
     socket.onmessage = (message) => show(JSON.parse(message.data));
@@ -397,14 +979,112 @@
       event.preventDefault();
       send('transcript', () => transcript(true));
     };
-    document.querySelector('#partial').onclick = () => send('transcript', () => transcript(false));
-    document.querySelector('#send-audio').onclick = () => void sendFile('audio', '#audio', 'browser-mock.wav');
     micButton.onclick = () => void startMicrophone();
     stopMicButton.onclick = () => void stopMicrophone();
-    document.querySelector('#send-image').onclick = () => void sendFile('frame', '#image', 'browser-mock.png');
-    document.querySelector('#stop-speaking').onclick = () => sendInterrupt('speech');
-    document.querySelector('#stop-task').onclick = () => sendInterrupt('task');
-    document.querySelector('#restart-session').onclick = restartSession;
+    document.querySelector('#new-task').onclick = restartSession;
+    document.querySelector('#stop-speaking').onclick = () => {
+      window.speechSynthesis?.cancel();
+      document.querySelector('#speak-pill').classList.remove('visible');
+      sendInterrupt('speech');
+    };
+    document.querySelector('#tts-toggle').onchange = (event) => {
+      ttsEnabled = event.target.checked;
+      if (!ttsEnabled) {
+        if (document.querySelector('#speak-pill').classList.contains('visible')) sendInterrupt('speech');
+        window.speechSynthesis?.cancel();
+        document.querySelector('#speak-pill').classList.remove('visible');
+      }
+    };
+    if (!('speechSynthesis' in window)) {
+      document.querySelector('#tts-toggle').disabled = true;
+      document.querySelector('.tts-control span').textContent = 'Read aloud unavailable';
+    }
+    document.querySelector('#voice-toggle').onclick = () => {
+      if (microphone) void stopMicrophone();
+      else void startMicrophone();
+    };
+    document.querySelector('#choose-audio').onclick = () => document.querySelector('#audio').click();
+    document.querySelector('#audio').onchange = () => {
+      const file = document.querySelector('#audio').files[0];
+      if (!file) return;
+      if (file.size > maxMediaBytes || (!file.name.toLowerCase().endsWith('.wav') && !['audio/wav', 'audio/x-wav'].includes(file.type))) {
+        document.querySelector('#dock-error').textContent = file.size > maxMediaBytes ? 'That WAV is larger than 8 MiB.' : 'Choose a WAV audio file.';
+        document.querySelector('#audio').value = '';
+        return;
+      }
+      recordedWavBytes = null;
+      setVoiceCaption('WAV ready', 'It will be sent with your task');
+      document.querySelector('#dock-error').textContent = '';
+      renderStagedMedia();
+      updateRunButton();
+    };
+    document.querySelector('#drop-zone').onclick = () => {
+      if (!runInProgress) document.querySelector('#image').click();
+    };
+    document.querySelector('#drop-zone').onkeydown = (event) => {
+      if (runInProgress) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        document.querySelector('#image').click();
+      }
+    };
+    document.querySelector('#image').onchange = () => stageImage(document.querySelector('#image').files[0]);
+    const dropZone = document.querySelector('#drop-zone');
+    for (const eventName of ['dragenter', 'dragover']) dropZone.addEventListener(eventName, (event) => {
+      if (runInProgress) return;
+      event.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    for (const eventName of ['dragleave', 'drop']) dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', (event) => {
+      if (runInProgress) return;
+      stageImage(event.dataTransfer.files[0]);
+    });
+    document.querySelector('#task-text').oninput = (event) => {
+      const value = event.target.value;
+      document.querySelector('#text').value = value;
+      document.querySelector('#char-count').textContent = value.length.toLocaleString() + ' / 16,384';
+      document.querySelector('#dock-error').textContent = '';
+      updateRunButton();
+      clearTimeout(draftTimer);
+      if (value.trim() && !runInProgress) {
+        draftTimer = window.setTimeout(() => send('transcript', () => transcript(false)), 600);
+      }
+    };
+    document.querySelector('#run-task').onclick = () => void runTask();
+    document.querySelector('#follow-form').onsubmit = (event) => {
+      event.preventDefault();
+      const followup = document.querySelector('#follow-input').value.trim();
+      if (!followup) return;
+      document.querySelector('#task-text').value = followup;
+      document.querySelector('#text').value = followup;
+      document.querySelector('#follow-input').value = '';
+      document.querySelector('#task-text').dispatchEvent(new Event('input', { bubbles: true }));
+      void runTask();
+    };
+    document.querySelectorAll('.prompt-chip').forEach((chip) => {
+      chip.onclick = () => {
+        const input = document.querySelector('#follow-input');
+        input.value = chip.textContent;
+        input.focus();
+      };
+    });
+    document.querySelector('#answer-image-button').onclick = openImagePreview;
+    document.querySelector('#connection-indicator').onclick = restartSession;
+    document.querySelector('#close-image-dialog').onclick = () => document.querySelector('#image-dialog').close();
+    document.querySelector('#image-dialog').addEventListener('click', (event) => {
+      if (event.target === event.currentTarget) event.currentTarget.close();
+    });
+    window.addEventListener('beforeunload', () => {
+      clearTimeout(draftTimer);
+      clearInterval(microphoneTimer);
+      window.speechSynthesis?.cancel();
+      microphone?.stream.getTracks().forEach((track) => track.stop());
+      if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+    });
   </script>
 </body>
 </html>

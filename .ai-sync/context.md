@@ -1,5 +1,11 @@
 # AccessFlow shared agent log
 
+## [2026-09-23 10:45 UTC] — Codex
+**Task:** Implement the approved AccessFlow Input Dock + Answer Stage redesign.
+**Changes:** Replaced the visible developer-oriented stacked UI with a responsive task workspace; added local WAV/PNG staging, microphone recording, debounced text drafts, answer/provenance presentation, follow-up prompts, optional browser speech, and screenshot preview dialog. Added final-only demo observation notices without changing shared contracts. Updated demo tests, the canonical redesign implementation record, and the shared artifact summary.
+**Status:** Implementation and target-size browser review verified.
+**Notes:** Full suite 810 passed, 1 existing xfailed, 2 dependency warnings; Ruff, inline JavaScript syntax, and diff checks passed. Isolated Edge screenshots and text/PNG flows were reviewed at 1440×1024, 834×1194, and 390×844; a long headline overflow was corrected. Mixed-media events remain sequential rather than an atomic server batch. Microphone device permission, live ASR/vision quality, and non-mock reasoning remain unverified. No deployment, push, or shared contract change.
+
 Shared project context for Claude Code, Codex and Antigravity. Personal knowledge is
 not copied into this repository. Canonical plan and interface copies are in artifacts/.
 
@@ -1197,3 +1203,4 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** 21 compatible pinned packages,78 package files verified,validation/smoke no errors,no-tool100/final735ms. Same Windows host,not clean OS/Docker; no audio or vision score. Read-only source review confirmed stale vision-flag rejection notes and current Samsung factory/MP3/model-path gaps. MP3 ownership question pending; independent runtime/profile work available. AI-assisted inspection and verification; no human code edits. No application/B edits,workflow,release,submission or model downloads. Prior full1186pass/2skip/1xfail remains applicable source evidence,not a rerun. Push authorized.
 
 ---
+2026-09-23 verification: Repaired the intermittent stale-frame timeout boundary without permitting overlapping native work. `timeout_s` remains the provider execution deadline and independently bounds native-permit admission; queue expiry has an explicit diagnostic. Replaced fixed sleeps with an observed permit gate and added genuine queue-expiry coverage. Repeated isolated success: 20/20; perception: 218 passed; full suite: 809 passed, 1 xfailed, 2 warnings; Ruff and diff checks pass. No engine, contract, adapter, dependency or media files changed.

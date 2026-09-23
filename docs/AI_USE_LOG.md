@@ -1,5 +1,9 @@
 # AI-use development log
 
+## 2026-09-23 — AccessFlow frontend redesign
+
+AI-assisted implementation: Rebuilt the owned demo UI around the approved input-dock/answer-stage concept; staged media locally until Run, preserved existing event and media bounds, and added final-only demo observation notices for source correlation and provenance. Parallel read-only subagent reviews identified accessibility, media-lock, and responsive-layout gaps that were fixed. Full suite: 810 passed, 1 existing xfailed, 2 warnings; Ruff, inline JavaScript syntax, and diff checks passed. Isolated Edge browser QA inspected empty/text states at 1440×1024, 834×1194, and 390×844, plus PNG upload/preview and overflow at all three sizes. No shared contract/controller/dependency changes, deployment, or push.
+
 ## 2026-09-13 — Codex bootstrap
 
 - Feature origin: User-approved AccessFlow plan; original friend-agent proposal and prior
@@ -1213,3 +1217,4 @@ changed.
 **Notes:** 21 compatible pinned packages,78 package files verified,validation/smoke no errors,no-tool100/final735ms. Same Windows host,not clean OS/Docker; no audio or vision score. Read-only source review confirmed stale vision-flag rejection notes and current Samsung factory/MP3/model-path gaps. MP3 ownership question pending; independent runtime/profile work available. AI-assisted inspection and verification; no human code edits. No application/B edits,workflow,release,submission or model downloads. Prior full1186pass/2skip/1xfail remains applicable source evidence,not a rerun. Push authorized.
 
 ---
+2026-09-23 AI-assisted implementation and verification: Clarified the native perception timeout boundary, distinguished provider execution timeout from native-permit queue expiry, and preserved permit ownership until the underlying thread returns. Replaced stale-frame wall-clock sleeps with an observed admission gate and added a queue-expiry regression. Repeated isolated success passed 20/20; perception passed 218; full suite passed 809 with 1 xfailed and 2 warnings; Ruff and diff checks passed. No engine, contract, adapter, dependency or media files changed.
