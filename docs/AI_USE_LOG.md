@@ -1165,3 +1165,11 @@ changed.
 **Notes:** No frontend/backend changes, application tests, Stitch execution or direct message sent. Implementation goal remains paused. AI-assisted documentation edit from the user's explicit workflow choice; no human code edits. Checked Markdown links/fences and Git whitespace before committing.
 
 ---
+
+## [2026-09-23 22:37] — Implementation checkpoint
+**Task:** Resume Mridul-only work and complete the interrupted scoped corpus review.
+**Changes:** Bounded binary read with overflow refusal, normalized resolution failures, strict configured byte budget,17 new boundary cases and preserved existing open/oversize assertions. Completed review with explicit trust/platform limits.
+**Status:** Completed slice; overall goal active.
+**Notes:** Baseline87pass; new reproductions11fail/5pass/1skip; focused116pass/1skip; full1086pass/2skip/1xfail in89.55s, Ruff clean. Native symlink skips and existing frame xfail remain open. AI-assisted source review, implementation and tests after explicit user resume; no human code edits. Atishay remote advanced but no B files merged/edited. Push authorized; no workflow/release/submission.
+
+---

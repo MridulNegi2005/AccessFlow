@@ -1,5 +1,28 @@
 # Implementation status
 
+## Resumed A-side corpus review — 23 September 2026
+
+The user explicitly resumed Mridul's implementation work after the design handoff.
+The goal is active again; earlier pause instructions below are historical.
+
+Completed the scoped corpus boundary review and repaired the actual read-byte cap,
+normalized resolution errors and invalid read-budget configuration. The review does
+not claim adversarial-installation or native junction certification. Atishay's newly
+pushed frontend remains on his own branch and was not merged or edited in this slice.
+
+Validation: 1086 passed / 2 skipped / 1 xfailed, two dependency warnings, 89.55s;
+repository Ruff clean. Focused corpus/authority suite:116 passed/1 skipped. New tests
+first reproduced11 failures/5 passes/1 skip against original source. Both final skips
+are native Windows symlink permission limits; the existing conflicting-frame xfail
+remains open. No live model evidence from this slice.
+
+Review: docs/reviews/CORPUS_BOUNDARY_REVIEW_2026-09-23.md.
+Key files: src/accessflow/corpus.py and owned corpus tests, plus review/status docs.
+Next: measured prompt/input-token reduction and evidence-grounded answers, then
+broader official evaluation. Shared media/timing and platform/submission gates remain.
+Continue completed-checkpoint pushes on mridul/engine with configured identity and
+no attribution trailers. No teammate implementation, workflow, release or submission changes.
+
 ## User-requested pause checkpoint — 22 September 2026
 
 The user requested a pause after this checkpoint is pushed. Implementation and

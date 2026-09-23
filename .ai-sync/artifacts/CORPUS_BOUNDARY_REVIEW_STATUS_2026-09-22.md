@@ -1,5 +1,10 @@
 # Corpus boundary review status — 22 September 2026
 
+Update, 23 September: the user resumed implementation. The completed scoped review,
+repairs, reproductions and retained platform limitations are in
+[CORPUS_BOUNDARY_REVIEW_2026-09-23.md](../../docs/reviews/CORPUS_BOUNDARY_REVIEW_2026-09-23.md).
+The original pause record below is historical, not the current review status.
+
 Owner: Mridul. **Incomplete; no security closure claimed.**
 
 A bounded read-only review was started after the package checkpoint. The user then
