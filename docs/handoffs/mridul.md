@@ -1,5 +1,28 @@
 # Mridul workstream handoff
 
+## Frontend design handoff — 23 September 2026
+
+Current task: prepare the approved voice-first frontend design and independent
+implementation instructions for Atishay. This documentation task is complete;
+Mridul's implementation/evaluation goal remains paused at the previous checkpoint.
+
+Key files: root DESIGN.md; docs/design/README.md, FRONTEND_HANDOFF.md,
+ATISHAY_AGENT_PROMPT.md, STITCH_PROMPTS.md; two approved reference PNGs and their
+SHA-256 manifest. Shared specification copies are under .ai-sync/artifacts/.
+Atishay owns implementation. Both teammates must coordinate any shared event,
+provenance, timing or action-outcome seam identified in the handoff.
+
+Validation: seven Markdown files checked, thirteen relative links resolved,
+two reference hashes verified, no broken fences/links found. No application tests,
+model evaluations, frontend changes or perception/controller changes were made.
+The existing browser captures WAV then uploads on stop; the approved continuous
+voice experience remains implementation work, not a claimed existing capability.
+
+Next: give Atishay docs/design/ATISHAY_AGENT_PROMPT.md in his own checkout.
+Direct implementation is recommended; Stitch prompts are optional visual exploration.
+No Stitch project was generated or published. No workflow/release/submission change.
+Use configured Git identity without assistant attribution or coauthor trailers.
+
 ## User-requested pause checkpoint — 22 September 2026
 
 The user requested a pause after this checkpoint is pushed. Implementation and
