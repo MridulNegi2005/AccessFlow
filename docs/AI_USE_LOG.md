@@ -1,5 +1,9 @@
 # AI-use development log
 
+## 2026-09-23 — AccessFlow frontend redesign
+
+AI-assisted implementation: Rebuilt the owned demo UI around the approved input-dock/answer-stage concept; staged media locally until Run, preserved existing event and media bounds, and added final-only demo observation notices for source correlation and provenance. Parallel read-only subagent reviews identified accessibility, media-lock, and responsive-layout gaps that were fixed. Full suite: 810 passed, 1 existing xfailed, 2 warnings; Ruff, inline JavaScript syntax, and diff checks passed. Isolated Edge browser QA inspected empty/text states at 1440×1024, 834×1194, and 390×844, plus PNG upload/preview and overflow at all three sizes. No shared contract/controller/dependency changes, deployment, or push.
+
 ## 2026-09-13 — Codex bootstrap
 
 - Feature origin: User-approved AccessFlow plan; original friend-agent proposal and prior

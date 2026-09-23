@@ -1,5 +1,19 @@
 # Active Handoff
 
+## Current checkpoint — 2026-09-23
+
+Last updated by Codex on branch atishay/perception at HEAD 967e39d. The AccessFlow frontend redesign is implemented in the owned demo paths and documented in demo/FRONTEND_REDESIGN_SPEC.md and artifacts/FRONTEND_REDESIGN.md.
+
+Verification: full repository suite 810 passed, 1 existing xfailed, 2 dependency warnings; repository Ruff passed; inline browser JavaScript parsed; git diff --check passed. No deployment or push occurred.
+
+Visual browser QA is complete at 1440×1024, 834×1194, and 390×844 using an isolated local Edge profile. Empty and mock text-response states were inspected at all three sizes; a generated PNG upload, focusable full-image preview, and document-width behavior were checked. A long response headline overflow and a cramped mobile header were found and fixed. Remaining limits: microphone permission, live ASR/vision quality, and non-mock reasoning were not certified. See `demo/FRONTEND_REDESIGN_SPEC.md` and `demo/FRONTEND_REDESIGN_PREVIEW.png` for the canonical record and desktop capture.
+
+Mixed-media inputs are sent as sequential existing events. The page hides earlier finals while a Run action is in flight and displays the result correlated to the final submitted source via a final-only demo observation notice. This is presentation coalescing, not a transaction or shared-contract change.
+
+The current task did not modify docs/STATUS.md because AGENTS.md assigns that file to Mridul; its last measured project snapshot is older than this frontend work.
+
+## Historical handoff snapshot — 2026-09-16 (superseded)
+
 > Last updated by: Claude Code
 > Timestamp: 2026-09-16
 > Branch: `main`. Current status, measured by the orchestrator on 16 September 2026 at

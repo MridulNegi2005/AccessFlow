@@ -1,5 +1,15 @@
 # Atishay workstream handoff
 
+## 2026-09-23 — AccessFlow frontend redesign
+
+**Task:** Implement the approved Input Dock + Answer Stage visual direction in the owned browser demo.
+
+**Changes:** Replaced the visible stacked developer UI with an ivory input dock and charcoal answer stage. Added multiline text entry with debounced partial revisions; WAV selection and microphone recording staged until Run; PNG selection/drop with local thumbnail/removal/full preview; response/clarification rendering with truthful backend provenance; follow-up chips/composer; optional browser speech and Stop; and a New task session reset. Removed visible raw JSON event cards, manual partial-send, the large backend banner, separate upload buttons, and Stop task control. Kept the existing event/session contract, media budget, WAV encoder, speech interrupt, and one-session behavior. Added a final-only demo observation notice for display/correlation; no shared contract or controller changed.
+
+**Status:** Full suite 810 passed, 1 existing xfailed, 2 dependency warnings; Ruff, inline JavaScript syntax, and diff checks passed. Isolated Edge visual QA completed at 1440×1024, 834×1194, and 390×844 for empty and mock text states; generated PNG upload, preview focus/activation, loaded full-image dialog, and overflow behavior were checked. No deployment or push.
+
+**Next:** Manually accept physical microphone permission, screen-reader/browser combinations, speech playback, and live/non-mock backend behavior. See `demo/FRONTEND_REDESIGN_SPEC.md` for tested scope and limitations.
+
 Date and branch: 2026-09-16 / atishay/perception
 Completed: Perception foundation, deterministic turn-policy baseline, replaceable PNG vision seam, minimal fake-agent demo, optional loopback Ollama JSON reasoner, opt-in local audio demo path, opt-in local Ollama vision path, session path isolation, local model configuration guard, synthetic audio/image provenance fixtures, PCM/activity baseline, local ASR seam, dependency-free PCM backend, optional VAD/timing candidates, session-scoped browser media upload, microphone WAV capture, held-out generated-case evaluation, weighted 60-case scenario inventory with hash-checked assets, feedback-session template, demo recording script, template-neutral presentation outline and multimodal end-to-end evidence implemented in owned paths; shared fakes/interfaces remain unchanged.
 Contract version used: 0.1

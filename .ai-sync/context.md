@@ -1,5 +1,11 @@
 # AccessFlow shared agent log
 
+## [2026-09-23 10:45 UTC] — Codex
+**Task:** Implement the approved AccessFlow Input Dock + Answer Stage redesign.
+**Changes:** Replaced the visible developer-oriented stacked UI with a responsive task workspace; added local WAV/PNG staging, microphone recording, debounced text drafts, answer/provenance presentation, follow-up prompts, optional browser speech, and screenshot preview dialog. Added final-only demo observation notices without changing shared contracts. Updated demo tests, the canonical redesign implementation record, and the shared artifact summary.
+**Status:** Implementation and target-size browser review verified.
+**Notes:** Full suite 810 passed, 1 existing xfailed, 2 dependency warnings; Ruff, inline JavaScript syntax, and diff checks passed. Isolated Edge screenshots and text/PNG flows were reviewed at 1440×1024, 834×1194, and 390×844; a long headline overflow was corrected. Mixed-media events remain sequential rather than an atomic server batch. Microphone device permission, live ASR/vision quality, and non-mock reasoning remain unverified. No deployment, push, or shared contract change.
+
 Shared project context for Claude Code, Codex and Antigravity. Personal knowledge is
 not copied into this repository. Canonical plan and interface copies are in artifacts/.
 

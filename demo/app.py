@@ -69,6 +69,7 @@ class DemoPerception:
     def __init__(self, *, audio_backend=None, vision_backend=None):
         self._audio_backend = audio_backend
         self._vision_backend = vision_backend
+        self.observation_callback = None
         self._closed = False
         self._vision_perception = (
             LocalPerception(vision_provider=vision_backend)
@@ -156,12 +157,27 @@ class DemoPerception:
         ):
             raise ValueError("configured vision backend requires uploaded PNG bytes")
 
+    def _notify_observation(self, observation: Observation) -> None:
+        callback = self.observation_callback
+        if not callable(callback) or not observation.final:
+            return
+        callback(
+            {
+                "modality": observation.modality,
+                "source_id": observation.source_id,
+                "revision": observation.revision,
+                "text": observation.text,
+                "backend": observation.backend,
+                "final": observation.final,
+            }
+        )
+
     async def observe(self, event):
         if self._closed:
             return
         if isinstance(event, TranscriptEvent):
             payload = event.payload
-            yield Observation(
+            observation = Observation(
                 event_id=event.event_id,
                 source_id=payload.utterance_id,
                 revision=payload.revision,
@@ -172,14 +188,17 @@ class DemoPerception:
                 speech_end=payload.speech_end,
                 backend="demo/mock-text",
             )
+            self._notify_observation(observation)
+            yield observation
             return
         if isinstance(event, AudioEvent):
             if self._audio_backend is not None:
                 async for observation in self._audio_backend.observe(event):
+                    self._notify_observation(observation)
                     yield observation
                 return
             payload = event.payload
-            yield Observation(
+            observation = Observation(
                 event_id=event.event_id,
                 source_id=payload.utterance_id,
                 revision=payload.revision,
@@ -190,14 +209,17 @@ class DemoPerception:
                 speech_end=payload.speech_end,
                 backend="demo/mock-audio",
             )
+            self._notify_observation(observation)
+            yield observation
             return
         if isinstance(event, FrameEvent):
             if self._vision_backend is not None:
                 async for observation in self._vision_perception.observe(event):
+                    self._notify_observation(observation)
                     yield observation
                 return
             payload = event.payload
-            yield Observation(
+            observation = Observation(
                 event_id=event.event_id,
                 source_id=payload.frame_id,
                 revision=0,
@@ -208,6 +230,8 @@ class DemoPerception:
                 speech_end=event.timestamp,
                 backend="demo/mock-image",
             )
+            self._notify_observation(observation)
+            yield observation
             return
         raise ValueError(f"Unsupported demo event: {event.kind}")
 
@@ -611,6 +635,10 @@ async def websocket(websocket: WebSocket) -> None:
             outgoing.put_nowait(event)
         except asyncio.QueueFull as error:
             raise RuntimeError("demo output queue is full") from error
+
+    perception.observation_callback = lambda payload: enqueue_output(
+        {"kind": "demo_observation", "payload": payload}
+    )
 
     agent = Agent(
         perception,
