@@ -1,0 +1,253 @@
+{
+  "mode": "isolated-venv/windows/candidate-package-development",
+  "python": "3.11.15",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "isolated_python": true,
+  "base_commit": "89f5407eabffa603c194ff1c702732dbad579815",
+  "package_source_dirty": true,
+  "package_hashes_verified": true,
+  "adapter_import": "accessflow\\adapters\\samsung.py",
+  "installed_packages": [
+    "annotated-doc==0.0.5",
+    "annotated-types==0.8.0",
+    "anyio==4.15.1",
+    "attrs==26.1.0",
+    "certifi==2026.7.22",
+    "click==8.5.0",
+    "fastapi==0.141.1",
+    "h11==0.16.0",
+    "httpcore==1.0.9",
+    "httpx==0.28.1",
+    "idna==3.19",
+    "jsonschema-specifications==2025.9.1",
+    "jsonschema==4.26.0",
+    "pydantic==2.13.5",
+    "pydantic_core==2.46.5",
+    "referencing==0.37.0",
+    "rpds-py==2026.6.3",
+    "starlette==1.6.0",
+    "typing-inspection==0.4.4",
+    "typing_extensions==4.16.0",
+    "uvicorn==0.52.4"
+  ],
+  "validation_errors": [],
+  "contract_errors": [],
+  "failure": null,
+  "runtime_profile": {
+    "ACCESSFLOW_SAMSUNG_BACKEND": "groq",
+    "ACCESSFLOW_GROQ_MODEL": "qwen/qwen3.8-27b",
+    "ACCESSFLOW_GROQ_URL": "https://api.groq.com/openai/v1",
+    "ACCESSFLOW_GROQ_STRUCTURED": "0",
+    "ACCESSFLOW_MAX_OUTPUT_TOKENS": "950",
+    "ACCESSFLOW_MAX_CONTEXT_CHARS": "32768",
+    "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
+    "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1",
+    "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": "compact-v2",
+    "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": "evidence"
+  },
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 235.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "Find a flight to Denver and ",
+        "end_of_turn": false
+      },
+      "t_ms": 109.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "book the 8 AM one for Alice.",
+        "end_of_turn": true
+      },
+      "t_ms": 922.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 922.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 922.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "baf5e37a-5f6c-40eb-8727-93ed209b6fc4",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Denver"
+      },
+      "t_ms": 1984.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "baf5e37a-5f6c-40eb-8727-93ed209b6fc4",
+      "api_name": "flight_search",
+      "args": {
+        "destination": "Denver"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "flights": [
+          {
+            "flight_id": "FL-DEN-8AM",
+            "depart": "08:00",
+            "price_usd": 129
+          },
+          {
+            "flight_id": "FL-DEN-2PM",
+            "depart": "14:00",
+            "price_usd": 99
+          }
+        ]
+      },
+      "t_ms": 3890.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "37dda27e-0834-4a8f-b3b9-e1e32eb4ced1",
+      "api_name": "book_flight",
+      "args": {
+        "flight_id": "FL-DEN-8AM",
+        "passenger_name": "Alice"
+      },
+      "t_ms": 5047.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "37dda27e-0834-4a8f-b3b9-e1e32eb4ced1",
+      "api_name": "book_flight",
+      "args": {
+        "flight_id": "FL-DEN-8AM",
+        "passenger_name": "Alice"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "booking_id": "BK-0001",
+        "flight_id": "FL-DEN-8AM"
+      },
+      "t_ms": 6359.0
+    },
+    {
+      "kind": "action",
+      "action": "final_response",
+      "payload": {
+        "text": "The mock action is confirmed. Status: \"success\". Booking ID: \"BK-0001\". Flight ID: \"FL-DEN-8AM\"."
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "Denver",
+          "passenger_name": "Alice",
+          "depart_time": "08:00",
+          "flight_id": "FL-DEN-8AM"
+        }
+      },
+      "t_ms": 6375.0
+    }
+  ],
+  "score": {
+    "scenario_id": "pub_03_text_chained_booking",
+    "total": 100.0,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 1.0,
+        "points": 61.5,
+        "detail": {
+          "fraction": 1.0,
+          "checkpoints": [
+            {
+              "id": "search_called",
+              "type": "tool_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "book_called",
+              "type": "tool_called",
+              "weight": 0.45,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "final_confirms",
+              "type": "final_response_contains",
+              "weight": 0.25,
+              "passed": true,
+              "note": "matched final_response text"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 22.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "wall_s": 8.218000000000757,
+  "limitations": [
+    "One exposed chained-booking text attempt; not full official repeated evaluation.",
+    "Reuses verified isolated Python3.11 environment with identical pins; not a new install or Docker.",
+    "Explicit candidate compact-v2/evidence; optional ASR and vision runtimes not included."
+  ]
+}

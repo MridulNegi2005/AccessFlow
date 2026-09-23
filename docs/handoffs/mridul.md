@@ -1,5 +1,24 @@
 # Mridul workstream handoff
 
+## Explicit package read mode — 24 September 2026
+
+Reproduced/fixed an inherited environment changing package read-answer behavior
+without profile conflict. Builder now explicitly selects prompt/read modes and the
+entry validates/freezes both before environment mutation. Defaults remain full/prose;
+compact-v2/evidence is selectable,not silently promoted to release configuration.
+
+Focused87passed; Ruff clean. Full1failed/1194passed/2skipped/1xfail in59.38s: the same
+merged demo vision-recovery ordering failure recurred; unchanged B/controller code,
+no rerun-to-green. A controller readiness review/gated reproduction is next; do not
+claim this media race closed. No B source/test changes in this slice.
+
+Generated candidate package passed isolated import/hash/contract checks and one
+live Samsung booking100 (one search,one mock write,final6375ms). Reused the verified
+Python3.11 environment/21pins; not a new clean install or repeated score. Evidence:
+docs/evidence/package-profile-2026-09-24/README.md; usage docs/SAMSUNG_PACKAGE.md.
+Goal active. Continue A-owned pending-media diagnosis/runtime work. MP3 bridge
+ownership still awaits user answer. Push own branch only; main stays at merged89f5407.
+
 ## Combined branch checkpoint — 24 September 2026
 
 Merged Mridul c9136eb into main first (a40cffd), then Atishay ed9d581 (8c609d9).

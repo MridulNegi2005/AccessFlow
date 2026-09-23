@@ -1212,3 +1212,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Initial full1fail/1187pass/2skip/1xfail; four isolated passes; final1188pass/2skip/1xfail in55.42s. Vision-recovery ordering issue remains open,not hidden by passing repeats. Ruff,JS parser and offline4/4 passed; same B blobs as remote branch,workflow unchanged. AI-assisted merge resolution and validation; no new author trailers,no B branch rewrite,no deployment/submission/tag. Raw evidence retained with hashes. MP3 bridge ownership still pending; independent A runtime work remains available.
 
 ---
+
+## [2026-09-24 00:11] — Implementation checkpoint
+**Task:** Freeze package read-answer mode and permit explicit candidate profile builds after branch integration.
+**Changes:** Builder flags/profile,entry validation,7 owned regressions,isolated packaged booking verification and exact evidence. Defaults remain full/prose.
+**Status:** Package slice complete; general goal active; known media race remains open.
+**Notes:** Baseline2fail/18pass; focused87pass,Ruff clean; full1fail/1194pass/2skip/1xfail in59.38s (same merged demo recovery issue). No passing rerun substituted. Actual candidate package validation/smoke/hash passed,booking100 with1 mock write/final6375ms,reused isolated venv. AI-assisted implementation/verification,no human code edits; ongoing permitted read-only controller review. No B edits,workflow,main push,release,submission or model downloads. MP3 ownership pending; next deterministic A pending-media reproduction.
+
+---

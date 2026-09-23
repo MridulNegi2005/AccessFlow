@@ -45,8 +45,9 @@ and explicitly loads `docs/TOOLS.md`. It never receives scenario dictionaries or
 answer keys. The copied evaluator owns those inputs.
 
 `runtime_profile.json` declares Groq, the selected model, the official API endpoint,
-full prompt, output cap950, context-character cap32768, partial debounce1.0s,
-fast read retry and JSON-object response mode. Conflicting existing environment
+the selected prompt/read-answer modes (defaults full/prose), output cap950,
+context-character cap32768, partial debounce1.0s, fast read retry and JSON-object
+response mode. Conflicting existing environment
 values cause an explicit error instead of silently changing the reported profile.
 
 Supply `SECRET_GROQ_API_KEY` in the environment/portal. The entry maps this to the
@@ -125,3 +126,20 @@ Mridul owns the Samsung boundary, dependencies, package profile and integration.
 Neither should implement the other's files. Demo correlation and frame timing
 reports remain open even though this full run passed. No release tag, workflow
 change, registration, publishing of the generated kit or final submission occurred.
+
+## Explicit candidate profiles — 24 September 2026
+
+The builder now accepts `--prompt-profile compact-v2 --read-answer-mode evidence`
+for an explicitly selected candidate. Both settings are serialized in the package
+profile, validated against supported modes, and enforced before environment mutation.
+An inherited conflicting read-answer mode now fails instead of silently changing
+behavior. Defaults remain full/prose; this does not select the release configuration.
+
+```powershell
+uv run --offline --frozen python -m scripts.build_samsung_package --kit ../participant-kit/participant-kit --output artifacts/candidate-package --team AccessFlow --model qwen/qwen3.8-27b --prompt-profile compact-v2 --read-answer-mode evidence
+```
+
+Regenerate packages with the current builder; do not mix an old runtime_profile.json
+with the new entry wrapper. Old self-contained packages retain their old wrapper and
+are unchanged. Other multimodal/model installation and repeated-evaluation gates
+remain open. Candidate creation is local, not publication or submission.
