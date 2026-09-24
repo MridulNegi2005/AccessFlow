@@ -47,6 +47,12 @@ native export**; the clicks are not being reported as successful downloads. Revi
 two anchors against the approved sources at readable scale, correct any mismatches, and
 save only reviewed exports.
 
+The selected meeting frame's context-menu **Download** was also tried with a browser
+download-event watcher; no event fired. **Copy as → Copy as PNG** displayed “Copied as
+PNG,” but this session's browser clipboard API returned no image bytes. If using that
+option manually, paste into an image editor and save the PNG before counting it as an
+export. No file has been saved from either action here.
+
 ## Manual review and export still needed
 
 The project is accessible in the Codex in-app browser. To complete the source review and
@@ -58,7 +64,8 @@ native export without claiming an export that is not present:
 2. Attach `DESIGN.md` and the two PNGs from `docs/design/references/` using Stitch's
    **Choose Files** action, then correct the anchors against those exact source assets.
 3. Use Stitch’s `Shift+D` export shortcut or right-click each accepted frame and choose
-   **Copy As → PNG**; save the accepted anchors and reviewed variants here as
+   **Copy as → Copy as PNG**, then paste into an image editor and save it. Save the
+   accepted anchors and reviewed variants here as
    `01-photo-answer.png`, `02-meeting-correction.png`, etc.
 4. If Stitch offers a project ZIP export, confirm the archive actually downloaded before
    recording it here. Inspect an archive in an isolated folder before moving assets into

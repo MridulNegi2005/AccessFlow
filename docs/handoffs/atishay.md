@@ -655,3 +655,9 @@ newly edited code/test paths in this continuation. No shared engine/contracts,
 adapters, root config or lockfile were changed. Atishay and Mridul need to
 coordinate structured action identity/write outcomes before live meeting-card
 projection; causal media-answer and speech-interruption contracts remain open.
+
+Delivery: `f0ca543` was pushed to `origin/atishay/perception` and the remote ref
+verified. The two unrelated untracked review notes were not included. Stitch's
+per-frame Download emitted no browser download event; Copy as PNG showed a
+success toast but this session could not read image bytes from its clipboard.
+No native Stitch asset was saved or claimed, and nothing was deployed.

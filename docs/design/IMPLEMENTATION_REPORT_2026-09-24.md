@@ -87,10 +87,12 @@ names with platform sans-serif/Georgia fallbacks; no font is claimed to be self-
   this demo, not Stitch exports, approved photo assets or model evidence. The mic-denial and
   disconnected captures are simulated UI states, not screenshots of physical-device failures.
 
-The pre-existing `DESIGN.md`, approved reference PNGs and two untracked websocket/timing
-follow-up reviews were left intact. `docs/STATUS.md`, engine files, shared contracts, root
-configuration/lockfile and Mridul-owned adapters were not edited. No commit, push, deployment,
-publication or external action was performed.
+The pre-existing `DESIGN.md` and approved reference PNG bytes were preserved and committed;
+the two unrelated untracked websocket/timing follow-up reviews were left intact.
+`docs/STATUS.md`, engine files, shared contracts, root configuration/lockfile and
+Mridul-owned adapters were not edited. Implementation commit `f0ca543` was pushed to
+`origin/atishay/perception` and verified at the remote ref. No deployment,
+Stitch publication, booking, payment or outbound communication was performed.
 
 ## Verification evidence
 
