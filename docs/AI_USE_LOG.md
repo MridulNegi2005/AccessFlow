@@ -1313,3 +1313,13 @@ final revisions. Focused replay 8 passed; full suite 1209 passed, 2 skipped,
 browser showed microphone permission wait but no physical recording; no human
 speech, official media, streaming endpoint or controller effect was tested.
 No human source edits in this slice; A-owned source and contracts unchanged.
+
+2026-09-24 AI-assisted Atishay corrected-final replay follow-up: Added two
+failing constructed timeline cases showing an earlier final hiding the wait or
+miss for a later correction. Changed only owned offline aggregate accounting
+to use the latest final revision; historical candidates remain available.
+Focused replay 10 passed; full suite 1211 passed, 2 skipped, 1 retained
+xfailed. No physical capture,
+live ASR revision stream, official media result, booking or controller effect
+claimed. Human input was the existing voice-first request; no human source
+edits, and A-owned files/contracts were not changed.

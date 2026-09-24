@@ -63,7 +63,7 @@ class EndpointMeasurement:
 
 @dataclass(frozen=True)
 class TimingReplayReport:
-    """Threshold replay; missed_final_count ignores provisional endpoints."""
+    """Threshold replay; aggregate wait/miss require the newest revision to be final."""
 
     source_id: str
     min_pause_s: float
@@ -131,7 +131,6 @@ def replay_endpoint_candidates(
     latest_overall = _latest_revision(revision_values, source_id)
     accepted: list[EndpointMeasurement] = []
     premature: list[PauseCandidate] = []
-    matched_final = False
 
     for pause in pauses:
         latest = _latest_revision_available(revision_values, source_id, pause.end_s)
@@ -149,7 +148,6 @@ def replay_endpoint_candidates(
         speech_end = latest.speech_end_s if latest is not None and latest.final else None
         wait = None
         if speech_end is not None and pause.start_s >= speech_end:
-            matched_final = True
             wait = max(0.0, pause.end_s - speech_end)
         if not pause.trailing:
             premature.append(pause)
@@ -167,6 +165,17 @@ def replay_endpoint_candidates(
             )
         )
 
+    latest_final_measurement = next(
+        (
+            measurement
+            for measurement in accepted
+            if latest_overall is not None
+            and latest_overall.final
+            and measurement.revision == latest_overall.revision
+            and measurement.wait_after_speech_end_s is not None
+        ),
+        None,
+    )
     return TimingReplayReport(
         source_id=source_id,
         min_pause_s=min_pause_s,
@@ -174,15 +183,13 @@ def replay_endpoint_candidates(
         candidates=tuple(accepted),
         premature_candidates=tuple(premature),
         missed_final_count=int(
-            latest_overall is not None and latest_overall.final and not matched_final
+            latest_overall is not None
+            and latest_overall.final
+            and latest_final_measurement is None
         ),
         added_wait_after_speech_end_s=(
-            next(
-                measurement.wait_after_speech_end_s
-                for measurement in accepted
-                if measurement.wait_after_speech_end_s is not None
-            )
-            if matched_final
+            latest_final_measurement.wait_after_speech_end_s
+            if latest_final_measurement is not None
             else None
         ),
     )
