@@ -1346,3 +1346,14 @@ the page was reloaded to cancel capture. No local vision runtime/model was
 available. Updated ASR, checkpoint and Atishay handoff documents with evidence
 limits and remaining teammate/kit dependencies. No Mridul-owned code or shared
 contracts changed.
+
+2026-09-25 AI-assisted Atishay policy repair: A failing owned regression
+showed that “Cancel this booking” produced the engine-level `stop` decision
+and canceled the whole task. Reserved that decision for explicit task-level
+cancel/stop phrases; booking cancellation and device stop remain ordinary
+completed requests, while output-only stop remains unimplemented pending the
+shared contract. Focused turn-policy suite 22 passed; full suite 1215 passed,
+3 skipped, 1 xfailed, two dependency warnings in 64.36 s; Ruff/diff clean.
+Added a staged local microphone test run sheet with an exact correction script
+and mock-backend evidence warning. No human audio recorded, no Mridul-owned
+code/contracts changed, and no real booking or external effect occurred.

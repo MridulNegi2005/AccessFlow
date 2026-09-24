@@ -1317,3 +1317,9 @@ were proposed in B feedback with explicit A/B split; no A code edited.
 **Notes:** Real ASR on generated audio, but not human mic, official MP3, live reasoning, dynamic tool manifest or booking. Observation remains final with zero speech endpoints. C24-1/2/3 decisions and missing original kit remain open; no A-owned source/config changed.
 
 ---
+
+## [2026-09-25] — Atishay turn-policy scope and microphone run sheet
+**Task:** Prevent booking cancellation from being mistaken for stopping the whole agent, and prepare the requested physical-mic check without assuming a mock response is ASR.
+**Changes:** Added a regression after reproducing `Cancel this booking` => engine-level `stop`; narrowed Atishay-owned task-stop phrase matching. Added `docs/feedback/MICROPHONE_TEST_PROTOCOL.md` with a harmless Tuesday-to-Wednesday correction utterance, backend label gate, local upload note, observations to report, and separate interruption phase.
+**Status:** Focused policy 22 passed; full 1215 passed, 3 skipped, 1 xfailed, two existing dependency warnings; Ruff and diff check clean. ASR worker opt-in skipped because no local model path was configured. No human audio recorded.
+**Notes:** Changes stay in Atishay-owned turn-policy/tests/docs. Stop-speaking output scope still requires C24-2 agreement; real ASR mic, live vision, official kit/media, and common runtime are not verified. See `docs/handoffs/atishay.md` and `docs/feedback/MICROPHONE_TEST_PROTOCOL.md`.

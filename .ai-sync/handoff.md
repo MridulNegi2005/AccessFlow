@@ -1093,3 +1093,13 @@ test now covers this seam; with the installed model selected, full suite 1212
 passed, 2 skipped, 1 retained xfailed. This is not human microphone, official
 MP3, real reasoning or booking proof. C24-1/2/3 and kit/vision gates remain;
 see B handoff and ASR measurements. No A-owned source/config changed.
+
+2026-09-25: Atishay fixed a reproduced owned turn-policy scope bug: “Cancel
+this booking” had returned the engine-level task-stop decision. Only explicit
+task-stop language now returns stop; booking cancellation/device stop remain
+ordinary complete requests. Focused policy 22 passed, full suite 1215 passed,
+3 skipped, 1 xfailed. Added a no-real-effect user mic run sheet at
+`docs/feedback/MICROPHONE_TEST_PROTOCOL.md`; user should first verify the page
+reports a real ASR backend, because demo/mock replies are not transcription
+evidence. No user audio recorded. C24-2 output-stop scope, common runtime,
+real vision and official kit/media remain open. Details in Atishay handoff.

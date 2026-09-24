@@ -11,7 +11,7 @@ _CORRECTION = re.compile(r"\b(actually|rather|correction|sorry|i mean)\b|^\s*(no
 _OUTPUT_STOP_REQUEST = re.compile(r"^\s*stop\s+(?:speaking|talking)\b", re.I)
 _TASK_CANCEL_REQUEST = re.compile(
     r"^\s*(?:stop\s+(?:the\s+whole\s+task|this\s+task|everything)"
-    r"|cancel\s+(?:this\s+booking|the\s+task|this\s+task|everything))\b",
+    r"|cancel\s+(?:the\s+task|this\s+task|everything))\b",
     re.I,
 )
 _BACKCHANNELS = frozenset({"mm", "mm-hmm", "mhm", "uh huh", "uh-huh", "right", "okay", "ok"})
