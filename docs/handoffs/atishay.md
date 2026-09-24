@@ -598,3 +598,60 @@ suite passed 809 tests with 1 retained xfail and 2 warnings; Ruff and `git diff 
 The original failure was scheduler-sensitive deadline timing, not inactivity or evidence that
 native work could safely overlap. No engine, contract, adapter, dependency or media files were
 changed. Live provider latency remains unverified.
+
+## 2026-09-24 — voice-first frontend implementation
+
+**Task:** Continue the approved Stitch-first AccessFlow design through the owned demo
+implementation, while preserving the existing protocol and reporting the export gap.
+
+**Changes:** Replaced the previous task-form presentation with the approved ivory voice
+console / charcoal answer workspace; added compact typed input and conditional supported-media
+submission; made stopping microphone capture submit its bounded WAV automatically; drove the
+capture waveform from smoothed microphone RMS; added truthful status/provenance and a read-only
+`/?preview=1` sample mode that opens no WebSocket. Kept the existing JSON envelope, event order,
+IDs/revisions, queue/size limits, safe text rendering and separate speech-interrupt semantics.
+Added the current change inventory, Stitch export log and supersession note for the earlier
+frontend variant. No shared contract, engine, adapter, root config/lockfile or `docs/STATUS.md`
+change.
+
+**Status:** Full suite: 810 passed, 1 existing xfailed, 2 dependency warnings. Repository Ruff,
+`git diff --check` and inline-JavaScript parse passed. Browser checks used the local Edge page
+with demo/mock backends at 1536×1024, 1440×900, 1280×720, 768×1024 and 390×844; no horizontal
+overflow. The mock text request rendered through the real local WebSocket; preview mode was
+read-only and had no WebSocket; staged PNG, conditional send affordance and removal were checked.
+No push, commit, deployment or publication.
+
+**Limitations / coordination:** Physical microphone permission, real capture energy, live ASR,
+streaming/endpointing, automatic barge-in, TTS playback and assistive-technology combinations
+were not verified. The Stitch project was used for prompts 1–5, but the approved source PNGs
+were not attached and native exports were not saved because this task exposes no browser surface.
+Exact steps are in `docs/design/stitch/README.md`. Atishay and Mridul need to coordinate on
+structured action identity/write outcomes, answer/frame causality and shared speech timing;
+until then, unsupported meeting cards remain plain text and no success is fabricated.
+
+### 2026-09-24 continuation — anchor previews and browser QA
+
+The accessible Stitch project was inspected: `01-photo-answer` and
+`02-meeting-correction` show the intended subjects but are 1280×1033 and 1280×1025,
+not the requested 1536×1024. The approved PNGs and full `DESIGN.md` were not attached;
+the file chooser did not complete. Two ZIP export attempts yielded no verifiable file.
+The exact remaining manual review/export steps are in `docs/design/stitch/README.md`.
+
+Added a clearly labeled, original illustrative dog PNG and static route; `/?preview=photo`
+(also `1`) now shows the dog-photo composition and `/?preview=meeting` one corrected
+Wednesday 5 PM draft. Both are deterministic, disable input actions and open no
+WebSocket. The live demo still renders ordinary backend responses, not a fabricated
+calendar card. At 390×844 the meeting card now stacks its fields, avoiding the
+day/time collision; both previews loaded without horizontal overflow. At 1536×1024
+both compositions were inspected. A normal text request completed through the local
+demo/mock WebSocket, and the browser recorded no errors.
+
+Verification from repository root: `.venv\Scripts\python.exe -m pytest -q` →
+**811 passed, 1 existing xfailed, 2 dependency warnings**;
+`.venv\Scripts\python.exe -m pytest tests/demo/test_app.py -q` →
+**126 passed, 1 xfailed**. Ruff, inline JavaScript parsing and `git diff --check`
+passed. `demo/app.py`, `demo/index.html` and `tests/demo/test_app.py` are the only
+newly edited code/test paths in this continuation. No shared engine/contracts,
+adapters, root config or lockfile were changed. Atishay and Mridul need to
+coordinate structured action identity/write outcomes before live meeting-card
+projection; causal media-answer and speech-interruption contracts remain open.

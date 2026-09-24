@@ -1,16 +1,16 @@
 # Active Handoff
 
-## Current checkpoint — 2026-09-23
+## Current checkpoint — 2026-09-24
 
-Last updated by Codex on branch atishay/perception at HEAD 967e39d. The AccessFlow frontend redesign is implemented in the owned demo paths and documented in demo/FRONTEND_REDESIGN_SPEC.md and artifacts/FRONTEND_REDESIGN.md.
+Branch `atishay/perception`, HEAD `ed9d581`. The approved voice-first shell is implemented in the owned `demo/index.html`; the current delta and behavior are documented in `docs/design/IMPLEMENTATION_REPORT_2026-09-24.md`. The old task-dock specification is marked superseded, not erased.
 
-Verification: full repository suite 810 passed, 1 existing xfailed, 2 dependency warnings; repository Ruff passed; inline browser JavaScript parsed; git diff --check passed. No deployment or push occurred.
+Verification: `.venv/Scripts/python.exe -m pytest -q` → 811 passed, 1 existing xfailed, 2 dependency warnings; owned demo → 126 passed, 1 xfailed. Repository Ruff, `git diff --check` and inline JavaScript parsing pass. Real local Edge checks at 1536×1024, 1440×900, 1280×720, 768×1024 and 390×844 reported no horizontal overflow. A later in-app browser check inspected the new photo and meeting previews at 1536×1024 and 390×844; both loaded, the mobile meeting card no longer collides, and the normal demo/mock text request still traversed the actual local WebSocket without browser errors. A PNG fixture showed conditional send and remove behavior. Browser screenshots are in `artifacts/accessflow-*.png`, but they predate the two latest anchor previews.
 
-Visual browser QA is complete at 1440×1024, 834×1194, and 390×844 using an isolated local Edge profile. Empty and mock text-response states were inspected at all three sizes; a generated PNG upload, focusable full-image preview, and document-width behavior were checked. A long response headline overflow and a cramped mobile header were found and fixed. Remaining limits: microphone permission, live ASR/vision quality, and non-mock reasoning were not certified. See `demo/FRONTEND_REDESIGN_SPEC.md` and `demo/FRONTEND_REDESIGN_PREVIEW.png` for the canonical record and desktop capture.
+No engine, shared contracts, adapters, root config/lockfile or `docs/STATUS.md` were changed. No commit, push, publication or deployment occurred. Physical microphone permission, live ASR/endpointing/barge-in, speech-synthesis playback and screen-reader combinations remain unverified.
 
-Mixed-media inputs are sent as sequential existing events. The page hides earlier finals while a Run action is in flight and displays the result correlated to the final submitted source via a final-only demo observation notice. This is presentation coalescing, not a transaction or shared-contract change.
+Stitch prompts 1–5 were run in project `12923345623703202409`. The project is accessible in the in-app browser and the two anchor frames were inspected, but they remain 1280×1033 and 1280×1025. The two approved PNGs and full `DESIGN.md` were not attached, and no native export could be verified after two ZIP attempts. Exact manual export steps are in `docs/design/stitch/README.md`; local browser screenshots and the newly generated illustrative sample photo are not represented as Stitch assets. The demo now has read-only dog-photo (`/?preview=photo` or `1`) and corrected-meeting (`/?preview=meeting`) compositions, not live action evidence. Atishay and Mridul still need to coordinate shared transcript/action identity, causal frame/answer correlation and speech timing/interruption semantics.
 
-The current task did not modify docs/STATUS.md because AGENTS.md assigns that file to Mridul; its last measured project snapshot is older than this frontend work.
+This work did not modify `docs/STATUS.md` because `AGENTS.md` assigns that file to Mridul.
 
 ## Historical handoff snapshot — 2026-09-16 (superseded)
 

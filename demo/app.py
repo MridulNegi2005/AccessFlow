@@ -290,6 +290,11 @@ async def favicon() -> FileResponse:
     return FileResponse(ROOT / "favicon.svg", media_type="image/svg+xml")
 
 
+@app.get("/design-preview-dog.png")
+async def design_preview_dog() -> FileResponse:
+    return FileResponse(ROOT / "design-preview-dog.png", media_type="image/png")
+
+
 @app.get("/recorder-worklet.js")
 async def recorder_worklet() -> FileResponse:
     return FileResponse(ROOT / "recorder-worklet.js", media_type="application/javascript")
