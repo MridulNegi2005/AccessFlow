@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 
 from accessflow.adapters.samsung import ParticipantAgent as QueueParticipant
+from accessflow.adapters.prompt_profile import PROMPT_PROFILES
+from accessflow.read_answer import READ_ANSWER_MODES
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -13,6 +15,7 @@ PROFILE_KEYS = {
     "ACCESSFLOW_GROQ_STRUCTURED", "ACCESSFLOW_MAX_OUTPUT_TOKENS",
     "ACCESSFLOW_MAX_CONTEXT_CHARS", "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S",
     "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY", "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE",
+    "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE",
 }
 
 
@@ -24,6 +27,9 @@ def configure_profile(profile, environment):
     if (profile["ACCESSFLOW_SAMSUNG_BACKEND"] != "groq"
             or profile["ACCESSFLOW_GROQ_URL"] != "https://api.groq.com/openai/v1"):
         raise ValueError("This package profile requires the declared Groq endpoint")
+    if (profile["ACCESSFLOW_SAMSUNG_PROMPT_PROFILE"] not in PROMPT_PROFILES
+            or profile["ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE"] not in READ_ANSWER_MODES):
+        raise ValueError("Unsupported package prompt profile or read answer mode")
     for name, value in profile.items():
         if name in environment and environment[name] != value:
             raise ValueError(f"Environment conflicts with package profile: {name}")

@@ -1,0 +1,60 @@
+{
+  "base_commit": "89f5407",
+  "files": [
+    {
+      "file": ".gitattributes",
+      "bytes": 127,
+      "sha256": "d20df2854a92a6bc6ef0b2482b61e3c01fb345b7307cf4bb00d7a8dcffbbf436"
+    },
+    {
+      "file": "package-profile-baseline-2026-09-24.xml",
+      "bytes": 4245,
+      "sha256": "cc9406e4b1ebcb827c6d49acda98eeb9a7814fa880ae89a73d56de3a56d7a6ec"
+    },
+    {
+      "file": "package-profile-final-2026-09-24.xml",
+      "bytes": 12665,
+      "sha256": "9290a26f7cb12a78c0a61acee7be55135b0e0f175d5e5f3ba6d235f386ab36fc"
+    },
+    {
+      "file": "package-profile-full-2026-09-24.xml",
+      "bytes": 186612,
+      "sha256": "b9bd3cf807d09ad9036bd442a727e8716f6bfed41757d9485fc98d966bbbbffb"
+    },
+    {
+      "file": "package_manifest.json",
+      "bytes": 8317,
+      "sha256": "e54f36c318bb8c0fe0e4c044ff7dd10794ab8c3c4b691aae4c8e96665fae2c79"
+    },
+    {
+      "file": "README.md",
+      "bytes": 2370,
+      "sha256": "a6987056b037e7bf53dcbfed2a270c032ae6610b1cba42db58499797aeedca9d"
+    },
+    {
+      "file": "requirements.txt",
+      "bytes": 390,
+      "sha256": "04d1d5d4fd606c63a55aac7669224121e54356ea55c0632c2b1b2be826809a34"
+    },
+    {
+      "file": "runtime_profile.json",
+      "bytes": 471,
+      "sha256": "de0f696d54053bad19c783bc32875d1d24f34e40aa8379d74eb4ed21b017adaf"
+    },
+    {
+      "file": "verification-console.txt",
+      "bytes": 961,
+      "sha256": "025192b83d2e1cd2a7bb80a3df11e1361dd05be9075ff9143924fa75fb986df1"
+    },
+    {
+      "file": "verification.json",
+      "bytes": 6709,
+      "sha256": "a66ee8fb39a2e679c26ee32c00695f91c922d986e68df5309868a54eb4c909c8"
+    },
+    {
+      "file": "verify_package.py.txt",
+      "bytes": 2747,
+      "sha256": "2bc15b004d3fd5ba2afbca4b9e122878f85c73d5d36ee05216182adfc247d97d"
+    }
+  ]
+}

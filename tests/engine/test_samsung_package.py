@@ -33,6 +33,63 @@ def test_profile_maps_portal_secret_without_copying_it_into_profile():
     assert set(profile) == entry.PROFILE_KEYS
 
 
+def test_default_package_refuses_inherited_evidence_mode_without_mutation():
+    environment = {"SECRET_GROQ_API_KEY": "private-test-key",
+                   "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": "evidence"}
+    before = dict(environment)
+    with pytest.raises(ValueError, match="READ_ANSWER_MODE"):
+        entry.configure_profile(builder.profile_for("declared/model"), environment)
+    assert environment == before
+
+
+def test_candidate_profile_is_explicit_and_installs_both_modes():
+    profile = builder.profile_for("declared/model", prompt_profile="compact-v2", read_answer_mode="evidence")
+    environment = {"SECRET_GROQ_API_KEY": "private-test-key"}
+    entry.configure_profile(profile, environment)
+    assert environment["ACCESSFLOW_SAMSUNG_PROMPT_PROFILE"] == "compact-v2"
+    assert environment["ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE"] == "evidence"
+    assert builder.profile_for("declared/model")["ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE"] == "prose"
+
+
+@pytest.mark.parametrize("field,value", [("ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE", "guess"),
+                                       ("ACCESSFLOW_SAMSUNG_PROMPT_PROFILE", "compact-v99")])
+def test_invalid_package_modes_fail_before_environment_mutation(field, value):
+    profile = builder.profile_for("declared/model")
+    profile[field] = value
+    environment = {"SECRET_GROQ_API_KEY": "private-test-key"}
+    with pytest.raises(ValueError, match="Unsupported package"):
+        entry.configure_profile(profile, environment)
+    assert environment == {"SECRET_GROQ_API_KEY": "private-test-key"}
+
+
+@pytest.mark.parametrize("prompt,answer", [("full", "prose"), ("compact-v2", "evidence")])
+async def test_packaged_setup_delivers_profile_to_controller_and_reasoner(monkeypatch, tmp_path, prompt, answer):
+    from accessflow.adapters import models
+
+    class Backend:
+        def __init__(self, provider):
+            self.name = provider
+            self.warmed = False
+
+        async def warmup(self):
+            self.warmed = True
+
+    profile = builder.profile_for("declared/model", prompt_profile=prompt, read_answer_mode=answer)
+    (tmp_path / "runtime_profile.json").write_text(json.dumps(profile), encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/TOOLS.md").write_text("# Tool reference\n", encoding="utf-8")
+    monkeypatch.setattr(entry, "PACKAGE_ROOT", tmp_path)
+    monkeypatch.setattr(entry.os, "environ", {"SECRET_GROQ_API_KEY": "private-test-key"})
+    monkeypatch.setattr(models, "JsonBackend", Backend)
+    participant = entry.ParticipantAgent(asyncio.Queue(), asyncio.Queue())
+    await participant.setup()
+    assert participant.agent.read_answer_mode == answer
+    assert participant.agent.reasoner.read_answer_mode == answer
+    assert participant.agent.reasoner.prompt_profile == prompt
+    assert participant.agent.reasoner.backend.warmed
+    await participant.agent.perception.aclose()
+
+
 @pytest.mark.parametrize("overrides", [{}, {"SECRET_GROQ_API_KEY": " "},
     {"SECRET_GROQ_API_KEY": "one", "ACCESSFLOW_GROQ_API_KEY": "two"},
     {"SECRET_GROQ_API_KEY": "one", "ACCESSFLOW_GROQ_MODEL": "different/model"}])
@@ -109,6 +166,19 @@ def test_assembly_copies_only_selected_inputs_and_records_exact_bytes(package_so
         assert hashlib.sha256(data).hexdigest() == digest
         assert b"not-for-package" not in data
     assert len(manifest["files"]) == len([p for p in output.rglob("*") if p.is_file()]) - 1
+
+
+def test_assembly_records_candidate_profile_and_rejects_invalid_before_creation(package_sources):
+    repo, kit = package_sources
+    output = repo / "artifacts/candidate"
+    with pytest.raises(ValueError, match="Unsupported"):
+        builder.assemble(repo, kit, output, team="Team", model="model", requirements=["thing==1"],
+                         read_answer_mode="typo")
+    assert not output.exists()
+    builder.assemble(repo, kit, output, team="Team", model="model", requirements=["thing==1"],
+                     prompt_profile="compact-v2", read_answer_mode="evidence")
+    assert json.loads((output / "runtime_profile.json").read_text()) == builder.profile_for(
+        "model", prompt_profile="compact-v2", read_answer_mode="evidence")
 
 
 def test_assembly_never_overwrites_and_rejects_output_outside_artifacts(package_sources):
