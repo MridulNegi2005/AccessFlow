@@ -1310,4 +1310,10 @@ were proposed in B feedback with explicit A/B split; no A code edited.
 **Status:** Focused replay 10 passed; full suite 1211 passed/2 skipped/1 xfailed, two dependency warnings in 85.98 s; Ruff/diff clean.
 **Notes:** No live ASR revision stream, human microphone capture, official kit or agent effect was measured. C24-1/2 timing/finality contract still jointly owned with Mridul; no A-owned source/config changed.
 
+## [2026-09-24 16:21 IST] — Installed ASR child-worker and Agent seam
+**Task:** Verify generated WAV recognition crosses the actual native worker and Agent controller with causal identity and cleanup.
+**Changes:** Ran installed Faster Whisper base.en CPU INT8 on two generated fixtures through ProcessPerception, then a generated case through Agent with a deterministic mock reasoner and empty manifest. Added an opt-in owned regression and updated ASR/voice feedback and B handoff.
+**Status:** Child worker returned both transcripts, reused PID, closed cleanly; Agent final matched input event with zero tool calls/effects. Focused opt-in test 1 passed; full suite with local model path set 1212 passed/2 skipped/1 xfailed, two dependency warnings in 89.57 s; Ruff/diff clean.
+**Notes:** Real ASR on generated audio, but not human mic, official MP3, live reasoning, dynamic tool manifest or booking. Observation remains final with zero speech endpoints. C24-1/2/3 decisions and missing original kit remain open; no A-owned source/config changed.
+
 ---

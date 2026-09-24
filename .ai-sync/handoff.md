@@ -1083,3 +1083,13 @@ and focused replay now has 10 passing tests; full suite 1211 passed,
 2 skipped, 1 retained xfailed. Older acoustic candidates remain
 visible. This does not implement the C24-1/2 agent contract or verify physical
 capture; see B handoff for exact timing examples and remaining inputs.
+
+Atishay installed-ASR worker checkpoint: the real ProcessPerception child ran
+Faster Whisper base.en CPU INT8 on two generated WAVs, retained source/event/
+backend provenance, reused its PID and stopped after close. A separate actual
+Agent run with the child ASR and a deterministic mock reasoner produced a final
+caused by the intended audio event and no tool calls/effects. An opt-in owned
+test now covers this seam; with the installed model selected, full suite 1212
+passed, 2 skipped, 1 retained xfailed. This is not human microphone, official
+MP3, real reasoning or booking proof. C24-1/2/3 and kit/vision gates remain;
+see B handoff and ASR measurements. No A-owned source/config changed.

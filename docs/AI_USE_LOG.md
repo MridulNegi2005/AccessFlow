@@ -1323,3 +1323,14 @@ xfailed. No physical capture,
 live ASR revision stream, official media result, booking or controller effect
 claimed. Human input was the existing voice-first request; no human source
 edits, and A-owned files/contracts were not changed.
+
+2026-09-24 AI-assisted Atishay native-worker/Agent seam: Ran the installed
+Faster Whisper base.en CPU INT8 model on two checked-in generated WAVs through
+the actual ProcessPerception child, then one generated WAV through the actual
+Agent controller with a deterministic mock reasoner and no tools. Added an
+opt-in owned regression and recorded source hashes, timing, backend, causal
+identity and cleanup. Human input was the existing voice-first work request;
+no human recording or code edits in this slice. Focused opt-in test 1 passed;
+full suite with model path set 1212 passed, 2 skipped, 1 retained xfailed;
+Ruff/diff clean. No real reasoning, official MP3, vision, human microphone,
+booking or shared-contract result claimed; A-owned source/config untouched.
