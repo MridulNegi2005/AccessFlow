@@ -1242,3 +1242,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Mridul0c12ba0 then Atishay8083ebf; applicatione7c95f5. Full1197pass/2skip/1xfail; separate pending-frame4fail; Ruff/JS/Node/offline4pass. Initial probe collection path error retained separately. Preserved unfinished local patch outside main. AI-assisted merge/review/documentation; no human code edits in this slice. No assistant signoff/coauthor, workflow activation, release, submission, live provider calls or B implementation edits. See current review and evidence before resuming.
 
 ---
+
+## [2026-09-24 14:05] — Implementation checkpoint
+**Task:** Complete A current-frame readiness and failure handling after the merge handoff.
+**Changes:** Controller guard/failure fences,19 new regression cases, one migrated A rollback fixture, retained evidence and own handoff.
+**Status:** Tested slice complete; overall goal active, code completion now precedes accuracy tuning.
+**Notes:** Final1216pass/2skip/1xfail71.49s; focused25pass; Ruff clean. Earlier5fail expanded baseline and1fail integration retained and explained. Read-only review identified partial-evidence and revision gaps; fixed and tested. No B source/tests, schema, dependency, workflow, main push, live inference, release or submission changes. AI-assisted implementation/testing with human priority steering, no human code edits. Existing stash remains historical backup only.
+
+---

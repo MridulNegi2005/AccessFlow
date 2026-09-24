@@ -1,5 +1,26 @@
 # Active Handoff
 
+## Pending-frame correctness checkpoint — 24 September 2026
+
+Completed the preserved A-controller guard. Pending current images now block final/write
+while allowing speech-based read prefetch; final revision-zero/current-token evidence is
+required. Failed/partial/malformed/timed-out streams cannot release authority, and stale
+results after replacement/interrupt cannot restore it. Image failure asks completed speakers
+to resend/continue; a valid replacement retains their prior spoken authority.
+
+Final suite1216pass/2skip/1xfail in71.49s; focused25pass; Ruff clean. Earlier integration
+1fail/991pass retained: migrated the A provisional-slot rollback fixture to completed vision
+with partial speech, preserving rollback/cancellation assertions. No B files changed.
+Read docs/PENDING_FRAME_GUARD_2026-09-24.md and evidence/pending-frame-2026-09-24.
+
+Current priority from the user: complete runnable submission CODE before accuracy tuning;
+PPT/video/deck work is excluded from this milestone. Next A work is Samsung real-perception
+configuration and missing media/package paths. No more prompt/accuracy experiments now.
+MP3/turn ownership and C24 shared seams remain coordination items; no B implementation.
+The old pending-frame stash remains as a backup only; its incomplete patch must not be
+reapplied over this completed repair. Push own branch; main remains the earlier merged
+checkpoint unless the user requests another integration. Overall goal remains active.
+
 ## Merged readiness and ownership handoff — 24 September 2026
 
 Merged Mridul 0c12ba0 into main first (c564754), then Atishay 8083ebf (e7c95f5).
