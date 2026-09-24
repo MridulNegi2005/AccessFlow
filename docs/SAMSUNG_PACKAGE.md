@@ -1,5 +1,7 @@
 # Samsung development package — 22 September 2026
 
+Generated packages now include hosting/container files; see [hosting guide](PACKAGE_HOSTING_2026-09-24.md). Actual Windows full media setup passed;Docker/Linux remains unverified.
+
 24 September update: optional native ASR assets, installation tooling and frozen
 media profiles are now available. See [Native package instructions](NATIVE_PACKAGE_2026-09-24.md)
 for the 37-pin audio profile and fresh-environment ASR evidence. The base text

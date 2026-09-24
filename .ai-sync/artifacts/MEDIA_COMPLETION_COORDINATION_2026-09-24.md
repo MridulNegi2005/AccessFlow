@@ -37,9 +37,10 @@ pending/failed status, no text/finality/acoustic timestamps. Samsung uses revisi
 1. Integrate only agreed additive worker/provider options in configured_agent and
    package metadata. Validate/freeze them before setup; no implicit model download,
    silent fallback or inherited environment changing a submitted profile.
-2. Finish a reproducible vision-service installation/startup path for the declared
-   evaluation environment. The audio package includes ASR weights; it does not
-   bundle Ollama/Gemma weights or start that external service automatically.
+2. Verify the new packaged vision-service launcher and evaluator Docker recipe on
+   the declared evaluation platform. Actual isolated Windows ASR/vision/Qwen setup
+   now passes; Docker/Linux remains unverified. Read PACKAGE_HOSTING_2026-09-24.md.
+   ASR assets are bundled; Ollama/Gemma remain an explicitly installed local service.
 3. Test package import, setup, raw media, interruptions and cleanup on the supported
    platform. Current evidence is Windows; Docker/Linux is not verified. Check the
    current Docker path against the official procedure, not just fake text replay.

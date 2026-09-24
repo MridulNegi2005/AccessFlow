@@ -40,7 +40,7 @@ inputs or tool-result instructions.
 | `ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S` | Finite positive seconds, maximum 110; default 30 |
 | `ACCESSFLOW_SAMSUNG_VISION_PROVIDER` | `none` or `ollama`; default `none` |
 | `ACCESSFLOW_SAMSUNG_VISION_MODEL` | Required explicit model when enabling Ollama vision |
-| `ACCESSFLOW_SAMSUNG_VISION_URL` | HTTP(S) origin; default `http://127.0.0.1:11434`; no credentials, path, query or fragment |
+| `ACCESSFLOW_SAMSUNG_VISION_URL` | Loopback HTTP(S) origin; default `http://127.0.0.1:11434`; no credentials, path, query or fragment |
 | `ACCESSFLOW_SAMSUNG_WARMUP_IMAGE` | Existing installation PNG, required for vision |
 
 Set reasoning credentials outside tracked files. Native settings in text mode

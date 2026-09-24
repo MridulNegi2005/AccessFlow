@@ -1275,3 +1275,18 @@ workflow,release,submission or model download. Existing local Ollama service sta
 via owned hidden launcher. Scoped corpus review already completed23September.
 
 ---
+
+## [2026-09-24 15:44] - Package hosting checkpoint
+**Task:** Complete A packaging/startup paths before accuracy tuning.
+**Changes:** Generated real-evaluator Docker recipe/allowlist,portable installed-vision
+launcher,loopback/port validation,26 added tests,setup evidence and own handoffs.
+**Status:** Tested software slice;overall goal active,platform/media/repeated gates open.
+**Notes:** Full1344pass/2skip/1xfail79.52s;Ruff clean. Actual isolated candidate95hashes,
+37pins,service6.125s and real ASR/vision/Qwen setup47.906s. Default real-Docker execution
+is unverified;no Docker/Podman/WSL distro available. Review fixed tokenizer exclusion and
+COPY destination mistakes before final tests. AI-assisted implementation/testing;human
+supplied priorities,no human source edits. No B change,main merge,workflow,release,
+submission or model download. Remote B3926690 is newer and unmerged;tests cover current
+own branch. Windows cleanup stopped test11436;existing11435 service stayed running.
+
+---

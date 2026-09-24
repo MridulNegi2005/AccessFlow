@@ -9,6 +9,7 @@ import subprocess
 
 from accessflow.adapters.prompt_profile import PROMPT_PROFILES
 from accessflow.read_answer import READ_ANSWER_MODES
+from scripts.package_container import container_files
 
 KIT_ROOT_FILES = ("eval_submission.py", "run_local.py", "README.md", "WALKTHROUGH.md")
 KIT_AREAS = {"harness": {".py"}, "docs": {".md"}, "scenarios": {".json"},
@@ -130,6 +131,10 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
             raise ValueError(f"Supplied kit is missing {required}")
     files["agent/__init__.py"] = b""
     files["agent/agent.py"] = checked_bytes(repo, repo / "scripts/submission_entry.py")
+    files["hosting/start_vision_server.py"] = checked_bytes(repo, repo / "scripts/start_vision_server.py")
+    files["HOSTING.md"] = checked_bytes(repo, repo / "docs/PACKAGE_HOSTING_2026-09-24.md")
+    files.setdefault("assets/.gitkeep", b"")
+    files.update(container_files())
     for name in ("pyproject.toml", "uv.lock"):
         files[f"build_inputs/{name}"] = checked_bytes(repo, repo / name)
     yaml = [f'team: "{team}"', 'entry_point: "agent.agent:ParticipantAgent"', 'python: "3.11"',
@@ -141,12 +146,16 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
         "# Local development package\n\n"
         "Install requirements.txt in a fresh Python3.11 environment. Supply SECRET_GROQ_API_KEY.\n"
         "Run from this directory: python eval_submission.py . --reps 3\n"
+        "Or build this package directory with its Dockerfile; the repository-root Dockerfile is offline-only.\n"
+        "Read HOSTING.md for setup, result retrieval, service identity and unverified platform gates.\n"
+        "Pass SECRET_GROQ_API_KEY at runtime, not as a Docker build argument.\n"
         "This runs hosted inference and consumes the configured provider quota.\n"
         "The default profile is declared in runtime_profile.json; conflicting environment values fail.\n"
         "No credential or release tag is included. Any ASR assets/fixture provenance are in assets/installation.json.\n"
         "Organizer source/public scenarios/media are copied for local reproducibility.\n"
         "Do not publish the generated directory as repository source.\n"
         "Native packages require the declared vision service separately when enabled; no vision weights are bundled.\n"
+        "hosting/start_vision_server.py validates installed service/model identities; it never downloads them.\n"
         "Native dependency pins target CPython3.11.15 on Windows/Linux x64; only measured platforms are verified.\n"
         "Native audio uses bounded MP3 assembly at explicit end_of_turn. Packaging does not certify multimodal quality.\n"
         "No official repeated-run score, clean install, or Docker result is implied by assembly.\n"

@@ -1,5 +1,27 @@
 # Active Handoff
 
+## Package hosting checkpoint - 24 September 2026
+
+Generated packages now include a real-evaluator Docker recipe and a checked portable
+vision-service launcher. The root Dockerfile remains labeled offline-only. Configuration
+rejects unsupported remote origins,invalid ports and empty userinfo before model work.
+No B source/tests changed relative to the starting6055ff8 tree.
+
+Full1344pass/2skip/1xfail79.52s;Ruff clean. Rebuilt candidate95hashes/37pins/officialimport
+verified in reused isolated Windows venv. Packaged service started6.125s;actual ASR,
+Gemma vision and hosted Qwen setup passed47.906s. Service cleanup left existing11435
+untouched. Startup-only live identity check also passed. No Docker/Linux runtime exists
+here;generated recipe remains unexecuted. No new official task score or accuracy claim.
+
+Read docs/PACKAGE_HOSTING_2026-09-24.md and retained evidence/package-hosting-2026-09-24.
+Remaining A: actual container/platform validation,integrate agreed B media options and
+latest branch changes,then repeated packaged public tests and integration repairs.
+B owns microphone/endpointing/vision speed;both coordinate settings and timing. Atishay's
+remote reference advanced to3926690 during this slice;it is NOT merged or covered by
+these tests. Our tree retains the earlier merged B code. Push own branch only.
+Code completion first;PPT/video excluded;goal active. No workflow,main merge,release,
+submission,new model download or B implementation edits.
+
 ## Audio admission and native runtime checkpoint - 24 September 2026
 
 Samsung MP3 input is now admitted through an asynchronous bounded turn bridge using

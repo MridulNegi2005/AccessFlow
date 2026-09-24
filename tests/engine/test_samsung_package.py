@@ -137,6 +137,8 @@ def package_sources(tmp_path, monkeypatch):
         repo / "src/accessflow/adapters/samsung.py": "# tracked participant\n",
         repo / "src/accessflow/untracked.py": "# must not be included\n",
         repo / "scripts/submission_entry.py": "# entry template\n",
+        repo / "scripts/start_vision_server.py": "# hosting template\n",
+        repo / "docs/PACKAGE_HOSTING_2026-09-24.md": "# Hosting instructions\n",
         repo / "pyproject.toml": "[project]\n",
         repo / "uv.lock": "version = 1\n",
         repo / ".env": "SECRET_GROQ_API_KEY=not-for-package\n",
@@ -179,6 +181,10 @@ def test_assembly_copies_only_selected_inputs_and_records_exact_bytes(package_so
     assert not (output / "accessflow/untracked.py").exists()
     assert not (output / "harness/__pycache__").exists()
     assert "SECRET_GROQ_API_KEY" in (output / "submission.yaml").read_text()
+    from scripts.package_container import COPY_PATHS
+    for path in COPY_PATHS:
+        assert (output / path).exists(), f"Docker COPY input is absent: {path}"
+    assert (output / "hosting/start_vision_server.py").read_bytes() == (repo / "scripts/start_vision_server.py").read_bytes()
     for name, digest in manifest["files"].items():
         data = (output / name).read_bytes()
         assert hashlib.sha256(data).hexdigest() == digest
