@@ -15,9 +15,10 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 ## Current progress
 
 As of24 September: the Samsung queue adapter supports actual MP3 turn assembly,
-local CPU transcription and explicit real-perception setup. An isolated native audio
+local CPU transcription and explicit real-perception setup. The new packaged
+ASR/vision/Qwen warm-up passed in47.9s;the Docker recipe remains unexecuted. An isolated native audio
 package verified89 hashes/37 pins and ran a public audio scenario. Full software suite:
-1318 passed,2 skipped,1 expected failure. Actual audio tasks still missed completion;
+1344 passed,2 skipped,1 expected failure. Actual audio tasks still missed completion;
 local vision took23.688s and missed the official tail. **Code readiness remains open.**
 See [current status](docs/STATUS.md), [audio/runtime evidence](docs/SAMSUNG_AUDIO_ADMISSION_2026-09-24.md)
 and [ownership/coordination](docs/MEDIA_COMPLETION_COORDINATION_2026-09-24.md).

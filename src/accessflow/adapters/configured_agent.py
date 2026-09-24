@@ -87,9 +87,10 @@ class PerceptionConfig:
             vision_model = value("VISION_MODEL")
             vision_url = value("VISION_URL", "http://127.0.0.1:11434").rstrip("/")
             parsed = urlsplit(vision_url)
-            if (parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username
-                    or parsed.password or parsed.query or parsed.fragment or parsed.path):
-                raise ValueError("VISION_URL must be an HTTP(S) origin without credentials")
+            if (parsed.scheme not in {"http", "https"} or parsed.hostname not in {"localhost", "127.0.0.1", "::1"}
+                    or parsed.username is not None or parsed.password is not None or parsed.query or parsed.fragment
+                    or parsed.path or (parsed.port is not None and not 1 <= parsed.port <= 65535)):
+                raise ValueError("VISION_URL must be a loopback HTTP(S) origin without credentials")
             image = installed_path("WARMUP_IMAGE", suffix=".png")
         elif provider != "none":
             raise ValueError("VISION_PROVIDER must be none or ollama")

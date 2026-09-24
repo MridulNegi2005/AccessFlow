@@ -83,7 +83,10 @@ def test_text_configuration_rejects_ignored_native_settings(tmp_path):
 @pytest.mark.parametrize("field,value", [("PERCEPTION", "fake"), ("PERCEPTION_TIMEOUT_S", "nan"),
     ("PERCEPTION_TIMEOUT_S", "0"), ("PERCEPTION_TIMEOUT_S", "111"), ("ASR_MODEL_PATH", "missing"),
     ("WARMUP_AUDIO", "missing.wav"), ("VISION_PROVIDER", "silent-fallback"),
-    ("VISION_URL", "https://name:password@example.test"), ("VISION_URL", "https://example.test/path")])
+    ("VISION_URL", "https://name:password@example.test"), ("VISION_URL", "https://example.test/path"),
+    ("VISION_URL", "http://example.test:11434"), ("VISION_URL", "http://0.0.0.0:11434"),
+    ("VISION_URL", "http://127.0.0.1:99999"), ("VISION_URL", "http://127.0.0.1:bad"),
+    ("VISION_URL", "http://127.0.0.1:0"), ("VISION_URL", "http://@localhost:11434")])
 def test_invalid_media_configuration_fails_before_model_work(tmp_path, field, value):
     env = native_environment(tmp_path, vision=True)
     env["ACCESSFLOW_SAMSUNG_" + field] = value
