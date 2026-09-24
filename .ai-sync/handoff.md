@@ -1075,3 +1075,11 @@ partial revision identity remain visible. Focused replay 8 passed; full suite
 not streaming or controller finality. The local browser reached a microphone
 permission wait, so physical capture remains unverified until the user allows
 it. See B handoff and voice checkpoint for the event example and limits.
+
+Atishay corrected-final follow-up: constructed offline replay now measures
+aggregate wait/miss against the newest final revision, not an earlier final
+that a correction superseded. Two parametrized cases failed before the fix
+and focused replay now has 10 passing tests; full suite 1211 passed,
+2 skipped, 1 retained xfailed. Older acoustic candidates remain
+visible. This does not implement the C24-1/2 agent contract or verify physical
+capture; see B handoff for exact timing examples and remaining inputs.

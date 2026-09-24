@@ -1304,4 +1304,10 @@ were proposed in B feedback with explicit A/B split; no A code edited.
 **Status:** Focused replay 8 passed; full suite 1209 passed/2 skipped/1 xfailed, two dependency warnings in 87.49 s; Ruff/diff clean.
 **Notes:** Browser is connected but awaits microphone permission; no physical recording or human speech was obtained. This is an offline metric repair, not controller finality or automatic interruption. C24-1/2 joint decisions and the original kit remain open; A-owned source untouched.
 
+## [2026-09-24 16:15 IST] — Atishay corrected-final replay checkpoint
+**Task:** Ensure offline timing metrics follow the newest final correction, not a superseded final.
+**Changes:** Two failing constructed timelines now verify corrected-final wait and a missed late final; owned replay aggregation targets the newest revision and keeps older per-candidate history. Updated B feedback and handoff.
+**Status:** Focused replay 10 passed; full suite 1211 passed/2 skipped/1 xfailed, two dependency warnings in 85.98 s; Ruff/diff clean.
+**Notes:** No live ASR revision stream, human microphone capture, official kit or agent effect was measured. C24-1/2 timing/finality contract still jointly owned with Mridul; no A-owned source/config changed.
+
 ---

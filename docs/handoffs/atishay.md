@@ -830,3 +830,11 @@ main before B adopts the common runtime; no A file was edited here.
 **Validation:** Focused replay 8 passed; full suite 1209 passed, 2 skipped, 1 retained xfailed, 2 dependency warnings in 87.49 s; Ruff and diff check clean. This is deterministic offline timing evidence, not a real-device or official evaluation result.
 
 **Open input:** The local browser reached microphone permission wait but recording did not start; user must allow access and provide a non-sensitive test utterance. Participant kit location remains unknown. C24-1/2 timing/finality and stop effect decisions remain joint with Mridul; no A files were edited.
+
+## 2026-09-24 — Superseded-final replay measurement
+
+**Reproduction:** Two owned parametrized cases failed before the fix. An earlier final revision matched an internal pause, then a corrected final arrived either before the trailing candidate or after recording. The report selected the older 0.8 s aggregate wait in both cases and missed the latter corrected final.
+
+**Owned fix:** `src/accessflow/turn_policy/timing_replay.py` now associates aggregate wait/miss with the newest revision only if it is final. Historical acoustic candidates and the revision available at each pause are retained. A newer partial leaves aggregate wait unknown, even if an older final had a candidate. No shared contract, controller or browser behavior changed.
+
+**Validation/limits:** `tests/perception/test_timing_replay.py`: 10 passed; full suite 1211 passed, 2 skipped, 1 retained xfailed, 2 dependency warnings in 85.98 s; Ruff and diff check clean. These are constructed offline timelines, not human microphone speech, official raw media, ASR accuracy or end-to-end interruption. C24-1/2 joint clock and finality semantics remain the integration gate; physical mic permission and participant kit path still require user input.
