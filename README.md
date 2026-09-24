@@ -1,25 +1,29 @@
 # AccessFlow
 
 A conversational agent prototype for unfinished speech, corrections and safe mock actions.
-Samsung PRISM Theme 5; Mridul + Atishay. **Bootstrap in progress, not an evaluated submission.**
+Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates remain open.**
 
 ## Start here
 
 - Atishay and his AI: [ATISHAY_START_HERE.md](ATISHAY_START_HERE.md)
 - Current verified status: [docs/STATUS.md](docs/STATUS.md)
+- Samsung package and official checks: [docs/SAMSUNG_PACKAGE.md](docs/SAMSUNG_PACKAGE.md)
 - Agreed plan: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 - Interfaces and ownership: [docs/CONTRACT.md](docs/CONTRACT.md), [AGENTS.md](AGENTS.md)
 - Daily notes: [docs/handoffs/](docs/handoffs/)
 
 ## Current progress
 
-The engine is integrated with Atishay's perception adapter and heuristic turn policy.
-Correction, raw-media routing and authorization integration checks run locally; model
-callbacks in those checks are explicitly injected doubles. Separate
-[actual local reasoning measurements](docs/results/LOCAL_MODEL_2026-09-13.md) currently
-show failed tasks; a working live-model submission is not claimed. See
-[the integration report](docs/INTEGRATION_2026-09-13.md) and
-[Atishay's checkpoint history](docs/WORKSTREAM_B_CHECKPOINTS.md).
+As of22 September: the queue adapter runs live hosted text scenarios through Samsung's
+supplied harness. A locally assembled package passed official import/setup checks and
+one public text case in a fresh Python environment. The latest full software suite has
+1070passing tests, one skip and one expected failure. Scores from individual exposed
+cases do not establish overall reliability; quota, answer grounding and Samsung media
+integration remain open. See [current status](docs/STATUS.md) for retained failures,
+scope and ownership, and [packaging evidence](docs/SAMSUNG_PACKAGE.md) for reproduction.
+
+The earlier checkpoints below are historical. Their test counts, backend limitations
+and local-model results describe their recorded state, not today's entire implementation.
 
 ## Local setup
 
