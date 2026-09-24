@@ -1022,3 +1022,24 @@ vision, Qwen/mock effect and official media evaluation remain open. Kit files
 were not found at the documented location. C24-1 through C24-5 examples, splits
 and exact limits are in `docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md`.
 No Mridul-owned source/config, release, direct-main push or deployment action.
+
+2026-09-24: Atishay-owned browser microphone permission-wait repair. A new
+deterministic regression first observed two simultaneous getUserMedia requests;
+the demo now shows waiting/not-recording, blocks duplicates, restores controls
+after denial and stops late-granted tracks after task/disconnect/restart/exit
+invalidation. Live page confirmed the waiting state, not physical capture.
+Owned demo/perception 372 passed, 1 xfailed; Ruff and diff check clean. Details
+in docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md. No shared engine,
+contracts, Samsung adapter or submission change.
+
+2026-09-24: Browser capture teardown now discards active microphone resources
+on WebSocket close, session restart and unload without uploading abandoned
+audio. Owned Node regression covers track/context/port cleanup and idempotency.
+No physical disconnect or human ASR evidence is claimed.
+
+The owned disconnect harness also reproduced late WAV staging after the socket
+closed during AudioContext shutdown; a stop-path guard now drops that capture.
+
+Final B capture-slice checks: owned373pass/1xfail; full1205pass/2skip/1xfail,
+2 dependency warnings; Ruff and browser-script parse clean. Actual mic
+permission and human speech remain unverified.

@@ -565,6 +565,30 @@ def test_browser_answers_require_current_request_causality():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_browser_microphone_permission_wait_is_single_and_recoverable():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("microphone_pending_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_browser_disconnect_discards_microphone_without_upload():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("microphone_disconnect_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = _normalized_demo_source()
 

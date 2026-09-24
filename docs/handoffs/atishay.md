@@ -760,3 +760,42 @@ clock/stop scope, common runtime/identities); C24-4/5 remain explicit joint
 decisions. Atishay can independently continue physical-mic observations, ASR
 metadata/uncertainty fixtures and real vision availability checks. Do not call
 the current mock browser result a confirmed effect or a Samsung submission pass.
+
+### 2026-09-24 continuation — browser microphone permission wait
+
+**Reproduction:** A deterministic owned Node harness called `startMicrophone()`
+twice while the browser's permission promise was unresolved. Before the fix it
+observed two `getUserMedia()` requests instead of one. The live local page also
+gave no visual feedback while the permission remained pending.
+
+**Owned fix:** `demo/index.html` now exposes a truthful waiting state, admits
+only one pending permission request, recovers on denial, and invalidates pending
+starts when a task begins, the WebSocket closes, the session restarts or the
+page exits. A late-granted stream is stopped before recording. The new
+`tests/demo/microphone_pending_check.cjs` is invoked by `test_app.py` and covers
+duplicate start, pending UI, rejection and late-grant cleanup.
+
+**Evidence and limits:** The focused test passes after the reproduced failure;
+the live local page visibly showed “Waiting for microphone permission” with
+Start disabled. `tests/demo tests/perception`: 372 passed, 1 retained xfailed;
+Ruff and diff check passed. This is simulated permission and UI evidence, not
+a physical-microphone recording or transcription. C24-1/2/3 coordination and
+Samsung raw-media evaluation remain open; no Mridul-owned files changed.
+
+**Disconnect teardown follow-up:** A separate owned Node reproducer found no
+recording teardown on WebSocket close. The demo now discards an active capture on
+disconnect, restart or page exit: stops tracks, disconnects nodes, closes the
+AudioContext and clears unsent audio without invoking an upload. The simulated
+helper/wiring regression passes; a physical disconnect during human speech is
+still an open manual acceptance case.
+
+**Close-race follow-up:** A second deterministic assertion failed before the
+fix because `stopMicrophone()` encoded/staged audio after the socket closed
+while AudioContext shutdown was pending. The stop path now drops that WAV if
+the session is closing/closed. No actual voice or network interruption timing
+was measured.
+
+**Final validation for this owned capture slice:** 373 demo/perception tests
+passed with one retained xfail. Full suite: 1205 passed, 2 skipped, 1 retained
+xfail and 2 dependency warnings in 81.24 s. Ruff, inline JavaScript parse
+and whitespace check pass. No physical-microphone permission was granted.

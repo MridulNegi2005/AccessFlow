@@ -1259,6 +1259,27 @@ evaluation. Owned371pass/1xfail; full1203pass/2skip/1xfail; Ruff/Node clean.
 Kit files missing at documented path; C24-1..5 joint decisions and limitations
 recorded in docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md. No A source,
 shared contract/config or release action.
+
+2026-09-24 microphone permission follow-up: Before fix, two start calls made
+two pending getUserMedia requests; an owned Node regression captured the
+failure. The demo now labels permission wait truthfully, prevents duplicate
+starts, recovers denial, and stops a late-granted stream after task/disconnect/
+restart/page-exit invalidation. Live browser showed waiting state; no physical
+capture because permission UI remained unavailable. Owned372pass/1xfail,
+Ruff/diff clean. No A source, shared contract or Samsung runtime edits.
+
+2026-09-24 capture-disconnect follow-up: Active browser recording now uses an
+owned discard helper on WebSocket close, restart and unload. Deterministic Node
+coverage checks track stop, node/port disconnect, AudioContext close, no
+retained WAV and idempotency. Physical microphone disconnect remains untested.
+
+An additional deterministic close race first encoded a WAV after socket close
+during AudioContext shutdown; the owned stop path now discards it. Simulated
+only, with no official or real-device timing claim.
+
+Final owned capture-slice checks: demo/perception373pass/1xfail; full1205pass/
+2skip/1xfail,2 warnings; Ruff and inline JS parse clean. Physical mic still
+requires manual browser permission and human speech.
 ## [2026-09-24 13:49] — Integration and review checkpoint
 **Task:** Merge both branches in order, review current code and produce separate ownership/testing handoffs.
 **Changes:** Three documentation conflicts resolved; current readiness, detailed B work and first-person B prompt, retained full-suite and failing audit evidence. No application repair.
