@@ -719,3 +719,44 @@ structured action identity/write outcomes and any shared speech timing rules.
 Demo final-answer causality now uses the engine's existing ID field, with no
 Mridul-owned engine/contracts/config change. The two pre-existing untracked
 review notes remain untouched.
+
+### 2026-09-24 continuation — merged voice/perception checkpoint
+
+**Branch and preservation:** Fetched `origin/main` at `749fe23`, committed the prior
+owned frontend changes as `bee5d6f`, fast-forwarded local `main` and merged it into
+`atishay/perception` at `f84bea7` without conflicts. The two previously untracked
+review notes were byte-identical to tracked copies in main; a named stash remains
+as a redundant backup. No direct main push, reset or force-push.
+
+**Owned changes:** Narrowed `HeuristicTurnPolicy` task-stop classification to final
+task-cancel phrases; partial cancellation and output-only “Stop speaking” no longer
+stop the whole task, and “Stop the washing machine” remains a complete device
+request. Output-only spoken stop is still not implemented because the shared
+decision lacks that scope. Strengthened the demo's configured-reasoner test so
+image-only and combined answers differ and the accepted final must be caused by
+the observed spoken question. No A-owned controller, contract, Samsung adapter,
+configuration, lockfile or evaluation path was edited.
+
+**Before-fix and checks:** Four new policy assertions failed before the owned fix;
+they now pass. `tests/perception tests/demo`: 371 passed, 1 retained xfailed;
+full suite: 1203 passed, 2 skipped, 1 retained xfailed, 2 dependency warnings.
+Changed-path Ruff, Node speech-lifecycle and diff checks pass. The one focused
+configured loopback reasoner correlation case passes. See
+`docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md` for exact ASR timings,
+fixture hash, limitations and the C24-1 through C24-5 decision packet.
+
+**Actual model/device evidence:** Installed Faster Whisper base.en CPU INT8
+transcribed the existing generated correction clip through both direct model
+and `LocalPerception.observe`; the adapter emitted the correct text but flattened
+segment timing and uncertainty, with final=True and zero speech endpoints.
+The demo connected with that model, but the browser's physical microphone
+permission stayed `prompt`; no live capture or human speech transcription occurred.
+No live vision, Qwen or official raw-media run occurred. The Samsung kit files
+were missing at the documented local path, so kit-dependent acceptance is still
+unverified. Asked for the kit location and manual microphone permission/speech.
+
+**Next:** Both Atishay and Mridul must agree C24-1/2/3 first (MP3/turn finality,
+clock/stop scope, common runtime/identities); C24-4/5 remain explicit joint
+decisions. Atishay can independently continue physical-mic observations, ASR
+metadata/uncertainty fixtures and real vision availability checks. Do not call
+the current mock browser result a confirmed effect or a Samsung submission pass.

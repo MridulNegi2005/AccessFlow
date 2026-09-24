@@ -1006,3 +1006,19 @@ Focused demo: 128 passed, 1 existing xfailed; full suite: 813 passed,
 390px mobile had no horizontal overflow. Native Stitch export and same-state
 reference QA remain blocked; no engine/contracts/config change. Atishay and
 Mridul need to coordinate authoritative action identity/outcome and speech timing.
+
+2026-09-24: Atishay merged updated main (`749fe23`) into `atishay/perception`
+at `f84bea7`, preserving prior owned edits and identical untracked review notes
+in a named backup stash. Current owned voice slice narrows task-stop to final
+task-cancel phrases; partial cancel and output-only stop no longer cancel the
+task, while device stop remains a complete request. The output-only typed action
+still needs joint C24-2 agreement. The configured demo reasoner test now checks
+the spoken question's causal final and distinct combined evidence. Before-fix
+policy reproduction: four failures; owned tests: 371 passed/1 xfailed; full:
+1203 passed/2 skipped/1 xfailed. Actual generated WAV through installed local
+ASR produced text but flattened segment timing/finality in the public observation.
+Physical mic permission remained prompt, so no real capture was verified; live
+vision, Qwen/mock effect and official media evaluation remain open. Kit files
+were not found at the documented location. C24-1 through C24-5 examples, splits
+and exact limits are in `docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md`.
+No Mridul-owned source/config, release, direct-main push or deployment action.

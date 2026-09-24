@@ -1245,6 +1245,20 @@ xfailed, 2 warnings; Ruff, Node syntax and diff check passed. Stitch photo
 frame still 1280x1033 and Download produced no verified file. Design QA blocked
 in docs/design/ATISHAY_DESIGN_QA.md. Shared engine/contracts/config untouched;
 two unrelated untracked review notes preserved.
+
+2026-09-24 voice/perception checkpoint: Local main 749fe23 was merged into
+atishay/perception at f84bea7 after preserving prior B edits and byte-identical
+untracked review notes (named stash retained). Four owned stop-scope regressions
+failed before the narrow policy fix and now pass; configured demo test correlates
+the final to the spoken question's observed event ID and distinguishes image-only
+from combined replies. Actual installed Faster Whisper base.en CPU INT8 produced
+timed generated-audio segments and a LocalPerception observation, but that
+observation has final=True and zero speech endpoints. Physical mic permission
+remained prompt; no human capture, real vision, Qwen effect or official media
+evaluation. Owned371pass/1xfail; full1203pass/2skip/1xfail; Ruff/Node clean.
+Kit files missing at documented path; C24-1..5 joint decisions and limitations
+recorded in docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md. No A source,
+shared contract/config or release action.
 ## [2026-09-24 13:49] — Integration and review checkpoint
 **Task:** Merge both branches in order, review current code and produce separate ownership/testing handoffs.
 **Changes:** Three documentation conflicts resolved; current readiness, detailed B work and first-person B prompt, retained full-suite and failing audit evidence. No application repair.

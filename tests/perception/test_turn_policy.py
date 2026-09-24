@@ -105,14 +105,35 @@ def test_backchannel_is_not_planned_as_a_new_request():
     assert decision.kind == "backchannel"
 
 
-@pytest.mark.parametrize("text", ["Stop speaking while I think", "Stop the whole task now"])
-def test_explicit_stop_request_returns_stop(text: str):
+@pytest.mark.parametrize("text", ["Cancel this booking", "Stop the whole task now"])
+def test_explicit_task_cancel_returns_stop(text: str):
     item = observation(text, final=True)
 
     decision = HeuristicTurnPolicy().update(item, view())
 
     assert decision.kind == "stop"
     assert decision.uncertainty < 0.2
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Stop speaking while I think", "continue"),
+        ("Stop the washing machine", "complete"),
+        ("Cancel this booking", "stop"),
+    ],
+)
+def test_stop_words_have_distinct_scopes(text: str, expected: str):
+    decision = HeuristicTurnPolicy().update(observation(text, final=True), view())
+
+    assert decision.kind == expected
+
+
+@pytest.mark.parametrize("text", ["Cancel this booking", "Stop the whole task now"])
+def test_partial_cancel_hypothesis_cannot_stop_task(text: str):
+    decision = HeuristicTurnPolicy().update(observation(text, final=False), view())
+
+    assert decision.kind == "continue"
 
 
 def test_image_captions_cannot_drive_speech_turn_policy():
