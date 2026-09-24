@@ -6,6 +6,7 @@ from pathlib import Path
 
 from accessflow.adapters.samsung import ParticipantAgent as QueueParticipant
 from accessflow.adapters.prompt_profile import PROMPT_PROFILES
+from accessflow.adapters.configured_agent import PERCEPTION_ENV_KEYS
 from accessflow.read_answer import READ_ANSWER_MODES
 
 
@@ -16,6 +17,7 @@ PROFILE_KEYS = {
     "ACCESSFLOW_MAX_CONTEXT_CHARS", "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S",
     "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY", "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE",
     "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE",
+    "ACCESSFLOW_SAMSUNG_PERCEPTION",
 }
 
 
@@ -30,6 +32,11 @@ def configure_profile(profile, environment):
     if (profile["ACCESSFLOW_SAMSUNG_PROMPT_PROFILE"] not in PROMPT_PROFILES
             or profile["ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE"] not in READ_ANSWER_MODES):
         raise ValueError("Unsupported package prompt profile or read answer mode")
+    if profile["ACCESSFLOW_SAMSUNG_PERCEPTION"] != "text":
+        raise ValueError("This package does not install native perception assets")
+    undeclared = sorted((PERCEPTION_ENV_KEYS - PROFILE_KEYS) & environment.keys())
+    if undeclared:
+        raise ValueError(f"Environment contains undeclared perception setting: {undeclared[0]}")
     for name, value in profile.items():
         if name in environment and environment[name] != value:
             raise ValueError(f"Environment conflicts with package profile: {name}")

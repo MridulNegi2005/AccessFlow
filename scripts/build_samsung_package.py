@@ -40,6 +40,7 @@ def profile_for(model, *, prompt_profile="full", read_answer_mode="prose"):
         "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
         "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1", "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": prompt_profile,
         "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": read_answer_mode,
+        "ACCESSFLOW_SAMSUNG_PERCEPTION": "text",
     }
 
 

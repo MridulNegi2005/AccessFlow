@@ -1246,3 +1246,7 @@ Request: merge Mridul first, then Atishay; inspect remaining work and give Atish
 ## 2026-09-24 14:05 — Current-frame controller repair
 
 Request: continue Mridul-owned implementation; prioritize complete submission code before accuracy tuning. Assistance: controller lifecycle repair, deterministic regressions, read-only review and evidence documentation. Review found partial-image promotion and malformed-final gaps; implementation and tests addressed them. One earlier test fixture was migrated to completed image/partial speech while retaining provisional rollback assertions. Final1216pass/2skip/1xfail; no live-model or microphone claims. Human input changed priorities; no human source edits in this slice.
+
+## 2026-09-24 14:20 — Configured runtime
+
+Request: prioritize runnable submission code before accuracy. Assistance: shared factory, explicit native configuration, setup deadlines/cleanup, package profile isolation and regressions. Corrected new fixture input from frame_ref to image_ref after failed integration; final1243pass/2skip/1xfail. Inference in tests is fake, including real child-process transport test. No live media claims or B edits. Human priority steering only; no human code edits recorded.

@@ -13,8 +13,6 @@ import time
 from collections.abc import Mapping
 from pathlib import Path
 
-from accessflow.engine import Agent
-
 from .prompt_profile import PROMPT_PROFILES
 from .samsung_protocol import MediaInputError, SamsungProtocol, SamsungProtocolError
 
@@ -114,23 +112,14 @@ class ParticipantAgent:
             raise
 
     async def _build_agent(self):
-        # Imports and remote/model warm-up occur off the scenario clock in setup.
-        from accessflow.perception.local import LocalPerception
-        from accessflow.turn_policy import HeuristicTurnPolicy
+        from .configured_agent import build_configured_agent
 
-        from .models import JsonBackend, ModelReasoner
-
-        backend_name = os.getenv("ACCESSFLOW_SAMSUNG_BACKEND")
-        if not backend_name:
-            raise ValueError("Set ACCESSFLOW_SAMSUNG_BACKEND explicitly; no model fallback is enabled")
-        backend = JsonBackend(backend_name)
-        await backend.warmup()
-        return Agent(LocalPerception(), HeuristicTurnPolicy(),
-                     ModelReasoner(backend, tool_documentation=self.documentation_evidence,
-                                   prompt_profile=self.prompt_profile, read_answer_mode=self.read_answer_mode),
-                     executor=None, authorization=HarnessAuthorization(),
-                     partial_debounce_s=self.partial_debounce_s, fast_read_retry=self.fast_read_retry,
-                     read_answer_mode=self.read_answer_mode)
+        return await build_configured_agent(
+            root=self.media_root or os.getenv("ACCESSFLOW_SAMSUNG_MEDIA_ROOT"),
+            authorization=HarnessAuthorization(), executor=None,
+            tool_documentation=self.documentation_evidence, prompt_profile=self.prompt_profile,
+            read_answer_mode=self.read_answer_mode, partial_debounce_s=self.partial_debounce_s,
+            fast_read_retry=self.fast_read_retry)
 
     async def _pump_input(self, incoming):
         manifest_seen = False
