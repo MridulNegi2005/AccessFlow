@@ -3,8 +3,9 @@
 24 September update: optional native ASR assets, installation tooling and frozen
 media profiles are now available. See [Native package instructions](NATIVE_PACKAGE_2026-09-24.md)
 for the 37-pin audio profile and fresh-environment ASR evidence. The base text
-instructions below remain applicable; MP3 assembly and full multimodal evaluation
-remain unfinished.
+instructions below remain applicable. MP3 admission and an isolated actual audio
+run are now verified; see [audio admission](SAMSUNG_AUDIO_ADMISSION_2026-09-24.md).
+Full multimodal readiness and platform/repeated evaluation remain unfinished.
 
 Owner: Mridul. A local assembler now produces a self-contained package that passes
 the supplied evaluator's import and contract smoke stages. This is preparation,

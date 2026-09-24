@@ -17,7 +17,7 @@ from .confirmation_text import confirmation_payload
 from .contracts import (
     AudioEvent, EndEvent, FrameEvent, InterruptEvent, Observation, OutputEvent,
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
-    ToolResult, TranscriptEvent,
+    ToolResult, TranscriptEvent, SpeechStatusEvent,
 )
 from .corpus import (
     CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
@@ -391,7 +391,7 @@ class Agent:
                     await self._emit("acknowledge", text="Stopped." if event.payload.scope == "task"
                                      else "I'm listening.", stop_output=True)
                     continue
-                if isinstance(event, (TranscriptEvent, AudioEvent, FrameEvent)):
+                if isinstance(event, (TranscriptEvent, AudioEvent, SpeechStatusEvent, FrameEvent)):
                     payload = event.payload
                     if isinstance(event, FrameEvent):
                         source = ("image", payload.frame_id)
@@ -448,6 +448,25 @@ class Agent:
                     self.state.status = "listening"
                     # Conservative write guard until semantic/dependency resolution.
                     await self._cancel_writes("new_evidence")
+                    if isinstance(event, SpeechStatusEvent):
+                        # Transport activity supersedes unfinished speech work, but
+                        # does not discard the current frame or fabricate an ASR
+                        # hypothesis. Existing generation/source gates reject late
+                        # plans and speech observations while input is pending.
+                        for key, worker in tuple(self.perception_workers.items()):
+                            if key[0] == "speech":
+                                worker.cancel()
+                        if self.planner and not self.planner.done():
+                            self.planner.cancel()
+                        if event.payload.status == "failed":
+                            self.clarification_outstanding = True
+                            self.state.status = "clarifying"
+                            await self._emit("error", code="audio_input_failed")
+                            await self._emit("clarify", text="I couldn't process that recording. "
+                                             "Please try again or type your request.")
+                        else:
+                            await self._emit("acknowledge", text="I'm listening.", stop_output=True)
+                        continue
                     self._start_perception(event, source)
         finally:
             pending = list(self.workers)

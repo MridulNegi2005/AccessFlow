@@ -1,0 +1,38 @@
+{
+  "created_at": "2026-09-24T09:46:39.270444+00:00",
+  "base_commit": "5d13a26053a006f84b6dbe654758b2499f77b52a",
+  "source_dirty": true,
+  "python": "3.11.15 (main, May 10 2026, 19:31:25) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "source_hash_format": "UTF8 file bytes with CRLF normalized to LF",
+  "sources": {
+    "src/accessflow/contracts.py": "d53f3548a769b6427d871252ec587e727ddcadb0e49ae1512090838eecbfbca5",
+    "src/accessflow/engine.py": "62dc020ec11603d669e29e042a9b7e78d2f4e6af029e04f04f79f6c5ff5f8ac4",
+    "src/accessflow/adapters/samsung.py": "ee20f65ddde754c979112d0dcc9d1b22b354618721262a9e8d9589531c66bd4c",
+    "src/accessflow/adapters/samsung_audio.py": "863a2e2ebb0609ef073fe90d075e1501702f33b23d6317e83b60754348f61480",
+    "src/accessflow/adapters/samsung_protocol.py": "f8c2ab658b564ddfe1370d508445ffb9b01a5f4f3a334fe496a877e93c407b2b",
+    "scripts/build_samsung_package.py": "8c3912bfeac664fadc760adc45076e601c1aaa844b3432b15ace10da4d41ebd3",
+    "tests/test_contract.py": "444ff18f2a6c741b35413e85d1d1856bd3e7bbff109cafa4c1bb14bf127f1a51",
+    "tests/engine/test_samsung_audio.py": "973a97812a6ecdcd6eb7ac347bf70d05bb9263289f1adab5e9bf2db93cf21a83",
+    "tests/engine/test_speech_status.py": "e90acb4fac3f48bdd166b87dbab27cc9779d43da89d59bc470b8788a6851b9db"
+  },
+  "evidence_sha256": {
+    "focused.xml": "62e368edd986ce3910b1715c43a28032895aaf5ccb3b3deb46fa4ff53699b88e",
+    "full-before-fairness.xml": "ab931bbd360752509d9d06775860276161cce7a942924e15ba3407fd24fa04fd",
+    "full-final.xml": "df3b69856bc116cbe26fa15264bca5c1bee43704080265a122a338f8c5978a1b",
+    "initial-controller-fixture-errors.xml": "73a65c4f2c64a944893bad9f89267fc3f22df44d993f6c8ec7f630fbc42088e0",
+    "initial-queue-fixture-errors.xml": "43eab9f5ba43e6259b47855b2df70a3ca543ff2abfffaf76ff6fa6a315c3fd6a",
+    "package-public-audio.json": "9dc01e3f2cad858f2b695f11b9b396f20c96e8d21bea5fafa9c7ab67c3f3f4ad",
+    "package-tests.xml": "a2ed717ab5160c5761f7ef8aabc3fcd0b8984d4c9806a106cdcf547db9e2f0c3",
+    "package_manifest.json": "99843f2c0fefa32e384c73fac333d76138ecfa63c2bbcec913aa3fb5d2fbca1f",
+    "public-audio-ambiguity.json": "9cc24f03f71a2074acc1a1c27696f56ef0d4c6d557d5f144ca920c13800a8d53",
+    "public-audio-disfluency.json": "4962580ab6f7b40256645b98251d83727c1087b78037a818b427e32144b1d7b5",
+    "requirements.txt": "90c28039360ad2cdcb7d393676b5cd8612e507fcc608233c10aaecf9e3954f11",
+    "runtime_profile.json": "62c0eab95120986f9ca3bb87792e6ebddcf307cc04f291d8409f12948238134f",
+    "second-queue-fixture-error.xml": "c70c2c9d185b2e1d44959d29d9a8a4dbb79ae918fa01e3d9ee76010f7c9fcb34",
+    "verify_package.py": "29638f53afad10e3d6149cf218be722a32a74bd11546751b8f634236abbb62b6",
+    "vision-official-tail-missed.json": "3aaf801ef552fde0fd9930114182425120a0747126c043a78595412fb1d8d979",
+    "vision-setup-failed.json": "2b97b7ca3c4aa2d2b9e9727190c2cef232fc0a9537d77b1fa81d5f2ba9fbb70a",
+    "vision-single-observation.json": "a4092cda2f8bbc6db5ffc1e189aec652473805c4af5d7107de2293cacda3d779"
+  }
+}

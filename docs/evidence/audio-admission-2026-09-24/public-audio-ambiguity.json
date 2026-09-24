@@ -1,0 +1,339 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 4266.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_audio_chunk",
+      "payload": {
+        "audio_ref": "audio/pub_05_turn1.mp3",
+        "duration_ms": 1400,
+        "end_of_turn": true
+      },
+      "t_ms": 93.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'm listening."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 109.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 2203.0
+    },
+    {
+      "kind": "action",
+      "action": "clarification_request",
+      "payload": {
+        "text": "I'm sorry to hear that. Could you clarify what you'd like help with? For example, are you looking for flight information, device support, or something else?"
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 2922.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_audio_chunk",
+      "payload": {
+        "audio_ref": "audio/pub_05_turn2.mp3",
+        "duration_ms": 900,
+        "end_of_turn": true
+      },
+      "t_ms": 4218.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 4218.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'm listening."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 4234.0
+    },
+    {
+      "kind": "action",
+      "action": "clarification_request",
+      "payload": {
+        "text": "I heard two separate statements: “I broke up, and I did too fast” and “I said Boston.” Could you clarify what you’d like me to do? For example, are you asking me to search for flights to Boston, look up a device manual, or something else?"
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 7015.0
+    }
+  ],
+  "wall_s": 14.563000000000102,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 14000,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 3,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 3,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.4070000000001528,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.049372942,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003163618,
+        "completion_tokens": 6,
+        "completion_time": 0.011559512,
+        "total_tokens": 55,
+        "total_time": 0.01472313
+      },
+      {
+        "elapsed_seconds": 0.7039999999997235,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.052995505,
+        "prompt_tokens": 2568,
+        "prompt_time": 0.184585903,
+        "completion_tokens": 87,
+        "completion_time": 0.167937434,
+        "total_tokens": 2655,
+        "total_time": 0.352523337
+      },
+      {
+        "elapsed_seconds": 0.6089999999994689,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.052184608,
+        "prompt_tokens": 2680,
+        "prompt_time": 0.184599461,
+        "completion_tokens": 111,
+        "completion_time": 0.210988991,
+        "total_tokens": 2791,
+        "total_time": 0.395588452
+      }
+    ],
+    "prompt_profile": "full",
+    "read_answer_mode": "prose",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 4503,
+        "data_chars": 3297,
+        "protocol_data_chars_before_elision": 3297,
+        "protocol_data_chars_after_elision": 3297,
+        "schema_chars": 4063,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1",
+        "enforced_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1"
+      },
+      {
+        "instruction_chars": 4503,
+        "data_chars": 3555,
+        "protocol_data_chars_before_elision": 3555,
+        "protocol_data_chars_after_elision": 3555,
+        "schema_chars": 4063,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1",
+        "enforced_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1"
+      }
+    ]
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "c77d23fa-492d-4120-b0fb-8738e471ebcd"
+      ],
+      "proposal": {
+        "intent": null,
+        "slot_updates": {},
+        "calls": [],
+        "clarification": "I'm sorry to hear that. Could you clarify what you'd like help with? For example, are you looking for flight information, device support, or something else?",
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": false,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "c77d23fa-492d-4120-b0fb-8738e471ebcd",
+        "94f08bb4-9f6c-4606-b7df-dab507e5da5a"
+      ],
+      "proposal": {
+        "intent": null,
+        "slot_updates": {},
+        "calls": [],
+        "clarification": "I heard two separate statements: “I broke up, and I did too fast” and “I said Boston.” Could you clarify what you’d like me to do? For example, are you asking me to search for flights to Boston, look up a device manual, or something else?",
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": false,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 0.08,
+    "fast_read_retry": true,
+    "read_answer_mode": "prose"
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "5d13a26053a006f84b6dbe654758b2499f77b52a",
+  "runner_sha256": "1f81541a3ec2c97b23975e39276950153bc887fbd09c86acf0fecddee1621571",
+  "created_at": "2026-09-24T09:36:16.108762+00:00",
+  "provenance": {
+    "source_sha256": "911d39036f5b926ab39917c782b5b06f8521a63f6acf1b8ef0af66712dc76554",
+    "scenario_sha256": "c686137574f5e3333fc0290abc08eafeef37636e8e7695f10ed48ff5950bb4b9",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_05_audio_asr_ambiguity.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_05_audio_asr_ambiguity",
+    "total": 51.5,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 0.25,
+        "points": 15.4,
+        "detail": {
+          "fraction": 0.25,
+          "checkpoints": [
+            {
+              "id": "asked_before_acting",
+              "type": "clarification",
+              "weight": 0.3,
+              "passed": false,
+              "note": "no clarification in window"
+            },
+            {
+              "id": "no_premature_search",
+              "type": "tool_not_called",
+              "weight": 0.25,
+              "passed": true,
+              "note": "0 forbidden matching call(s) found"
+            },
+            {
+              "id": "search_boston",
+              "type": "tool_called",
+              "weight": 0.3,
+              "passed": false,
+              "note": "0/1 matching call(s) emitted"
+            },
+            {
+              "id": "final_boston",
+              "type": "final_response_contains",
+              "weight": 0.15,
+              "passed": false,
+              "note": "no final_response matched any_of"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 0,
+              "delta_ms": 9.0,
+              "fraction": 1.0
+            },
+            {
+              "event_index": 1,
+              "delta_ms": 34.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 0.85,
+        "points": 13.1,
+        "detail": {
+          "fraction": 0.85,
+          "notes": [
+            "1 verbatim-repeated filler(s)"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public-development attempt; mock external tools, no median or hidden-set claim."
+}

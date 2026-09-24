@@ -1276,3 +1276,18 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 ---
 
 2026-09-24 14:47 review completion: independent review found double-cancel startup orphan risk; reproduced before repair. Dedicated shielded cleanup retains PID ownership through repeated caller cancellation. Focused24pass/full1295pass final; earlier1294pass and failing reproduction retained. Live ASR report predates only cleanup hardening and is explicitly labeled.
+
+## [2026-09-24 15:17] - Implementation checkpoint
+**Task:** Code completion first: real Samsung audio admission and native runtime checks.
+**Changes:** Additive controller-only speech_status,async bounded MP3 queue bridge,
+fairness/stale-result gates,23 new regression cases,package note and evidence/handoffs.
+**Status:** Audio slice verified;goal active;vision/platform/real-microphone gates open.
+**Notes:** Full1318pass/2skip/1xfail70.10s;focused45pass;package64pass. Actual public
+audio54.6/51.5 tasks incomplete;isolated package89hashes/37pins/pub06 score54.6.
+Vision defaultsetup failed;110ssetup passed but official tail missed;directframe23.688s.
+All results retained,including early fixture errors. AI-assisted implementation/testing;
+human supplied priority,no human source edits. No B changes,accuracy tuning,main push,
+workflow,release,submission or model download. Existing local Ollama service started
+via owned hidden launcher. Scoped corpus review already completed23September.
+
+---

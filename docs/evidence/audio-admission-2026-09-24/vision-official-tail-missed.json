@@ -1,0 +1,362 @@
+{
+  "failure": null,
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 26765.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "video_frame",
+      "payload": {
+        "frame_id": "f_017",
+        "image_ref": "frames/pub_07_f017.png",
+        "device_hint": "GENERIC"
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_speech_chunk",
+      "payload": {
+        "text": "What is this port used for?",
+        "end_of_turn": true
+      },
+      "t_ms": 610.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 610.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 610.0
+    },
+    {
+      "kind": "action",
+      "action": "tool_call",
+      "call_id": "3db4b5a9-41e4-45a3-8f94-819b2ee36294",
+      "api_name": "lookup_manual",
+      "args": {
+        "query": "What is this port used for?"
+      },
+      "t_ms": 1328.0
+    },
+    {
+      "kind": "tool_completed",
+      "call_id": "3db4b5a9-41e4-45a3-8f94-819b2ee36294",
+      "api_name": "lookup_manual",
+      "args": {
+        "query": "What is this port used for?"
+      },
+      "status": "success",
+      "result": {
+        "status": "success",
+        "pages": [
+          {
+            "doc": "GENERIC-laptop-manual",
+            "page": 21,
+            "title": "Headphone / Microphone Jack"
+          },
+          {
+            "doc": "GENERIC-laptop-manual",
+            "page": 23,
+            "title": "USB Ports"
+          },
+          {
+            "doc": "GENERIC-laptop-manual",
+            "page": 25,
+            "title": "Ethernet (LAN) Port"
+          }
+        ],
+        "search_mode": "text_only"
+      },
+      "t_ms": 3438.0
+    }
+  ],
+  "wall_s": 33.42100000000028,
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 14000,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 3,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 3,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.6400000000003274,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.231147023,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003570756,
+        "completion_tokens": 6,
+        "completion_time": 0.011583675,
+        "total_tokens": 55,
+        "total_time": 0.015154431
+      },
+      {
+        "elapsed_seconds": 0.6880000000001019,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050604948,
+        "prompt_tokens": 2526,
+        "prompt_time": 0.180005549,
+        "completion_tokens": 142,
+        "completion_time": 0.279141765,
+        "total_tokens": 2668,
+        "total_time": 0.459147314
+      },
+      {
+        "elapsed_seconds": 0.6719999999995707,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.050313072,
+        "prompt_tokens": 2858,
+        "prompt_time": 0.197653616,
+        "completion_tokens": 95,
+        "completion_time": 0.19410977,
+        "total_tokens": 2953,
+        "total_time": 0.391763386
+      }
+    ],
+    "prompt_profile": "full",
+    "read_answer_mode": "prose",
+    "prompt_measurements": [
+      {
+        "instruction_chars": 4503,
+        "data_chars": 3248,
+        "protocol_data_chars_before_elision": 3248,
+        "protocol_data_chars_after_elision": 3248,
+        "schema_chars": 4063,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1",
+        "enforced_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1"
+      },
+      {
+        "instruction_chars": 4503,
+        "data_chars": 4083,
+        "protocol_data_chars_before_elision": 4083,
+        "protocol_data_chars_after_elision": 4083,
+        "schema_chars": 4063,
+        "instruction_sha256": "0c0b70a1847a4d3389a5feb93dacdcb4c05ec3123f4bb6ccfe89fb8e51c23b0b",
+        "presented_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1",
+        "enforced_schema_sha256": "e3a723fb03c2bcfd37aaf44f392f8e36bd41d5cbe61249a51cbbfc22ce9381f1"
+      }
+    ]
+  },
+  "plans": [
+    {
+      "state_revision": 0,
+      "observation_event_ids": [
+        "db11bdbe-703f-4cac-be53-963b141037c5"
+      ],
+      "proposal": {
+        "intent": "lookup_manual",
+        "slot_updates": {
+          "query": "What is this port used for?"
+        },
+        "calls": [
+          {
+            "tool": "lookup_manual",
+            "arguments": {
+              "query": "What is this port used for?"
+            },
+            "dependencies": [
+              "query"
+            ],
+            "argument_slots": {},
+            "result_sources": {}
+          }
+        ],
+        "clarification": null,
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": true,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    },
+    {
+      "state_revision": 1,
+      "observation_event_ids": [
+        "db11bdbe-703f-4cac-be53-963b141037c5"
+      ],
+      "proposal": {
+        "intent": "lookup_manual",
+        "slot_updates": {},
+        "calls": [],
+        "clarification": "Which port are you asking about? The manual has sections for the Headphone/Microphone Jack, USB Ports, and Ethernet (LAN) Port. Please specify which one you'd like information on.",
+        "response": null,
+        "evidence_answer": null,
+        "request_complete": false,
+        "write_requested": false,
+        "write_contracts": []
+      }
+    }
+  ],
+  "execution_ledger": [
+    {
+      "call_id": "3db4b5a9-41e4-45a3-8f94-819b2ee36294",
+      "operation_id": "a40727f7-8268-470c-9e31-2645c5b1bc8e",
+      "tool": "lookup_manual",
+      "arguments": {
+        "query": "What is this port used for?"
+      },
+      "dependencies": {
+        "query": 1
+      },
+      "effect": "read",
+      "retry_of_call_id": null,
+      "request_id": "9bd7d109-1b86-4f09-845d-e6bf5167bcc3",
+      "status": "success"
+    }
+  ],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 0.08,
+    "fast_read_retry": true,
+    "read_answer_mode": "prose"
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "5d13a26053a006f84b6dbe654758b2499f77b52a",
+  "runner_sha256": "1f81541a3ec2c97b23975e39276950153bc887fbd09c86acf0fecddee1621571",
+  "created_at": "2026-09-24T09:40:25.672400+00:00",
+  "provenance": {
+    "source_sha256": "911d39036f5b926ab39917c782b5b06f8521a63f6acf1b8ef0af66712dc76554",
+    "scenario_sha256": "5e16e8b11e45ea6eaae61e55218254589bd69c1129ae23714394bc913d1e0e58",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_07_visual_port_lookup.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": {
+    "scenario_id": "pub_07_visual_port_lookup",
+    "total": 66.2,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 0.45,
+        "points": 27.7,
+        "detail": {
+          "fraction": 0.44999999999999996,
+          "checkpoints": [
+            {
+              "id": "manual_lookup",
+              "type": "tool_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "1/1 matching call(s) completed successfully"
+            },
+            {
+              "id": "hybrid_bonus_embedding_passed",
+              "type": "tool_called",
+              "weight": 0.15,
+              "passed": false,
+              "note": "0/1 matching call(s) emitted"
+            },
+            {
+              "id": "final_grounded_hdmi",
+              "type": "final_response_contains",
+              "weight": 0.3,
+              "passed": false,
+              "note": "no final_response matched any_of"
+            },
+            {
+              "id": "final_not_hedging",
+              "type": "spoken_not_contains",
+              "weight": 0.15,
+              "passed": true,
+              "note": "no forbidden phrase spoken"
+            },
+            {
+              "id": "cites_manual",
+              "type": "final_response_contains",
+              "weight": 0.1,
+              "passed": false,
+              "note": "no final_response matched any_of"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 10.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 1.0,
+        "points": 15.4,
+        "detail": {
+          "fraction": 1.0,
+          "notes": [
+            "clean"
+          ]
+        }
+      }
+    }
+  },
+  "limitation": "One public-development attempt; mock external tools, no median or hidden-set claim."
+}

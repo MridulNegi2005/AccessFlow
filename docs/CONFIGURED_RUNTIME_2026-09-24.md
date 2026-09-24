@@ -1,5 +1,10 @@
 # Configured queue runtime — 24 September 2026
 
+Later24September update: actual Samsung MP3 admission and isolated native audio runs
+are now implemented. See [audio admission](SAMSUNG_AUDIO_ADMISSION_2026-09-24.md)
+and [remaining media coordination](MEDIA_COMPLETION_COORDINATION_2026-09-24.md).
+The checkpoint details below retain their original test counts and limitations.
+
 Later on 24 September: the optional native builder/installer and real ASR warm-up
 are now verified; see [Native package checkpoint](NATIVE_PACKAGE_2026-09-24.md).
 The text-only builder limitation below describes the earlier checkpoint. MP3 and

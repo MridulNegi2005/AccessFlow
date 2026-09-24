@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="6" time="3.191" timestamp="2026-09-24T14:59:43.219542+05:30" hostname="JARVIS"><testcase classname="tests.engine.test_samsung_audio" name="test_multiclip_waits_for_final_keeps_frame_and_retains_wav_through_asr" time="2.038"><failure message="TimeoutError">queue = &lt;Queue at 0x231e1148550 maxsize=0 tasks=1&gt;, kind = 'filler_utterance'
+
+    async def action(queue, kind):
+        async with asyncio.timeout(2):
+            while True:
+&gt;               item = await queue.get()
+                       ^^^^^^^^^^^^^^^^^
+
+tests\engine\test_samsung_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x231e1148550 maxsize=0 tasks=1&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('D:/Temp/pytest-of-JARVIS/pytest-632/test_multiclip_waits_for_final0')
+
+    async def test_multiclip_waits_for_final_keeps_frame_and_retains_wav_through_asr(tmp_path):
+        participant, codec, perception, task = await start(tmp_path)
+        try:
+            await participant.in_queue.put(chunk(final=False))
+&gt;           await action(participant.out_queue, "filler_utterance")
+
+tests\engine\test_samsung_audio.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\engine\test_samsung_runtime.py:20: in action
+    async with asyncio.timeout(2):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Timeout [expired]&gt;
+exc_type = &lt;class 'asyncio.exceptions.CancelledError'&gt;
+exc_val = CancelledError(), exc_tb = &lt;traceback object at 0x00000231E1148C40&gt;
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -&gt; Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() &lt;= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+&gt;               raise TimeoutError from exc_val
+E               TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\timeouts.py:115: TimeoutError</failure></testcase><testcase classname="tests.engine.test_samsung_audio" name="test_new_text_remains_responsive_and_rejects_late_cancel_ignoring_decode" time="0.014" /><testcase classname="tests.engine.test_samsung_audio" name="test_audio_failure_clarifies_without_a_fabricated_observation[missing]" time="0.011" /><testcase classname="tests.engine.test_samsung_audio" name="test_audio_failure_clarifies_without_a_fabricated_observation[codec]" time="0.014" /><testcase classname="tests.engine.test_samsung_audio" name="test_audio_failure_clarifies_without_a_fabricated_observation[missing_final]" time="0.014" /><testcase classname="tests.engine.test_samsung_audio" name="test_scenario_tail_allows_completed_turn_conversion_to_finish" time="0.018" /></testsuite></testsuites>

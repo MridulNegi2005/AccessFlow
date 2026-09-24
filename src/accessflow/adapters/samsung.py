@@ -1,7 +1,7 @@
 """In-process Samsung queue entry point; external effects belong to the harness.
 
-This is an integration adapter, not a claim of full multimodal readiness. MP3
-assembly remains an explicit perception integration dependency.
+MP3 clips are assembled asynchronously at the supplied end_of_turn boundary.
+Live media quality and platform readiness require separate measured evidence.
 """
 
 import asyncio
@@ -15,6 +15,7 @@ from pathlib import Path
 
 from .prompt_profile import PROMPT_PROFILES
 from .samsung_protocol import MediaInputError, SamsungProtocol, SamsungProtocolError
+from .samsung_audio import SamsungAudioInput
 
 
 PRE_MANIFEST_EVENT_LIMIT = 32
@@ -66,6 +67,7 @@ class ParticipantAgent:
         self.read_answer_mode = "prose"
         self.agent = None
         self.protocol = None
+        self.audio_input = None
         self.tasks = set()
         self.diagnostics = []
         self._running = False
@@ -106,6 +108,7 @@ class ParticipantAgent:
             if agent.executor is not None:
                 raise ValueError("Samsung adapter requires executor=None; the harness executes tools")
             self.protocol = protocol
+            self.audio_input = SamsungAudioInput(protocol)
             self.agent = agent
         except Exception as exc:
             self._setup_error = exc
@@ -125,37 +128,65 @@ class ParticipantAgent:
         manifest_seen = False
         pending = []
         pending_bytes = 0
-        while True:
-            raw = await self.in_queue.get()
-            if (not manifest_seen and isinstance(raw, Mapping)
-                    and raw.get("event_type") in PRE_MANIFEST_INPUTS):
-                # The official contract probe sends speech before any manifest.
-                # Retain bounded user input, but give the controller no authority
-                # or observations until its actual tool registry is initialized.
-                try:
-                    encoded = json.dumps(raw, ensure_ascii=False, allow_nan=False)
-                except (TypeError, ValueError) as exc:
-                    raise SamsungProtocolError("Invalid input before tool_manifest") from exc
-                pending_bytes += len(encoded.encode("utf-8"))
-                if len(pending) >= PRE_MANIFEST_EVENT_LIMIT or pending_bytes > PRE_MANIFEST_BYTE_LIMIT:
-                    raise SamsungProtocolError("Input before tool_manifest exceeds the startup buffer")
-                pending.append(json.loads(encoded))
-                continue
-            # The strict translator still validates the manifest before any held
-            # input. Unknown event types and unsolicited tool results still fail.
-            batch = [raw, *pending] if not manifest_seen else [raw]
-            for item in batch:
-                await self._deliver_input(item, incoming)
-            manifest_seen = True
-            pending.clear()
-            pending_bytes = 0
+        raw_task = None
+        media_task = asyncio.create_task(self.audio_input.completed.get())
+        try:
+            while True:
+                if raw_task is None:
+                    raw_task = asyncio.create_task(self.in_queue.get())
+                done, _ = await asyncio.wait({raw_task, media_task}, return_when=asyncio.FIRST_COMPLETED)
+                # Process already-arrived input before a simultaneous decode
+                # result, so a correction can invalidate its generation first.
+                if raw_task not in done:
+                    await self.audio_input.deliver(media_task.result(), incoming)
+                    media_task = asyncio.create_task(self.audio_input.completed.get())
+                    continue
+                raw = raw_task.result()
+                raw_task = None
+                if (not manifest_seen and isinstance(raw, Mapping)
+                        and raw.get("event_type") in PRE_MANIFEST_INPUTS):
+                    # Retain the existing bounded startup ordering contract.
+                    try:
+                        encoded = json.dumps(raw, ensure_ascii=False, allow_nan=False)
+                    except (TypeError, ValueError) as exc:
+                        raise SamsungProtocolError("Invalid input before tool_manifest") from exc
+                    pending_bytes += len(encoded.encode("utf-8"))
+                    if len(pending) >= PRE_MANIFEST_EVENT_LIMIT or pending_bytes > PRE_MANIFEST_BYTE_LIMIT:
+                        raise SamsungProtocolError("Input before tool_manifest exceeds the startup buffer")
+                    pending.append(json.loads(encoded))
+                    continue
+                batch = [raw, *pending] if not manifest_seen else [raw]
+                for item in batch:
+                    await self._deliver_input(item, incoming)
+                manifest_seen = True
+                pending.clear()
+                pending_bytes = 0
+                # One raw batch wins a simultaneous correction race; a ready
+                # decode must then get service even under sustained raw input.
+                if media_task.done():
+                    await self.audio_input.deliver(media_task.result(), incoming)
+                    media_task = asyncio.create_task(self.audio_input.completed.get())
+        finally:
+            readers = [task for task in (raw_task, media_task) if task is not None]
+            for task in readers:
+                task.cancel()
+            await asyncio.gather(*readers, return_exceptions=True)
 
     async def _deliver_input(self, raw, incoming):
         # scenario_end translates to no event: tools may return in the tail
         # window. The harness cancels run() when that window ends.
         try:
+            if isinstance(raw, Mapping) and raw.get("event_type") == "user_audio_chunk":
+                try:
+                    await self.audio_input.accept(raw, incoming)
+                except MediaInputError:
+                    self.diagnostics.append({"code": "media_unavailable"})
+                    del self.diagnostics[:-128]
+                    await self.audio_input.fail(incoming)
+                return
             events = self.protocol.translate_input(raw)
         except MediaInputError:
+            self.audio_input.invalidate()
             self.diagnostics.append({"code": "media_unavailable"})
             del self.diagnostics[:-128]
             for event in self.protocol.media_failure_events(raw):
@@ -163,6 +194,10 @@ class ParticipantAgent:
             await self.out_queue.put({"action": "clarification_request", "payload": {
                 "text": "I couldn't process that media. Please describe it or provide another recording or image."}})
             return
+        if raw.get("event_type") in {"interruption", "user_speech_chunk"}:
+            self.audio_input.invalidate()
+        elif raw.get("event_type") == "scenario_end":
+            await self.audio_input.missing_final(incoming)
         for event in events:
             await incoming.put(event)
 
@@ -211,5 +246,8 @@ class ParticipantAgent:
                     if inspect.isawaitable(result):
                         await asyncio.wait_for(result, timeout=2)
             finally:
-                self._running = False
-                self._finished = True
+                try:
+                    await self.audio_input.aclose()
+                finally:
+                    self._running = False
+                    self._finished = True

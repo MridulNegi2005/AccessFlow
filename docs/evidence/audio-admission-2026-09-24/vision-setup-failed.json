@@ -1,0 +1,38 @@
+{
+  "failure": "setup_failed",
+  "trace": [],
+  "wall_s": 34.25,
+  "model_evidence": null,
+  "plans": [],
+  "execution_ledger": [],
+  "adapter_diagnostics": [],
+  "participant_config": {
+    "partial_debounce_s": 0.08,
+    "fast_read_retry": null,
+    "read_answer_mode": null
+  },
+  "mode": "live/public-development/single-run",
+  "commit": "5d13a26053a006f84b6dbe654758b2499f77b52a",
+  "runner_sha256": "1f81541a3ec2c97b23975e39276950153bc887fbd09c86acf0fecddee1621571",
+  "created_at": "2026-09-24T09:39:09.908414+00:00",
+  "provenance": {
+    "source_sha256": "911d39036f5b926ab39917c782b5b06f8521a63f6acf1b8ef0af66712dc76554",
+    "scenario_sha256": "5e16e8b11e45ea6eaae61e55218254589bd69c1129ae23714394bc913d1e0e58",
+    "worktree_dirty": true
+  },
+  "scenario": "pub_07_visual_port_lookup.json",
+  "time_scale": 1,
+  "tail_ms": 6000,
+  "setup_cap_s": 300,
+  "wall_cap_s": 120,
+  "kit_sha256": {
+    "harness\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness\\mock_env.py": "70e92bf48cad5673db6316be099c2e0809901cfd7ab927532147a2e21f04fa5a",
+    "harness\\protocol.py": "4842dc5e503c03159460c353b86bb2650c598886a3dde2fc5fed3a15d26a8215",
+    "harness\\runner.py": "7e024661b5cd3d69e116efe2f14012e9c1a1edb653e8d965a96fa89b5e37c3d3",
+    "harness\\scenario_gen.py": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+    "harness\\scorer.py": "81ea1297de9e90b0272d5f098a68cca293109bebaf96b38b01b7c79e7bf665e6"
+  },
+  "score": null,
+  "limitation": "One public-development attempt; mock external tools, no median or hidden-set claim."
+}

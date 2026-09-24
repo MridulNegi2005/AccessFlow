@@ -1,0 +1,27 @@
+{
+  "mode": "live-local-public-image-single-observation",
+  "python": "3.11.15",
+  "image_sha256": "52620cb1296765d663d7cda409e4c5181e561bd301edd4ef542675175e5f4b9e",
+  "service": "existing portable Ollama0.34.0 localhost11435",
+  "model": "gemma3:4b",
+  "timeout_s": 110,
+  "limitations": [
+    "Warm vision server, fresh perception worker; not an official task, microphone run or score."
+  ],
+  "observations": [
+    {
+      "event_id": "3636ce53-4e8a-4853-b423-96dd1632fd38",
+      "source_id": "public-frame-single-check",
+      "revision": 0,
+      "modality": "image",
+      "text": "Here's a description of the image:\n\nThe image shows a close-up of the port panel on the bottom of a silver laptop, displaying HDMI, USB-C, and Thunderbolt ports.  The ports are labeled \"HDMI\", \"USB-C\", and \"Thunderbolt\".",
+      "final": true,
+      "speech_start": 0.0,
+      "speech_end": 0.0,
+      "backend": "ollama/gemma3:4b"
+    }
+  ],
+  "failure": null,
+  "observation_s": 23.688000000000102,
+  "child_closed": true
+}

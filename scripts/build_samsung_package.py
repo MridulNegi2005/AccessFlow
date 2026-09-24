@@ -148,7 +148,7 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
         "Do not publish the generated directory as repository source.\n"
         "Native packages require the declared vision service separately when enabled; no vision weights are bundled.\n"
         "Native dependency pins target CPython3.11.15 on Windows/Linux x64; only measured platforms are verified.\n"
-        "MP3 turn assembly remains incomplete. Packaging does not certify multimodal quality.\n"
+        "Native audio uses bounded MP3 assembly at explicit end_of_turn. Packaging does not certify multimodal quality.\n"
         "No official repeated-run score, clean install, or Docker result is implied by assembly.\n"
     ).encode()
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()

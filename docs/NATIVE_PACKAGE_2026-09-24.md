@@ -1,5 +1,10 @@
 # Native installation package — 24 September 2026
 
+Later24September update: actual Samsung MP3 admission and isolated native audio runs
+are now implemented. See [audio admission](SAMSUNG_AUDIO_ADMISSION_2026-09-24.md)
+and [remaining media coordination](MEDIA_COMPLETION_COORDINATION_2026-09-24.md).
+The checkpoint details below retain their original test counts and limitations.
+
 ## What is now available
 
 The A-owned builder can include a pinned, hash-checked Faster Whisper installation,

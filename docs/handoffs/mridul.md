@@ -1,5 +1,36 @@
 # Mridul workstream handoff
 
+## Audio admission and native runtime checkpoint - 24 September 2026
+
+Samsung MP3 input is now admitted through an asynchronous bounded turn bridge using
+its explicit end_of_turn. Additive controller-only speech_status preserves current
+frames while blocking unfinished speech/write authority. B receives ordinary WAVs;
+no B code/tests changed. New raw-input/decode fairness and stale-result gates tested.
+
+Full1318pass/2skip/1xfail70.10s; focused45pass; package64pass; Ruff clean.
+Actual official audio Qwen+CPU-ASR scores54.6/51.5: pipeline ran,but tasks did not
+complete. Retained poor transcription,missing-detail clarification and repeated
+filler penalty; no accuracy tuning. Rebuilt isolated audio package verified89 hashes,
+37 pins,official import and actual pub06;setup5.375s,total12.906s,score54.6.
+
+Existing D: portable Ollama/Gemma installation was found and started,not downloaded.
+Default30s vision setup failed without a retained cause;110s setup passed26.765s.
+Official visual attempt66.2 had no image-grounded final. Direct actual frame took
+23.688s,exceeding the six-second tail. Vision latency/service deployment and B
+microphone/endpointing remain readiness gaps. Raising timeout is not a fix.
+
+Read docs/SAMSUNG_AUDIO_ADMISSION_2026-09-24.md and
+ docs/MEDIA_COMPLETION_COORDINATION_2026-09-24.md. A owns contracts/admission/package;
+B owns vision/provider/assigned worker and microphone;both coordinate optional worker
+settings and browser/acoustic adoption. Earlier broad MP3 ownership wording is
+superseded for this A-only explicit-end_of_turn bridge;teammate approval is not claimed.
+
+Next A: declared vision deployment/options integration and platform/package checks;
+then repeated official evaluation and accuracy improvements. Scoped corpus review was
+already completed23September;do not reopen it from stale older summaries. Docker/Linux,
+whole-system security review and hidden/repeated results are unverified. Code completion
+first;PPT/video excluded;goal active. Commit/push Mridul branch only;no main merge/tag.
+
 ## MP3 converter checkpoint - 24 September 2026
 
 A standalone A-owned bounded subprocess converter now joins ordered MP3 clips as mono
