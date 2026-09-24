@@ -1,5 +1,11 @@
 # Samsung development package — 22 September 2026
 
+24 September update: optional native ASR assets, installation tooling and frozen
+media profiles are now available. See [Native package instructions](NATIVE_PACKAGE_2026-09-24.md)
+for the 37-pin audio profile and fresh-environment ASR evidence. The base text
+instructions below remain applicable; MP3 assembly and full multimodal evaluation
+remain unfinished.
+
 Owner: Mridul. A local assembler now produces a self-contained package that passes
 the supplied evaluator's import and contract smoke stages. This is preparation,
 not a submission or release. The current package remains incomplete for Samsung
@@ -29,8 +35,8 @@ live under ignored `artifacts/`; do not commit the copied organizer kit.
 `requirements.txt` and `submission.yaml` contain the same21 exact public-PyPI pins
 exported from `uv.lock`. Unsupported exports with local paths, URLs, editable
 requirements, markers or duplicate names fail rather than producing broken YAML.
-If the dependency profile later requires conditional packages, extend this logic
-and test Samsung's minimal YAML parser before changing the lockfile.
+The native profile resolves conditional exports for explicitly declared targets;
+see the new native package report for the parser validation and platform limits.
 
 Every packaged input has a SHA-256 in `package_manifest.json`, alongside the base
 commit and dirty-worktree flag. The manifest does not hash itself. It describes the

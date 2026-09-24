@@ -1250,3 +1250,7 @@ Request: continue Mridul-owned implementation; prioritize complete submission co
 ## 2026-09-24 14:20 — Configured runtime
 
 Request: prioritize runnable submission code before accuracy. Assistance: shared factory, explicit native configuration, setup deadlines/cleanup, package profile isolation and regressions. Corrected new fixture input from frame_ref to image_ref after failed integration; final1243pass/2skip/1xfail. Inference in tests is fake, including real child-process transport test. No live media claims or B edits. Human priority steering only; no human code edits recorded.
+
+## 2026-09-24 14:35 — Native package and actual ASR verification
+
+Request: continue A code completion. Assistance: pinned public model installation, native assets/profile packaging, strict dependency target resolution,28 regressions, fresh-environment checks and reports. Initial conditional lock export was rejected; implementation now resolves declared target pins and verified the actual Samsung YAML parser. Real ASR used B's existing generated fixture and unchanged worker. Full1271pass/2skip/1xfail; no live reasoning, vision, microphone or official audio-task score. Human supplied scope; no human code edits recorded.

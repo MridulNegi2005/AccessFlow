@@ -1,0 +1,18 @@
+{
+  "mode": "isolated-package-install-and-real-ASR-warmup",
+  "python": "3.11.15 (main, May 10 2026, 19:31:25) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "package_files_verified": 86,
+  "exact_pins_installed": 37,
+  "official_import_errors": [],
+  "official_yaml_pins_match": true,
+  "warmup_backends": {
+    "audio": "faster-whisper/cpu-int8"
+  },
+  "warmup_seconds": 5.41773749999993,
+  "package_sha256": "230152aed683b8640d124787a19249b3e1d81ce10ea80558597829eea341b0b9",
+  "limitations": [
+    "Same Windows host, fresh virtualenv; not clean OS or Docker.",
+    "No reasoning provider call, vision, official MP3 task, microphone or score."
+  ]
+}

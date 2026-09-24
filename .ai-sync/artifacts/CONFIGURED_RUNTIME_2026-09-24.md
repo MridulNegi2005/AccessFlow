@@ -1,5 +1,10 @@
 # Configured queue runtime — 24 September 2026
 
+Later on 24 September: the optional native builder/installer and real ASR warm-up
+are now verified; see [Native package checkpoint](NATIVE_PACKAGE_2026-09-24.md).
+The text-only builder limitation below describes the earlier checkpoint. MP3 and
+full multimodal task completion remain open.
+
 ## Scope and current limit
 
 `accessflow.adapters.configured_agent.build_configured_agent` now composes the

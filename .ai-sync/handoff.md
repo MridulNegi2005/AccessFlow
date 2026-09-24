@@ -1,5 +1,22 @@
 # Active Handoff
 
+## Native package checkpoint - 24 September 2026
+
+Optional native packaging now includes a pinned/hash-checked ASR installation, explicit
+warm-up fixtures/provenance and frozen relative media settings. The public-snapshot installer
+was exercised at revision3d3d5dee26484f91867d81cb899cfcf72b96be6c. Dependencies use37 exact
+pins selected for declared Python3.11.15 Windows/Linux x64 targets; only Windows was measured.
+Fresh package venv verified86 hashes,all37 installed pins,official import/YAML,and actual
+ASR warm-up5.418s. Repository worker warm-up5.161s,second transcription1.386s using B's
+unchanged generated development fixture. No microphone or official task score implied.
+
+Final1271pass/2skip/1xfail62.21s; Ruff clean; no B code/tests changed. Read
+ docs/NATIVE_PACKAGE_2026-09-24.md and evidence/native-package-2026-09-24.
+Text remains default; vision weights/server are not bundled. MP3 ownership/turn bridge,
+actual vision/full queue tasks, platform/Docker and repeated official gates remain open.
+Native assets/packages remain ignored; code/evidence pushed only to Mridul branch.
+Overall goal active; completion before accuracy; PPT/video excluded.
+
 ## Configured runtime checkpoint - 24 September 2026
 
 Samsung now uses the shared configured-agent factory. Explicit process mode validates

@@ -1258,3 +1258,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Full1243pass/2skip/1xfail59.13s; focused62pass; Ruff clean. Intermediate wrong-field test failure retained. No B changes, live inference, dependency/model installation, main push, release or submission. AI-assisted implementation/testing; human supplied priorities, no human code edits. Native media package and MP3 integration remain open.
 
 ---
+
+## [2026-09-24 14:35] — Native package checkpoint
+**Task:** Complete independent A native installation/package path while audio ownership remains pending.
+**Changes:** Explicit public pinned ASR installer, allowlisted/hash-checked model and fixture packaging, frozen relative media profile,37-pin native target resolution,28 regressions and actual installation/ASR evidence.
+**Status:** Tested native packaging slice; overall goal active.
+**Notes:** Full1271pass/2skip/1xfail62.21s, Ruff clean. Fresh same-host venv37pins/86hashes/officialimport/parser/ASRwarmup5.418s; repoASR5.161s/1.386s. Initial marker export failed explicitly; fixed and verified against actual parser. AI-assisted implementation/testing; no human code edits. Existing B generated fixture reused without mutation; no new recordings, B source/tests, provider reasoning calls, main push, workflow, release or submission. Vision service and MP3/full-task gates remain open.
+
+---

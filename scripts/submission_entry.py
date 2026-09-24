@@ -6,7 +6,7 @@ from pathlib import Path
 
 from accessflow.adapters.samsung import ParticipantAgent as QueueParticipant
 from accessflow.adapters.prompt_profile import PROMPT_PROFILES
-from accessflow.adapters.configured_agent import PERCEPTION_ENV_KEYS
+from accessflow.adapters.configured_agent import PERCEPTION_ENV_KEYS, PerceptionConfig
 from accessflow.read_answer import READ_ANSWER_MODES
 
 
@@ -21,9 +21,19 @@ PROFILE_KEYS = {
 }
 
 
-def configure_profile(profile, environment):
+def configure_profile(profile, environment, *, root=None):
     """Validate before mutation; configuration is shared, conversation state is not."""
-    if (not isinstance(profile, dict) or set(profile) != PROFILE_KEYS
+    if not isinstance(profile, dict):
+        raise ValueError("Package runtime profile has an invalid shape")
+    expected = set(PROFILE_KEYS)
+    native = profile.get("ACCESSFLOW_SAMSUNG_PERCEPTION") == "process"
+    if native:
+        expected.update({"ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH", "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO",
+                         "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S", "ACCESSFLOW_SAMSUNG_VISION_PROVIDER"})
+        if profile.get("ACCESSFLOW_SAMSUNG_VISION_PROVIDER") == "ollama":
+            expected.update({"ACCESSFLOW_SAMSUNG_VISION_MODEL", "ACCESSFLOW_SAMSUNG_VISION_URL",
+                             "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE"})
+    if (set(profile) != expected
             or any(not isinstance(value, str) or not value.strip() for value in profile.values())):
         raise ValueError("Package runtime profile has an invalid shape")
     if (profile["ACCESSFLOW_SAMSUNG_BACKEND"] != "groq"
@@ -32,9 +42,18 @@ def configure_profile(profile, environment):
     if (profile["ACCESSFLOW_SAMSUNG_PROMPT_PROFILE"] not in PROMPT_PROFILES
             or profile["ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE"] not in READ_ANSWER_MODES):
         raise ValueError("Unsupported package prompt profile or read answer mode")
-    if profile["ACCESSFLOW_SAMSUNG_PERCEPTION"] != "text":
-        raise ValueError("This package does not install native perception assets")
-    undeclared = sorted((PERCEPTION_ENV_KEYS - PROFILE_KEYS) & environment.keys())
+    if native:
+        fixed_paths = {"ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH": "assets/asr",
+                       "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO": "assets/warmup.wav"}
+        if "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE" in profile:
+            fixed_paths["ACCESSFLOW_SAMSUNG_WARMUP_IMAGE"] = "assets/warmup.png"
+        if any(profile[name] != value for name, value in fixed_paths.items()):
+            raise ValueError("Native profile must use packaged installation assets")
+        base = (PACKAGE_ROOT if root is None else Path(root)).resolve()
+        if any(not (base / path).resolve().is_relative_to(base) for path in fixed_paths.values()):
+            raise ValueError("Packaged installation assets escape their boundary")
+    PerceptionConfig.from_environment(PACKAGE_ROOT if root is None else Path(root), profile)
+    undeclared = sorted((PERCEPTION_ENV_KEYS - expected) & environment.keys())
     if undeclared:
         raise ValueError(f"Environment contains undeclared perception setting: {undeclared[0]}")
     for name, value in profile.items():
