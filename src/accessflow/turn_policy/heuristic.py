@@ -7,7 +7,9 @@ import re
 from ..contracts import Observation, SessionView, TurnDecision
 from ..perception.timing import ActivitySummary
 
-_CORRECTION = re.compile(r"\b(actually|rather|correction|sorry|i mean)\b|^\s*(no|wait)\s*[,.-]", re.I)
+_CORRECTION = re.compile(r"\b(actually|rather|correction|i mean)\b|^\s*(no|wait)\s*[,.-]", re.I)
+_SORRY = re.compile(r"\bsorry\b", re.I)
+_APOLOGY_PREFIX = re.compile(r"^\s*(?:(?:i['’]m|i am)\s+)?sorry\b", re.I)
 _OUTPUT_STOP_REQUEST = re.compile(r"^\s*stop\s+(?:speaking|talking)\b", re.I)
 _TASK_CANCEL_REQUEST = re.compile(
     r"^\s*(?:stop\s+(?:the\s+whole\s+task|this\s+task|everything)"
@@ -46,7 +48,9 @@ class HeuristicTurnPolicy:
             return TurnDecision(kind="continue", uncertainty=0.25)
         if normalized in _BACKCHANNELS and observation.final:
             return TurnDecision(kind="backchannel", uncertainty=0.05)
-        if _CORRECTION.search(text):
+        if _CORRECTION.search(text) or (
+            _SORRY.search(text) and not _APOLOGY_PREFIX.match(text)
+        ):
             return TurnDecision(
                 kind="possible_correction",
                 uncertainty=0.15 if observation.final else 0.35,

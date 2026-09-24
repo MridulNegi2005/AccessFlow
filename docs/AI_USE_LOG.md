@@ -1,5 +1,60 @@
 # AI-use development log
 
+## 2026-09-25 — Browser request/response correlation recovery
+
+- A deterministic regression reproduced two owned demo issues: a valid
+  terminal response from an earlier input in the same multimodal task was
+  rejected as not matching the last source, and a late engine error from an
+  old task could end the currently active task.
+- Updated browser correlation to accept the latest known event from any source
+  in the current task, including queued terminal replies; stale or uncorrelated
+  engine errors are ignored. Existing uncorrelated input/transport `demo_error`
+  messages remain actionable.
+- `tests/demo`: 150 passed, 1 retained xfailed, 2 dependency warnings. The
+  Node correlation check, syntax check, scoped Ruff and diff check passed. The
+  complete repo suite was not rerun; `uv run`'s configured Python 3.11 link is
+  unavailable, so pytest used the existing Python 3.12.10 virtualenv.
+- After the next owned policy repair, the combined demo, timing-replay,
+  turn-policy, audio and local-perception set passed 317 tests with 1 retained
+  xfail and 2 existing dependency warnings in 20.86 s.
+- No shared contracts, engine, adapters, or configuration changed. No human
+  audio, live reasoning/action, live vision, or official media evaluation is
+  claimed. Full details and open gates are in `docs/handoffs/atishay.md`.
+
+## 2026-09-25 — Polite apology versus spoken correction
+
+- A new failing policy regression reproduced two polite openers (“I'm sorry,
+  set a reminder…” and “Sorry, set a reminder…”) being misclassified as
+  unresolved corrections. Kept “Tuesday, sorry—Wednesday” as a correction.
+- Narrowed the apology token rule in the owned heuristic and added the three
+  deterministic cases. The turn-policy suite passed 25 tests; the final
+  combined owned demo/timing/policy/audio/local-perception suite passed 317,
+  with 1 retained xfail and 2 existing dependency warnings. Ruff, Node
+  correlation, and diff checks passed.
+- This is lexical policy evidence only. No human ASR or booking behavior is
+  claimed; C24-2's output-stop and live timing semantics remain joint work.
+
+## 2026-09-25 — Microphone evidence and backend disclosure
+
+- User provided a screenshot of one human mic-to-local-ASR run; the recognized
+  Tuesday-to-Wednesday correction and `local/Faster Whisper CPU INT8 audio` /
+  `demo/mock-reasoner` labels were recorded with their limits. Raw audio was not
+  retained; the mock response was not represented as reminder execution.
+- Verified the existing accessible backend-status UI delta, ran the 150-test
+  demo suite (1 retained xfail), Node correlation/mic lifecycle checks and Ruff
+  for the changed Python test. Updated the run sheet so the reviewer—not the
+  user—checks statuses and knows the server connection log does not contain
+  transcript evidence.
+- No shared contract, controller, Mridul-owned files, external actions or
+  deployment changed. Remaining shared decisions are C24-1/2/3.
+- Added a clearly pending C24-1/2 contract discussion draft with concrete
+  timing/finality/interruption cases. Rechecked local vision and participant-kit
+  availability; neither runtime/resource was present, so no inference ran.
+- Re-ran the current-branch opt-in model test through actual ProcessPerception
+  and Agent with a checked-in generated WAV: 1 passed in 8.67 s, zero mock tool
+  effects, worker cleaned up. The separate owned timing/audio/turn-policy set
+  passed 103 tests; this is not human ASR accuracy or real-reasoner evidence.
+
 ## 2026-09-23 — AccessFlow frontend redesign
 
 AI-assisted implementation: Rebuilt the owned demo UI around the approved input-dock/answer-stage concept; staged media locally until Run, preserved existing event and media bounds, and added final-only demo observation notices for source correlation and provenance. Parallel read-only subagent reviews identified accessibility, media-lock, and responsive-layout gaps that were fixed. Full suite: 810 passed, 1 existing xfailed, 2 warnings; Ruff, inline JavaScript syntax, and diff checks passed. Isolated Edge browser QA inspected empty/text states at 1440×1024, 834×1194, and 390×844, plus PNG upload/preview and overflow at all three sizes. No shared contract/controller/dependency changes, deployment, or push.
@@ -1357,3 +1412,27 @@ shared contract. Focused turn-policy suite 22 passed; full suite 1215 passed,
 Added a staged local microphone test run sheet with an exact correction script
 and mock-backend evidence warning. No human audio recorded, no Mridul-owned
 code/contracts changed, and no real booking or external effect occurred.
+
+2026-09-25 AI-assisted Atishay ASR evidence retention: Implemented an optional
+immutable diagnostic hook on the owned direct `LocalPerception` path for
+Faster Whisper raw word/segment estimates, language metadata and event/source/
+revision identity; no confidence calibration, shared Observation field,
+controller use or Agent authorization. Added empty-decode and sink-failure
+regressions, updated the Whisper API fake, and widened scheduler margins only
+in two native-frame timeout tests after a full-suite failure. Full final suite
+1218 passed/4 skipped/1 xfailed; Ruff, four Node checks and diff check passed.
+Installed Faster Whisper CPU INT8 opt-in generated-audio tests 2 passed;
+deterministic mock reasoning/tools. Synthetic tone produced no decoded
+segments; this does not prove silence/noise classification. C24-1/2 and
+Mridul-owned process-worker transport remain open; no human audio, official
+media, live vision/reasoning, shared contract, commit or push.
+
+2026-09-25 AI-assisted Atishay final verification: Full repository test run
+passed 1221, skipped 4, retained 1 xfailed, with two existing dependency
+warnings; Ruff and four Node browser checks passed. The opt-in installed
+Faster Whisper CPU INT8 tests passed on generated fixtures (2 tests); the
+reasoner remained deterministic mock and no tool effects occurred. No human
+speech was recorded. Existing Python 3.12.10 venv was used because the pinned
+Python 3.11 uv link is unavailable. No live vision or official kit evaluation;
+C24-1/2/3 integration remains jointly open with Mridul. No teammate-owned
+source or shared contract/configuration changed.

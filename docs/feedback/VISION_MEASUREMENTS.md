@@ -31,3 +31,12 @@ The current `atishay/perception` checkout was rechecked before attempting anothe
 
 No live benchmark was started. The existing deterministic child-process loopback test remains
 protocol and provenance evidence only; it does not establish live vision grounding or quality.
+
+## Availability recheck — 25 September 2026
+
+Before selecting the next perception task, the local environment was checked
+again. No Ollama process was present, `http://127.0.0.1:11434/api/tags` was
+unavailable, and the participant kit was absent from the expected
+`E:\Downloads\Samsung Stuff\participant-kit\participant-kit` path. No live
+vision inference or official raw-media run was started. Existing provider
+tests remain protocol evidence, not image-grounding results.

@@ -1,5 +1,82 @@
 # Active Handoff
 
+## Browser correlation recovery — 25 September 2026
+
+The browser now accepts terminal replies caused by the latest known event from
+any input source in the active task, and replays early queued finals by the same
+task-local event set. Engine errors with missing or stale event identities no
+longer interrupt the current task. Uncorrelated input/transport `demo_error`
+events remain visible. Deterministic regression, Node syntax/correlation checks,
+the demo suite (150 passed, 1 retained xfailed) and focused lint passed. This is
+only the owned browser slice, not proof of configured live reasoning or action.
+No shared contract, engine, adapter, or Mridul-owned configuration changed;
+C24-1/2/3, runtime, physical-mic timing/interruption, real vision, and official
+raw-media gates remain open. See `docs/handoffs/atishay.md` for evidence.
+
+## Turn-policy apology correction — 25 September 2026
+
+The owned heuristic no longer treats a leading “Sorry, …” or “I'm/I am sorry,
+…” as a semantic correction; “Tuesday, sorry—Wednesday” remains a correction.
+The regression failed before the change. Final combined owned demo/timing/
+policy/audio/local-perception suite: 317 passed, 1 retained xfailed, 2 existing
+warnings; Ruff and Node correlation check passed. This is not ASR accuracy or
+booking proof. C24-2 timing and output-only-stop semantics still need agreement.
+
+## Atishay ASR evidence-retention checkpoint — 25 September 2026
+
+The direct owned `LocalPerception` path now keeps immutable raw Faster Whisper
+segment/word estimates, language output and event/source/revision identity in
+an optional diagnostic sink. It explicitly labels decoder estimates as
+uncalibrated, leaves timestamps WAV-relative, and does not expose these values
+to the shared `Observation`, turn decision or action controller. Empty decodes
+reach the sink before the existing empty-transcript error; sink failures are
+logged without dropping valid transcript text. This is not integrated through
+the Mridul-owned process adapter and requires C24-1/2 agreement before shared
+use.
+
+Final verification: full suite 1218 passed, 4 skipped, 1 xfailed, 2 dependency
+warnings; repository Ruff, four Node browser checks and `git diff --check`
+passed. Installed Faster Whisper 1.2.1 base.en CPU INT8 tests with generated
+audio: 2 passed in 12.58 s, including direct metadata retention and the actual
+child/Agent seam with mock reasoning and no tools. A 0.5 s generated tone
+yielded no decoded segments; this does not prove silence detection. A first
+full run exposed scheduler sensitivity in a 50 ms native-frame test; two test
+deadlines now use 500 ms, and a fresh full run passed. No human audio, official
+kit/media, live vision/reasoning or real effect was tested. No Mridul-owned
+source, shared contract or configuration changed.
+
+## Atishay microphone checkpoint — 25 September 2026
+
+One user-provided browser screenshot shows local/Faster Whisper CPU INT8
+perception and demo/mock-reasoner. The displayed recognition preserves the
+Tuesday-at-3 to Wednesday-at-5 correction; the mock agent echoes it rather than
+resolving it or creating a reminder. This verifies one human-mic upload/local
+ASR display smoke only. No raw audio, timing, device/browser details, live
+partials or barge-in were captured. Uvicorn connection logs do not expose audio
+payloads or transcripts. Evidence and limitations:
+`docs/feedback/MICROPHONE_TEST_2026-09-25.md`.
+
+The ASR run sheet now points at the configured 8001 instance, distinguishes
+real-ASR perception from the mock reasoner, and asks the user only to say
+“done”; the reviewer must inspect the page/screenshot rather than ask the user
+to report statuses. The owned backend-status UI delta passes its focused test
+and the 150-test demo suite (1 retained xfail); correlation, microphone
+pending/disconnect and speech-lifecycle Node checks pass. No controller,
+shared contract, or Mridul-owned file changed.
+
+A separate discussion draft in `docs/CONTRACT_PROPOSALS.md` now gives the
+smallest C24-1/2 examples and decisions needed on clock, finality, activity,
+uncertainty and output-stop/task-stop semantics. It is not an agreed contract.
+Current preflight found no local Ollama service and no participant kit at the
+expected path; no live vision or official raw-media evaluation ran.
+
+Fresh local-model recheck: the opt-in generated-WAV test passed through the
+real Faster Whisper child, actual Agent and B-owned turn policy (1 passed in
+8.67 s; tool effects zero; child closed). Focused B timing/audio/policy suite:
+103 passed. This still uses generated speech and a mock reasoner; it does not
+verify live conversation reasoning or endpointing. Details and fixture hash are
+in `docs/feedback/ASR_MEASUREMENTS.md`.
+
 ## Merged readiness and ownership handoff — 24 September 2026
 
 Merged Mridul 0c12ba0 into main first (c564754), then Atishay 8083ebf (e7c95f5).
@@ -1103,3 +1180,17 @@ ordinary complete requests. Focused policy 22 passed, full suite 1215 passed,
 reports a real ASR backend, because demo/mock replies are not transcription
 evidence. No user audio recorded. C24-2 output-stop scope, common runtime,
 real vision and official kit/media remain open. Details in Atishay handoff.
+
+## 2026-09-25 — Atishay final owned-tree verification
+
+- Full suite: 1,221 passed, 4 skipped, 1 retained xfailed, two existing
+  dependency warnings (53.86 s); Ruff and four Node browser checks passed.
+- Installed Faster Whisper opt-in generated-media checks: 2 passed (8.90 s).
+  Reasoning remains a deterministic mock with no tool effects; no speech was
+  newly recorded.
+- Outstanding: C24-1/2/3 shared runtime/timing decisions with Mridul, real
+  streaming interruption/timing, live vision/model endpoint, and official kit
+  media runs. Expected kit path/files and local Ollama ports were unavailable.
+- No Mridul-owned source/contracts/configuration changed. Atishay changes remain
+  uncommitted and unpushed; tests use the existing Python 3.12.10 venv because
+  the pinned Python 3.11 uv minor link is missing.

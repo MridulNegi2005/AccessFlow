@@ -128,3 +128,60 @@ The existing installed Faster Whisper 1.2.1 `Systran/faster-whisper-base.en` sna
 - One separate run through the actual `Agent` controller plus the real ASR child worker took 4.678 s from queued audio to a final. The reasoner was a deterministic **mock**, the policy was the final-flag baseline, and the tool manifest was empty. Its view contained the recognized repeated-Tuesday/corrected-Wednesday audio observation with matching event/source IDs and `faster-whisper/cpu-int8` provenance; the final's `caused_by_event_id` matched the audio event. There were zero tool calls/effects and the child stopped after close.
 
 The opt-in owned regression `tests/perception/test_live_worker_agent.py` checks the Agent/worker seam with `ACCESSFLOW_TEST_WHISPER_MODEL_PATH` set to an installed snapshot; it skips when no path is supplied rather than downloading a model. It now uses Atishay’s `HeuristicTurnPolicy` and verifies that the ASR correction causes an acknowledgment and a final tied to the same audio event, with zero mock tool effects. The focused local run passed. This is actual local ASR on generated voice, **not** human microphone audio, official MP3 admission, a real reasoning-model result or booking behavior. The worker returned `final=True` and `speech_start=speech_end=0.0` because the current shared audio contract has no clip finality or measured clock mapping; C24-1/2 remains unresolved. Single-run wall times are not latency percentiles.
+
+## 2026-09-25 — Current-branch model-backed Agent recheck
+
+On the current `atishay/perception` checkout, reran the opt-in test with the
+already-installed Faster Whisper base.en CPU INT8 snapshot configured through
+`ACCESSFLOW_TEST_WHISPER_MODEL_PATH`:
+
+```powershell
+$env:ACCESSFLOW_TEST_WHISPER_MODEL_PATH = 'E:\Downloads\Samsung Stuff\AccessFlow\models\models--Systran--faster-whisper-base.en\snapshots\3d3d5dee26484f91867d81cb899cfcf72b96be6c'
+.\.venv\Scripts\python.exe -m pytest -q tests/perception/test_live_worker_agent.py
+Remove-Item Env:ACCESSFLOW_TEST_WHISPER_MODEL_PATH
+```
+
+Result: **1 passed in 8.67 s**. The test used the checked-in generated
+`held_out/heldout_repetition.wav` (SHA-256
+`d16355e7d1e702ebc309227e18bd9925a3ec7290cc7d454754d89dbaae55853f`; 208,378
+bytes), actual `ProcessPerception` child worker and `Agent`, and Atishay's
+`HeuristicTurnPolicy`. It asserts two `Tuesday` tokens and `Wednesday` in the
+ASR observation, matching audio-event causality for acknowledgment/final, zero
+tool calls/effects, and child-process cleanup. The reasoner and tools remain
+test doubles. The 8.67 s is the complete focused pytest run, not a standalone
+ASR latency measurement. This adds a fresh current-checkout plumbing check, not
+new human-speech, endpointing, live-reasoning, official MP3 or booking evidence.
+
+## 2026-09-25 — Raw decoder evidence on the owned LocalPerception path
+
+The regular installed-Faster-Whisper `LocalPerception` path now requests word
+timestamps and can send an immutable `ASRDecodeEvidence` record to an optional
+diagnostic sink. The record preserves the input event ID, utterance/source ID,
+revision, backend, transcript, language estimates, segment timestamps and raw
+decoder estimates (`avg_logprob`, `no_speech_prob`, compression ratio and word
+probabilities). Estimates are explicitly uncalibrated; segment/word offsets
+remain relative to the WAV. No controller/session clock mapping or turn
+finality is inferred, and this diagnostic record is not added to the shared
+`Observation` or used by the agent to authorize an action. Sink failures are
+logged and do not suppress a valid transcript. An empty decode is captured
+before the existing empty-text error, so diagnostic evidence is not silently
+lost; it is not relabeled as silence.
+
+Fake-model regressions verify populated evidence, source/revision correlation,
+empty decodes and sink failure behavior. A fresh opt-in run against the
+installed Faster Whisper 1.2.1 base.en CPU INT8 model on the generated
+`held_out/heldout_repetition.wav` passed both the actual child-worker/Agent
+check and the direct `LocalPerception` evidence check: **2 passed in 12.58 s**.
+The Agent's reasoner/tools are test doubles and no effects were executed; the
+metadata check is on generated speech, not human or official media.
+
+A separate direct-model probe of checked-in `tests/fixtures/audio/synthetic_tone.wav`
+(SHA-256 `9038a6555bc5598b60b954d69637dc83bfc2322c9a55a6abf644863eb67df8b5`,
+0.5 s mono 16 kHz PCM) returned `no_decoded_segments`, empty transcript,
+language `en`, language probability `1.0`; model inference was 2.16 s for this
+single fixture. This is not evidence that the signal is silence or that all
+noise is rejected. In the normal local path the empty transcript still raises
+the established perception error after the diagnostic callback. Proper
+no-speech/recovery semantics and transport through `ProcessPerception` remain
+open; the latter is Mridul-owned, and any shared-field/controller use requires
+C24-1 agreement.

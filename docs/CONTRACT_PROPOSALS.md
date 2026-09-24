@@ -62,6 +62,63 @@ No new public authorization field; the independent authorization provider still 
 - Compatibility plan: Keep v0.1 transcript/audio events and TurnPolicy unchanged. A translating adapter can drop timing metadata for older consumers; the current owned timing summary remains offline until the proposal is accepted.
 - Decision: Pending review by Mridul; no shared contract files changed.
 
+## 2026-09-25 — C24-1/2 audio-turn examples for joint review
+
+**Status:** Discussion draft only. No shared contract, controller behavior, or
+official MP3 adapter changed.
+
+**Current gap (verified in this checkout):** `Transcript` already carries an
+utterance ID, revision, `final`, and speech start/end numbers; `Audio` carries a
+file path, utterance ID, revision, and speech start/end numbers. However, the
+meaning/timebase of those numbers is not settled here. One completed `AudioEvent`
+is transcribed by `LocalPerception` into a single `Observation(final=True)`. The
+owned `ActivitySummary` can describe activity windows and pauses, but the engine
+does not currently pass it to the turn policy. Thus the browser's WAV upload
+works after Stop, but it cannot express live partial hypotheses or acoustic
+pause evidence to the engine.
+
+**Small examples the shared contract must make unambiguous:**
+
+1. **Pause then continuation:** one utterance begins “Set a reminder for Tuesday
+   at 3,” pauses for about two seconds, then continues “Actually, Wednesday at
+   5.” A pause/activity fact is not itself turn completion; the later corrected
+   revision must remain associated with the same utterance.
+2. **Repetition without correction:** “Tuesday, Tuesday at 3” must preserve the
+   repeated words but must not become a semantic correction solely because a
+   word repeats.
+3. **Correction after a hypothesis:** revision 1 says “Tuesday at 3”; revision 2
+   says “Tuesday at 3—actually Wednesday at 5.” A delayed older revision must
+   not replace the newer one. ASR/backend estimates remain raw, attributed
+   evidence—not calibrated confidence or permission to act.
+4. **Three stop meanings:** “Stop speaking” requests stopping assistant output;
+   “Stop the washing machine” is an ordinary device request; “Cancel this task”
+   requests task cancellation. Only the last may map to global task stop. The
+   contract must define how output-only stop is represented separately from
+   task cancellation and ordinary commands.
+
+**Decisions requested from both owners:**
+
+- Define whether transcript/audio speech offsets are clip-relative monotonic
+  seconds and how they map to the controller/session clock; define the timebase
+  of the envelope timestamp separately.
+- Define whether `Transcript.final` means “no more revisions for this utterance”
+  or “the user's task turn is complete.” Proposed: it means only the first;
+  turn completion stays an independent policy/controller decision.
+- Decide how bounded activity windows and pause candidates are keyed to
+  utterance ID and revision, and ensure they are evidence only—not a synthetic
+  `complete` decision.
+- Specify how an interruption invalidates or ignores late ASR results and how
+  output-only stop differs from task cancel.
+- Agree whether backend uncertainty is absent/unknown, a raw decoder estimate
+  with provenance, or a calibrated shared score. Do not invent calibration.
+
+**Ownership:** Atishay supplies perception/activity production, timing and
+turn-policy examples/tests, and browser capture/playback wiring. Mridul owns the
+shared contract, controller interpretation, official MP3 clip boundary, and
+cancellation effects. Both must agree the fields/semantics before either side
+integrates them. Until then the current proposal remains offline and no live
+streaming or automatic barge-in claim is made.
+
 ## 2026-09-15 - Vision provider in the perception worker
 
 - Author: Mridul Workstream A
