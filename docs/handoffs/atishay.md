@@ -799,3 +799,12 @@ was measured.
 passed with one retained xfail. Full suite: 1205 passed, 2 skipped, 1 retained
 xfail and 2 dependency warnings in 81.24 s. Ruff, inline JavaScript parse
 and whitespace check pass. No physical-microphone permission was granted.
+
+**Read-only teammate update:** `origin/mridul/engine@81699c9` now contains A's
+official MP3/end-of-turn bridge and configured-agent factory, but neither is
+merged into this checkout. A's report retains a 23.688-second real public-frame
+observation and a missed visual tail. Current local port 11435 has no listener;
+no fresh B vision inference was run. A proposed optional bounded vision-output
+setting, exact file split, test matrix and limits are in the feedback checkpoint.
+Both teammates must agree the worker/provider/config seam and merge A through
+main before B adopts the common runtime; no A file was edited here.

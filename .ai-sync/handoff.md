@@ -1043,3 +1043,10 @@ closed during AudioContext shutdown; a stop-path guard now drops that capture.
 Final B capture-slice checks: owned373pass/1xfail; full1205pass/2skip/1xfail,
 2 dependency warnings; Ruff and browser-script parse clean. Actual mic
 permission and human speech remain unverified.
+
+Read-only A update: origin/mridul/engine@81699c9 contains MP3 turn admission
+and the configured factory, still unmerged into this B checkout. Its reported
+23.688s real public-frame observation missed the visual tail. B documented an
+optional, unimplemented vision generation-cap experiment and joint file split
+in the voice/perception feedback checkpoint. Local vision service unavailable;
+no B real-pixel result, A file edit or implicit contract acceptance.

@@ -1280,6 +1280,12 @@ only, with no official or real-device timing claim.
 Final owned capture-slice checks: demo/perception373pass/1xfail; full1205pass/
 2skip/1xfail,2 warnings; Ruff and inline JS parse clean. Physical mic still
 requires manual browser permission and human speech.
+
+Read-only A branch update: origin/mridul/engine@81699c9 has an MP3/end-of-turn
+bridge and configured factory, but they are not merged into this branch. A's
+reported public-frame observation was23.688s and missed the visual tail; no
+local 11435 service/current B run. Optional bounded vision-output settings
+were proposed in B feedback with explicit A/B split; no A code edited.
 ## [2026-09-24 13:49] — Integration and review checkpoint
 **Task:** Merge both branches in order, review current code and produce separate ownership/testing handoffs.
 **Changes:** Three documentation conflicts resolved; current readiness, detailed B work and first-person B prompt, retained full-suite and failing audit evidence. No application repair.
