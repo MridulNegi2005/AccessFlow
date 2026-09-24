@@ -692,3 +692,30 @@ remain unverified. Native Stitch exports remain unavailable; this is not design-
 completion. Atishay and Mridul need to coordinate causal answer/frame identity,
 structured meeting operation outcomes and shared speech timing before live action-card
 projection. The two unrelated untracked review files remain untouched.
+
+### 2026-09-24 continuation — browser answer causality
+
+**Task:** Prevent an old image/text final from replacing the active follow-up.
+
+**Owned change:** `demo/app.py` now exposes the already-existing observation
+`event_id` in demo-only observation notices. `demo/index.html` registers each
+request source, maps final observations to event IDs, buffers answers during
+sequential media sends, and projects only a final/clarify whose
+`caused_by_event_id` matches the latest dispatched source. Late, duplicate and
+unattributed finals are ignored. Added `tests/demo/answer_correlation_check.cjs`
+and WebSocket identity assertions in `tests/demo/test_app.py`.
+
+**Evidence:** Local `demo/mock` text request visibly completed through the real
+WebSocket after restarting the demo server. The 390×844 CSS-pixel layout had no
+horizontal overflow in this browser check. Focused demo: 128 passed, 1 existing
+xfailed; full suite: 813 passed, 1 existing xfailed, 2 dependency warnings.
+Ruff, Node syntax and diff check passed. Stitch photo frame Download was clicked,
+but no native file was verified. `docs/design/ATISHAY_DESIGN_QA.md` is blocked
+pending normalized same-state comparison. Physical mic, real audio/model output,
+native Stitch exports and live meeting-card updates remain unverified.
+
+**Coordination:** Atishay and Mridul need to coordinate on authoritative
+structured action identity/write outcomes and any shared speech timing rules.
+Demo final-answer causality now uses the engine's existing ID field, with no
+Mridul-owned engine/contracts/config change. The two pre-existing untracked
+review notes remain untouched.

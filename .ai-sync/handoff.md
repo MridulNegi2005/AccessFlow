@@ -407,3 +407,13 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-15: Added pre-decode encoded upload limit derived from the 8 MiB raw-media budget; oversized PNG regression passes. Full suite: 114 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-15: Configured OllamaVisionProvider timeout regression now covers WebSocket backend_failure and same-session transcript recovery. Full suite: 115 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-24: Demo-only answer correlation now carries Observation.event_id to the
+browser and accepts final/clarify only for the latest request's matching
+caused_by_event_id. Early finals are buffered through serialized media sends;
+late/unattributed finals are ignored. Owned browser/WebSocket regressions pass.
+Focused demo: 128 passed, 1 existing xfailed; full suite: 813 passed,
+1 existing xfailed, 2 warnings. Real local demo/mock text request rendered and
+390px mobile had no horizontal overflow. Native Stitch export and same-state
+reference QA remain blocked; no engine/contracts/config change. Atishay and
+Mridul need to coordinate authoritative action identity/outcome and speech timing.

@@ -186,3 +186,34 @@ export is verified. Review and correct the anchors against the approved sources,
 **Shift+D** or **right-click → Copy As → PNG** if available, save the reviewed PNGs under
 `docs/design/stitch/`, and add their actual filenames/date/dimensions there. Treat any
 Stitch code as untrusted generated output and inspect it before reuse.
+
+### Causal answer projection follow-up (24 September)
+
+The demo previously used a boolean “final observation seen” gate. Once a newer
+observation arrived, an older `final` could overwrite its answer; an unattributed
+late final could also render after the current run ended. The owned demo adapter
+now includes the existing `Observation.event_id` in its display-only
+`demo_observation` notice. The browser associates it with the active source and
+accepts `final`/`clarify` only when the engine's existing
+`payload.caused_by_event_id` matches the latest dispatched source. Earlier
+answers arriving while media are being sent are buffered briefly and projected
+only after all inputs have been dispatched. Unmatched and duplicate late finals
+are ignored without replacing the visible response or screen-reader announcement.
+This did not modify shared events, engine behavior or configuration.
+
+An owned Node.js projection regression covers stale observation, old and
+unattributed final, early buffering and duplicate final. WebSocket tests assert
+that text and audio demo-observation IDs match final causal IDs. After restarting
+the local demo server with the new adapter, a real `demo/mock` text request
+completed in the in-app browser. The 390×844 CSS-pixel answer view was visually
+inspected and had no horizontal overflow (`scrollWidth` 375px within a 390px
+viewport). Browser warning/error logs were empty in the checked live tab.
+Focused demo tests: **128 passed, 1 existing xfailed**; full suite:
+**813 passed, 1 existing xfailed, 2 dependency warnings**. Ruff, Node syntax
+and `git diff --check` passed.
+
+Design acceptance is still **IN PROGRESS**. See
+[`ATISHAY_DESIGN_QA.md`](ATISHAY_DESIGN_QA.md) for the blocked source/preview
+comparison gate. The selected Stitch photo frame still reports 1280×1033 and
+its Download action produced no file in the checked folders. No native export,
+physical voice, live vision or meeting write outcome is claimed.

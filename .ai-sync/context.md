@@ -1051,3 +1051,14 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 2026-09-24 delivery: Committed and pushed the owned frontend/design work as `f0ca543` on `origin/atishay/perception`; `git ls-remote` confirmed the branch head. The two unrelated untracked review notes remain untouched. Stitch per-frame Download did not emit a browser download event, and Copy as PNG showed a success toast but provided no readable clipboard image to this session; no native export was saved. No deployment or Stitch publication.
 
 2026-09-24 frontend interaction continuation — Task: close the read-only photo dialog defect, long-answer hierarchy defect and stale browser-TTS callback path. Changes: preview dialog now opens the actually displayed image; short-view modal sizing avoids inner scroll; answers whose first segment exceeds 120 characters keep the full text as body copy; speech generation/utterance identity invalidates old callbacks. A new request also interrupts obsolete local playback using speech scope only. Added an optional Node.js lifecycle regression in owned `tests/demo/`. Status: focused demo 127 passed, 1 existing xfailed; full suite 812 passed, 1 existing xfailed, 2 dependency warnings; Ruff, inline JS parse and diff check passed. In-app browser reproduced the photo click failure before edit, verified loaded dialog after edit at desktop/mobile, and inspected a long mock answer via live local WebSocket. Notes: audible speech, physical mic and native Stitch exports remain unverified; no Mridul-owned code/config changed. Two unrelated untracked review notes preserved.
+
+2026-09-24 answer-causality continuation: Exposed Observation.event_id in
+demo-only notices and matched final/clarify caused_by_event_id against the latest
+active source; buffered early finals during serialized media sends. Added owned
+Node/browser projection and WebSocket ID regressions. Local mock text request
+rendered after server restart; 390x844 CSS mobile remained horizontally bounded.
+Focused demo: 128 passed, 1 existing xfailed; full suite: 813 passed, 1 existing
+xfailed, 2 warnings; Ruff, Node syntax and diff check passed. Stitch photo
+frame still 1280x1033 and Download produced no verified file. Design QA blocked
+in docs/design/ATISHAY_DESIGN_QA.md. Shared engine/contracts/config untouched;
+two unrelated untracked review notes preserved.
