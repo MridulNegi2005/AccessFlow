@@ -48,7 +48,7 @@ class TranscriptRevision:
 
 @dataclass(frozen=True)
 class EndpointMeasurement:
-    """One accepted acoustic candidate and its wait after labeled speech end."""
+    """One acoustic candidate; wait is known only after a final revision."""
 
     source_id: str
     revision: int | None
@@ -63,7 +63,7 @@ class EndpointMeasurement:
 
 @dataclass(frozen=True)
 class TimingReplayReport:
-    """Measurement output from one threshold and transcript-gating policy."""
+    """Threshold replay; missed_final_count ignores provisional endpoints."""
 
     source_id: str
     min_pause_s: float
@@ -144,7 +144,9 @@ def replay_endpoint_candidates(
         if require_final and not gated:
             continue
 
-        speech_end = latest.speech_end_s if latest is not None else None
+        # A partial hypothesis may expose a provisional endpoint, but it cannot
+        # establish the labeled final speech end used by wait/miss metrics.
+        speech_end = latest.speech_end_s if latest is not None and latest.final else None
         wait = None
         if speech_end is not None and pause.start_s >= speech_end:
             matched_final = True

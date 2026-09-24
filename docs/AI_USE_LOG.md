@@ -1304,3 +1304,12 @@ recording or source edits in this slice. No calibrated confidence, turn-finality
 live agent, physical-mic, image or Samsung evaluation claim. Owned 376 passed,
 1 retained xfailed; full 1208 passed, 2 skipped, 1 xfailed; Ruff clean.
 Shared contract, engine and adapter untouched.
+
+2026-09-24 AI-assisted Atishay offline timing correction: Added a deterministic
+owned test showing that a partial revision was incorrectly counted as a final
+speech-end match in the ungated replay, then limited wait/miss accounting to
+final revisions. Focused replay 8 passed; full suite 1209 passed, 2 skipped,
+1 retained xfailed; Ruff and diff check clean. The
+browser showed microphone permission wait but no physical recording; no human
+speech, official media, streaming endpoint or controller effect was tested.
+No human source edits in this slice; A-owned source and contracts unchanged.
