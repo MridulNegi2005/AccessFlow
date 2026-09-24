@@ -1,5 +1,24 @@
 # Active Handoff
 
+## MP3 converter checkpoint - 24 September 2026
+
+A standalone A-owned bounded subprocess converter now joins ordered MP3 clips as mono
+PCM16/16k WAV, with rooted refs, byte/sample limits, cancellation/deadline cleanup and
+actual-Windows spawn-race coverage. No shared contract, B code or Samsung admission
+changed: _reject_audio still remains until the joint pending-speech/finality integration.
+
+Final1295pass/2skip/1xfail63.69s; focused24pass; Ruff clean. Real public MP3->ASR checked
+three turns: pub06 preserves Boston then NewYork correction; pub05 first transcription
+is poor and retained, not patched with expected text. Decode0.85-0.97s; ASR1.12-1.35s.
+Review reproduced/fixed repeated-cancel orphan race; before/final tests retained.
+Actual clip duration differs from supplied event duration_ms; no calibrated endpoint
+claim. See docs/MP3_CONVERTER_2026-09-24.md and evidence/mp3-converter-2026-09-24.
+
+Next: joint C24-1/2 pending speech/finality integration preserving latest image context,
+real vision service/full official tasks and remaining platform checks. Broader turn-bridge
+ownership is not silently resolved by this format utility. No B work, release or main push.
+Code completion first; goal active, PPT/video excluded.
+
 ## Native package checkpoint - 24 September 2026
 
 Optional native packaging now includes a pinned/hash-checked ASR installation, explicit

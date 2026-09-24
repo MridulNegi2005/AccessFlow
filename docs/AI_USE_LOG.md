@@ -1254,3 +1254,9 @@ Request: prioritize runnable submission code before accuracy. Assistance: shared
 ## 2026-09-24 14:35 — Native package and actual ASR verification
 
 Request: continue A code completion. Assistance: pinned public model installation, native assets/profile packaging, strict dependency target resolution,28 regressions, fresh-environment checks and reports. Initial conditional lock export was rejected; implementation now resolves declared target pins and verified the actual Samsung YAML parser. Real ASR used B's existing generated fixture and unchanged worker. Full1271pass/2skip/1xfail; no live reasoning, vision, microphone or official audio-task score. Human supplied scope; no human code edits recorded.
+
+## 2026-09-24 14:45 — Bounded MP3 conversion
+
+Request: continue A code completion. Assistance: isolated format converter, bounded/path/lifecycle regressions, real public-clip decode and existing ASR checks. No reference transcript was passed to either worker. pub05 bad transcription retained; pub06 correction preserved. Full1294pass/2skip/1xfail. No B/shared/admission implementation or official score claimed. Human scope unchanged; no human code edits.
+
+Review amendment: a separate read-only review found repeated-cancellation orphan risk. A new regression reproduced it; shielded cleanup ownership fixed it. Final1295pass/2skip/1xfail; prior evidence preserved.

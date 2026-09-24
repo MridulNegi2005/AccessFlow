@@ -1266,3 +1266,13 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Full1271pass/2skip/1xfail62.21s, Ruff clean. Fresh same-host venv37pins/86hashes/officialimport/parser/ASRwarmup5.418s; repoASR5.161s/1.386s. Initial marker export failed explicitly; fixed and verified against actual parser. AI-assisted implementation/testing; no human code edits. Existing B generated fixture reused without mutation; no new recordings, B source/tests, provider reasoning calls, main push, workflow, release or submission. Vision service and MP3/full-task gates remain open.
 
 ---
+
+## [2026-09-24 14:45] — MP3 format checkpoint
+**Task:** Implement independent A format-conversion component without deciding disputed shared turn semantics.
+**Changes:** Bounded MP3 worker/context API,23 lifecycle/codec/path regressions,actual public media->ASR evidence and coordination notes.
+**Status:** Converter verified; official input admission and full tasks remain open; goal active.
+**Notes:** Full1295pass/2skip/1xfail63.69s; Ruff clean. Real pub06 correction retained; poor pub05 first transcript retained. Event metadata durations differ from decoded samples. AI-assisted implementation/testing; no human source edits. No shared schema/B implementation/new speech fixture, model reasoning call, main push,workflow,release or submission.
+
+---
+
+2026-09-24 14:47 review completion: independent review found double-cancel startup orphan risk; reproduced before repair. Dedicated shielded cleanup retains PID ownership through repeated caller cancellation. Focused24pass/full1295pass final; earlier1294pass and failing reproduction retained. Live ASR report predates only cleanup hardening and is explicitly labeled.
