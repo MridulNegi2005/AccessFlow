@@ -105,7 +105,15 @@ def test_backchannel_is_not_planned_as_a_new_request():
     assert decision.kind == "backchannel"
 
 
-@pytest.mark.parametrize("text", ["Cancel this booking", "Stop the whole task now"])
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Cancel this task",
+        "Cancel the task",
+        "Stop this task",
+        "Stop the whole task now",
+    ],
+)
 def test_explicit_task_cancel_returns_stop(text: str):
     item = observation(text, final=True)
 
@@ -120,7 +128,9 @@ def test_explicit_task_cancel_returns_stop(text: str):
     [
         ("Stop speaking while I think", "continue"),
         ("Stop the washing machine", "complete"),
-        ("Cancel this booking", "stop"),
+        ("Cancel this booking", "complete"),
+        ("Cancel the booking", "complete"),
+        ("Cancel this task", "stop"),
     ],
 )
 def test_stop_words_have_distinct_scopes(text: str, expected: str):
