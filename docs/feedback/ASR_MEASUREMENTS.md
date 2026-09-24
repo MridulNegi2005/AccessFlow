@@ -98,3 +98,19 @@ held-out human speech accuracy, generalization, accessibility benefit or clinica
 | Total | 18 | 18 adapter observations completed |
 
 The fixtures are generated voice or generated acoustic material. The scores compare known local scripts and do not establish human speech accuracy, generalization, accessibility benefit, vision quality, reasoning quality or end-to-end task completion.
+
+## 2026-09-24 - Opt-in ASR timing and decoder-evidence probe
+
+`python -m accessflow.perception.asr_evidence` directly invokes the installed Faster Whisper model with `beam_size=5` and `word_timestamps=True`. It records the fixture SHA-256 and format, model snapshot, segment and word offsets, decoder estimates, and model load/inference time. It is a **diagnostic direct-model probe**, not `LocalPerception.observe`, a browser microphone test, an agent turn, or an official Samsung run. The probe does not infer turn finality or calibrated confidence. It emits JSON to stdout and does not save raw audio.
+
+Backend: Faster Whisper 1.2.1, `Systran/faster-whisper-base.en`, snapshot `3d3d5dee26484f91867d81cb899cfcf72b96be6c`, CPU INT8 on Intel Core Ultra 5 125H. The runs below used the already-installed local model and checked-in **generated** WAV fixtures. Timings are individual warm-machine observations, not a latency distribution.
+
+| Fixture (SHA-256 prefix) | Model load | Inference | Decoded evidence |
+|---|---:|---:|---|
+| `synthetic_pause_correction.wav` (`49b0b26f`) | 1.713 s | 2.150 s | `Book Tuesday Actually, Wednesday at 5`; two segments at 0.00–0.64 s and 2.68–5.04 s. |
+| `held_out/heldout_repetition.wav` (`d16355e7`) | 1.096 s | 1.676 s | `I want Tuesday, Tuesday, actually Wednesday at 5.`; one segment at 0.00–3.74 s. Separate word offsets retain both `Tuesday` tokens (0.40–0.74 s and 1.34–1.82 s) and `Wednesday` (2.64–3.10 s). |
+| `synthetic_tone.wav` (`9038a655`) | 1.025 s | 1.432 s | No decoded segments on one generated half-second tone. This is not a silence-detection benchmark. |
+
+For the repetition clip, the model emitted word decoder probabilities of approximately 0.986 and 0.989 for the two `Tuesday` tokens and 0.997 for `Wednesday`; the segment's `avg_logprob` was -0.285 and `no_speech_prob` was 0.000354. These are **raw decoder estimates, not calibrated correctness probabilities**. The generated source and exposure history prevent calling the case fresh unseen human speech. The probe's `word_timestamps=True` path can alter the exact punctuation/text and runtime relative to the default live `LocalPerception` path; the earlier adapter transcript and timing above must not be treated as directly comparable. Segment offsets are model-relative to the submitted WAV, not session-clock capture timestamps or proof of when a turn is complete.
+
+The public `Observation` currently flattens transcript text and sets audio finality without carrying these offsets/estimates. Until Atishay and Mridul agree C24-1/2's provenance, clock, revision, finality and uncertainty fields—and Mridul changes the shared contract/controller—this probe does **not** feed agent decisions. Real microphone capture, human speech, physical interruption and official raw-MP3 evaluation remain unverified.

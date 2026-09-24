@@ -1294,3 +1294,13 @@ runtime evidence without merging or editing A files. Used official Ollama API
 documentation to write an explicitly unimplemented, jointly owned vision
 generation-cap experiment with source/timing/quality gates. The 23.688-second
 visual observation is Mridul's historical reported run, not a new B result.
+
+2026-09-24 AI-assisted Atishay ASR evidence slice: Added an opt-in direct-model
+Faster Whisper probe and injected-model tests in owned perception paths. Ran
+the installed base.en CPU INT8 backend on three checked-in generated WAVs;
+documented hashes, offsets, decoder estimates, timings and source limits in
+ASR_MEASUREMENTS. Human input was the voice-first work request; no human
+recording or source edits in this slice. No calibrated confidence, turn-finality,
+live agent, physical-mic, image or Samsung evaluation claim. Owned 376 passed,
+1 retained xfailed; full 1208 passed, 2 skipped, 1 xfailed; Ruff clean.
+Shared contract, engine and adapter untouched.

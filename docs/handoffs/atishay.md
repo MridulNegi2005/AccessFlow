@@ -808,3 +808,15 @@ no fresh B vision inference was run. A proposed optional bounded vision-output
 setting, exact file split, test matrix and limits are in the feedback checkpoint.
 Both teammates must agree the worker/provider/config seam and merge A through
 main before B adopts the common runtime; no A file was edited here.
+
+## 2026-09-24 — Direct ASR evidence probe
+
+**Task:** Preserve timing and decoder uncertainty from the installed ASR backend while waiting for C24-1/2's shared contract decision.
+
+**Owned change:** Added `src/accessflow/perception/asr_evidence.py` and `tests/perception/test_asr_evidence.py`. The opt-in CLI directly runs Faster Whisper on a supplied WAV, hashes the source, emits JSON segment/word offsets and raw decoder estimates, and explicitly declines to infer calibrated confidence or turn finality. It does not feed the agent or change `LocalPerception.observe`. Updated `docs/feedback/ASR_MEASUREMENTS.md` and the voice checkpoint.
+
+**Backend/evidence:** Existing Faster Whisper 1.2.1 `Systran/faster-whisper-base.en` snapshot `3d3d5dee26484f91867d81cb899cfcf72b96be6c`, CPU INT8, Intel Core Ultra 5 125H; three checked-in **generated** WAV fixtures. The held-out generated repetition clip decoded `I want Tuesday, Tuesday, actually Wednesday at 5.` with two distinct Tuesday word offsets; inference took 1.676 s after 1.096 s model load. The pause/correction and tone results, hashes and other timings are in ASR_MEASUREMENTS. This probe uses word timestamps, so its outputs/timings need not exactly match the default live adapter path.
+
+**Validation:** Dedicated injected-model tests 3 passed; owned demo/perception tests 376 passed, 1 retained xfailed, 2 dependency warnings; full suite 1208 passed, 2 skipped, 1 retained xfailed, 2 warnings in 85.82 s; Ruff clean.
+
+**Failures/dependencies/next:** No physical microphone, human-speech or official MP3 evidence; local vision service unavailable and participant kit still missing at its documented path. Both Atishay and Mridul must decide C24-1/2 clock, clip assembly, uncertainty, revision and finality semantics before this data can affect the agent. Mridul's configured factory remains only on his unmerged branch, so C24-3 adoption awaits a reviewed integration; C24-4/5 gates remain open. Next independent B step is consented physical-mic capture and word/slot error logging once permission is available, plus actual pixel-grounded vision measurements when the backend is running. No A-owned code/config or shared contract changed.

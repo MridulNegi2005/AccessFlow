@@ -1292,4 +1292,10 @@ were proposed in B feedback with explicit A/B split; no A code edited.
 **Status:** Requested merge/review complete; implementation remains unfinished.
 **Notes:** Mridul0c12ba0 then Atishay8083ebf; applicatione7c95f5. Full1197pass/2skip/1xfail; separate pending-frame4fail; Ruff/JS/Node/offline4pass. Initial probe collection path error retained separately. Preserved unfinished local patch outside main. AI-assisted merge/review/documentation; no human code edits in this slice. No assistant signoff/coauthor, workflow activation, release, submission, live provider calls or B implementation edits. See current review and evidence before resuming.
 
+## [2026-09-24 16:03 IST] — Atishay ASR evidence checkpoint
+**Task:** Retain local ASR timing and uncertainty evidence without crossing the shared C24-1/2 boundary.
+**Changes:** Owned opt-in Faster Whisper direct-model probe, three injected-model regressions, generated-fixture model runs, measurement and B handoff updates.
+**Status:** Owned 376 passed/1 xfailed; full 1208 passed/2 skipped/1 xfailed, two dependency warnings; Ruff clean.
+**Notes:** Existing base.en CPU INT8 model decoded generated repetition/correction with word and segment offsets; a generated tone had no decoded segments. Decoder estimates are not calibrated confidence; probe does not set turn finality or change the agent. Physical microphone and human speech unverified. Both teammates must settle shared fields/clock/MP3 assembly before integration; A-owned source untouched.
+
 ---

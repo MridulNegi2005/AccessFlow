@@ -24,6 +24,22 @@ Next A: pending-frame correctness and configured Samsung media runtime; next B: 
 correlation/timing, real ASR/vision/microphone tests. Both coordinate shared contracts.
 No release tag, submission, workflow activation, model downloads or external messages.
 
+## Atishay ASR evidence checkpoint — 2026-09-24
+
+On `atishay/perception`, B added an opt-in direct-model ASR probe in owned
+perception code. Actual local Faster Whisper base.en CPU INT8 runs on three
+generated WAVs retained segment/word offsets and raw decoder estimates;
+`docs/feedback/ASR_MEASUREMENTS.md` has provenance, hashes and timings. This
+does not feed the agent and is not a physical microphone, human-speech,
+calibrated-confidence or official Samsung result. Owned tests: 376 passed,
+1 retained xfailed; full suite: 1208 passed, 2 skipped, 1 retained xfailed;
+Ruff clean. The shared Observation still lacks uncertainty and timing fields.
+Both teammates must settle C24-1/2 clip/utterance timing, clock mapping,
+revision/finality, uncertainty and output-stop effects before integration.
+Mridul's runtime factory remains unmerged into this checkout; C24-3/4/5 and
+the original participant kit are still open. See B handoff for exact next
+steps; no A-owned source or configuration changed.
+
 ## Current checkpoint — 2026-09-24
 
 Branch `atishay/perception`; the last verified pushed baseline before this continuation was `508d29d`. The approved voice-first shell is implemented in owned `demo/index.html`; the current delta and behavior are documented in `docs/design/IMPLEMENTATION_REPORT_2026-09-24.md`. The old task-dock specification is marked superseded, not erased. See Git for the moving branch HEAD.
