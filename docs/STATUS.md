@@ -1,5 +1,29 @@
 # Implementation status
 
+## Merged readiness and ownership handoff — 24 September 2026
+
+Merged Mridul 0c12ba0 into main first (c564754), then Atishay 8083ebf (e7c95f5).
+Three documentation conflicts resolved with both work histories and newer design status
+retained; no application source conflict or repair. B implementation matches his fetched
+branch. Standard suite1197pass/2skip/1xfail in74.22s; Ruff, inline JS, Node speech lifecycle
+and offline4/4 pass. Separate gated audit probes reproduce four pending-frame controller
+failures; do not call the merged agent defect-free or multimodal-ready.
+
+Read docs/reviews/MERGED_READINESS_2026-09-24.md, ATISHAY_VOICE_WORK_2026-09-24.md
+and ATISHAY_AGENT_PROMPT_2026-09-24.md. They separate A/B work, actual Samsung criteria,
+C24-1..5 coordination and real media acceptance tests. Frontend polish/Stitch exports are
+deferred. Historical 18 generated-audio ASR measurements are acknowledged; the newest UI
+uploads on stop, but streaming/barge-in and a common real runtime remain open.
+
+Unfinished pending-frame engine/test work was saved in stash object
+feb6af1643ee7ad11ca6d2cf8473dcde1183fd36 before merging; excluded from main. Restore on
+Mridul's branch after this documentation checkpoint. Finish/review/test it separately.
+The last explicit pause stopped that implementation; the current request authorizes this
+merge, review and handoff. No implementation fix or new live evaluation in this slice.
+Next A: pending-frame correctness and configured Samsung media runtime; next B: owned
+correlation/timing, real ASR/vision/microphone tests. Both coordinate shared contracts.
+No release tag, submission, workflow activation, model downloads or external messages.
+
 ## Explicit package read mode — 24 September 2026
 
 Reproduced/fixed an inherited environment changing package read-answer behavior

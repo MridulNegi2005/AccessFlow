@@ -1,0 +1,123 @@
+"""Controller readiness across independently scheduled speech and frame perception."""
+
+import asyncio
+
+import pytest
+
+from accessflow.contracts import (
+    Audio, AudioEvent, Frame, FrameEvent, Observation, PlanProposal, ProposedCall,
+    Start, StartEvent,
+)
+from accessflow.engine import Agent
+from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
+from test_safety import end, manifest, wait_for
+
+
+class GatedPerception:
+    def __init__(self):
+        self.started = asyncio.Queue()
+        self.release = {}
+        self.fail = set()
+
+    async def observe(self, event):
+        frame = isinstance(event, FrameEvent)
+        source = event.payload.frame_id if frame else event.payload.utterance_id
+        if frame:
+            gate = self.release.setdefault(source, asyncio.Event())
+            await self.started.put(source)
+            await gate.wait()
+            if source in self.fail:
+                raise RuntimeError("Frame unavailable")
+        yield Observation(event_id=event.event_id, source_id=source,
+                          modality="image" if frame else "audio", final=True,
+                          text=f"image {source}" if frame else "Book Wednesday", backend="offline/gated")
+
+
+class RecordingAgent(Agent):
+    async def _apply(self, proposal, source=None):
+        await super()._apply(proposal, source)
+        await self.applied.put(source)
+
+
+class Planner:
+    def __init__(self, kind):
+        self.kind = kind
+        self.views = []
+
+    async def plan(self, view, manifests):
+        self.views.append(view)
+        if self.kind == "write":
+            return PlanProposal(intent="service", slot_updates={"day": "Wednesday"},
+                                request_complete=True, write_requested=True,
+                                calls=[ProposedCall(tool="reserve", arguments={"day": "Wednesday"},
+                                                    dependencies=["day"])])
+        if self.kind == "read" and not view.calls:
+            return PlanProposal(request_complete=True, slot_updates={"day": "Wednesday"}, calls=[ProposedCall(
+                tool="lookup", arguments={"day": "Wednesday"}, dependencies=["day"])])
+        return PlanProposal(request_complete=True, response=" | ".join(o.text for o in view.observations))
+
+
+async def setup(kind="final"):
+    perception, planner, tools = GatedPerception(), Planner(kind), FakeTools()
+    agent = RecordingAgent(perception, FinalFlagPolicy(), planner, tools,
+                           MockOnlyAuthorization(), partial_debounce_s=0, frame_debounce_s=0)
+    agent.applied = asyncio.Queue()
+    iq, oq = asyncio.Queue(), asyncio.Queue()
+    task = asyncio.create_task(agent.run(iq, oq))
+    await iq.put(StartEvent(session_id="s", payload=Start(tools=[manifest(name="reserve"),
+                                                               manifest("read", "lookup")])))
+    return agent, iq, oq, task
+
+
+def frame(name="f1"):
+    return FrameEvent(session_id="s", payload=Frame(frame_id=name, path="unused.png"))
+
+
+async def speech_after_pending_frame(agent, iq, image):
+    await iq.put(image)
+    assert await asyncio.wait_for(agent.perception.started.get(), 2) == image.payload.frame_id
+    await iq.put(AudioEvent(session_id="s", payload=Audio(utterance_id="u", path="unused.wav")))
+    assert await asyncio.wait_for(agent.applied.get(), 2) == ("speech", "u")
+
+
+@pytest.mark.parametrize("kind", ["final", "write", "read"])
+async def test_current_image_delays_final_and_write_but_allows_read_prefetch(kind):
+    agent, iq, oq, task = await setup(kind)
+    image = frame()
+    try:
+        await speech_after_pending_frame(agent, iq, image)
+        if kind == "read":
+            # Wait for the read-result continuation too: it cannot bypass readiness.
+            await asyncio.wait_for(agent.applied.get(), 2)
+        seen = []
+        while not oq.empty():
+            seen.append(oq.get_nowait())
+        assert not any(e.kind == "final" for e in seen), "An unfinished frame is part of this request"
+        assert not any(c.effect == "write" for c in agent.ledger.values())
+        assert any(c.effect == "read" for c in agent.ledger.values()) == (kind == "read")
+        agent.perception.release["f1"].set()
+        final = await wait_for(oq, lambda e: e.kind == "final")
+        assert {o.modality for o in agent.reasoner.views[-1].observations} == {"audio", "image"}
+        assert final.payload["caused_by_event_id"] == image.event_id
+        if kind == "write":
+            assert len(agent.executor.effects) == 1
+        else:
+            assert "image f1" in final.payload["text"]
+    finally:
+        await end(iq, task)
+
+
+async def test_current_frame_failure_is_reported_after_new_speech_and_resumes():
+    agent, iq, oq, task = await setup()
+    agent.perception.fail.add("f1")
+    try:
+        await speech_after_pending_frame(agent, iq, frame())
+        while not oq.empty():
+            oq.get_nowait()
+        agent.perception.release["f1"].set()
+        error = await wait_for(oq, lambda e: e.kind == "error")
+        assert error.payload["code"] == "backend_failure"
+        final = await wait_for(oq, lambda e: e.kind == "final")
+        assert final.payload["text"] == "Book Wednesday"
+    finally:
+        await end(iq, task)

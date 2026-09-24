@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="1.298" timestamp="2026-09-24T13:41:25.374316+05:30" hostname="JARVIS"><testcase classname="" name="artifacts.merge-handoff-2026-09-24.test_pending_frame" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\negim\Desktop\Hackathon\Samsung GenAI\AccessFlow\artifacts\merge-handoff-2026-09-24\test_pending_frame.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+artifacts\merge-handoff-2026-09-24\test_pending_frame.py:13: in &lt;module&gt;
+    from test_safety import end, manifest, wait_for
+E   ModuleNotFoundError: No module named 'test_safety'</error></testcase></testsuite></testsuites>

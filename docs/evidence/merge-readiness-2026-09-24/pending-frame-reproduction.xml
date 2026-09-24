@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="3.613" timestamp="2026-09-24T13:41:50.359263+05:30" hostname="JARVIS"><testcase classname="artifacts.merge-handoff-2026-09-24.test_pending_frame" name="test_current_image_delays_final_and_write_but_allows_read_prefetch[final]" time="0.019"><failure message="AssertionError: An unfinished frame is part of this request&#10;assert not True&#10; +  where True = any(&lt;generator object test_current_image_delays_final_and_write_but_allows_read_prefetch.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001978E10BB90&gt;)">kind = 'final'
+
+    @pytest.mark.parametrize("kind", ["final", "write", "read"])
+    async def test_current_image_delays_final_and_write_but_allows_read_prefetch(kind):
+        agent, iq, oq, task = await setup(kind)
+        image = frame()
+        try:
+            await speech_after_pending_frame(agent, iq, image)
+            if kind == "read":
+                # Wait for the read-result continuation too: it cannot bypass readiness.
+                await asyncio.wait_for(agent.applied.get(), 2)
+            seen = []
+            while not oq.empty():
+                seen.append(oq.get_nowait())
+&gt;           assert not any(e.kind == "final" for e in seen), "An unfinished frame is part of this request"
+E           AssertionError: An unfinished frame is part of this request
+E           assert not True
+E            +  where True = any(&lt;generator object test_current_image_delays_final_and_write_but_allows_read_prefetch.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001978E10BB90&gt;)
+
+artifacts\merge-handoff-2026-09-24\test_pending_frame.py:95: AssertionError</failure></testcase><testcase classname="artifacts.merge-handoff-2026-09-24.test_pending_frame" name="test_current_image_delays_final_and_write_but_allows_read_prefetch[write]" time="0.029"><failure message="assert not True&#10; +  where True = any(&lt;generator object test_current_image_delays_final_and_write_but_allows_read_prefetch.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001978E1A35E0&gt;)">kind = 'write'
+
+    @pytest.mark.parametrize("kind", ["final", "write", "read"])
+    async def test_current_image_delays_final_and_write_but_allows_read_prefetch(kind):
+        agent, iq, oq, task = await setup(kind)
+        image = frame()
+        try:
+            await speech_after_pending_frame(agent, iq, image)
+            if kind == "read":
+                # Wait for the read-result continuation too: it cannot bypass readiness.
+                await asyncio.wait_for(agent.applied.get(), 2)
+            seen = []
+            while not oq.empty():
+                seen.append(oq.get_nowait())
+            assert not any(e.kind == "final" for e in seen), "An unfinished frame is part of this request"
+&gt;           assert not any(c.effect == "write" for c in agent.ledger.values())
+E           assert not True
+E            +  where True = any(&lt;generator object test_current_image_delays_final_and_write_but_allows_read_prefetch.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001978E1A35E0&gt;)
+
+artifacts\merge-handoff-2026-09-24\test_pending_frame.py:96: AssertionError</failure></testcase><testcase classname="artifacts.merge-handoff-2026-09-24.test_pending_frame" name="test_current_image_delays_final_and_write_but_allows_read_prefetch[read]" time="0.024"><failure message="AssertionError: An unfinished frame is part of this request&#10;assert not True&#10; +  where True = any(&lt;generator object test_current_image_delays_final_and_write_but_allows_read_prefetch.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001978E1DDA40&gt;)">kind = 'read'
+
+    @pytest.mark.parametrize("kind", ["final", "write", "read"])
+    async def test_current_image_delays_final_and_write_but_allows_read_prefetch(kind):
+        agent, iq, oq, task = await setup(kind)
+        image = frame()
+        try:
+            await speech_after_pending_frame(agent, iq, image)
+            if kind == "read":
+                # Wait for the read-result continuation too: it cannot bypass readiness.
+                await asyncio.wait_for(agent.applied.get(), 2)
+            seen = []
+            while not oq.empty():
+                seen.append(oq.get_nowait())
+&gt;           assert not any(e.kind == "final" for e in seen), "An unfinished frame is part of this request"
+E           AssertionError: An unfinished frame is part of this request
+E           assert not True
+E            +  where True = any(&lt;generator object test_current_image_delays_final_and_write_but_allows_read_prefetch.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001978E1DDA40&gt;)
+
+artifacts\merge-handoff-2026-09-24\test_pending_frame.py:95: AssertionError</failure></testcase><testcase classname="artifacts.merge-handoff-2026-09-24.test_pending_frame" name="test_current_frame_failure_is_reported_after_new_speech_and_resumes" time="2.023"><failure message="TimeoutError">output = &lt;Queue at 0x1978e1fcd90 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='002e1657-5f87-...e=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=3&gt;
+predicate = &lt;function test_current_frame_failure_is_reported_after_new_speech_and_resumes.&lt;locals&gt;.&lt;lambda&gt; at 0x000001978E1B6020&gt;
+
+    async def wait_for(output, predicate):
+        async with asyncio.timeout(2):
+            while True:
+&gt;               event = await output.get()
+                        ^^^^^^^^^^^^^^^^^^
+
+tests\engine\test_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x1978e1fcd90 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='002e1657-5f87-...e=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=3&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+    async def test_current_frame_failure_is_reported_after_new_speech_and_resumes():
+        agent, iq, oq, task = await setup()
+        agent.perception.fail.add("f1")
+        try:
+            await speech_after_pending_frame(agent, iq, frame())
+            while not oq.empty():
+                oq.get_nowait()
+            agent.perception.release["f1"].set()
+&gt;           error = await wait_for(oq, lambda e: e.kind == "error")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+artifacts\merge-handoff-2026-09-24\test_pending_frame.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\engine\test_safety.py:31: in wait_for
+    async with asyncio.timeout(2):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Timeout [expired]&gt;
+exc_type = &lt;class 'asyncio.exceptions.CancelledError'&gt;
+exc_val = CancelledError(), exc_tb = &lt;traceback object at 0x000001978E1FD4C0&gt;
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -&gt; Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() &lt;= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+&gt;               raise TimeoutError from exc_val
+E               TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\timeouts.py:115: TimeoutError</failure></testcase></testsuite></testsuites>
