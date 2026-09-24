@@ -1264,3 +1264,26 @@ human edits or human speech recording in this slice. Owned tests 371 passed,
 and diff checks passed. Physical microphone permission remained ungranted in
 the browser; no live vision, official media evaluation, Qwen booking, submission,
 deployment, workflow activation or model training was claimed.
+
+2026-09-24 AI-assisted Atishay microphone-capture follow-up: Reproduced a
+duplicate `getUserMedia` request during a pending browser permission promise,
+added a deterministic owned Node regression, and fixed the demo's waiting,
+denial and late-grant cleanup states. Verified the waiting text on the live
+local page without accepting a browser permission. Human input: the prior
+voice-first testing request; no human recording or source edits in this slice.
+Owned tests 372 passed/1 xfailed, Ruff and diff check passed. Physical voice,
+ASR on a human recording, automatic barge-in and Samsung media remain unverified.
+
+2026-09-24 AI-assisted Atishay capture-disconnect follow-up: Added a failing
+owned teardown reproducer for active recording on WebSocket close, then a
+shared browser teardown helper for disconnect, restart and page exit. Node
+checks verify track, recorder, node and AudioContext cleanup plus idempotency;
+this is simulated hardware, not a human voice or official evaluation run.
+
+The same owned Node harness reproduced and fixed a late WAV-staging race when
+the socket closed during AudioContext shutdown. No live network timing or
+physical audio was claimed.
+
+Final capture-slice verification: owned 373 passed/1 xfailed; full 1205
+passed/2 skipped/1 xfailed, two dependency warnings; Ruff and inline script
+parse clean. No Mridul-owned code, release, deployment or submission action.
