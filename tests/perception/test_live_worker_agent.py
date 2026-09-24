@@ -11,7 +11,8 @@ import pytest
 from accessflow.adapters.process_perception import ProcessPerception
 from accessflow.contracts import Audio, AudioEvent, EndEvent, PlanProposal, Start, StartEvent
 from accessflow.engine import Agent
-from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
+from accessflow.fakes import FakeTools, MockOnlyAuthorization
+from accessflow.turn_policy import HeuristicTurnPolicy
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "audio" / "held_out" / "heldout_repetition.wav"
@@ -37,7 +38,7 @@ async def test_installed_asr_worker_reaches_actual_agent_without_tool_effects():
     perception = ProcessPerception(model_path=model, observation_timeout_s=30.0)
     reasoner = _RecordingMockReasoner()
     executor = FakeTools()
-    agent = Agent(perception, FinalFlagPolicy(), reasoner, executor, MockOnlyAuthorization())
+    agent = Agent(perception, HeuristicTurnPolicy(), reasoner, executor, MockOnlyAuthorization())
     incoming: asyncio.Queue = asyncio.Queue()
     outgoing: asyncio.Queue = asyncio.Queue()
     task = asyncio.create_task(agent.run(incoming, outgoing))
@@ -67,7 +68,11 @@ async def test_installed_asr_worker_reaches_actual_agent_without_tool_effects():
             await perception.aclose()
 
     assert outputs[-1].kind == "final"
+    assert any(output.kind == "acknowledge" for output in outputs)
     assert outputs[-1].payload["caused_by_event_id"] == "audio-request"
+    assert next(output for output in outputs if output.kind == "acknowledge").payload[
+        "caused_by_event_id"
+    ] == "audio-request"
     assert len(reasoner.views) == 1
     observation = reasoner.views[0].observations[-1]
     assert observation.event_id == "audio-request"

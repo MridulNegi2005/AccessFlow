@@ -1334,3 +1334,15 @@ no human recording or code edits in this slice. Focused opt-in test 1 passed;
 full suite with model path set 1212 passed, 2 skipped, 1 retained xfailed;
 Ruff/diff clean. No real reasoning, official MP3, vision, human microphone,
 booking or shared-contract result claimed; A-owned source/config untouched.
+
+2026-09-25 AI-assisted Atishay continuation: Updated the opt-in model-backed
+Agent regression to use Atishay's `HeuristicTurnPolicy` and assert that both
+correction acknowledgment and final are causally tied to the generated audio
+event, with no tool effects. Focused regression passed; full suite with the
+installed model path set: 1212 passed, 2 skipped, 1 xfailed, 2 dependency
+warnings in 71.87 s; Ruff passed. User explicitly declined to speak, so no
+human audio was captured or uploaded; browser permission remained `prompt` and
+the page was reloaded to cancel capture. No local vision runtime/model was
+available. Updated ASR, checkpoint and Atishay handoff documents with evidence
+limits and remaining teammate/kit dependencies. No Mridul-owned code or shared
+contracts changed.
