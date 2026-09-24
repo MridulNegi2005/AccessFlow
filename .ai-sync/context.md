@@ -1298,4 +1298,10 @@ were proposed in B feedback with explicit A/B split; no A code edited.
 **Status:** Owned 376 passed/1 xfailed; full 1208 passed/2 skipped/1 xfailed, two dependency warnings; Ruff clean.
 **Notes:** Existing base.en CPU INT8 model decoded generated repetition/correction with word and segment offsets; a generated tone had no decoded segments. Decoder estimates are not calibrated confidence; probe does not set turn finality or change the agent. Physical microphone and human speech unverified. Both teammates must settle shared fields/clock/MP3 assembly before integration; A-owned source untouched.
 
+## [2026-09-24 16:10 IST] — Atishay offline timing correction
+**Task:** Prevent partial ASR revisions from falsely satisfying the final-speech-end timing metric.
+**Changes:** Added a failing owned replay case and changed only final-end wait/match accounting in the owned timing replay; retained all acoustic candidates and partial revision identity. Updated B feedback and handoff.
+**Status:** Focused replay 8 passed; full suite 1209 passed/2 skipped/1 xfailed, two dependency warnings in 87.49 s; Ruff/diff clean.
+**Notes:** Browser is connected but awaits microphone permission; no physical recording or human speech was obtained. This is an offline metric repair, not controller finality or automatic interruption. C24-1/2 joint decisions and the original kit remain open; A-owned source untouched.
+
 ---

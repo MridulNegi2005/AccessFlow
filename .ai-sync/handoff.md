@@ -1066,3 +1066,12 @@ and the configured factory, still unmerged into this B checkout. Its reported
 optional, unimplemented vision generation-cap experiment and joint file split
 in the voice/perception feedback checkpoint. Local vision service unavailable;
 no B real-pixel result, A file edit or implicit contract acceptance.
+
+Atishay follow-up: the offline timing replay no longer counts a partial
+transcript's provisional endpoint as a final-speech-end match. A deterministic
+owned test failed before the change and now passes; acoustic candidates and
+partial revision identity remain visible. Focused replay 8 passed; full suite
+1209 passed, 2 skipped, 1 retained xfailed; this is
+not streaming or controller finality. The local browser reached a microphone
+permission wait, so physical capture remains unverified until the user allows
+it. See B handoff and voice checkpoint for the event example and limits.

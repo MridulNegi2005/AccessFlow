@@ -820,3 +820,13 @@ main before B adopts the common runtime; no A file was edited here.
 **Validation:** Dedicated injected-model tests 3 passed; owned demo/perception tests 376 passed, 1 retained xfailed, 2 dependency warnings; full suite 1208 passed, 2 skipped, 1 retained xfailed, 2 warnings in 85.82 s; Ruff clean.
 
 **Failures/dependencies/next:** No physical microphone, human-speech or official MP3 evidence; local vision service unavailable and participant kit still missing at its documented path. Both Atishay and Mridul must decide C24-1/2 clock, clip assembly, uncertainty, revision and finality semantics before this data can affect the agent. Mridul's configured factory remains only on his unmerged branch, so C24-3 adoption awaits a reviewed integration; C24-4/5 gates remain open. Next independent B step is consented physical-mic capture and word/slot error logging once permission is available, plus actual pixel-grounded vision measurements when the backend is running. No A-owned code/config or shared contract changed.
+
+## 2026-09-24 — Offline timing metric correction
+
+**Reproduction:** Added an owned replay case with two acoustic pauses, a partial transcript available before them, and a final revision available only after recording ended. It failed before the change because the partial provisional endpoint was counted as a final-speech-end wait.
+
+**Owned fix:** `src/accessflow/turn_policy/timing_replay.py` now computes final-end wait/match only from a revision marked final. Ungated acoustic candidates and the available partial revision remain observable; no `TurnDecision` or controller behavior changes. `tests/perception/test_timing_replay.py` covers a missed final and unknown wait.
+
+**Validation:** Focused replay 8 passed; full suite 1209 passed, 2 skipped, 1 retained xfailed, 2 dependency warnings in 87.49 s; Ruff and diff check clean. This is deterministic offline timing evidence, not a real-device or official evaluation result.
+
+**Open input:** The local browser reached microphone permission wait but recording did not start; user must allow access and provide a non-sensitive test utterance. Participant kit location remains unknown. C24-1/2 timing/finality and stop effect decisions remain joint with Mridul; no A files were edited.
