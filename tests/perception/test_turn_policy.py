@@ -89,6 +89,20 @@ def test_explicit_self_correction_is_held_for_resolution():
     assert decision.uncertainty < 0.2
 
 
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("I'm sorry, set a reminder for Wednesday", "complete"),
+        ("Sorry, set a reminder for Wednesday", "complete"),
+        ("Tuesday, sorry—Wednesday", "possible_correction"),
+    ],
+)
+def test_polite_apology_is_not_mistaken_for_a_correction(text: str, expected: str):
+    decision = HeuristicTurnPolicy().update(observation(text, final=True), view())
+
+    assert decision.kind == expected
+
+
 def test_repeated_word_without_correction_marker_is_not_rewritten():
     item = observation("two two tickets", final=True)
 

@@ -615,6 +615,9 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="voice-state"' in html
     assert 'id="voice-help"' in html
     assert 'id="answer-context"' in html
+    assert 'id="backend-status" role="status" aria-live="polite"' in html
+    assert "'Perception: ' + payload.perception_backend" in html
+    assert "Reasoner: ' + reasoner" in html
     assert '<textarea class="task-input" id="task-text" hidden' in html
     assert "const previewMode = ['1', 'photo', 'meeting'].includes(previewVariant);" in html
     assert 'function renderDesignPreview(variant)' in html
@@ -672,7 +675,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "nextMediaId('mic-audio')" in html
     assert "kind === 'audio' ? 'upload-audio' : 'upload-frame'" in html
     assert "event.kind === 'demo_observation'" in html
-    assert "requestEventIds.get(finalSourceId) !== cause" in html
+    assert "Array.from(requestEventIds.values()).includes(cause)" in html
+    assert "function replayPendingAnswer()" in html
     assert "requestSourceIds.has(payload.source_id)" in html
     assert "demo/mock mode does not transcribe audio." in html
     assert 'Date.now()' not in html
@@ -1560,8 +1564,9 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
     class WhisperModel:
         calls = []
 
-        def transcribe(self, path, *, beam_size):
+        def transcribe(self, path, *, beam_size, word_timestamps):
             WhisperModel.calls.append((path, beam_size))
+            assert word_timestamps is True
             text = (
                 "Please inspect the initial screen"
                 if len(WhisperModel.calls) == 1

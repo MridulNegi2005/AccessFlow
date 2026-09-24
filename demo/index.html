@@ -546,6 +546,13 @@
         font-size: 11px;
         line-height: 1.5;
       }
+      .backend-status {
+        margin: 7px 2px 0;
+        color: #4f5b52;
+        font-size: 11px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
       .run-button {
         position: absolute;
         left: -10000px;
@@ -1466,6 +1473,9 @@
           Voice is recorded in this browser and uploaded to the current demo
           backend after you finish.
         </p>
+        <p class="backend-status" id="backend-status" role="status" aria-live="polite">
+          Checking connected backends…
+        </p>
       </aside>
       <section class="answer-stage" aria-label="Task response">
         <div class="stage-top">
@@ -1666,7 +1676,14 @@
             if (pendingAnswers.length < 8) pendingAnswers.push(event);
             return;
           }
-          if (requestEventIds.get(finalSourceId) !== cause) return;
+        }
+        if (event.kind === "error") {
+          const cause = payload.caused_by_event_id;
+          if (
+            !runInProgress ||
+            typeof cause !== "string" ||
+            !Array.from(requestEventIds.values()).includes(cause)
+          ) return;
         }
         document.querySelector("#announcements").textContent = announce(event);
         if (
@@ -1678,6 +1695,10 @@
           indicator.classList.toggle("disconnected", !payload.connected);
           indicator.disabled = payload.connected;
           indicator.textContent = payload.connected ? "Connected" : "Reconnect";
+          if (!payload.connected) {
+            document.querySelector("#backend-status").textContent =
+              "Backend status unavailable · reconnect before recording.";
+          }
           if (!payload.connected) {
             document.querySelector("#voice-state").textContent =
               "Connection lost";
@@ -1695,6 +1716,9 @@
           responseBackend = reasoner
             ? payload.perception_backend + " · " + reasoner
             : payload.perception_backend;
+          document.querySelector("#backend-status").textContent = reasoner
+            ? "Perception: " + payload.perception_backend + " · Reasoner: " + reasoner
+            : "Perception: " + payload.perception_backend;
           document.querySelector("#answer-context").textContent =
             modeLabel() + " · Conversation";
           return;
@@ -1745,6 +1769,19 @@
           if (runInProgress) finishRun();
         }
         return;
+      }
+
+      function replayPendingAnswer() {
+        const pendingAnswer = pendingAnswers.findLast(
+          (event) =>
+            Array.from(requestEventIds.values()).includes(
+              event.payload.caused_by_event_id,
+            ),
+        );
+        pendingAnswers = [];
+        if (!pendingAnswer) return false;
+        show(pendingAnswer);
+        return true;
       }
 
       function renderResponse(event) {
@@ -2691,16 +2728,7 @@
               "No request could be sent. Check your connection and try again.",
             );
           inputsDispatched = true;
-          const pendingAnswer = pendingAnswers.findLast(
-            (event) =>
-              requestEventIds.get(finalSourceId) ===
-              event.payload.caused_by_event_id,
-          );
-          pendingAnswers = [];
-          if (pendingAnswer) {
-            show(pendingAnswer);
-            return;
-          }
+          if (replayPendingAnswer()) return;
           responseTimer = window.setTimeout(() => {
             if (!runInProgress) return;
             document.querySelector("#answer-error").textContent =
