@@ -1,0 +1,48 @@
+{
+  "application_commit": "e7c95f576c5ba4713d27df9976301e0f451d0b07",
+  "date": "2026-09-24",
+  "mode": "offline audit; no live inference",
+  "regular_suite": {
+    "passed": 1197,
+    "skipped": 2,
+    "xfailed": 1,
+    "duration_seconds": 74.22
+  },
+  "pending_frame_probes": {
+    "failed": 4,
+    "duration_seconds": 3.64
+  },
+  "ruff": "passed",
+  "inline_javascript_blocks_parsed": 1,
+  "node_speech_lifecycle_exit_code": 0,
+  "offline_development_cases_passed": 4,
+  "semantic_stop_probe": [
+    {
+      "input": "Stop speaking",
+      "decision": {
+        "kind": "stop",
+        "uncertainty": 0.1
+      }
+    },
+    {
+      "input": "Cancel this booking",
+      "decision": {
+        "kind": "stop",
+        "uncertainty": 0.1
+      }
+    },
+    {
+      "input": "Stop the washing machine",
+      "decision": {
+        "kind": "stop",
+        "uncertainty": 0.1
+      }
+    }
+  ],
+  "limitations": [
+    "Node check uses a VM fake, not audible playback",
+    "One regular suite pass does not close historical intermittent failures",
+    "Initial probe collection failed because test_safety helper was not on path; corrected with pytest pythonpath option",
+    "Pending-frame repair is preserved locally and excluded from merged source"
+  ]
+}

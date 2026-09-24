@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "file": "pub_01_first.json",
+      "sha256": "42059311be9a28a1c6acc2e8765ec91733497f1156291a6176f41144623d606f",
+      "total": 100.0,
+      "model": "qwen/qwen3.8-27b",
+      "limitation": "One public development attempt, not a median"
+    },
+    {
+      "file": "pub_03_first.json",
+      "sha256": "1fd29e5b592c22045d66d9740923ae686f51c5b5711403d018a1063315115ae1",
+      "total": 56.9,
+      "model": "qwen/qwen3.8-27b",
+      "limitation": "One public development attempt, not a median"
+    },
+    {
+      "file": "pub_08_first.json",
+      "sha256": "6cc081f58580f7bf8b9b10b83ff53f59fc56eb11cc93e110408af90697e2314f",
+      "total": 81.5,
+      "model": "qwen/qwen3.8-27b",
+      "limitation": "One public development attempt, not a median"
+    }
+  ],
+  "source": "Exact copies of locally recorded reports; keys scanned before copying"
+}

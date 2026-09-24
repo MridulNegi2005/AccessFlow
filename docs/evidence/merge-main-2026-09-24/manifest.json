@@ -1,0 +1,57 @@
+{
+  "application_commit": "8c609d9",
+  "mridul_input": "c9136eb",
+  "atishay_input": "ed9d581",
+  "files": [
+    {
+      "file": ".gitattributes",
+      "bytes": 148,
+      "sha256": "89c0ffb7bf70c3fbfa6ab3f9534d6a0d22e51e4bff6a9fad3af1140276f48d11"
+    },
+    {
+      "file": "merge-vision-isolated-2026-09-24.xml",
+      "bytes": 367,
+      "sha256": "4f33995dd0fce44a7803d4bd1e671cbf67687c0d50bee4ca50cccf5b945e824d"
+    },
+    {
+      "file": "merge-vision-repeat-1-2026-09-24.xml",
+      "bytes": 367,
+      "sha256": "7cdd4c8c26147ac7a47d2654b523e014817cb3f5a7f5c42de563dce2514b7430"
+    },
+    {
+      "file": "merge-vision-repeat-2-2026-09-24.xml",
+      "bytes": 367,
+      "sha256": "d6a967bb351dbeb8e2f26b8b9bab96140532368194b93d4638e618cd38271fb8"
+    },
+    {
+      "file": "merge-vision-repeat-3-2026-09-24.xml",
+      "bytes": 367,
+      "sha256": "8765fece39242df70d2537ab4236a10d2acd09e2b2e73ef6e69c5f026169b05e"
+    },
+    {
+      "file": "merge-vision-repeats-2026-09-24.json",
+      "bytes": 348,
+      "sha256": "c308f84b514d6e4332d5baa5652fc225ab680e03cfd99dd2d92acf064f122f15"
+    },
+    {
+      "file": "merged-main-2026-09-24.xml",
+      "bytes": 185490,
+      "sha256": "3d18488b31979295bee829aa745d301327b9a3c8922be27a14df983ae9227d1b"
+    },
+    {
+      "file": "merged-main-final-2026-09-24.xml",
+      "bytes": 181448,
+      "sha256": "a4c939341f612f9020d2504f0dfc02002c5834ca7c395657cba1ca2f54db040d"
+    },
+    {
+      "file": "offline-dev-report.json",
+      "bytes": 41844,
+      "sha256": "5c28b346b2c5c7d474eba3b6c6c3a65924e182e29cddc31bf7cc71314674ce50"
+    },
+    {
+      "file": "README.md",
+      "bytes": 1705,
+      "sha256": "c74197d44890493a7562451a6f1705ca2c0b9e98d8245c31c8252d862111ac6b"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "source_commit": "cd53bc23cdd1f9f540551ea8964df67219480588",
+  "files": [
+    {
+      "file": ".gitattributes",
+      "bytes": 182,
+      "sha256": "9a243275174239029cb693a8f1cc1a42f94aa783f2744250552d566c9fe37780"
+    },
+    {
+      "file": "package_manifest.json",
+      "bytes": 8318,
+      "sha256": "42f94d01ac7e62cc0ee4afa30b17aed3f74e1d1dffc131138dca22ab32eb1c7d"
+    },
+    {
+      "file": "README.md",
+      "bytes": 2692,
+      "sha256": "11f7a7020beee0b4634c59b570e2472e764e18180391a070c0bf984a72c45be6"
+    },
+    {
+      "file": "requirements.txt",
+      "bytes": 390,
+      "sha256": "04d1d5d4fd606c63a55aac7669224121e54356ea55c0632c2b1b2be826809a34"
+    },
+    {
+      "file": "runtime_profile.json",
+      "bytes": 412,
+      "sha256": "13934f51ced03f2155a35eb37bc8eb131ac7cb836d1c21fd5fbcd9aa1c9402de"
+    },
+    {
+      "file": "verification-console.txt",
+      "bytes": 811,
+      "sha256": "8ba4e18a09d6bd10246456dff4ac71d647b6abe9e24d4e20609ac1fa89320834"
+    },
+    {
+      "file": "verification.json",
+      "bytes": 4528,
+      "sha256": "7cf62feccb600249ff535c862ee84ca5a929c53aec7f18e55afd205c00a2b603"
+    },
+    {
+      "file": "verify_package.py.txt",
+      "bytes": 2701,
+      "sha256": "cc8f0265a460b750cc047d92264784f3b5484624700d05513aa527508f18884d"
+    }
+  ]
+}

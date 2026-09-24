@@ -126,7 +126,9 @@ async def test_reasoner_sends_required_decision_schema_without_changing_internal
     def handler(request):
         payload = json.loads(request.content)
         schema = payload["format"]
-        assert set(schema["required"]) == set(PlanProposal.model_fields)
+        # The optional binding extension preserves legacy proposals; every original
+        # completion/action decision remains mandatory for model generation.
+        assert set(schema["required"]) == set(PlanProposal.model_fields) - {"write_contracts", "evidence_answer"}
         grounded_schema = payload["messages"][-1]["content"].split("\nJSON schema:\n")[1]
         assert json.loads(grounded_schema) == schema
         assert "Slot names" in schema["$defs"]["ProposedCall"]["properties"]["dependencies"]["description"]

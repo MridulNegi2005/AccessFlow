@@ -26,8 +26,8 @@ _RESERVED_STEMS = frozenset(
     {"CON", "PRN", "AUX", "NUL"} | {f"COM{n}" for n in range(1, 10)} | {f"LPT{n}" for n in range(1, 10)}
 )
 
-# Bounds enforced BEFORE any file is opened or fully read, so a slow/huge document
-# cannot be turned into unbounded blocking I/O, memory, or tokenization work (M2).
+# Reject known oversized files before opening; also bound the actual binary read
+# so growth after the metadata check cannot cause an unbounded allocation.
 MAX_DOCUMENT_BYTES = 200_000
 MAX_QUERY_CHARS = 500
 
@@ -69,6 +69,8 @@ class CorpusStore:
     """
 
     def __init__(self, root, max_document_bytes=MAX_DOCUMENT_BYTES):
+        if type(max_document_bytes) is not int or max_document_bytes <= 0:
+            raise ValueError("max_document_bytes must be a positive integer")
         self.root = Path(root).resolve()
         self.max_document_bytes = max_document_bytes
 
@@ -77,7 +79,11 @@ class CorpusStore:
             raise CorpusAccessError("unsafe_document_name", name)
         if name not in allowlist:
             raise CorpusAccessError("document_not_in_corpus", name)
-        candidate = (self.root / name).resolve()
+        try:
+            candidate = (self.root / name).resolve()
+        except (OSError, RuntimeError):
+            # Python 3.11/3.12 may use RuntimeError for a symlink-resolution loop.
+            raise CorpusAccessError("document_unreadable", name) from None
         try:
             candidate.relative_to(self.root)
         except ValueError:
@@ -91,12 +97,16 @@ class CorpusStore:
         try:
             if not candidate.is_file():
                 raise CorpusAccessError("document_not_found", name)
-            # Size is checked before the (potentially large) read_text allocation below,
-            # not after -- an oversized document is refused before it is ever read into
-            # memory, not merely truncated afterward.
+            # Early rejection avoids opening a known oversized document. A bounded
+            # read below also covers file growth after this metadata snapshot.
             if candidate.stat().st_size > self.max_document_bytes:
                 raise CorpusAccessError("document_too_large", name)
-            return candidate.read_text(encoding="utf-8", errors="replace")
+            with candidate.open("rb") as stream:
+                content = stream.read(self.max_document_bytes + 1)
+            if len(content) > self.max_document_bytes:
+                raise CorpusAccessError("document_too_large", name)
+            # Preserve read_text's replacement decoding and universal newlines.
+            return content.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
         except CorpusAccessError:
             raise
         except OSError:

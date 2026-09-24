@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "file": "pub_03_binding_attempt1.json",
+      "sha256": "a0c85b3991b7cbe9e0b50286d80c32c5efc4190e9efd6e01f96d71432785401e",
+      "total": 38.5,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    },
+    {
+      "file": "pub_03_binding_documented_attempt1.json",
+      "sha256": "932262171728768054311a7bcf9541132d0e25e288bbbdaf03bb4c7f59a36bcc",
+      "total": 15.4,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    },
+    {
+      "file": "pub_03_binding_compact_attempt1.json",
+      "sha256": "f4d8f279e021b2e7aa571070c60e664a4109f41951cda0cfa3bf29ff9f1ef1d5",
+      "total": 100.0,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    }
+  ]
+}

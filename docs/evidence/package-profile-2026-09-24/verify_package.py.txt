@@ -1,0 +1,38 @@
+import asyncio, hashlib, importlib.metadata, json, platform, sys, time
+from pathlib import Path
+root=Path.cwd().resolve()
+sys.path.insert(0,str(root))
+import eval_submission as evaluator
+import accessflow.adapters.samsung as adapter
+assert Path(adapter.__file__).resolve().is_relative_to(root)
+manifest=json.loads((root/'package_manifest.json').read_text(encoding='utf-8'))
+assert all(hashlib.sha256((root/name).read_bytes()).hexdigest()==digest for name,digest in manifest['files'].items())
+started=time.monotonic()
+config,cls,errors=evaluator.validate_submission(str(root))
+report={'mode':'isolated-venv/windows/candidate-package-development', 'python':platform.python_version(),
+ 'platform':platform.platform(), 'isolated_python':bool(sys.flags.isolated),
+ 'base_commit':manifest['base_commit'], 'package_source_dirty':manifest['source_dirty'],
+ 'package_hashes_verified':True, 'adapter_import':str(Path(adapter.__file__).resolve().relative_to(root)),
+ 'installed_packages':sorted(f'{d.metadata["Name"]}=={d.version}' for d in importlib.metadata.distributions()),
+ 'validation_errors':errors, 'contract_errors':None, 'failure':None,
+ 'runtime_profile':json.loads((root/'runtime_profile.json').read_text(encoding='utf-8'))}
+try:
+ if errors: raise RuntimeError('package_validation_failed')
+ report['contract_errors']=evaluator.contract_smoke_test(cls,setup_cap_s=300)
+ if report['contract_errors']: raise RuntimeError('contract_smoke_failed')
+ scenario=json.loads((root/'scenarios/pub_03_text_chained_booking.json').read_text(encoding='utf-8'))
+ async def check():
+  harness=evaluator.EvaluationHarness(scenario,lambda a,b:cls(a,b),time_scale=1,verbose=False)
+  await asyncio.wait_for(harness.prepare(),300)
+  return await asyncio.wait_for(harness.run(),120)
+ report['trace']=asyncio.run(check())
+ report['score']=evaluator.score_scenario(scenario,report['trace'])
+ if any(e.get('kind')=='agent_crash' for e in report['trace']):raise RuntimeError('agent_crash')
+except Exception as exc:
+ report['failure']=type(exc).__name__
+report['wall_s']=time.monotonic()-started
+report['limitations']=['One exposed chained-booking text attempt; not full official repeated evaluation.', 'Reuses verified isolated Python3.11 environment with identical pins; not a new install or Docker.', 'Explicit candidate compact-v2/evidence; optional ASR and vision runtimes not included.']
+out=root.parent/'verification.json'
+with out.open('x',encoding='utf-8') as f:json.dump(report,f,indent=2)
+print(json.dumps({'failure':report['failure'],'validation_errors':report['validation_errors'],'contract_errors':report['contract_errors'],'score':report.get('score'),'wall_s':report['wall_s']}))
+if report['failure']: raise SystemExit(1)

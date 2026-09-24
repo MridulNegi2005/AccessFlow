@@ -1,0 +1,111 @@
+{
+  "engine_commit": "7086d6e",
+  "source_sha256": "74880bbf4732929e7d2a2d955dc4063bfc6620e01668f685e00bd6fe10ca1bd4",
+  "files": [
+    {
+      "file": "attempt-01.json",
+      "bytes": 760,
+      "sha256": "2135c3c2ec916b1263a9da0bbf82188e1bb6e972fbca607c1461a17e9b39b7d1"
+    },
+    {
+      "file": "attempt-02.json",
+      "bytes": 1025,
+      "sha256": "c2131827a119624663c504cee4916a5d0ebef97e536bc8810d4c5c08df40ff59"
+    },
+    {
+      "file": "attempt-03.json",
+      "bytes": 881,
+      "sha256": "a65bf382cd2c39eb489b0613d96fec7d492acf11b1eb64ac4bb7a9067a1c33b8"
+    },
+    {
+      "file": "attempt-04.json",
+      "bytes": 969,
+      "sha256": "cb36b8d6e26a8eff0efd25497865a13d538d1c489c2d5eb90aec8ef4888b41cc"
+    },
+    {
+      "file": "attempt-05.json",
+      "bytes": 814,
+      "sha256": "c20c51297e0fe8b2d86c7a52c067f71c673e7bfb2a768e31a476cb4280b7293c"
+    },
+    {
+      "file": "attempt-06.json",
+      "bytes": 603,
+      "sha256": "6221733e3dcec57fa586d1696f2461975b58d1f4ac0f230538dac925bc4b1f61"
+    },
+    {
+      "file": "driver-executed.py.txt",
+      "bytes": 5510,
+      "sha256": "40f1afbf31d35a6a2c14c034084410fb044bec2b7f61bb8e00fa31a8339d8022"
+    },
+    {
+      "file": "driver-final.py.txt",
+      "bytes": 8851,
+      "sha256": "88479501d00ea6c950fe9c6b39c534cdec08245038a3321f7adbe35af02ecc0e"
+    },
+    {
+      "file": "plan.json",
+      "bytes": 1616,
+      "sha256": "65d6c9fd1ec27c4b240facf756de06095ac90745b49bcee91f69720a264765ea"
+    },
+    {
+      "file": "pub_01_text_simple.json",
+      "bytes": 11346,
+      "sha256": "bf490879f7418456a4f35b83700deead9140efc2848d1f499e7ee62fc4afd82f"
+    },
+    {
+      "file": "pub_02_text_interrupt.json",
+      "bytes": 16045,
+      "sha256": "40a92b4739deaa4e1232f47fba14d83a2474e414fb7bfcadee68d680c0248c06"
+    },
+    {
+      "file": "pub_03_text_chained_booking.json",
+      "bytes": 14118,
+      "sha256": "d22b4cda4e733eef208e4bb0e03fb11684d11d43072d3ed6e3a630b057cd6c9f"
+    },
+    {
+      "file": "pub_04_text_no_tool.json",
+      "bytes": 7509,
+      "sha256": "955572deef31aca4ceb9e4e73cc694c744494114e551fa813975339c52d75934"
+    },
+    {
+      "file": "pub_08_text_tool_failure.json",
+      "bytes": 12933,
+      "sha256": "b228e54cc3c2416ad9cac2aed9e4beb84d1456a1f7086d2be19728fa401a57ed"
+    },
+    {
+      "file": "pub_09_text_unseen_tool.json",
+      "bytes": 10813,
+      "sha256": "46dd8257a6026874271e493117391d56c10cbac09edba6aa3031f670b560d84d"
+    },
+    {
+      "file": "reviewed-summary-final.json",
+      "bytes": 7046,
+      "sha256": "b5ebaf487e8723350f73659003453e7ff5d0f5771626f35a379b44066a1fa5a6"
+    },
+    {
+      "file": "reviewed-summary.json",
+      "bytes": 7016,
+      "sha256": "c5535b9f18eb33def33f484c1f42b69487a8a33b3d705bbc8ef13c67294d4111"
+    },
+    {
+      "file": "samsung-screen-tests-2026-09-23.xml",
+      "bytes": 3458,
+      "sha256": "472d93b7f7c9079b78888a273f88245a5a75285f5fe0890f8175ee87c5b83aa3"
+    },
+    {
+      "file": "samsung-screen-tests-final-2026-09-23.xml",
+      "bytes": 3458,
+      "sha256": "34f4db75c0037274b05d1af56d7cf6a0f4482a4bee44ad2033b5d0f2ed7dcf70"
+    },
+    {
+      "file": "samsung-screen-tests-release-2026-09-23.xml",
+      "bytes": 3929,
+      "sha256": "9877e4536c0c42ec349e4aa38ee8d90a851a9f9cdb390bd53eed63382bc42226"
+    },
+    {
+      "file": "summary.json",
+      "bytes": 7458,
+      "sha256": "6280b3889ee239b48387ee5a80854f7605d96b82cb4ec1c3c43f73fec4057617"
+    }
+  ]
+}

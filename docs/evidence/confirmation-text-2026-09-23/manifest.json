@@ -1,0 +1,41 @@
+{
+  "base_commit": "07e628a",
+  "final_source_sha256": "084ccb97723fd4668866925b7018f5da177cebaea4f955e8e087fe2daad0bd52",
+  "files": [
+    {
+      "file": ".gitattributes",
+      "bytes": 72,
+      "sha256": "308a40fa1d89ae5ea4390b4c9b46a0108b09f171f07898f25d451fa0c69c4e9f"
+    },
+    {
+      "file": "booking-final.json",
+      "bytes": 14088,
+      "sha256": "8b3936d7f1f1cece2ded408455a4ddf9c7fd75a6cf333925a44c4e8e3c7ee3fd"
+    },
+    {
+      "file": "booking-intermediate.json",
+      "bytes": 14070,
+      "sha256": "cb17bd7506e3088ba418708cc6212b7531b47c46d3118377c6c7c957319ce814"
+    },
+    {
+      "file": "README.md",
+      "bytes": 2334,
+      "sha256": "3d3df600397e336ce5607be102a22d5b3f51e699eac91751df4beab0310214ba"
+    },
+    {
+      "file": "suite-final.xml",
+      "bytes": 181191,
+      "sha256": "68a4edcde15e9cc3899be0201bea05f87915a5a2329d46bd6029df87801c47df"
+    },
+    {
+      "file": "suite-intermediate.xml",
+      "bytes": 180918,
+      "sha256": "a2985e14af6551f642a0e8cc1572dcaef33693495f9728afb12eec0de5e46e97"
+    },
+    {
+      "file": "summary.json",
+      "bytes": 1905,
+      "sha256": "1013b90c254dbca4ffe7b0502a0ab60ed45aa61283b37cc39c02cd4b40ac0ec9"
+    }
+  ]
+}

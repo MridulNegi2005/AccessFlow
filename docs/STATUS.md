@@ -1,5 +1,541 @@
 # Implementation status
 
+## Merged readiness and ownership handoff — 24 September 2026
+
+Merged Mridul 0c12ba0 into main first (c564754), then Atishay 8083ebf (e7c95f5).
+Three documentation conflicts resolved with both work histories and newer design status
+retained; no application source conflict or repair. B implementation matches his fetched
+branch. Standard suite1197pass/2skip/1xfail in74.22s; Ruff, inline JS, Node speech lifecycle
+and offline4/4 pass. Separate gated audit probes reproduce four pending-frame controller
+failures; do not call the merged agent defect-free or multimodal-ready.
+
+Read docs/reviews/MERGED_READINESS_2026-09-24.md, ATISHAY_VOICE_WORK_2026-09-24.md
+and ATISHAY_AGENT_PROMPT_2026-09-24.md. They separate A/B work, actual Samsung criteria,
+C24-1..5 coordination and real media acceptance tests. Frontend polish/Stitch exports are
+deferred. Historical 18 generated-audio ASR measurements are acknowledged; the newest UI
+uploads on stop, but streaming/barge-in and a common real runtime remain open.
+
+Unfinished pending-frame engine/test work was saved in stash object
+feb6af1643ee7ad11ca6d2cf8473dcde1183fd36 before merging; excluded from main. Restore on
+Mridul's branch after this documentation checkpoint. Finish/review/test it separately.
+The last explicit pause stopped that implementation; the current request authorizes this
+merge, review and handoff. No implementation fix or new live evaluation in this slice.
+Next A: pending-frame correctness and configured Samsung media runtime; next B: owned
+correlation/timing, real ASR/vision/microphone tests. Both coordinate shared contracts.
+No release tag, submission, workflow activation, model downloads or external messages.
+
+## Explicit package read mode — 24 September 2026
+
+Reproduced/fixed an inherited environment changing package read-answer behavior
+without profile conflict. Builder now explicitly selects prompt/read modes and the
+entry validates/freezes both before environment mutation. Defaults remain full/prose;
+compact-v2/evidence is selectable,not silently promoted to release configuration.
+
+Focused87passed; Ruff clean. Full1failed/1194passed/2skipped/1xfail in59.38s: the same
+merged demo vision-recovery ordering failure recurred; unchanged B/controller code,
+no rerun-to-green. A controller readiness review/gated reproduction is next; do not
+claim this media race closed. No B source/test changes in this slice.
+
+Generated candidate package passed isolated import/hash/contract checks and one
+live Samsung booking100 (one search,one mock write,final6375ms). Reused the verified
+Python3.11 environment/21pins; not a new clean install or repeated score. Evidence:
+docs/evidence/package-profile-2026-09-24/README.md; usage docs/SAMSUNG_PACKAGE.md.
+Goal active. Continue A-owned pending-media diagnosis/runtime work. MP3 bridge
+ownership still awaits user answer. Push own branch only; main stays at merged89f5407.
+
+## Combined branch checkpoint — 24 September 2026
+
+Merged Mridul c9136eb into main first (a40cffd), then Atishay ed9d581 (8c609d9).
+Only .ai-sync/handoff.md conflicted; both histories retained. No application conflict
+or source repair. B-owned source/tests remain identical to Atishay's branch.
+
+Final combined suite1188pass/2skip/1xfail in55.42s; Ruff clean,JS syntax passed,
+offline dev4/4. Initial suite had1 failure in vision-failure recovery (image context
+absent from first audio final); four isolated repeats and final suite passed with
+unchanged source. This is an open timing/correlation issue,not fixed or established
+as a merge regression. Both full reports and repeats retained. See
+ docs/INTEGRATION_2026-09-24.md and docs/evidence/merge-main-2026-09-24/README.md.
+
+Push verified merged main; fast-forward Mridul's branch for continued owned work.
+Do not update Atishay's branch or reinterpret old branch-specific evidence as new
+combined-tree live verification. Workflow unchanged/manual-only; no deployment/tag.
+Goal active. Next A work remains runtime/profile configuration, coordinating the
+pending MP3 ownership decision and the documented multimodal ordering follow-up.
+
+## Isolated package validation and media follow-up — 23 September 2026
+
+Built a clean cd53bc2 base package (78 files), installed all21 pinned dependencies
+into a new Python3.11.15 environment from cached wheels, verified hashes/import
+location under Python -I and passed dependency consistency. Samsung validation and
+contract smoke returned no errors; one no-tool text run scored100 with final735ms.
+This is the same Windows host, full/prose profile; not a clean machine, Docker,
+repeated score or media validation. Docker command is unavailable in PATH.
+Evidence: docs/evidence/samsung-clean-install-2026-09-23/README.md.
+
+Source inspection confirmed the worker already accepts vision flags: old rejection
+notes are stale. Samsung's factory still configures no real ASR/vision; MP3 events
+remain rejected, and vision via the process worker requires an installed ASR path.
+Read docs/SAMSUNG_MEDIA_NEXT_2026-09-23.md for the exact A tasks and B seams.
+User ownership question for the MP3 bridge remains pending; do not infer approval.
+Continue independent runtime/profile work; do not fabricate model paths or edit B.
+Goal active. No application source changed since the verified confirmation slice;
+no repeated full suite is claimed for these evidence/docs-only changes.
+
+## Readable confirmation checkpoint — 23 September 2026
+
+Confirmed writes and reconciled committed effects now provide bounded literal text
+while preserving raw evidence/call/operation IDs. Mock-only runtimes explicitly say
+"mock action" from trusted authorization metadata, never from model/result guesses.
+Unknown, cancelled, failed and invalidated outcomes keep existing gates. Unsupported
+or oversized details produce an explicit summary omission without a second action.
+No B source/tests changed; cards/playback remain B-owned coordination work.
+
+Final full suite: 1186 passed / 2 skipped / 1 xfailed in 64.47s; focused 23 passed;
+Ruff clean. Final-source live Samsung booking: 100, all 3 provider calls successful,
+one read/one mock write, final at 6407ms (5500ms after last text-turn input). This is
+one development attempt, not repeated official or voice-usability evidence.
+Both intermediate and final traces/suites retained with hashes. Read
+CONFIRMATION_TEXT_2026-09-23.md and evidence/confirmation-text-2026-09-23/README.md.
+
+Next A: repeated Samsung/profile evidence and final profile selection, A-side media
+integration with B, clean-install/platform/Docker verification and submission assembly.
+Compact/evidence defaults remain opt-in. Goal active; completed checkpoint pushed
+using configured identity, no workflow changes, release tag, submission or real effects.
+
+## Six-case public text screen — 23 September 2026
+
+Screened all six public text cases once on frozen7086d6e implementation with
+compact-v2 and evidence read answers. Five scored100; interruption89.6. All18
+provider requests succeeded,29112 reported input tokens including six warm-ups.
+These are exposed development attempts, not an official aggregate or three-run median.
+
+The interruption trace confirms Boston cancellation875ms after the signal, followed
+by New York search and a request for missing flight/passenger details. No booking
+was invented. The chained case made exactly one confirmed mock booking. Substantive
+text-turn response delays ranged718–5953ms; filler latency is a different metric.
+
+Added a sequential screen driver with failure retention, fresh output paths,
+explicit model configuration and source-drift detection. Corrected summary extraction
+for official clarification/cancellation trace names; all original raw reports and
+the first driver remain retained. Final focused reporting tests26pass, Ruff clean.
+No application source or B source/tests changed. Existing1144pass/2skip/1xfail is
+previous engine evidence, not a newly run full suite for this reporting-only slice.
+
+Read docs/TEXT_PROFILE_SCREEN_2026-09-23.md. Defaults remain full/prose. Next A work:
+make confirmed-action replies readable for voice while preserving committed/unknown/
+cancelled outcome gates and raw provenance; then broader/repeated official evidence.
+A read-only review identified both direct-commit and reconciliation final paths;
+no implementation from that review has been made yet. B display/speech adoption
+requires coordination, not teammate-file edits. Goal active; push completed checkpoint.
+
+## Evidence-selected read-answer checkpoint — 23 September 2026
+
+Added an opt-in evidence-selection final-answer path for current successful reads.
+The controller renders actual fields and rejects stale/failed/write sources,
+oversized selections and mixed answer/state/action proposals. The default remains
+prose; full remains the default prompt profile. No B implementation/tests changed.
+
+The compact-v2 baseline again invented a hotel billing period despite scorer100.
+Final-source evidence mode returned the actual name/price without that qualifier,
+with scorer100 and a final at4937ms. Two final-source synthetic model probes also
+preserved explicit billing units, physical units, false and zero. These are exposed
+single development attempts, not a hidden-set result, repeated reliability score or
+proof of source truth/completeness. Free-form clarifications remain unverified.
+
+Final1144passed/2skipped/1xfail in65.71s; Ruff clean. Fifty-two new test cases cover
+source admission, bounded rendering, model restrictions, controller enforcement,
+legacy compatibility and unfinished-speech rejection. Read-only review found an
+answer/state-mutation gap; it was fixed before final validation. Both full-suite
+reports and every live iteration are retained with byte hashes and source provenance.
+
+Read docs/READ_ANSWER_EXPERIMENT_2026-09-23.md and its evidence bundle. Both teammates
+must coordinate browser/card/voice adoption: A owns validated results, B owns display
+and speech. No one should duplicate the other's authority or presentation code.
+
+Next A work: broader profile/read-answer evaluation and relevance/completeness checks,
+then remaining official repeatability, packaging/platform and integration gates.
+Overall goal remains active. Push this completed checkpoint with configured identity;
+no attribution trailers, workflow changes, release tag, submission or real effects.
+
+## Compact-v2 experiment checkpoint — 23 September 2026
+
+Added explicit compact-v2 input presentation: typed protocol-default elision and
+model-facing audit-metadata removal, with literal evidence/full-schema enforcement
+preserved. Full remains the default, including the submission-package profile.
+
+Live Qwen interruption pair: both scorer89.6, but v2 completed all model calls and
+returned a useful selection clarification; full's final call hit provider quota.
+Initial input tokens2057 versus3008 (31.6% fewer for the combined profile). One v2
+chained-booking attempt scored100.0 with a confirmed mock action at6500ms. These are
+single exposed development attempts, not repeated evaluation or a general quota fix.
+
+Final1092passed/2skipped/1xfail in85.48s; Ruff clean. First full run had one B-owned
+session-isolation test failure, followed by three isolated passes and the green full
+rerun. Both suite XMLs and all live reports are retained with exact-byte hashes.
+Atishay's remote includes newer worker fixes not merged here; the follow-up makes
+that source distinction explicit. No B implementation/tests changed.
+
+Read docs/COMPACT_INPUT_PROFILE_2026-09-23.md and the linked evidence bundle.
+B follow-up: docs/reviews/ATISHAY_SESSION_ISOLATION_FOLLOWUP_2026-09-23.md.
+Corpus scoped review was completed in4b2908d with explicit platform/deployment limits.
+
+Next A work: broader/repeated profile evaluation and evidence-grounded read answers.
+The unsupported hotel price qualifier remains open. Coordinate newer B work before
+shared media/timing validation; Docker/platform and human submission gates remain.
+Overall goal active after explicit resume. Completed checkpoints are pushed with
+configured identity, no attribution trailers, workflow change, release or submission.
+
+## Resumed A-side corpus review — 23 September 2026
+
+The user explicitly resumed Mridul's implementation work after the design handoff.
+The goal is active again; earlier pause instructions below are historical.
+
+Completed the scoped corpus boundary review and repaired the actual read-byte cap,
+normalized resolution errors and invalid read-budget configuration. The review does
+not claim adversarial-installation or native junction certification. Atishay's newly
+pushed frontend remains on his own branch and was not merged or edited in this slice.
+
+Validation: 1086 passed / 2 skipped / 1 xfailed, two dependency warnings, 89.55s;
+repository Ruff clean. Focused corpus/authority suite:116 passed/1 skipped. New tests
+first reproduced11 failures/5 passes/1 skip against original source. Both final skips
+are native Windows symlink permission limits; the existing conflicting-frame xfail
+remains open. No live model evidence from this slice.
+
+Review: docs/reviews/CORPUS_BOUNDARY_REVIEW_2026-09-23.md.
+Key files: src/accessflow/corpus.py and owned corpus tests, plus review/status docs.
+Next: measured prompt/input-token reduction and evidence-grounded answers, then
+broader official evaluation. Shared media/timing and platform/submission gates remain.
+Continue completed-checkpoint pushes on mridul/engine with configured identity and
+no attribution trailers. No teammate implementation, workflow, release or submission changes.
+
+## User-requested pause checkpoint — 22 September 2026
+
+The user requested a pause after this checkpoint is pushed. Implementation and
+model evaluation have stopped. The incomplete read-only corpus review worker was
+interrupted; no completed findings or test results are claimed from it. No new
+compact/token-budget profile was implemented. No matching corpus-review Python/uv
+process was found in the final process check.
+
+Latest implemented code:9a3eb84 on mridul/engine. Main holds the earlier combined
+merge438b91b. Final software validation remains1070passed/1skip/1xfail and Ruff clean;
+this checkpoint only adds documentation, so those checks were not repeated.
+The package passed official import/setup and one public text scenario, not the
+full repeated official procedure or multimodal certification.
+
+Read docs/WORK_SUMMARY_2026-09-22.md for the consolidated work and remaining tasks.
+Corpus review remains open at
+`docs/reviews/CORPUS_BOUNDARY_REVIEW_STATUS_2026-09-22.md`.
+Atishay's ownership and his existing timing/correlation follow-ups remain unchanged.
+
+After pushing this documentation checkpoint, set the active goal to paused.
+Do not continue coding, testing, provider calls or worker tasks until the user
+explicitly resumes. No release tag, submission or workflow change. Use configured
+Git identity without coauthor trailers or attribution signoffs.
+
+## Package/startup checkpoint — 22 September 2026
+
+Added a local Samsung package assembler, declared Groq model profile, portal-secret
+mapping, pinned requirements and exact file manifests. Generated packages remain
+ignored local artifacts. A fresh Python3.11.15 environment installed21 pins from
+public PyPI; the initial offline attempt failed on missing cache entries.
+
+Official import passed, but the first contract smoke crashed because Samsung sends
+speech before a manifest. Fixed A runtime with bounded early-input buffering
+(32events/64KiB); no controller input or action precedes the real manifest. Unknown
+inputs/tool results remain rejected and cancellation/overflow are explicit.
+The rebuilt package passes official import/setup checks and one public no-tool
+case100.0, final703ms. This is not the full three-repetition evaluation or media proof.
+
+Final1070passed/1skip/1xfail, two warnings,55.27s; focused36passed; Ruff clean.
+Twenty-three new tests across packaging and startup. No B implementation/tests
+changed. Evidence and exact reproduction: docs/SAMSUNG_PACKAGE.md and
+`docs/evidence/samsung-package-2026-09-22/`. Package label AccessFlow is provisional
+until the registered team spelling is confirmed for final submission.
+
+Two prompt-only grounding changes both failed to remove the unsupported hotel
+pricing period and were reverted. Both attempts are retained in
+`docs/evidence/samsung-grounding-2026-09-22/`; the production model prompts are
+unchanged. Grounded claims and provider quota remain A work. Both teammates must
+coordinate media/vision/timing; Atishay retains B ownership. Existing B follow-ups,
+frame xfail, Docker/Linux verification and final submission gates remain open.
+
+Completed verified changes are pushed to mridul/engine under configured Git identity,
+without coauthor trailers or signoffs. No workflow, release tag or submission action.
+Overall goal remains active; this checkpoint supersedes historical status below.
+
+## Unfamiliar-tool checkpoint — 22 September 2026
+
+The diagnostic runner accepts explicit external development fixtures while retaining
+public filename restrictions and evaluator/participant separation. Four live hosted
+attempts scored100.0: weather, two rental variants and hotel. These exposed examples
+span three tool names; they are not a hidden-set score or repeated-run median.
+Manual review found an unsupported "per night" claim in the hotel answer despite
+its full score. Generic answer grounding is the next A-owned quality task.
+
+Seven runner tests pass; Ruff clean. First full suite1failed/1046passed/1skip/1xfail;
+final rerun1047passed/1skip/1xfail (60.69s). A different B demo test failed in the
+first full run and one of three isolated reruns. It may accept an image-only final
+before the follow-up question is answered; the causal interleaving is not proven.
+Report: docs/reviews/ATISHAY_WEBSOCKET_CORRELATION_FOLLOWUP_2026-09-22.md.
+Atishay owns B synchronization/demo changes; Mridul owns A output provenance and
+integration, with explicit coordination if a shared-contract defect is found.
+No B source, tests or handoff changed. Prior frame timeout/xfail remain open.
+
+Four unchanged traces, suite XML and hashes are retained in
+`docs/evidence/samsung-unseen-2026-09-22/`. The generated fixture seed is20260922;
+raw organizer fixtures/answers are excluded. Full prompt remains default.
+Completed tested changes are pushed to mridul/engine with configured Git identity.
+No coauthor trailers, signoffs, workflow changes, release or submission.
+Overall goal remains active; this checkpoint supersedes historical status below.
+
+## Request-final checkpoint — 22 September 2026
+
+Resolved historical writes no longer silence unrelated informational follow-ups.
+Informational finals close their request internally while preserving the demo's
+`listening` status. Current and unresolved effects still require tool evidence.
+A first proposal that establishes write intent cannot substitute a prose success
+claim for dispatch; incomplete waiting-for-input and read-only paths remain valid.
+
+Final suite: **1044 passed, 1 skipped, 1 xfailed**, two dependency warnings,
+54.82 seconds. Six new regression cases and a revised historical silence test;
+focused78 passed. Ruff and diff checks clean. Intermediate regressions in exposed
+status, promised-image waiting and a read-only fixture were corrected in A code;
+no B tests were changed. Full history: `docs/INFORMATIONAL_FOLLOWUPS_2026-09-22.md`.
+
+Live Samsung no-tool case: **100.0**, zero tool calls, final at735ms and both model
+requests successful. This public run preceded the additional first-plan write
+claim guard and does not exercise it; source provenance is retained in
+`docs/evidence/samsung-informational-2026-09-22/README.md`. Follow-up/guard evidence
+is deterministic mock integration, not a live multi-turn claim.
+
+Next A work: unseen-tool public evaluation, compact-profile selection quality and
+input quota, then packaging/remaining boundary review. Full prompt stays default.
+Media, timing and frame semantics still need Atishay coordination. Known skip,
+frame xfail and separately reported intermittent B timing issue remain open.
+No B implementation changes, subagents, workflow changes, submission or release tag.
+Completed tested commits are pushed to mridul/engine using configured Git identity,
+without coauthor trailers or assistant-name signoffs. Overall goal remains active.
+This checkpoint supersedes historical status below.
+
+## Compact profile checkpoint — 22 September 2026
+
+Added explicit `compact-v1` prompt presentation with condensed guidance, generated
+schema annotation removal and bounded size/hash telemetry. Full schema enforcement
+and session/tool evidence are preserved. Default remains `full`.
+
+Validation: **1038 passed, 1 skipped, 1 xfailed**, two dependency warnings,
+64.86 seconds. Nine new tests; focused model/validation suite83 passed; Ruff clean.
+Live compact interruption score84.3: initial plan validation failed, one retry was
+superseded, corrected search succeeded, final request hit input quota. Lower initial
+input tokens (2321 versus previous3004) did not establish better reliability. This
+is an opt-in experiment, not a default upgrade or a closed quota issue. Evidence:
+`docs/evidence/samsung-compact-2026-09-22/README.md`.
+
+Samsung's kit explicitly allows hosted APIs and open/local models, with no published
+Theme5 parameter ceiling found. The observed7000 ITPM cap is Groq's quota. Model,
+runtime and submission rules are in `docs/SAMSUNG_MODEL_RULES_2026-09-22.md`.
+Atishay's intermittent frame issue remains separately documented; no B source edited.
+
+Next: improve compact binding selection and broaden live cases; inspect the inherited
+follow-up-answer suppression after writes. Keep the full profile until experiments
+justify adopting another. User authorized continuing pushes of completed tested
+commits on mridul/engine. Use configured Git identities; no co-author trailers or
+assistant-name sign-offs in new commits/documents. Previously completed work through
+a21067b has been pushed. No release tag, submission or workflow changes.
+Overall goal remains active. This supersedes historical status below.
+
+## Correction-response checkpoint — 22 September 2026
+
+Implemented accepted user-correction speech with current state, Samsung repeated
+filler suppression and bounded honest failure clarification. Finished possible
+corrections now bypass the partial debounce; partial speech still waits. No change
+to B perception/policy semantics, write permission or actual tool-effect reporting.
+Details: `docs/CORRECTION_FEEDBACK_2026-09-22.md`.
+
+Final suite: **1029 passed, 1 skipped, 1 xfailed**, two dependency warnings in
+53.64 seconds. Eight new tests; Ruff clean. Prior feedback-only full run also
+passed (1027 tests). Existing skip/xfail and separate intermittent B timing issue
+remain open. No B source, tests or handoff edits; no subagents used.
+
+Live public interruption attempts: **65.3 -> 84.3 -> 89.6**. The latest trace
+passes corrected-city acknowledgment, current-state, cancellation, latency and
+safety checks; the final useful answer is still missing because the third planning
+request exceeds provider input quota. All failures are retained in
+`docs/evidence/samsung-interruption-2026-09-22/README.md`. This is exposed incremental
+development, not repeated reliability, a completion percentage or certification.
+
+Next A work: reduce repeated model-input overhead without changing enforcement,
+then retest correction completion and broaden public text coverage. Also inspect
+the documented inherited follow-up-answer suppression after a completed write.
+B media/endpoint/frame work needs coordination. Changes remain local; no push,
+workflow dispatch, release tag or submission. Overall goal remains active.
+This checkpoint supersedes historical current-state descriptions below.
+
+## Read-retry checkpoint — 22 September 2026
+
+Implemented a bounded fast retry for current transient read failures. It preserves
+arguments, dependency revisions and operation identity, uses a new physical call
+ID with retry lineage, and shares the existing two-attempt budget with model retries.
+Current write bindings follow only this controller-issued replacement; stale
+contracts and failed payloads cannot gain authority. No automatic write retry.
+Base Agent remains opt-in; Samsung's default factory enables it (flag 0 disables).
+
+Final full suite: **1021 passed, 1 skipped, 1 xfailed**, two dependency warnings,
+71.79 seconds. New retry tests: 25 passed; Ruff clean; fake dev 4/4. The previous
+full run failed one B-owned stale-frame timing test; three isolated reruns and the
+final full run passed on unchanged B files. The failure remains documented for
+Atishay in `docs/reviews/ATISHAY_TIMING_FOLLOWUP_2026-09-22.md`. The native symlink
+skip and existing conflicting-frame xfail are not passing safety evidence.
+
+Live Samsung pub_08: fast retry **100.0**, matched configuration control **81.5**.
+Error-to-retry emission: 15 ms versus 922 ms. Fast mode returned a grounded final
+at 5734 ms; the control's final model call hit HTTP 429. Same source/configuration
+apart from retry flag, but provider quota/timing are not controlled. This pair
+supports reduced round trips and token demand, not repeated reliability or a pure
+latency ablation. Reports, provenance and hashes are retained in
+`docs/evidence/samsung-retry-2026-09-22/README.md`.
+
+Next A work: broader public text interruption/unfamiliar-tool/no-tool cases and
+repeat measurements under declared quota conditions. B media/endpoint/frame
+semantics need Atishay coordination; no B source, tests or handoff edited. Docker,
+remaining security review and submission work stay open. Changes remain local on
+mridul/engine; no push, workflow dispatch, release tag or submission. No subagents
+used for this slice. Overall user goal stays active.
+
+This checkpoint supersedes the historical current-state descriptions below.
+
+## Current A-side checkpoint — 22 September 2026
+
+**996 passed, 1 skipped, 1 xfailed**, two dependency deprecation warnings, in
+82.99 seconds. Ruff passed; offline-fake development scenarios 4/4. Commands:
+`uv run --offline --frozen --extra dev pytest -q`,
+`uv run --offline --frozen --extra dev ruff check .`,
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+The skip is native Windows symlink creation without the required privilege;
+mocked resolved-escape tests pass. The existing conflicting-frame xfail remains
+unresolved. Neither is counted as a passing safety test.
+
+Implemented explicit spoken result bindings, fixed argument mappings and source
+revision checks. A scoped review reproduced and closed an image-induced contract
+removal bypass and acceptance of success-labelled evidence carrying an error.
+Malformed Pydantic/JSON/schema outputs now get one bounded same-input retry with
+sanitized shape feedback; non-fresh retries cannot gain spoken write authority.
+Optional tool documentation is explicitly loaded below kit/docs, hashed and kept
+separate from observations/results/permissions. Verbatim return examples are
+selected with line/hash provenance to reduce repeated input tokens.
+
+One live Qwen Samsung chained-booking attempt completed: **100.0/100**, one search,
+one booking, confirmed final at 6250 ms, normal tail unchanged. Earlier new attempts
+failed validation (38.5) and hit input quota (15.4); all reports are retained in
+`docs/evidence/samsung-binding-2026-09-22/README.md`. These are individual exposed
+public development runs, not medians, an ablation or release certification.
+The successful explicit profile uses a 32768-character hosted cap, output cap950,
+1.0-second speculative partial debounce and docs/TOOLS.md. Defaults/local limits
+were not silently changed. The provider reported a 7000 input-token/minute quota;
+the successful run used 3013+3615 planning input tokens, so headroom remains tight.
+
+Next A-side work: bounded transient-read retry to save a model roundtrip and final
+answer time; then additional public interruption/unseen/no-tool cases and repeated
+measurements under declared quota conditions. MP3/vision/timing/frame coordination
+still requires Atishay; no B-owned implementation or handoff changed. Docker,
+unrelated file-boundary security review and submission materials remain outstanding.
+Current work stays local on mridul/engine. No push, workflow dispatch, release tag
+or submission. User's latest steering: no more Astra subagents; Luna only if needed.
+This checkpoint supersedes current-state wording in historical sections below.
+
+## Current validation checkpoint — 22 September 2026
+
+Fresh rerun: **863 passed, 1 xfailed**, two dependency deprecation warnings
+(63.64 seconds); Ruff passed; offline-fake development suite **4/4**.
+Commands: `uv run --offline --frozen --extra dev pytest -q`,
+`uv run --offline --frozen --extra dev ruff check .`, and
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+The merged-main baseline previously measured 842 passed / 1 xfailed; the current
+local Mridul branch additionally includes adapter, recovery and runner tests.
+The conflicting-frame expected failure remains unresolved, not a passing safety test.
+
+Three recorded live Qwen public text attempts: simple search **100.0**, chained
+booking **56.9**, failed-read recovery **81.5**. These are individual development
+scores, not task completion percentages or final benchmark results. Booking was
+blocked by tool-derived argument authority; recovery succeeded but final inference
+missed the normal tail window. Full evidence and provenance:
+`docs/evidence/samsung-text-2026-09-22/README.md`.
+
+Next A-side work: implement and test the proposed delegated-result binding in
+`docs/DELEGATED_RESULT_BINDING.md`, then optimize bounded read recovery timing.
+That spec is not implemented or certified. Coordinate MP3/vision/timing with
+Atishay; no B-owned implementation changed. No new dependencies. Current work
+remains local on `mridul/engine`; no release, submission or workflow dispatch.
+This checkpoint supersedes current-state claims in historical sections below.
+
+## Read-failure recovery checkpoint — 22 September 2026
+
+Latest Workstream A validation: **859 passed, 1 xfailed**, with two dependency
+deprecation warnings; Ruff passed; offline-fake development scenarios **4/4**.
+Commands: `uv run --offline --frozen --extra dev pytest -q` (68.11 seconds),
+`uv run --offline --frozen --extra dev ruff check .`, and
+`uv run --offline --frozen --extra dev python -m accessflow.cli suite scenarios/dev`.
+
+Fixed a reproduced silence after failed read-only tools: the reasoner now gets
+sanitized `tool_failures` separately from usable results, and can use the existing
+one-retry allowance or explain the failure. Four new tests cover recovery,
+repeated failure, the retry cap, and refusal to create write permission.
+The first implementation broke three corpus invariants; separation of failures
+restored all three original tests without weakening their assertions.
+
+No Atishay-owned files changed. No live model, public Samsung score or full
+security audit was run. The existing conflicting-frame xfail remains unresolved.
+Next: legitimate tool-derived argument grounding and real Samsung configuration;
+media/endpoint work remains coordinated with Atishay. Current work is local on
+`mridul/engine`; main remains the earlier verified merge.
+
+
+## Samsung boundary checkpoint — 22 September 2026
+
+This checkpoint supersedes older statements that the official adapter is entirely
+unimplemented. Development is on `mridul/engine`, based on merged main `438b91b`.
+The new queue adapter is partial; it is not full official-kit compatibility.
+
+- Full suite: **855 passed, 1 xfailed**, two dependency deprecation warnings.
+  `uv run --offline --frozen --extra dev pytest -q` (95.19 seconds).
+- New adapter tests: **13 passed**. Ruff and diff checks passed.
+- Supplied Samsung validator accepted all five output kinds using synthetic data.
+  No public scenario scores or live inference were run in this slice.
+- Added in-process runtime, translated manifests/text/corrections/results/actions,
+  tail-window handling, uncertain-write status, and media-failure invalidation.
+- Default entry point is text-only. MP3 assembly and real vision configuration
+  are not complete. Failed media is explicit and invalidates pending writes.
+- No Atishay-owned files changed. No workflow enabled, release tagged or submission made.
+
+Next: reconcile legitimate tool-derived arguments with authority guards; verify
+read-error recovery and frame-as-context behavior, then run recorded official
+scenarios after real configuration. Coordinate media/C1–C4 seams with Atishay.
+See `docs/SAMSUNG_ADAPTER.md` for configuration, limits and ownership.
+
+
+## Current integration checkpoint — 22 September 2026
+
+This dated checkpoint supersedes older current-state, branch and kit-availability
+claims below; those sections are historical records, not fresh verification.
+Mridul merged first (`5c84976`), then Atishay (`a0c36c5`), without conflicts.
+The other AI's pending engine/test changes were preserved in `93afd57`.
+
+- Combined suite: **842 passed, 1 xfailed**, with two dependency deprecation warnings.
+  Command: `uv run --offline --frozen --extra dev pytest -q`.
+- Ruff: passed (`uv run --offline --frozen --extra dev ruff check .`).
+- Offline-fake development suite: **4/4 passed** (`python -m accessflow.cli suite scenarios/dev`).
+- The retained conflicting-frame xfail is not proof of safe conflict handling.
+- Both branch tips are ancestors of main. No implementation added by this merge session.
+- Samsung kit is now available outside the repository. Its README says Theme 5;
+  the enclosing ZIP name says Theme02. Official adapter is still unimplemented.
+- No live inference, official evaluation, Docker test or fresh security audit was run.
+  Prior issue-closure statements are not independently certified by these tests.
+- Workflow remains manual-only; no workflow enabled or dispatched.
+
+Next: implement Mridul's official queue adapter, coordinating MP3/timing/frame
+interfaces with Atishay. Details and ownership: docs/INTEGRATION_2026-09-22.md.
+
+
 Workstream A remains in progress. This is implementation evidence, not an evaluated
 submission.
 
@@ -7,112 +543,128 @@ submission.
 
 This section is the single authoritative statement of current state. It replaces all older
 headers in this file, including the commit `fd53aca` snapshot below, which is historical.
-Read this section first. The orchestrator measured every fact below on 17 September 2026, on
-branch `main`, at merge commit `de89f55`. Each fact quotes the command that produced it. The
-repository virtualenv at `.venv` supplied the interpreter.
+Read this section first. The orchestrator measured every fact below on 18 September 2026, on
+branch `mridul/engine`, at commit `ef58557`. Each fact quotes the command that produced it.
+The repository virtualenv at `.venv` supplied the interpreter.
 
-Commit `de89f55` merges branch `atishay/perception` into `main`. The merge applied with no
-conflicts. It adds 59 commits of Workstream B work across 24 files.
+Branch `mridul/engine` is three commits ahead of `main`. Workstream A work is committed
+there, not directly on `main`.
 
-- **Full test suite:** 769 passed, 1 xfailed, 0 failed.
+- **Full test suite:** 818 passed, 1 xfailed, 0 failed.
   Command: `./.venv/Scripts/python.exe -m pytest -q`.
-  The 19 `tests/demo/` failures recorded at commit `71b1bb5` are closed. The three
-  `XPASS(strict)` markers in that set are also closed. Workstream B repaired both groups.
+  Earlier figures of 411, 635, 769 and 799 are historical. Do not cite them as current.
 - **Remaining xfail:** one test in `tests/demo/test_app.py`, named
-  `test_conflicting_frames_require_resolution_before_write`.
-  Its stated reason is a controller limitation: the controller does
-  not represent conflicting frame evidence before a write. The test file belongs to
-  Workstream B. The named limitation belongs to the engine. Ownership of the repair is not
-  yet agreed. Do not treat this xfail as closed by the merge.
+  `test_conflicting_frames_require_resolution_before_write`. Read finding A17-3 below before
+  you interpret it. It does not prove what its reason string says.
 - **Lint:** all checks passed.
   Command: `./.venv/Scripts/python.exe -m ruff check .`.
 - **Offline dev suite:** 4 passed, 0 failed, 0 unscored, 0 error. Oracle pass rate 1.0.
   Command: `./.venv/Scripts/python.exe -m accessflow.cli suite scenarios/dev`.
   The report states its own limitation: developer-authored criteria and mock effects. These
   are not official-kit results and not held-out results.
-- **Wrong-action-rate metric:** implemented. `src/accessflow/evaluation/trace_metrics.py`
-  computes `wrong_action_rate`. It counts four categories separately: `unexpected`,
-  `wrong_arguments`, `duplicate_expected` and `missed_expected`. The rate is `None`, not
-  `0.0`, when no denominator exists. Coverage is in `tests/engine/test_trace_metrics.py`.
-  An earlier version of this file said the metric was not implemented. That statement is
-  obsolete.
-- **Security review of `corpus.py`:** run. The review completed on 16 September 2026 and
-  reached a clean verdict after five findings were repaired. An earlier version of this file
-  said the review had never run. That statement is obsolete.
-- **Security review of the Workstream B merge:** run on 17 September 2026 over
-  `git diff 3c1619f de89f55`. The verdict is not clean. The review found one medium and
-  five low findings. All six are in Workstream B files. Mridul decided to push the merge
-  and to triage the findings separately. Branch `atishay/perception` then added 69 more
-  commits, many of which harden the same areas. Those 69 commits are NOT covered by any
-  security review. Treat the whole Workstream B surface as review-pending.
-- **Scenario corpus:** 17 files, 10 distinct tool sets. See
-  [SCENARIO_INVENTORY.md](SCENARIO_INVENTORY.md), which is generated from the files.
+- **Scenario counts.** Workstream A has **17 executable scenario files**. Workstream B has a
+  **60-entry authored media catalog**. These are different artifacts. Do not add them
+  together and do not use one count where the other belongs.
 - **Evidence bundle:** 57 attempted runs. The quality denominator is **43 of 49**. It is not
-  43 of 46. A 429 admission refusal no longer excuses a run whose model already produced
-  output on an earlier step. Three such runs count in the denominator.
+  43 of 46.
 - **Held-out planner probes:** ran once, on 16 September 2026, on `groq/qwen/qwen3.8-27b`.
-  They passed 4 of 4. They are spent. They are development data now. Do not run them again
-  and call the result unseen evaluation.
-- **Docker:** not installed on this machine. The container execution gate is unmeasured in
-  this environment. This is neither a pass nor a failure.
-- **Endpoint telemetry:** not re-measured at `de89f55`. The last recorded figure is 0 of 161
-  traces carrying `config.endpoint`, in the `fd53aca` snapshot below. Treat it as unverified
-  at the current commit.
+  They passed 4 of 4. They are spent. They are development data now.
+- **Security review status.** A corpus review ran on 16 September 2026 and reached a clean
+  verdict after repairs. A review of the first Workstream B merge ran on 17 September 2026
+  and found one medium and five low findings, which are listed below and are not repaired.
+  A further 69 Workstream B commits, and all Workstream A work on this branch, have had no
+  security review. **No full-surface review has ever run. Do not describe the current
+  surface as reviewed or clean.**
+- **Docker:** not installed on this machine. The container execution gate is unmeasured here.
+- **Endpoint telemetry:** not re-measured. The last recorded figure is 0 of 161 traces
+  carrying `config.endpoint`, in the `fd53aca` snapshot below. Treat it as unverified.
 
-### Findings status at commit `de89f55`
+### Findings status at commit `ef58557`
 
-The findings record is
+The current findings record is
+[reviews/MRIDUL_MERGED_AUDIT_2026-09-17.md](reviews/MRIDUL_MERGED_AUDIT_2026-09-17.md)
+(A17-1 through A17-4), with the companion
+[reviews/ATISHAY_MERGED_AUDIT_2026-09-17.md](reviews/ATISHAY_MERGED_AUDIT_2026-09-17.md).
+Earlier records are
 [reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md](reviews/MRIDUL_SECOND_REAUDIT_2026-09-16.md)
-(M1 through M7), which followed
+(M1 through M7) and
 [reviews/MRIDUL_REAUDIT_2026-09-15.md](reviews/MRIDUL_REAUDIT_2026-09-15.md) (A1 through A9).
-Fix evidence is in
-[reviews/REAUDIT_RESOLUTION_2026-09-16.md](reviews/REAUDIT_RESOLUTION_2026-09-16.md). Read the
-second re-audit for the state of any A-numbered finding that it reassessed. Do not treat the
-first audit's verdict as current where the second audit reopened or narrowed it.
 
-- **Closed, with tests:**
-  - M1, the clarification fixture — commit `7b0d373`. See the residual note below.
-  - M4, evidence-to-write authority — commit `6caa889`, repaired again at `09f76d9`. The
-    first fix compared `len(self.results)`, which can decrease when
-    `_invalidate_dependencies` removes entries. A monotonic admitted-result counter replaced
-    it.
-  - M6, 429 run classification — commit `86655f0`.
-  - M2, M3, M5 corpus dispatch, I/O bounding and discovery — commit `71b1bb5`.
-  - M7, documentation consistency — closed by the 16 September update to this file.
-  - All five findings from the corpus security review — closed before the 16 September push.
-  - The 19 `tests/demo/` failures — closed by Workstream B in this merge.
+- **A17-1, argument authority — NOT closed. Partly mitigated, and the residual is larger
+  than the mitigation.**
+  - Commit `3c59f31` adds controller-only slot provenance. `Agent._user_fixed_slots` records
+    the slot names a fresh-evidence proposal supplied. A tool-result replan can no longer
+    change the value of a slot the user fixed. It can still set a slot the user never fixed,
+    so a delegated value such as "book the first available day" continues to work.
+  - Commit `ef58557` closes a bypass of that guard. The first fix keyed on the slot NAME. An
+    adversarial planner avoided the fixed name completely: it created a new slot and used
+    `ProposedCall.argument_slots` to steer the write's own parameter onto it. The orchestrator
+    reproduced this and recorded a committed Friday effect while the `day` slot still read
+    Wednesday. `_argument_dependency_error` now refuses an alias that redirects a write
+    parameter whose own name is a user-fixed slot.
+  - Regressions: `tests/engine/test_argument_authority.py` (2 tests) and
+    `tests/engine/test_slot_provenance.py`. Both use an adversarial planner that actively
+    proposes the unsafe write. A cooperative planner that refuses on its own would not prove
+    the guard.
+  - No contract change. The provenance state is controller-only, so `Slot` and `Snapshot` in
+    `contracts.py` are untouched.
+  - **Residual, confirmed by probe on 18 September 2026.** Both guards key on a SLOT NAME.
+    Nothing binds a write tool's PARAMETER name to the slot name the planner chose. When the
+    two differ, which is the normal case, neither guard fires. Two demonstrated bypasses:
+    1. The fresh proposal names the slot `requested_day`. The tool-result replan creates a
+       new slot named `day` -- the write parameter's own name, never user-fixed -- sets it to
+       `Friday` and dispatches. The write commits `Friday` while `requested_day` still reads
+       `Wednesday`.
+    2. The same shape through `argument_slots`, aliasing the `day` parameter onto a new slot.
+    The two tests in `tests/engine/test_argument_authority.py` pass only because the fixture
+    in `tests/engine/test_safety.py` declares the parameter `day` AND the fixture's fresh
+    proposal happens to name the slot `day`. Rename either and both tests fail open. Treat
+    those tests as covering one naming coincidence, not the property.
+  - **Why no controller-only fix closes this.** The attack and a legitimate delegated value
+    are structurally identical: in both, a non-fresh replan creates a new slot and grounds
+    the write on it. "Book Wednesday after checking the manual" and "book the first available
+    day" differ only in whether the user's utterance named a day. The controller sees slot
+    names the planner chose, not the utterance. The reviewer's proposed repair -- record the
+    tool/parameter binding from the fresh proposal's write calls -- does not apply, because
+    the documented legitimate read-then-write pattern
+    (`tests/engine/test_write_authority_evidence.py:188`) puts no write call in the fresh
+    proposal at all.
+  - **Decision required before any further work.** Either the planner declares delegation
+    explicitly, which is a shared contract change and a C3 coordination item, or any write
+    grounded on a tool-origin value requires one explicit user confirmation. The second is
+    controller-only and needs no agreement, at the cost of one extra turn on every delegated
+    write. Neither is started.
 
-- **Open, with owner and reason:**
-  - **M1 residual, Workstream A.** `proposal.intent` and `proposal.slot_updates` stay
-    ungated on a replan that a tool result triggers. Only the write decision is gated. A
-    tool result can still move the intent and the slot values. The repair is a larger
-    behaviour change, because some legitimate flows refine intent from a tool result. It is
-    not started.
-  - **Corpus harness gap, Workstream A.** `replay()` and `run_suite()` accept no
-    `corpus_root` parameter. The command-line flag reaches `Agent` through an environment
-    variable only. No scenario retrieves a document through the normal harness. The corpus
-    path is therefore covered by unit tests and not by any scenario.
-  - **A2 and B0, vision worker wiring.** Assigned to Atishay by Mridul's decision; see
-    `CONTRACT_PROPOSALS.md`. This merge changed no file under `src/accessflow/adapters/`, so
-    the process adapter still rejects the vision options that the parent sends.
-    `frame_device_panel.json` still cannot run through the process adapter.
-  - **Conflicting frame evidence before a write.** The single remaining xfail, described
-    above. Owner not yet agreed.
-  - **Six security findings in the Workstream B merge, Workstream B.** The 17 September
-    review found them. The medium finding is a denial-of-service path in `demo/app.py`: the
-    per-session media budget refunds a rejected upload, so a PNG that is crafted to fail
-    validation after decompression costs the attacker no budget and can repeat without
-    limit. One measured connection inflated 2442 MiB server-side from 2.38 MiB of upload.
-    The other five findings are low. Workstream A did not repair any of them, because every
-    affected file belongs to Workstream B. Some later Workstream B commits may already close
-    some of these findings. No one has re-verified that. Do not assume any finding is closed
-    without a new review.
-  - **Matched-timing baseline and end-of-speech latency.** This merge adds
-    `src/accessflow/perception/timing.py` and `src/accessflow/turn_policy/timing_replay.py`.
-    Whether these supply the calibrated signal that the baseline needs is not yet assessed.
-  - **Official kit adapter.** Blocked on the organizer.
-  - **Docker.** Unmeasured in this environment.
-  - **Submission materials: deck, video, AI disclosure and tag.** Untouched.
+- **A17-2, corpus harness configuration — partly closed.**
+  - Commit `73f31e9` adds an explicit `corpus_root` parameter to `replay()` and `run_suite()`
+    and passes it from both CLI subcommands. An explicit value wins over
+    `ACCESSFLOW_CORPUS_ROOT`, which stays as a documented fallback. A missing or non-directory
+    root fails once, before any scenario runs. Recorded metadata carries
+    `corpus_root_configured` and `corpus_root_basename` only, never the absolute path.
+  - **Still open:** no scenario retrieves a document through the normal harness. The
+    plumbing is tested; end-to-end retrieval through a scenario is not. This needs a scenario
+    fixture and a small team-authored corpus document. It is held pending Mridul's decision
+    on whether the corpus is kept at all.
+
+- **A17-3, conflicting frames — open, and blocked on a shared decision.**
+  Ownership is not the open question. The engine and engine tests are Mridul's; the demo test
+  is Atishay's. The open question is the design: whether a second frame REPLACES the first,
+  contradicts it, or is an explicit device change. Nothing can be implemented before that is
+  agreed. The existing xfail does not establish the safety gap its reason string claims: it
+  times out at `conflict_seen.wait()`, `tests/demo/test_app.py:3725`, before reaching
+  `assert not executor.calls` and `assert not executor.effects`. Verified by the orchestrator
+  with `--runxfail`. Do not treat that test as a specification.
+
+- **Open, with owner:**
+  - Six security findings in the first Workstream B merge. Workstream B owns every affected
+    file. Some later Workstream B commits may close some of them; nobody has verified which.
+  - A2 and B0, vision worker wiring — Atishay, by Mridul's decision; see `CONTRACT_PROPOSALS.md`.
+  - Matched-timing baseline — `perception/timing.py` and `turn_policy/timing_replay.py` now
+    exist. Whether they supply the calibrated signal the baseline needs is not yet assessed.
+  - C1 through C4 coordination items in the 17 September audits — each needs an agreed
+    example and event trace before any shared schema changes.
+  - Official kit adapter — blocked on the organizer. Docker — unmeasured here.
+  - Submission materials: deck, video, AI disclosure and tag — untouched.
 
 
 Multimodal coverage counts are unchanged from the `fd53aca` snapshot below (2 audio files

@@ -9,3 +9,13 @@
 # Do not add a file here that anyone rewrites in place, such as docs/STATUS.md.
 .ai-sync/context.md merge=union
 docs/AI_USE_LOG.md merge=union
+
+# Preserve exact bytes of hashed verification artifacts across platform checkouts.
+docs/evidence/samsung-grounding-2026-09-22/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evidence/samsung-package-2026-09-22/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evidence/samsung-compact-v2-2026-09-23/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Pytest failure excerpts retain original indentation and blank-line whitespace.
+docs/evidence/samsung-compact-v2-2026-09-23/*.xml -text -whitespace
+
+docs/evidence/samsung-read-answer-2026-09-23/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evidence/samsung-text-screen-2026-09-23/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -1,5 +1,10 @@
 # Prompt for Atishay's coding agent
 
+> **Priority superseded — 24 September 2026:** use the current
+> [voice/perception/testing prompt](../reviews/ATISHAY_AGENT_PROMPT_2026-09-24.md).
+> Frontend polish and Stitch exports are deferred. The design-only prompt below is
+> retained as history; it is not the next implementation assignment.
+
 Copy the text below into the agent running in Atishay's own AccessFlow checkout.
 The first-person speaker is Atishay; Mridul is his teammate.
 

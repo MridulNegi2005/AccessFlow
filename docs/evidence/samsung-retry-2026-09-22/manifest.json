@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {
+      "file": "pub_08_fast_retry_attempt1.json",
+      "sha256": "187d1aa8fa109dd45a97f2242f817ff2091737539681594b3f9cc0a4704bd042",
+      "total": 100.0,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    },
+    {
+      "file": "pub_08_model_retry_control1.json",
+      "sha256": "d8275a5afa3b76272c7883dd60636cd2b27f30b3080246e43c3689643132c05d",
+      "total": 81.5,
+      "limitation": "Single exposed public development attempt; not a completion percentage"
+    }
+  ]
+}

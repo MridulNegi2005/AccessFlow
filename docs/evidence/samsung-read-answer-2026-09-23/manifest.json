@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-23",
+  "final_source_sha256": "74880bbf4732929e7d2a2d955dc4063bfc6620e01668f685e00bd6fe10ca1bd4",
+  "files": [
+    {
+      "file": "baseline.json",
+      "bytes": 11735,
+      "sha256": "1233a47533b102664abcf48c75e16a0c4414e58cf94adeaa996ac770c10554da"
+    },
+    {
+      "file": "evidence-attempt1.json",
+      "bytes": 11771,
+      "sha256": "06f87f7de82155824a5e6a082aaa41c88aca3d1e97ddb06ccffc66b773f9d812"
+    },
+    {
+      "file": "evidence-final.json",
+      "bytes": 11725,
+      "sha256": "1a16fa0952134deae6a66ec86760ed55b87a9210f527a55d0e5dd811d84c387e"
+    },
+    {
+      "file": "evidence-release-candidate.json",
+      "bytes": 11713,
+      "sha256": "f0ef552695e09c4aafe2aa2f13592dc625e3b857c5cc065653865f0c7fc4277b"
+    },
+    {
+      "file": "read-answer-suite-2026-09-23.xml",
+      "bytes": 174840,
+      "sha256": "57225bd8e548004d392c3e39c2b6d56a62add72f69fb6e51a1ec0af70517aa7f"
+    },
+    {
+      "file": "read-answer-suite-final-2026-09-23.xml",
+      "bytes": 175005,
+      "sha256": "b8da15a52338fade2f4c7e5bce763b7ad90648515bb7c1ad7cfe56c79910ca48"
+    },
+    {
+      "file": "synthetic-final.json",
+      "bytes": 8495,
+      "sha256": "30253abf2e3302f4545f95dd9e4e7aa2fcbc0486580d5f59f125f33dd46d1884"
+    },
+    {
+      "file": "synthetic-probes.json",
+      "bytes": 8665,
+      "sha256": "e758ce62336223453a5f1039269887363340c6da97cda1cec9980da10e0cb4bb"
+    }
+  ]
+}

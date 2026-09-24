@@ -1,0 +1,46 @@
+{
+  "files": [
+    {
+      "file": "pub_09_unseen_attempt1.json",
+      "sha256": "6c01706dd8714f46b5f6741f5a67aa92d0aebe267658d28cbea90b1be90e4ba5"
+    },
+    {
+      "file": "gen_unseen_000_attempt1.json",
+      "sha256": "5275d7233bfd53f116714d2b930f4a9a2532c795121459a3fbaa51cc6c165230"
+    },
+    {
+      "file": "gen_unseen_001_attempt1.json",
+      "sha256": "f6e759613b7e0e0d3459524e1fbdc7333fb16649f8e846a75ddfe67147ceeed9"
+    },
+    {
+      "file": "gen_unseen_002_attempt1.json",
+      "sha256": "61c5f70ec121478ba9a7f8ed89d785497833f1456af4ec7cb55ab6c480dcd9d0"
+    },
+    {
+      "file": "external-scenario-runner-validation.xml",
+      "sha256": "6b2233644eb59d75be5729a5039dee4f4af9dd2340b81df411bd5e5a81572515"
+    },
+    {
+      "file": "external-scenario-runner-validation-repeat.xml",
+      "sha256": "63127c6d2709ba87d2ad15c995496795f39f158b642b197996fd63cf62c261b4"
+    }
+  ],
+  "generated_fixture_hashes": [
+    {
+      "file": "gen_unseen_000.json",
+      "sha256": "7ecde7c7fa9af87da554c48af5feb090605f634c2f2656af423b771b3f7f9340"
+    },
+    {
+      "file": "gen_unseen_001.json",
+      "sha256": "a8465a4a31132a4950b3306060155ce5affc66bf44fc7517492755fe7beffb53"
+    },
+    {
+      "file": "gen_unseen_002.json",
+      "sha256": "8a5b81884d88944340dacd4b1f3b9206b889ddbf9ac16e1aaf92d6ba102e24a6"
+    }
+  ],
+  "generator_sha256": "6b8613b3c1b290a87dc5846390b5c2a49855d1cff6e839acf42e08b054beb1c8",
+  "seed": 20260922,
+  "template": "unseen_tool",
+  "count": 3
+}

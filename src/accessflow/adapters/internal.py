@@ -11,4 +11,8 @@ def parse_event(raw):
 
 
 def official_adapter(*args, **kwargs):
-    raise NotImplementedError("Official kit is not available; internal v0.1 is not official compatibility")
+    raise NotImplementedError(
+        "Use accessflow.adapters.samsung.ParticipantAgent for the Samsung queue boundary; "
+        "internal v0.1 parsing is not official protocol translation. "
+        "See docs/SAMSUNG_ADAPTER.md for current integration limits."
+    )

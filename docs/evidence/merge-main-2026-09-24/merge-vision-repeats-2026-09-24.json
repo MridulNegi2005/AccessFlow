@@ -1,0 +1,17 @@
+[
+  {
+    "attempt": 1,
+    "exit_code": 0,
+    "report": "artifacts/merge-vision-repeat-1-2026-09-24.xml"
+  },
+  {
+    "attempt": 2,
+    "exit_code": 0,
+    "report": "artifacts/merge-vision-repeat-2-2026-09-24.xml"
+  },
+  {
+    "attempt": 3,
+    "exit_code": 0,
+    "report": "artifacts/merge-vision-repeat-3-2026-09-24.xml"
+  }
+]

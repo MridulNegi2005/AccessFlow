@@ -1,0 +1,110 @@
+{
+  "mode": "official-import-and-contract-smoke/live-hosted/fresh-venv",
+  "package_manifest_sha256": "1873913361577a18416733c644893e64b5d4c353d58fd246f661100f8c543a7d",
+  "stage1_errors": [],
+  "stage2_errors": [
+    "agent crashed on first event: SamsungProtocolError: tool_manifest must be the first official event"
+  ],
+  "imports_within_package": {
+    "eval_submission": "eval_submission.py",
+    "accessflow.adapters": "accessflow\\adapters\\__init__.py",
+    "accessflow.clock": "accessflow\\clock.py",
+    "accessflow.contracts": "accessflow\\contracts.py",
+    "accessflow.corpus": "accessflow\\corpus.py",
+    "accessflow.result_binding": "accessflow\\result_binding.py",
+    "accessflow.write_binding": "accessflow\\write_binding.py",
+    "accessflow.validation_diagnostics": "accessflow\\validation_diagnostics.py",
+    "accessflow.engine": "accessflow\\engine.py",
+    "accessflow.adapters.samsung_protocol": "accessflow\\adapters\\samsung_protocol.py",
+    "accessflow.adapters.samsung": "accessflow\\adapters\\samsung.py",
+    "agent.agent": "agent\\agent.py",
+    "accessflow.adapters.tool_metadata": "accessflow\\adapters\\tool_metadata.py",
+    "accessflow.perception.local": "accessflow\\perception\\local.py",
+    "accessflow.perception.audio": "accessflow\\perception\\audio.py",
+    "accessflow.perception.timing": "accessflow\\perception\\timing.py",
+    "accessflow.perception.vad": "accessflow\\perception\\vad.py",
+    "accessflow.perception.vision": "accessflow\\perception\\vision.py",
+    "accessflow.perception.metrics": "accessflow\\perception\\metrics.py",
+    "accessflow.perception": "accessflow\\perception\\__init__.py",
+    "accessflow.turn_policy.heuristic": "accessflow\\turn_policy\\heuristic.py",
+    "accessflow.turn_policy.timing_replay": "accessflow\\turn_policy\\timing_replay.py",
+    "accessflow.turn_policy": "accessflow\\turn_policy\\__init__.py",
+    "accessflow.adapters.prompt_profile": "accessflow\\adapters\\prompt_profile.py",
+    "accessflow.adapters.models": "accessflow\\adapters\\models.py"
+  },
+  "python": "3.11.15 (main, May 10 2026, 19:31:25) [MSC v.1944 64 bit (AMD64)]",
+  "installed": {
+    "annotated-doc": "0.0.5",
+    "annotated-types": "0.8.0",
+    "anyio": "4.15.1",
+    "attrs": "26.1.0",
+    "certifi": "2026.7.22",
+    "click": "8.5.0",
+    "fastapi": "0.141.1",
+    "h11": "0.16.0",
+    "httpcore": "1.0.9",
+    "httpx": "0.28.1",
+    "idna": "3.19",
+    "jsonschema-specifications": "2025.9.1",
+    "jsonschema": "4.26.0",
+    "pydantic-core": "2.46.5",
+    "pydantic": "2.13.5",
+    "referencing": "0.37.0",
+    "rpds-py": "2026.6.3",
+    "starlette": "1.6.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+    "uvicorn": "0.52.4"
+  },
+  "model_evidence": {
+    "backend": "groq",
+    "model": "qwen/qwen3.8-27b",
+    "config": {
+      "endpoint": "https://api.groq.com/openai/v1/chat/completions",
+      "request_timeout_seconds": 20,
+      "warmup_timeout_seconds": 290,
+      "history_limit": 128,
+      "num_ctx": null,
+      "num_gpu": null,
+      "response_format": "json_object",
+      "temperature": 0,
+      "max_output_tokens": "950",
+      "max_context_chars": 32768,
+      "ollama_duration_unit": "nanoseconds"
+    },
+    "request_count": 1,
+    "omitted_count": 0,
+    "outcome_counts": {
+      "success": 1,
+      "failure": 0,
+      "cancelled": 0
+    },
+    "requests": [
+      {
+        "elapsed_seconds": 0.8430000000007567,
+        "outcome": "success",
+        "finish_reason": "stop",
+        "queue_time": 0.048588441,
+        "prompt_tokens": 49,
+        "prompt_time": 0.003383906,
+        "completion_tokens": 6,
+        "completion_time": 0.011527833,
+        "total_tokens": 55,
+        "total_time": 0.014911739
+      }
+    ],
+    "prompt_profile": "full",
+    "prompt_measurements": [],
+    "tool_documentation": {
+      "source": "docs/TOOLS.md",
+      "sha256": "4eb45c6f00a4e3b55eec9cd552c390a241d24d930e388aab05c21f66782e1a3d",
+      "encoding": "utf-8",
+      "byte_count": 6770,
+      "line_start": 1,
+      "line_end": 95
+    }
+  },
+  "wall_s": 2.936999999999898,
+  "secret_input": "SECRET_GROQ_API_KEY only; AccessFlow runtime profile configured by package",
+  "limitation": "Stages1-2 only, no scenario score, no repeated-run benchmark, no Docker or multimodal claim"
+}

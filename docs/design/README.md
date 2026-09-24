@@ -1,5 +1,11 @@
 # Frontend design handoff — 23 September 2026
 
+> **Current priority — 24 September 2026:** follow the
+> [voice/perception/testing handoff](../reviews/ATISHAY_VOICE_WORK_2026-09-24.md)
+> and [current agent prompt](../reviews/ATISHAY_AGENT_PROMPT_2026-09-24.md).
+> Preserve this design; defer further Stitch exports, variants and polish until
+> real media, interruption and evaluation integration are working and measured.
+
 The user approved two views of one voice-first AccessFlow interface. This package
 turns those approvals into an implementable brief for Atishay and a Stitch prompt pack.
 No frontend, perception, controller or shared contract implementation was changed.
