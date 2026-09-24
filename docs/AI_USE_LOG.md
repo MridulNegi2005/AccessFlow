@@ -1250,3 +1250,17 @@ No shared engine/contracts/config changes or deployment.
 ## 2026-09-24 13:49 — Merge and readiness review
 
 Request: merge Mridul first, then Atishay; inspect remaining work and give Atishay a detailed first-person prompt prioritizing voice/testing over frontend polish. Assistance: inspected fetched code and official local kit, resolved shared documentation conflicts, ran offline validation and exported failing audit probes, drafted the three linked review/handoff documents. Human input: ownership and priority instructions; no human source edits in this slice. Output checked against source, retained tests and provenance; no model training, live-media evaluation, deployment or submission.
+
+2026-09-24 AI-assisted Atishay voice/perception continuation: Preserved prior owned
+frontend work in a local commit, safely updated local main and merged it into
+the Atishay branch; retained a named backup of byte-identical review notes.
+Reproduced and repaired the owned stop-scope policy gap, strengthened the
+configured demo reasoner correlation assertion, ran actual installed Faster
+Whisper on generated audio through both direct model and LocalPerception paths,
+and documented C24-1 through C24-5 examples and ownership splits. Human input:
+the explicit voice-first priorities and branch/ownership instructions; no
+human edits or human speech recording in this slice. Owned tests 371 passed,
+1 xfailed; full 1203 passed, 2 skipped, 1 xfailed; Ruff, Node speech lifecycle
+and diff checks passed. Physical microphone permission remained ungranted in
+the browser; no live vision, official media evaluation, Qwen booking, submission,
+deployment, workflow activation or model training was claimed.
