@@ -42,6 +42,24 @@ def test_default_package_refuses_inherited_evidence_mode_without_mutation():
     assert environment == before
 
 
+@pytest.mark.parametrize("name", sorted(entry.PERCEPTION_ENV_KEYS))
+def test_text_package_refuses_inherited_native_perception_before_mutation(name):
+    environment = {"SECRET_GROQ_API_KEY": "private-test-key", name: "process"}
+    before = dict(environment)
+    with pytest.raises(ValueError, match="perception|PERCEPTION"):
+        entry.configure_profile(builder.profile_for("declared/model"), environment)
+    assert environment == before
+
+
+def test_native_profile_cannot_claim_assets_installed_by_text_builder():
+    profile = builder.profile_for("declared/model")
+    profile["ACCESSFLOW_SAMSUNG_PERCEPTION"] = "process"
+    environment = {"SECRET_GROQ_API_KEY": "private-test-key"}
+    with pytest.raises(ValueError, match="native perception assets"):
+        entry.configure_profile(profile, environment)
+    assert environment == {"SECRET_GROQ_API_KEY": "private-test-key"}
+
+
 def test_candidate_profile_is_explicit_and_installs_both_modes():
     profile = builder.profile_for("declared/model", prompt_profile="compact-v2", read_answer_mode="evidence")
     environment = {"SECRET_GROQ_API_KEY": "private-test-key"}

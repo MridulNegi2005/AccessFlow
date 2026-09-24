@@ -1250,3 +1250,11 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Final1216pass/2skip/1xfail71.49s; focused25pass; Ruff clean. Earlier5fail expanded baseline and1fail integration retained and explained. Read-only review identified partial-evidence and revision gaps; fixed and tested. No B source/tests, schema, dependency, workflow, main push, live inference, release or submission changes. AI-assisted implementation/testing with human priority steering, no human code edits. Existing stash remains historical backup only.
 
 ---
+
+## [2026-09-24 14:20] — Implementation checkpoint
+**Task:** Complete configured real-perception runtime wiring before accuracy tuning.
+**Changes:** Common factory, validated native settings, media/reasoner warm-up budget and cleanup, text package profile isolation, 27 regressions, runtime handoff and evidence.
+**Status:** Tested slice complete; general goal active.
+**Notes:** Full1243pass/2skip/1xfail59.13s; focused62pass; Ruff clean. Intermediate wrong-field test failure retained. No B changes, live inference, dependency/model installation, main push, release or submission. AI-assisted implementation/testing; human supplied priorities, no human code edits. Native media package and MP3 integration remain open.
+
+---

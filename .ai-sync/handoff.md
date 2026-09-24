@@ -1,5 +1,21 @@
 # Active Handoff
 
+## Configured runtime checkpoint - 24 September 2026
+
+Samsung now uses the shared configured-agent factory. Explicit process mode validates
+installed ASR/vision resources, warms both media routes and reasoning within a combined
+290-second budget, and closes native work on failure. No fake inference fallback.
+Generated packages are explicitly frozen to text mode until native assets are packaged.
+Final1243pass/2skip/1xfail59.13s; focused62pass; Ruff clean. Real subprocess integration
+uses fake inference and does not establish actual ASR/vision quality. One intermediate
+new-test failure used an incorrect official field; corrected to image_ref.
+
+Read docs/CONFIGURED_RUNTIME_2026-09-24.md for settings and the joint demo adoption seam.
+No B code/tests changed. MP3 assembly, portable media installation and real public-case
+runs remain A completion work, with turn/ownership coordination where needed. B owns
+microphone/endpointing/barge-in and demo adoption. Code completion precedes accuracy;
+PPT/video are excluded. Push own branch only; overall goal remains active.
+
 ## Pending-frame correctness checkpoint — 24 September 2026
 
 Completed the preserved A-controller guard. Pending current images now block final/write

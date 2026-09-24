@@ -1,0 +1,17 @@
+{
+  "source_normalization": "CRLF to LF",
+  "source": {
+    "src/accessflow/adapters/configured_agent.py": "33f1bb69a03381d9d08803ab91c8f26d0b579db7c24246e59bb066fa513a9f38",
+    "src/accessflow/adapters/samsung.py": "89fac92f228e8800c7492cd05486e693b0156690b967f0c6177fdb518987b2b9",
+    "scripts/build_samsung_package.py": "8e6406b9b4955a25b9994b31058297e391f4637313ac6976334fb47241e9f55d",
+    "scripts/submission_entry.py": "13363c3545e3cfd11c64450de22a0b2fa34879a65d380dce1b17db0e6931bd70",
+    "tests/engine/test_configured_agent.py": "35af062c626e2ccaedc02d239396d6659c7eacb3d524151eeaae12d0115faed3",
+    "tests/engine/test_samsung_package.py": "acdcac7079107bf35d565cd62aeac783054a7f80adee0ca6f083219db4ba338d"
+  },
+  "evidence_exact_bytes": {
+    "first.xml": "e516c734c518cbf08770711af2b9f0e1c8f1fa0f89c746e0a3c22eb6d6ee5eca",
+    "focused.xml": "56540e4f396111c7b190f3bee4bcb6eba9f1958eef85a7b3a9bb7f165738a250",
+    "full.xml": "e2f516ccd65295ce0736b8576d6258173875a6ae717c2b9606cdfcc95655eb24",
+    "integration.xml": "b78edcdbd1cc0deb6efd0f234914e5280686983c14bd963b0738f3c777ef1ace"
+  }
+}
