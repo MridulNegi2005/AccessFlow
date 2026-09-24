@@ -65,7 +65,7 @@ async def test_replaced_frame_rolls_back_visual_provisional_slot():
         async def observe(self, event):
             if event.kind == "frame":
                 yield Observation(event_id=event.event_id, source_id=event.payload.frame_id,
-                                  modality="image", text=event.payload.frame_id, final=False, backend="fake-image")
+                                  modality="image", text=event.payload.frame_id, final=True, backend="fake-image")
             else:
                 async for obs in FakePerception().observe(event):
                     yield obs
@@ -73,7 +73,7 @@ async def test_replaced_frame_rolls_back_visual_provisional_slot():
     class Planner:
         async def plan(self, view, manifests):
             frame = [o for o in view.observations if o.modality == "image"]
-            if frame[-1].text == "f1":
+            if frame and frame[-1].text == "f1":
                 return PlanProposal(slot_updates={"device": "tentative-old-frame"},
                                     calls=[proposal().calls[0].model_copy(
                                         update={"arguments": {"day": "any"}, "dependencies": ["device"]})])
@@ -87,8 +87,12 @@ async def test_replaced_frame_rolls_back_visual_provisional_slot():
         tool = manifest(effect="read")
         tool.parameters["properties"]["day"] = {"const": "any"}
         await iq.put(StartEvent(session_id="s", payload=Start(tools=[tool])))
+        # Vision has completed, but the user's request is still provisional.
+        # Incomplete image streams no longer enter authoritative planning.
+        await iq.put(transcript("Look up this device while I explain...", final=False))
         await iq.put(FrameEvent(session_id="s", payload=Frame(path="scripted-only.png", frame_id="f1")))
         await wait_for(oq, lambda e: e.kind == "tool_call")
+        assert not agent.state.slots["device"].confirmed
         await iq.put(FrameEvent(session_id="s", payload=Frame(path="scripted-only.png", frame_id="f2")))
         cancelled = await wait_for(oq, lambda e: e.kind == "cancel_call")
         assert "device" not in cancelled.state.slots

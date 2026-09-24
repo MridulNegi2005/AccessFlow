@@ -1242,3 +1242,7 @@ changed.
 ## 2026-09-24 13:49 — Merge and readiness review
 
 Request: merge Mridul first, then Atishay; inspect remaining work and give Atishay a detailed first-person prompt prioritizing voice/testing over frontend polish. Assistance: inspected fetched code and official local kit, resolved shared documentation conflicts, ran offline validation and exported failing audit probes, drafted the three linked review/handoff documents. Human input: ownership and priority instructions; no human source edits in this slice. Output checked against source, retained tests and provenance; no model training, live-media evaluation, deployment or submission.
+
+## 2026-09-24 14:05 — Current-frame controller repair
+
+Request: continue Mridul-owned implementation; prioritize complete submission code before accuracy tuning. Assistance: controller lifecycle repair, deterministic regressions, read-only review and evidence documentation. Review found partial-image promotion and malformed-final gaps; implementation and tests addressed them. One earlier test fixture was migrated to completed image/partial speech while retaining provisional rollback assertions. Final1216pass/2skip/1xfail; no live-model or microphone claims. Human input changed priorities; no human source edits in this slice.
