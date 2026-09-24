@@ -661,3 +661,34 @@ verified. The two unrelated untracked review notes were not included. Stitch's
 per-frame Download emitted no browser download event; Copy as PNG showed a
 success toast but this session could not read image bytes from its clipboard.
 No native Stitch asset was saved or claimed, and nothing was deployed.
+
+### 2026-09-24 continuation — frontend interaction hardening
+
+**Task:** Close browser-visible photo and long-answer defects and harden optional read-aloud
+state without touching shared engine contracts.
+
+**Changes:** The image dialog opens the image currently displayed, including the labeled
+design sample, rather than depending only on a staged user upload. Its maximum image
+height now fits within the dialog at a short desktop viewport. Long first sentences
+over 120 characters remain intact in body copy beneath a short generic heading. TTS
+utterances have a generation/identity guard; replacement or cancellation invalidates
+old start/end/error callbacks before they can change the speaking UI. Stop speaking,
+starting a new request, starting microphone capture, disabling read-aloud and session reset use the same
+invalidation path. Added an owned Node.js lifecycle regression, run by pytest when
+Node.js is available; no root dependency was introduced.
+
+**Status:** Local `demo/mock` WebSocket answer checked in the in-app browser; the long
+answer rendered with complete body text and no horizontal overflow. The sample-photo
+button was reproduced failing before the fix, then opened a loaded full-size image
+afterward. The dialog was visually inspected at 1280×720 and 390×844, with no inner
+scrolling or horizontal overflow in those checks. Browser error/warning logs were
+empty. `pytest tests/demo/test_app.py -q`: 127 passed, 1 existing xfailed.
+Full `pytest -q`: 812 passed, 1 existing xfailed, 2 dependency warnings. Ruff,
+inline JavaScript parse and diff check passed.
+
+**Notes:** Browser TTS visibly entered its speaking state, but audible playback,
+physical microphone behavior, live ASR/barge-in and all screen-reader combinations
+remain unverified. Native Stitch exports remain unavailable; this is not design-stage
+completion. Atishay and Mridul need to coordinate causal answer/frame identity,
+structured meeting operation outcomes and shared speech timing before live action-card
+projection. The two unrelated untracked review files remain untouched.

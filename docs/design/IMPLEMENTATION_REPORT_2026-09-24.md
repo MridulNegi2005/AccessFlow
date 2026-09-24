@@ -128,6 +128,29 @@ The 24 September final full-suite regression completed: **811 passed, 1 existing
 2 dependency warnings**. Focused demo tests: **126 passed, 1 xfailed**. Ruff, inline
 JavaScript parse and `git diff --check` passed.
 
+### Follow-up browser defect loop (24 September)
+
+**Status: IN PROGRESS.** The visual and interaction work is improved, but native Stitch
+exports, physical voice behavior and the full acceptance matrix remain open. This pass used
+the local FastAPI demo in the Codex in-app browser; screenshots were inspected in the task,
+not saved as native Stitch files or new repository artifacts.
+
+| Route / state | Viewport checked | Defect and outcome | Evidence |
+|---|---|---|---|
+| `/?preview=photo`, enlarge sample | 1280×720 browser viewport | P2: button previously did nothing; dialog now opens the displayed image and fits without inner scrolling | Before: loaded image with closed dialog after click. After: open dialog, loaded full-size image, `scrollHeight == clientHeight`, inspected screenshot and Escape returned focus to the image button |
+| `/?preview=photo`, enlarge sample | 390×844 CSS viewport | Same interaction works without horizontal overflow | Open dialog, `documentElement.scrollWidth` 375px within 390px viewport; inspected screenshot |
+| `/`, long mock response | 1280×720 browser viewport | P1: entire long response became a giant serif heading; now a short generic heading precedes the complete unmodified answer body | Submitted through the local `demo/mock` WebSocket; inspected rendered answer and verified full body text |
+| Browser read-aloud lifecycle | Controlled Node.js speech-synthesis stub | Stale callbacks after replacement/cancel can no longer set speaking state | `tests/demo/speech_lifecycle_check.cjs` runs under the owned pytest suite; audible output remains unverified |
+
+A new typed/attachment request also cancels obsolete local playback and sends only the
+existing speech interruption before entering Thinking; it does not cancel the task.
+
+The page's browser error/warning logs were empty in the checked photo and live-answer tabs.
+The follow-up full suite passed: **812 passed, 1 existing xfailed, 2 dependency warnings**;
+owned demo tests: **127 passed, 1 xfailed**. Ruff, inline JavaScript parse and
+`git diff --check` passed. The Node.js lifecycle regression is optional and explicitly
+skips when Node.js is not installed; no root dependency or lockfile changed.
+
 ### Not verified / not claimed
 
 - Actual physical microphone permission, recording quality, device removal, live ASR, streaming
