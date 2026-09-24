@@ -163,6 +163,7 @@ class DemoPerception:
             return
         callback(
             {
+                "event_id": observation.event_id,
                 "modality": observation.modality,
                 "source_id": observation.source_id,
                 "revision": observation.revision,

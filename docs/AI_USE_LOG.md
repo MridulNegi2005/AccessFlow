@@ -1063,3 +1063,12 @@ changed.
 2026-09-24 AI-assisted continuation: Inspected the accessible Stitch anchor frames and recorded their actual dimensions and the unresolved source attachment/native export gap. Generated an original illustrative sample dog image for a labeled read-only design preview, added photo and corrected-meeting preview states and a phone-safe stacked meeting card; did not treat previews as real perception or calendar action. In-app browser checks covered desktop/mobile anchors and an actual local demo/mock WebSocket text response. Full suite: 811 passed, 1 existing xfailed, 2 dependency warnings; owned demo: 126 passed, 1 xfailed; Ruff, inline JS parse and diff check passed. Mridul-owned engine/contracts/config remained untouched.
 2026-09-24 AI-assisted delivery: Committed/pushed the reviewed frontend and approved source documents/images as `f0ca543` to `origin/atishay/perception`, with remote-ref verification; unrelated untracked review notes remained untouched. Stitch per-frame download emitted no browser download event, and Copy as PNG produced a UI toast but no readable clipboard asset in this session, so no native Stitch export was claimed. No deployment or Stitch publication.
 2026-09-24 AI-assisted frontend hardening: Reproduced and fixed the sample-photo enlargement button, kept the full image within a short browser dialog, moved overlong answer headings into intact body copy, and guarded read-aloud state against stale start/end callbacks after cancellation or replacement. Added an optional Node.js lifecycle regression in owned tests. In-app browser checked the local mock answer and image dialog at desktop/mobile sizes, with no relevant browser errors. Focused demo: 127 passed, 1 existing xfailed; full suite: 812 passed, 1 existing xfailed, 2 dependency warnings; Ruff, inline JS parse and diff check passed. Audible TTS, live voice and native Stitch export remain unverified; no Mridul-owned shared code/config changed.
+
+2026-09-24 AI-assisted frontend continuation: Fixed the demo-only final-answer
+projection race by carrying the existing observation event ID to the browser and
+matching it to the engine's causal output ID. Added a Node.js browser-state
+regression and WebSocket identity checks. Real local demo/mock text answer was
+inspected; 390px mobile had no horizontal overflow. Full suite: 813 passed,
+1 existing xfailed, 2 dependency warnings; Ruff, Node syntax and diff check
+passed. Stitch Download produced no verifiable file; design QA remains blocked.
+No shared engine/contracts/config changes or deployment.

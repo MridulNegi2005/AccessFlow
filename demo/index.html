@@ -1618,7 +1618,10 @@
       let stagedImageUrl = null;
       let latestMediaSourceId = null;
       let finalSourceId = null;
-      let finalObservationSeen = false;
+      let requestSourceIds = new Set();
+      let requestEventIds = new Map();
+      let pendingAnswers = [];
+      let inputsDispatched = false;
       let runInProgress = false;
       let responseTimer = null;
       let responseBackend = "demo/mock";
@@ -1646,6 +1649,23 @@
           event.payload && typeof event.payload === "object"
             ? event.payload
             : {};
+        if (
+          event.kind === "demo_observation" &&
+          (!runInProgress || !requestSourceIds.has(payload.source_id))
+        ) return;
+        if (event.kind === "final" || event.kind === "clarify") {
+          const cause = payload.caused_by_event_id;
+          if (
+            !runInProgress ||
+            typeof cause !== "string" ||
+            !Array.from(requestEventIds.values()).includes(cause)
+          ) return;
+          if (!inputsDispatched) {
+            if (pendingAnswers.length < 8) pendingAnswers.push(event);
+            return;
+          }
+          if (requestEventIds.get(finalSourceId) !== cause) return;
+        }
         document.querySelector("#announcements").textContent = announce(event);
         if (
           event.kind === "demo_status" &&
@@ -1703,13 +1723,12 @@
               ? "Voice input received · demo/mock mode does not transcribe audio."
               : payload.text || "Voice request received.";
           }
-          if (payload.final === true && payload.source_id === finalSourceId) {
-            finalObservationSeen = true;
+          if (payload.final === true && typeof payload.event_id === "string") {
+            requestEventIds.set(payload.source_id, payload.event_id);
           }
           return;
         }
         if (event.kind === "final" || event.kind === "clarify") {
-          if (runInProgress && !finalObservationSeen) return;
           renderResponse(event);
           finishRun();
           return;
@@ -1812,7 +1831,10 @@
       function finishRun() {
         runInProgress = false;
         finalSourceId = null;
-        finalObservationSeen = false;
+        requestSourceIds = new Set();
+        requestEventIds = new Map();
+        pendingAnswers = [];
+        inputsDispatched = false;
         if (responseTimer) clearTimeout(responseTimer);
         responseTimer = null;
         document.querySelector("#processing").classList.remove("visible");
@@ -2009,6 +2031,12 @@
       function nextMediaId(prefix) {
         mediaSequence += 1;
         return prefix + "-" + mediaSequence;
+      }
+
+      function registerRequestSource(sourceId) {
+        if (!runInProgress) return;
+        requestSourceIds.add(sourceId);
+        finalSourceId = sourceId;
       }
 
       function sendInterrupt(scope) {
@@ -2339,6 +2367,7 @@
               kind === "audio" ? "upload-audio" : "upload-frame",
             );
             latestMediaSourceId = sourceId;
+            registerRequestSource(sourceId);
             return send(kind, () => ({
               data_base64: dataBase64,
               filename: file.name,
@@ -2542,8 +2571,11 @@
         clearTimeout(draftTimer);
         draftTimer = null;
         runInProgress = true;
-        finalObservationSeen = false;
         finalSourceId = null;
+        requestSourceIds = new Set();
+        requestEventIds = new Map();
+        pendingAnswers = [];
+        inputsDispatched = false;
         activeInputKinds = [];
         document.querySelector("#answer-error").classList.remove("visible");
         document.querySelector("#processing").classList.add("visible");
@@ -2567,6 +2599,7 @@
           if (recordedWavBytes) {
             const sourceId = nextMediaId("mic-audio");
             latestMediaSourceId = sourceId;
+            registerRequestSource(sourceId);
             const sent = await enqueueMediaAction(() =>
               send("audio", {
                 data_base64: bytesToBase64(recordedWavBytes),
@@ -2576,26 +2609,23 @@
             );
             if (!sent)
               throw new Error("The voice recording could not be sent.");
-            finalSourceId = sourceId;
             activeInputKinds.push("audio");
           } else if (audioFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("audio", "#audio");
             if (!sent) throw new Error("The WAV could not be sent.");
-            finalSourceId = latestMediaSourceId;
             activeInputKinds.push("audio");
           }
           if (imageFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("frame", "#image");
             if (!sent) throw new Error("The screenshot could not be sent.");
-            if (!text) finalSourceId = latestMediaSourceId;
             activeInputKinds.push("frame");
           }
           if (text) {
             document.querySelector("#text").value = text;
             const finalTranscript = transcript(true);
-            finalSourceId = finalTranscript.utterance_id;
+            registerRequestSource(finalTranscript.utterance_id);
             const sent = send("transcript", finalTranscript);
             if (!sent) throw new Error("Your request could not be sent.");
             activeInputKinds.push("text");
@@ -2605,6 +2635,17 @@
             throw new Error(
               "No request could be sent. Check your connection and try again.",
             );
+          inputsDispatched = true;
+          const pendingAnswer = pendingAnswers.findLast(
+            (event) =>
+              requestEventIds.get(finalSourceId) ===
+              event.payload.caused_by_event_id,
+          );
+          pendingAnswers = [];
+          if (pendingAnswer) {
+            show(pendingAnswer);
+            return;
+          }
           responseTimer = window.setTimeout(() => {
             if (!runInProgress) return;
             document.querySelector("#answer-error").textContent =
