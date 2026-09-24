@@ -1,1090 +1,2870 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AccessFlow | Task workspace</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <style>
-    :root {
-      color-scheme: dark;
-      font: 16px/1.5 Inter, "Segoe UI", system-ui, sans-serif;
-      --canvas: #15171c; --panel: #fbf8f2; --ink: #17191b;
-      --paper: #f7f4ee; --muted: #b3b6ba; --rule: #393c40;
-      --lime: #a8ec59; --pale-lime: #eaf2d5; --coral: #ff6548;
-      --serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: var(--canvas); color: var(--paper); }
-    button, input, textarea { font: inherit; }
-    button { cursor: pointer; }
-    button:disabled { cursor: not-allowed; opacity: .48; }
-    button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex="0"]:focus-visible {
-      outline: 3px solid #7fbd3f; outline-offset: 3px;
-    }
-    .legacy-ui { display: none !important; }
-    .app-header { height: 88px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; }
-    .brand { display: flex; align-items: center; gap: 12px; color: var(--paper); text-decoration: none; }
-    .brand-mark { width: 34px; height: 34px; color: var(--lime); }
-    .brand-name { font-size: 28px; font-weight: 750; letter-spacing: -.055em; }
-    .header-right { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: 13px; }
-    .tts-control { display: flex; align-items: center; gap: 10px; }
-    label.tts-control { min-height: 44px; cursor: pointer; }
-    .switch { appearance: none; width: 38px; height: 22px; border-radius: 20px; background: #44474c; position: relative; margin: 0; cursor: pointer; transition: background .18s ease; }
-    .switch::after { content: ""; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform .18s ease; }
-    .switch:checked { background: #72a933; }
-    .switch:checked::after { transform: translateX(16px); }
-    .workspace { width: min(100%, 1600px); margin: 0 auto; padding: 0 20px 32px; display: grid; grid-template-columns: 448px minmax(0, 1fr); gap: 56px; align-items: start; }
-    .input-dock { background: var(--panel); color: var(--ink); border-radius: 24px; padding: 25px 24px 22px; box-shadow: 0 14px 36px #0002; }
-    .dock-title { margin: 0 0 21px; display: flex; align-items: center; gap: 11px; font-size: 21px; letter-spacing: -.035em; }
-    .spark { color: #639523; font-size: 23px; line-height: 1; }
-    .field-label { display: flex; justify-content: space-between; align-items: center; margin: 0 0 9px; font-size: 15px; font-weight: 650; }
-    .field-label span:last-child { color: #7a7b76; font-size: 12px; font-weight: 500; }
-    .task-input { display: block; width: 100%; height: 236px; resize: vertical; min-height: 160px; max-height: 380px; padding: 20px; border: 1px solid #d9d7d0; border-radius: 16px; background: #fffefa; color: var(--ink); font-size: 20px; line-height: 1.45; }
-    .task-input::placeholder { color: #94938d; }
-    .dock-section { margin-top: 21px; }
-    .section-topline { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
-    .section-topline strong { font-size: 15px; }
-    .subtle { color: #777973; font-size: 11px; }
-    .voice-tile { min-height: 125px; position: relative; border-radius: 17px; background: var(--pale-lime); display: flex; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; }
-    .voice-line { position: absolute; display: flex; height: 28px; align-items: center; gap: 3px; left: 21px; right: 21px; justify-content: space-between; pointer-events: none; }
-    .voice-line span { display: block; width: 2px; height: var(--h); background: #a0b67b; border-radius: 2px; opacity: .72; }
-    .voice-action { position: relative; z-index: 1; width: 82px; height: 82px; border-radius: 50%; border: 0; background: #20251c; color: white; display: grid; place-items: center; }
-    .voice-action svg { width: 23px; height: 23px; }
-    .voice-action.recording { background: var(--coral); animation: record-pulse 1.5s ease-in-out infinite; }
-    .voice-caption { margin-top: 7px; font-size: 12px; font-weight: 650; }
-    .voice-caption small { display: block; font-size: 10px; font-weight: 450; color: #70756b; text-align: center; }
-    .mini-action { min-height: 44px; border: 0; background: transparent; color: #526c31; padding: 8px 10px; font-size: 11px; font-weight: 650; }
-    .drop-zone { min-height: 172px; border: 1px dashed #b7b9ae; border-radius: 16px; display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; color: #3e423a; background: #fffefa; transition: border .16s ease, background .16s ease; cursor: pointer; }
-    .drop-zone[aria-disabled="true"] { cursor: not-allowed; opacity: .7; }
-    .drop-zone.dragover { background: #f0f7e4; border: 2px dashed #78a83e; }
-    .drop-icon { width: 44px; height: 44px; margin-bottom: 9px; color: #62784b; }
-    .drop-main { font-size: 13px; font-weight: 650; }
-    .drop-hint { color: #7c7d76; font-size: 10px; }
-    .staged-list { display: grid; gap: 7px; margin-top: 9px; }
-    .staged-item { min-width: 0; display: flex; align-items: center; gap: 9px; padding: 8px; border: 1px solid #e4e1d8; border-radius: 11px; background: #fffefa; }
-    .staged-thumb { width: 38px; height: 38px; border-radius: 7px; object-fit: cover; background: #ecece7; }
-    .staged-audio-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 7px; background: var(--pale-lime); color: #4b622d; font-size: 18px; flex: 0 0 auto; }
-    .staged-copy { min-width: 0; flex: 1; }
-    .staged-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 650; }
-    .staged-size { display: block; color: #7e807a; font-size: 10px; }
-    .remove-media { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: #6d7068; padding: 7px; font-size: 17px; }
-    .run-button { display: flex; width: 100%; min-height: 66px; margin-top: 21px; padding: 13px 17px; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 14px; background: var(--lime); color: #192016; font-size: 15px; font-weight: 750; transition: transform .15s ease, filter .15s ease; }
-    .run-button:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
-    .run-button svg { width: 17px; height: 17px; }
-    .dock-note { margin: 14px 2px 0; color: #71736d; font-size: 10px; line-height: 1.5; text-align: center; }
-    .dock-error { margin: 9px 0 0; color: #a93e2a; font-size: 12px; }
-    .voice-tile.is-recording .voice-line span { animation: sound-wave .45s ease-in-out infinite alternate; }
-    .voice-tile.is-recording .voice-line span:nth-child(2n) { animation-delay: .16s; }
-    .voice-tile.is-recording .voice-line span:nth-child(3n) { animation-delay: .28s; }
-    dialog#image-dialog { width: min(92vw, 1100px); max-width: none; max-height: 92vh; padding: 16px; border: 1px solid #4b4e52; border-radius: 18px; background: #1c1e23; color: var(--paper); }
-    dialog#image-dialog::backdrop { background: #08090bcc; backdrop-filter: blur(3px); }
-    #dialog-image { display: block; max-width: 100%; max-height: calc(92vh - 66px); margin: 12px auto 0; object-fit: contain; }
-    #close-image-dialog { min-height: 44px; }
-    #close-image-dialog { display: block; margin-left: auto; padding: 7px 12px; border: 1px solid #55585c; border-radius: 9px; background: #292b30; color: var(--paper); }
-    .answer-stage { min-width: 0; min-height: calc(100vh - 112px); padding: 37px 22px 20px 4px; }
-    .stage-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-    .connection-indicator { min-height: 44px; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid #393c40; border-radius: 22px; background: #202226; color: #c5c8c3; font-size: 11px; }
-    .connection-indicator::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #d1ad54; }
-    .connection-indicator.connected::before { background: var(--lime); box-shadow: 0 0 8px #a8ec5966; }
-    .connection-indicator.disconnected { border-color: #663e34; color: #ffd2c7; }
-    .connection-indicator.disconnected::before { background: var(--coral); }
-    .connection-indicator:disabled { cursor: default; opacity: 1; }
-    .eyebrow { margin: 0 0 8px; color: #aeb1b4; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 700; }
-    .request-summary { max-width: 620px; color: #d4d3ce; font-size: 13px; line-height: 1.55; }
-    .speak-pill { display: none; align-items: center; gap: 9px; flex: 0 0 auto; padding: 8px 11px; border-radius: 30px; background: #282b2f; color: #e5e3dd; font-size: 11px; }
-    .speak-pill.visible { display: flex; }
-    .sound-bars { display: flex; gap: 2px; align-items: center; height: 16px; }
-    .sound-bars i { display: block; width: 2px; height: 7px; border-radius: 2px; background: var(--lime); animation: sound-wave .65s ease-in-out infinite alternate; }
-    .sound-bars i:nth-child(2n) { animation-delay: .2s; height: 12px; }
-    .sound-bars i:nth-child(3n) { animation-delay: .4s; height: 5px; }
-    .stop-speech { min-height: 44px; border: 0; border-radius: 22px; padding: 6px 13px; background: var(--coral); color: #25140f; font-size: 10px; font-weight: 700; }
-    .empty-state { max-width: 730px; padding: clamp(50px, 11vh, 125px) 0 42px; }
-    .empty-kicker { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--lime); font-size: 12px; font-weight: 650; }
-    .empty-kicker::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 14px #a8ec5966; }
-    .empty-state h1 { margin: 0; max-width: 720px; color: var(--paper); font-family: var(--serif); font-size: clamp(40px, 4.1vw, 60px); font-weight: 500; line-height: 1.07; letter-spacing: -.045em; }
-    .empty-state p { max-width: 440px; margin: 20px 0 0; color: #aeb1b4; font-size: 14px; line-height: 1.75; }
-    .answer-wrap { display: none; margin-top: 38px; }
-    .answer-wrap.visible { display: block; animation: rise-in .32s ease both; }
-    .answer-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
-    .answer-grid.with-image { grid-template-columns: minmax(260px, .92fr) minmax(300px, 1.08fr); }
-    .answer-image-button { display: block; width: 100%; padding: 0; border: 0; border-radius: 16px; background: transparent; cursor: zoom-in; }
-    .answer-image-button[hidden] { display: none; }
-    .answer-image { width: 100%; max-height: 430px; object-fit: contain; object-position: center; background: #202226; border: 1px solid #393b40; border-radius: 16px; cursor: zoom-in; }
-    .answer-image-button:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
-    .answer-copy h1 { max-width: 760px; margin: 0 0 17px; font: 500 clamp(34px, 3.3vw, 50px)/1.09 var(--serif); letter-spacing: -.04em; color: var(--paper); overflow-wrap: anywhere; }
-    .answer-body { max-width: 760px; color: #d0cfca; font-size: 18px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .answer-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
-    .meta-chip { padding: 5px 9px; border: 1px solid #42454a; border-radius: 20px; color: #bfc0bd; font-size: 10px; }
-    .clarification { border-left: 2px solid var(--lime); padding-left: 17px; }
-    .rule { height: 1px; margin: 27px 0 19px; background: var(--rule); }
-    .explore-title { margin: 0 0 10px; color: #d7d5ce; font-size: 11px; font-weight: 650; }
-    .prompt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .prompt-chip { min-height: 44px; padding: 8px 13px; border: 1px solid #42454a; border-radius: 24px; background: transparent; color: #c1c1bc; font-size: 10px; transition: border-color .15s ease, color .15s ease; }
-    .prompt-chip:hover { border-color: #9eca66; color: var(--paper); }
-    .follow-form { display: flex; gap: 8px; margin-top: 19px; padding: 6px; border: 1px solid #4a4d51; border-radius: 15px; background: #1c1e23; }
-    .follow-input { min-width: 0; flex: 1; padding: 9px 11px; border: 0; outline: 0; background: transparent; color: var(--paper); font-size: 13px; }
-    .follow-input::placeholder { color: #898c90; }
-    .follow-send { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 10px; background: var(--lime); color: #172012; font-size: 11px; font-weight: 750; }
-    .processing { display: none; align-items: center; gap: 10px; margin-top: 23px; color: #c2c3bf; font-size: 12px; }
-    .processing.visible { display: flex; }
-    .spinner { width: 15px; height: 15px; border: 2px solid #51545a; border-top-color: var(--lime); border-radius: 50%; animation: spin .8s linear infinite; }
-    .error-banner { display: none; margin-top: 18px; padding: 12px 14px; border: 1px solid #663e34; border-radius: 12px; background: #30221f; color: #ffd2c7; font-size: 12px; }
-    .error-banner.visible { display: block; }
-    .provenance { margin-top: 18px; color: #85888c; font-size: 10px; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-    @keyframes record-pulse { 50% { box-shadow: 0 0 0 7px #ff654822; } }
-    @keyframes sound-wave { to { transform: scaleY(.48); } }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes rise-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
-    @media (min-width: 1500px) { .workspace { gap: 56px; } }
-    @media (max-width: 1279px) and (min-width: 900px) {
-      .workspace { grid-template-columns: 360px minmax(0, 1fr); gap: 27px; }
-    }
-    @media (max-width: 1120px) {
-      .answer-grid.with-image { grid-template-columns: 1fr; }
-      .answer-image { max-height: 340px; }
-    }
-    @media (max-width: 899px) {
-      .app-header { height: 76px; padding: 0 22px; }
-      .workspace { grid-template-columns: 1fr; gap: 15px; padding: 0 16px 30px; }
-      .input-dock { max-width: none; padding: 21px; }
-      .answer-stage { min-height: 430px; padding: 30px 8px 12px; }
-      .empty-state { padding: 50px 0 25px; }
-    }
-    @media (max-width: 680px) { .answer-grid.with-image { grid-template-columns: minmax(0, 1fr); } }
-    @media (max-width: 639px) {
-      .app-header { height: 68px; padding: 0 17px; }
-      .brand-name { font-size: 22px; }
-      .brand-mark { width: 30px; height: 30px; }
-      .header-right { gap: 10px; }
-      .tts-control > span { display: none; }
-      .tts-control { gap: 0; }
-      #new-task { flex: 0 0 auto; white-space: nowrap; }
-      .header-tagline { display: none; }
-      .workspace { padding: 0 16px 22px; }
-      .input-dock { padding: 18px 16px; border-radius: 20px; }
-      .task-input { height: 142px; font-size: 16px; }
-      .answer-stage { padding: 22px 7px 10px; }
-      .stage-top { flex-direction: column; }
-      .speak-pill { align-self: flex-start; }
-      .empty-state { padding-top: 42px; }
-      .empty-state h1 { font-size: 36px; }
-      .answer-wrap { margin-top: 28px; }
-      .answer-grid.with-image { grid-template-columns: 1fr; }
-      .answer-copy h1 { font-size: 37px; }
-      .answer-body { font-size: 17px; }
-      .follow-form { border-radius: 12px; }
-      .follow-send { padding: 8px 10px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-    }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-  </style>
-</head>
-<body>
-  <header class="app-header">
-    <a class="brand" href="/" aria-label="AccessFlow home">
-      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 20 14 5h8l-9 15 9 15h-8L5 20Z" fill="currentColor"/><path d="M18 20 27 5h8l-9 15 9 15h-8l-9-15Z" fill="currentColor" opacity=".68"/></svg>
-      <span class="brand-name">AccessFlow</span>
-    </a>
-    <div class="header-right">
-      <span class="header-tagline">A calmer way to get things done</span>
-      <label class="tts-control" for="tts-toggle"><span>Read answers aloud</span><input class="switch" id="tts-toggle" type="checkbox" aria-label="Read answers aloud"></label>
-      <button class="mini-action" id="new-task" type="button" style="color:#d5d6d2">New task</button>
-    </div>
-  </header>
-  <main class="workspace">
-    <aside class="input-dock" aria-labelledby="dock-heading">
-      <h2 class="dock-title" id="dock-heading"><span class="spark" aria-hidden="true">✳</span>New task</h2>
-      <label class="field-label" for="task-text"><span>What do you need?</span><span id="char-count">0 / 16,384</span></label>
-      <textarea class="task-input" id="task-text" maxlength="16384" placeholder="Tell AccessFlow what you’d like to do…" aria-describedby="dock-note dock-error"></textarea>
-      <section class="dock-section" aria-labelledby="voice-heading">
-        <div class="section-topline"><strong id="voice-heading">Add your voice</strong><span class="subtle">WAV · up to 8 MiB</span></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AccessFlow — At your pace</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root {
+        color-scheme: dark;
+        font:
+          16px/1.5 Geist,
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          sans-serif;
+        --canvas: #191d1f;
+        --surface: #22272a;
+        --ivory: #f7f5ee;
+        --ink: #18221b;
+        --muted-dark: #bdc3c7;
+        --muted-light: #59615c;
+        --lime: #abe865;
+        --forest: #173e20;
+        --wash: #eaf5ce;
+        --line-dark: #4f585c;
+        --line-light: #c9cec5;
+        --serif:
+          "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia,
+          serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      html {
+        min-width: 320px;
+        background: var(--canvas);
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--canvas);
+        color: var(--ivory);
+      }
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      [tabindex="0"]:focus-visible {
+        outline: 3px solid #5b8c37;
+        outline-offset: 3px;
+      }
+      .legacy-ui {
+        display: none !important;
+      }
+      .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+      }
+      .app-header {
+        width: min(100%, 1600px);
+        min-height: 78px;
+        margin: auto;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        color: var(--ivory);
+        text-decoration: none;
+      }
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        color: var(--lime);
+      }
+      .brand-name {
+        font-size: 29px;
+        font-weight: 680;
+        letter-spacing: -0.055em;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        color: var(--muted-dark);
+        font-size: 14px;
+      }
+      .header-tagline {
+        color: #d0d5d1;
+        margin-left: 16px;
+        font-size: 17px;
+        font-weight: 400;
+        letter-spacing: 0;
+      }
+      .tts-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .tts-control label {
+        cursor: pointer;
+      }
+      .switch {
+        appearance: none;
+        width: 38px;
+        height: 22px;
+        border-radius: 20px;
+        background: #495054;
+        position: relative;
+        margin: 0;
+        cursor: pointer;
+        transition: background 0.18s;
+      }
+      .switch:after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 3px;
+        left: 3px;
+        border-radius: 50%;
+        background: white;
+        transition: transform 0.18s;
+      }
+      .switch:checked {
+        background: #57802f;
+      }
+      .switch:checked:after {
+        transform: translateX(16px);
+      }
+      .mini-action {
+        min-height: 44px;
+        border: 0;
+        border-radius: 22px;
+        background: transparent;
+        color: var(--ink);
+        padding: 8px 13px;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .header-right #new-task {
+        border: 1px solid var(--line-dark);
+        color: var(--ivory);
+      }
+      .header-right #new-task:hover {
+        border-color: var(--lime);
+      }
+      .workspace {
+        width: min(100%, 1600px);
+        margin: 0 auto;
+        padding: 4px 32px 28px;
+        display: grid;
+        grid-template-columns: minmax(340px, 30%) minmax(0, 1fr);
+        gap: clamp(28px, 3vw, 48px);
+        align-items: stretch;
+      }
+      .input-dock {
+        align-self: start;
+        min-width: 0;
+        padding: 28px 26px 23px;
+        border-radius: 24px;
+        background: var(--ivory);
+        color: var(--ink);
+        box-shadow: 0 18px 50px #0002;
+      }
+      .dock-title {
+        margin: 0 0 7px;
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 680;
+      }
+      .spark {
+        color: #638d38;
+      }
+      .console-intro {
+        margin: 0;
+        color: var(--muted-light);
+        font-size: 14px;
+      }
+      .voice-tile {
+        min-height: 230px;
+        margin-top: 10px;
+        padding: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 20px;
+        background: transparent;
+      }
+      .voice-orb {
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: var(--wash);
+        opacity: 0.84;
+      }
+      .voice-line {
+        position: absolute;
+        inset: 50% 26px auto;
+        transform: translateY(-50%);
+        display: flex;
+        height: 98px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 3px;
+        pointer-events: none;
+      }
+      .voice-line span {
+        display: block;
+        flex: 0 1 4px;
+        min-width: 2px;
+        height: var(--h);
+        border-radius: 8px;
+        background: var(--forest);
+        opacity: 0.88;
+        transform: scaleY(var(--energy, 0.38));
+        transform-origin: center;
+        transition: transform 75ms linear;
+      }
+      .voice-line span:nth-child(3n) {
+        background: #57923b;
+      }
+      .voice-line span:nth-child(4n) {
+        background: #8fc84d;
+      }
+      .voice-tile.is-recording .voice-line span {
+        opacity: 1;
+      }
+      .voice-action {
+        position: relative;
+        z-index: 1;
+        width: 66px;
+        height: 66px;
+        border: 0;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--forest);
+        color: white;
+        box-shadow: 0 4px 14px #173e2026;
+      }
+      .voice-action:hover {
+        background: #23552b;
+      }
+      .voice-action.recording {
+        background: #57352e;
+      }
+      .voice-action svg {
+        width: 24px;
+        height: 24px;
+      }
+      .voice-caption {
+        position: absolute;
+        inset: auto 10px 12px;
+        text-align: center;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .voice-caption small {
+        display: block;
+        color: var(--muted-light);
+        font-size: 11px;
+        font-weight: 450;
+      }
+      .voice-state {
+        margin: 19px 0 4px;
+        font-size: 19px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+      .voice-help {
+        min-height: 44px;
+        margin: 0;
+        color: var(--muted-light);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .session-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .session-control {
+        min-height: 46px;
+        flex: 1;
+        border: 1px solid var(--line-light);
+        border-radius: 24px;
+        background: transparent;
+        color: var(--ink);
+        padding: 9px 11px;
+        font-size: 13px;
+        font-weight: 620;
+      }
+      .session-control:hover {
+        background: #eeede5;
+      }
+      .session-control.primary {
+        border-color: var(--forest);
+        background: var(--forest);
+        color: #fff;
+      }
+      .session-control.primary:hover {
+        background: #23552b;
+      }
+      .preview-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .preview-controls[hidden],
+      .answer-grid[hidden],
+      .meeting-draft[hidden],
+      .answer-intro[hidden],
+      .answer-media[hidden],
+      .answer-image-caption[hidden] {
+        display: none;
+      }
+      .preview-control {
+        display: inline-flex;
+        min-height: 46px;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line-light);
+        border-radius: 24px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 620;
+        text-align: center;
+      }
+      .preview-control.primary {
+        border-color: var(--forest);
+        background: var(--forest);
+        color: #fff;
+      }
+      .preview-mode .voice-line span {
+        transform: scaleY(0.8);
+      }
+      .preview-mode .voice-caption {
+        display: none;
+      }
+      .preview-mode .answer-image {
+        aspect-ratio: 1 / 1;
+        max-height: 470px;
+        object-fit: cover;
+      }
+      .preview-mode .prompt-chip:disabled {
+        opacity: 1;
+        cursor: default;
+      }
+      .caption-wrap {
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line-light);
+      }
+      .caption-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #647065;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .request-summary {
+        min-height: 26px;
+        color: #303a33;
+        font-size: 14px;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+      }
+      .voice-compose {
+        margin-top: 18px;
+      }
+      .compose-label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted-light);
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .follow-form {
+        display: flex;
+        gap: 7px;
+        padding: 5px;
+        border: 1px solid #afb7aa;
+        border-radius: 14px;
+        background: #fffefa;
+      }
+      .follow-input {
+        width: 100%;
+        min-width: 0;
+        min-height: 46px;
+        flex: 1;
+        padding: 10px 11px;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--ink);
+        font-size: 14px;
+      }
+      .follow-input::placeholder {
+        color: #717a72;
+      }
+      .follow-send {
+        min-height: 44px;
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 10px;
+        background: var(--forest);
+        color: #fff;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .attachment-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 11px;
+      }
+      .attachment-button {
+        min-height: 42px;
+        border: 1px solid var(--line-light);
+        border-radius: 22px;
+        background: transparent;
+        color: #344137;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .attachment-button:hover {
+        background: #ecefe6;
+        border-color: #87987d;
+      }
+      .attachment-limit {
+        margin: 8px 0 0;
+        color: #737b73;
+        font-size: 11px;
+      }
+      .staged-list {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+      }
+      .staged-item {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 8px;
+        border: 1px solid #d9ded5;
+        border-radius: 12px;
+        background: #fffefa;
+      }
+      .staged-thumb {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: #ecece7;
+      }
+      .staged-audio-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--wash);
+        color: var(--forest);
+        font-size: 18px;
+        flex: 0 0 auto;
+      }
+      .staged-copy {
+        min-width: 0;
+        flex: 1;
+      }
+      .staged-name {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .staged-size {
+        display: block;
+        color: #687169;
+        font-size: 11px;
+      }
+      .remove-media {
+        min-width: 44px;
+        min-height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #4f5b52;
+        padding: 7px;
+        font-size: 19px;
+      }
+      .remove-media:hover {
+        background: #eff1eb;
+      }
+      .dock-error {
+        margin: 8px 0 0;
+        color: #9a3427;
+        font-size: 13px;
+      }
+      .dock-note {
+        margin: 12px 2px 0;
+        color: #687169;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .run-button {
+        position: absolute;
+        left: -10000px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+      .answer-stage {
+        min-width: 0;
+        min-height: calc(100vh - 110px);
+        padding: 25px 8px 24px 0;
+      }
+      .stage-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding-bottom: 19px;
+        border-bottom: 1px solid #343b3e;
+      }
+      .answer-context {
+        margin: 0;
+        color: #c2c9c5;
+        font-size: 13px;
+      }
+      .connection-indicator {
+        min-height: 42px;
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 13px;
+        border: 1px solid var(--line-dark);
+        border-radius: 24px;
+        background: transparent;
+        color: #d2d7d3;
+        font-size: 12px;
+      }
+      .connection-indicator:before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #d1ad54;
+      }
+      .connection-indicator.connected:before {
+        background: var(--lime);
+      }
+      .connection-indicator.disconnected {
+        border-color: #865246;
+        color: #ffd2c7;
+      }
+      .connection-indicator.disconnected:before {
+        background: #e77b63;
+      }
+      .connection-indicator:disabled {
+        cursor: default;
+        opacity: 1;
+      }
+      .speak-pill {
+        display: none;
+        align-items: center;
+        gap: 9px;
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border-radius: 30px;
+        background: var(--surface);
+        color: #e5e3dd;
+        font-size: 12px;
+      }
+      .speak-pill.visible {
+        display: flex;
+      }
+      .sound-bars {
+        display: flex;
+        gap: 2px;
+        align-items: center;
+        height: 16px;
+      }
+      .sound-bars i {
+        display: block;
+        width: 3px;
+        height: 7px;
+        border-radius: 2px;
+        background: var(--lime);
+        animation: sound-wave 0.65s ease-in-out infinite alternate;
+      }
+      .sound-bars i:nth-child(2n) {
+        animation-delay: 0.2s;
+        height: 12px;
+      }
+      .sound-bars i:nth-child(3n) {
+        animation-delay: 0.4s;
+        height: 5px;
+      }
+      .stop-speech {
+        min-height: 40px;
+        border: 1px solid #697174;
+        border-radius: 22px;
+        padding: 5px 12px;
+        background: transparent;
+        color: white;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .empty-state {
+        max-width: 740px;
+        padding: clamp(52px, 10vh, 116px) 0 42px;
+      }
+      .empty-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 17px;
+        color: var(--lime);
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .empty-kicker:before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .empty-state h1 {
+        max-width: 700px;
+        margin: 0;
+        color: var(--ivory);
+        font-family: var(--serif);
+        font-size: clamp(40px, 4.25vw, 60px);
+        font-weight: 400;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+      }
+      .empty-state p {
+        max-width: 460px;
+        margin: 20px 0 0;
+        color: var(--muted-dark);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+      .empty-examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 28px;
+      }
+      .example-prompt {
+        min-height: 44px;
+        border: 1px solid var(--line-dark);
+        border-radius: 24px;
+        background: transparent;
+        color: #e0e4df;
+        padding: 8px 13px;
+        font-size: 12px;
+      }
+      .example-prompt:hover {
+        border-color: var(--lime);
+      }
+      .answer-wrap {
+        display: none;
+        max-width: 1040px;
+        margin-top: 45px;
+      }
+      .answer-wrap.visible {
+        display: block;
+        animation: rise-in 0.2s ease both;
+      }
+      .answer-title {
+        max-width: 950px;
+        margin: 0;
+        font: 400 clamp(38px, 4.1vw, 60px) / 1.08 var(--serif);
+        letter-spacing: -0.025em;
+        color: var(--ivory);
+        overflow-wrap: anywhere;
+      }
+      .answer-intro {
+        margin: 12px 0 0;
+        color: var(--muted-dark);
+        font-size: 18px;
+      }
+      .answer-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 26px;
+        align-items: start;
+        margin-top: 26px;
+      }
+      .answer-grid.with-image {
+        grid-template-columns: minmax(230px, 0.88fr) minmax(280px, 1.12fr);
+      }
+      .answer-image-button {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        border-radius: 18px;
+        background: transparent;
+        cursor: zoom-in;
+      }
+      .answer-image-button[hidden] {
+        display: none;
+      }
+      .answer-image {
+        width: 100%;
+        max-height: 480px;
+        object-fit: contain;
+        object-position: center;
+        background: var(--surface);
+        border: 1px solid #394144;
+        border-radius: 18px;
+        cursor: zoom-in;
+      }
+      .answer-image-button:focus-visible {
+        outline: 3px solid var(--lime);
+        outline-offset: 4px;
+      }
+      .answer-image-caption {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted-dark);
+        font-size: 13px;
+      }
+      .answer-body {
+        max-width: 720px;
+        color: #e0e2dd;
+        font-size: 17px;
+        line-height: 1.75;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .answer-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 21px;
+      }
+      .meeting-draft {
+        margin-top: 27px;
+        padding: 28px 32px;
+        border: 1px solid var(--line-dark);
+        border-radius: 20px;
+        background: var(--surface);
+      }
+      .meeting-draft-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 21px;
+        border-bottom: 1px solid var(--line-dark);
+      }
+      .meeting-draft-head h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 550;
+      }
+      .meeting-draft-badge {
+        padding: 5px 15px;
+        border: 1px solid var(--line-dark);
+        border-radius: 30px;
+        color: var(--muted-dark);
+        font-size: 14px;
+      }
+      .meeting-draft-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px 36px;
+        padding: 24px 0;
+      }
+      .meeting-field-label {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--muted-dark);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .meeting-field-value {
+        color: var(--ivory);
+        font-size: 18px;
+      }
+      .meeting-field-value.important {
+        display: inline-block;
+        font: 400 clamp(32px, 3.2vw, 48px) / 1.1 var(--serif);
+      }
+      .meeting-field-value.changed {
+        padding: 6px 14px;
+        border-radius: 15px;
+        background: var(--wash);
+        color: var(--forest);
+      }
+      .meeting-draft-note {
+        margin: 0;
+        padding-top: 18px;
+        border-top: 1px solid var(--line-dark);
+        color: var(--muted-dark);
+        font-size: 14px;
+      }
+      .meta-chip {
+        padding: 6px 10px;
+        border: 1px solid #566064;
+        border-radius: 20px;
+        color: #d1d7d2;
+        font-size: 11px;
+      }
+      .clarification {
+        border-left: 2px solid var(--lime);
+        padding-left: 17px;
+      }
+      .rule {
+        height: 1px;
+        margin: 30px 0 20px;
+        background: #343b3e;
+      }
+      .explore-title {
+        margin: 0 0 10px;
+        color: #d9ddd9;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .prompt-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .prompt-chip {
+        min-height: 44px;
+        padding: 8px 13px;
+        border: 1px solid var(--line-dark);
+        border-radius: 24px;
+        background: transparent;
+        color: #d4d8d4;
+        font-size: 12px;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .prompt-chip:hover {
+        border-color: var(--lime);
+        color: var(--ivory);
+      }
+      .processing {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin-top: 24px;
+        color: #d0d4d1;
+        font-size: 13px;
+      }
+      .processing.visible {
+        display: flex;
+      }
+      .spinner {
+        width: 15px;
+        height: 15px;
+        border: 2px solid #51595d;
+        border-top-color: var(--lime);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      .error-banner {
+        display: none;
+        margin-top: 18px;
+        padding: 12px 14px;
+        border: 1px solid #805044;
+        border-radius: 12px;
+        background: #302522;
+        color: #ffd2c7;
+        font-size: 13px;
+      }
+      .error-banner.visible {
+        display: block;
+      }
+      .provenance {
+        margin-top: 19px;
+        color: #a6afab;
+        font-size: 12px;
+      }
+      dialog#image-dialog {
+        width: min(92vw, 1100px);
+        max-width: none;
+        max-height: 92vh;
+        padding: 16px;
+        border: 1px solid #4b5456;
+        border-radius: 18px;
+        background: #1c2224;
+        color: var(--ivory);
+      }
+      dialog#image-dialog::backdrop {
+        background: #080b0bcc;
+        backdrop-filter: blur(3px);
+      }
+      #dialog-image {
+        display: block;
+        max-width: 100%;
+        max-height: calc(92vh - 66px);
+        margin: 12px auto 0;
+        object-fit: contain;
+      }
+      #close-image-dialog {
+        display: block;
+        min-height: 44px;
+        margin-left: auto;
+        padding: 7px 12px;
+        border: 1px solid #596365;
+        border-radius: 9px;
+        background: #292f31;
+        color: var(--ivory);
+      }
+      .session-control.recording {
+        border-color: #57352e;
+        background: #57352e;
+        color: #fff;
+      }
+      .session-control.recording:hover {
+        background: #70443a;
+      }
+      .attachment-button.dragover {
+        border-color: #6b983f;
+        background: var(--wash);
+      }
+      .voice-line span:not([style*="--energy"]) {
+        transform: scaleY(0.68);
+      }
+      .run-button {
+        display: none;
+      }
+      .run-button.available {
+        position: static;
+        display: flex;
+        width: 100%;
+        min-height: 48px;
+        margin-top: 10px;
+        padding: 10px 14px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--forest);
+        border-radius: 13px;
+        background: transparent;
+        color: var(--forest);
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .run-button.available:hover:not(:disabled) {
+        background: #edf1e9;
+      }
+      @keyframes sound-wave {
+        to {
+          transform: scaleY(0.55);
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes rise-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @media (max-width: 1050px) and (min-width: 901px) {
+        .workspace {
+          grid-template-columns: minmax(310px, 34%) minmax(0, 1fr);
+          gap: 26px;
+          padding-inline: 24px;
+        }
+        .input-dock {
+          padding: 23px 20px;
+        }
+        .voice-tile {
+          min-height: 190px;
+        }
+        .answer-grid.with-image {
+          grid-template-columns: 1fr;
+        }
+        .answer-image {
+          max-height: 340px;
+        }
+      }
+      @media (max-width: 900px) {
+        .app-header {
+          min-height: 72px;
+          padding-inline: 22px;
+        }
+        .workspace {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 26px;
+          padding: 4px 22px 30px;
+        }
+        .input-dock {
+          padding: 23px;
+          display: grid;
+          grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1fr);
+          column-gap: 24px;
+          align-items: start;
+        }
+        .dock-title {
+          grid-column: 1/-1;
+        }
+        .voice-tile {
+          grid-row: 3/7;
+          grid-column: 1;
+          min-height: 152px;
+          margin-top: 16px;
+        }
+        .voice-orb {
+          width: 132px;
+          height: 132px;
+        }
+        .voice-line {
+          height: 70px;
+          inset-inline: 15px;
+        }
+        .voice-state {
+          grid-row: 3;
+          grid-column: 2;
+          margin-top: 18px;
+        }
+        .voice-help {
+          grid-row: 4;
+          grid-column: 2;
+        }
+        .session-controls,
+        .preview-controls {
+          grid-row: 5;
+          grid-column: 2;
+        }
+        .caption-wrap {
+          grid-row: 6;
+          grid-column: 2;
+          margin-top: 12px;
+          padding-top: 11px;
+        }
+        .voice-compose {
+          grid-column: 1/-1;
+          margin-top: 18px;
+        }
+        .attachment-actions,
+        .attachment-limit,
+        .staged-list,
+        .dock-error,
+        .dock-note {
+          grid-column: 1/-1;
+        }
+        .answer-stage {
+          min-height: 360px;
+          padding: 9px 8px 18px;
+        }
+        .empty-state {
+          padding: 34px 0 12px;
+        }
+        .answer-wrap {
+          margin-top: 30px;
+        }
+        .stage-top {
+          padding-bottom: 14px;
+        }
+      }
+      @media (max-width: 620px) {
+        .app-header {
+          min-height: 66px;
+          padding: 0 16px;
+        }
+        .brand {
+          gap: 8px;
+        }
+        .brand-mark {
+          width: 28px;
+          height: 28px;
+        }
+        .brand-name {
+          font-size: 24px;
+        }
+        .header-right {
+          gap: 9px;
+        }
+        .header-tagline,
+        .tts-control > span {
+          display: none;
+        }
+        .tts-control {
+          gap: 0;
+        }
+        .header-right #new-task {
+          min-height: 42px;
+          padding: 7px 10px;
+          font-size: 12px;
+        }
+        .workspace {
+          gap: 21px;
+          padding: 3px 14px 24px;
+        }
+        .input-dock {
+          padding: 18px 16px;
+          border-radius: 21px;
+          grid-template-columns: 1fr;
+          column-gap: 0;
+        }
+        .dock-title,
+        .voice-tile,
+        .voice-state,
+        .voice-help,
+        .session-controls,
+        .preview-controls,
+        .caption-wrap,
+        .voice-compose,
+        .attachment-actions,
+        .attachment-limit,
+        .staged-list,
+        .dock-error,
+        .dock-note {
+          grid-column: 1;
+        }
+        .voice-tile {
+          grid-row: auto;
+          min-height: 126px;
+          margin-top: 14px;
+        }
+        .voice-orb {
+          width: 110px;
+          height: 110px;
+        }
+        .voice-line {
+          height: 58px;
+          inset-inline: 20px;
+        }
+        .voice-state {
+          grid-row: auto;
+          margin-top: 13px;
+          font-size: 18px;
+        }
+        .voice-help {
+          grid-row: auto;
+          min-height: 0;
+        }
+        .session-controls,
+        .preview-controls {
+          grid-row: auto;
+          margin-top: 12px;
+        }
+        .caption-wrap {
+          grid-row: auto;
+          margin-top: 16px;
+        }
+        .voice-compose {
+          margin-top: 14px;
+        }
+        .attachment-actions {
+          margin-top: 9px;
+        }
+        .attachment-limit {
+          margin-top: 6px;
+        }
+        .answer-stage {
+          min-height: 300px;
+          padding: 7px 2px 12px;
+        }
+        .stage-top {
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .answer-context {
+          font-size: 12px;
+        }
+        .connection-indicator {
+          min-height: 40px;
+          padding: 7px 10px;
+          font-size: 11px;
+        }
+        .empty-state {
+          padding: 33px 0 9px;
+        }
+        .empty-state h1 {
+          font-size: clamp(34px, 9vw, 42px);
+        }
+        .empty-state p {
+          margin-top: 15px;
+          font-size: 14px;
+        }
+        .empty-examples {
+          margin-top: 19px;
+        }
+        .example-prompt {
+          font-size: 11px;
+        }
+        .answer-wrap {
+          margin-top: 25px;
+        }
+        .answer-grid.with-image {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .answer-image {
+          max-height: 300px;
+        }
+        .answer-title {
+          font-size: 36px;
+        }
+        .answer-body {
+          font-size: 16px;
+        }
+        .meeting-draft {
+          padding: 21px;
+        }
+        .meeting-draft-fields {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 18px;
+        }
+        .meeting-field-value.important {
+          font-size: 30px;
+        }
+        .speak-pill {
+          font-size: 11px;
+        }
+        .stop-speech {
+          min-height: 40px;
+        }
+      }
+      .tts-icon {
+        display: none;
+        width: 18px;
+        height: 18px;
+      }
+      @media (max-width: 620px) {
+        .tts-icon {
+          display: block;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <a class="brand" href="/" aria-label="AccessFlow home">
+        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+          <path d="M5 20 14 5h8l-9 15 9 15h-8L5 20Z" fill="currentColor" />
+          <path
+            d="M18 20 27 5h8l-9 15 9 15h-8l-9-15Z"
+            fill="currentColor"
+            opacity=".68"
+          />
+        </svg>
+        <span class="brand-name">AccessFlow</span>
+        <span class="header-tagline">At your pace.</span>
+      </a>
+      <div class="header-right">
+        <label class="tts-control" for="tts-toggle"
+          ><svg
+            class="tts-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 10v4h4l5 4V6l-5 4H4Z"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M16 9a5 5 0 0 1 0 6m2.5-8.5a8.5 8.5 0 0 1 0 11"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            /></svg
+          ><span>Read answers aloud</span
+          ><input
+            class="switch"
+            id="tts-toggle"
+            type="checkbox"
+            aria-label="Read answers aloud"
+        /></label>
+        <button class="mini-action" id="new-task" type="button">
+          New conversation
+        </button>
+      </div>
+    </header>
+    <main class="workspace">
+      <aside class="input-dock" aria-labelledby="dock-heading">
+        <h2 class="dock-title" id="dock-heading">Voice conversation</h2>
         <div class="voice-tile" id="voice-tile">
-          <div class="voice-line" aria-hidden="true"><span style="--h:7px"></span><span style="--h:12px"></span><span style="--h:6px"></span><span style="--h:17px"></span><span style="--h:9px"></span><span style="--h:20px"></span><span style="--h:10px"></span><span style="--h:15px"></span><span style="--h:7px"></span><span style="--h:18px"></span><span style="--h:8px"></span><span style="--h:13px"></span><span style="--h:6px"></span></div>
-          <button class="voice-action" id="voice-toggle" type="button" aria-label="Start recording">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </button>
-          <div class="voice-caption" id="voice-caption">Tap to record<small>Or upload an existing recording</small></div>
-        </div>
-        <button class="mini-action" id="choose-audio" type="button">↑ &nbsp;Upload WAV</button>
-      </section>
-      <section class="dock-section" aria-labelledby="image-heading">
-        <div class="section-topline"><strong id="image-heading">Add a screenshot</strong><span class="subtle">PNG · up to 8 MiB</span></div>
-        <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Choose a PNG screenshot or drop it here">
-          <svg class="drop-icon" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="3" y="4" width="22" height="20" rx="4" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="11" r="2.2" stroke="currentColor" stroke-width="1.5"/><path d="m5 21 6-6 4 4 3-3 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="drop-main">Drop a PNG image</span><span class="drop-hint">or click to browse · up to 8 MiB</span>
-        </div>
-      </section>
-      <div class="staged-list" id="staged-list" aria-live="polite"></div>
-      <p class="dock-error" id="dock-error" role="alert"></p>
-      <button class="run-button" id="run-task" type="button" disabled>
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 3.7c0-.8.9-1.3 1.6-.9l9 5.3a1.1 1.1 0 0 1 0 1.9l-9 5.3c-.7.4-1.6-.1-1.6-.9V3.7Z"/></svg>
-        <span>Run task</span>
-      </button>
-      <p class="dock-note" id="dock-note">Combine a request with your voice or one PNG screenshot. This demo keeps everything in the current session.</p>
-    </aside>
-    <section class="answer-stage" aria-label="Task response">
-      <div class="stage-top">
-        <div><p class="eyebrow">Your task</p><div class="request-summary" id="request-summary">Your request and response will appear here.</div></div>
-        <button class="connection-indicator" id="connection-indicator" type="button" disabled>Connecting</button>
-        <div class="speak-pill" id="speak-pill" role="status"><span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>AccessFlow is speaking…</span><button class="stop-speech" id="stop-speaking" type="button">Stop</button></div>
-      </div>
-      <div class="empty-state" id="empty-state">
-        <div class="empty-kicker">Ready when you are</div>
-        <h1>One clear next step, from all the things you share.</h1>
-        <p>Describe what you need, add a voice recording or screenshot if it helps, and AccessFlow will bring the details together.</p>
-      </div>
-      <div class="processing" id="processing" role="status"><span class="spinner" aria-hidden="true"></span><span>Bringing your request together…</span></div>
-      <div class="error-banner" id="answer-error" role="alert"></div>
-      <article class="answer-wrap" id="answer-wrap">
-        <div class="answer-grid" id="answer-grid">
-          <button class="answer-image-button" id="answer-image-button" type="button" aria-label="Open screenshot preview" hidden>
-            <img class="answer-image" id="answer-image" alt="Screenshot attached to this task">
-          </button>
-          <div class="answer-copy">
-            <h1 id="answer-title"></h1>
-            <div class="answer-body" id="answer-body"></div>
-            <div class="answer-meta" id="answer-meta"></div>
+          <div class="voice-orb" aria-hidden="true"></div>
+          <div class="voice-line" id="voice-waveform" aria-hidden="true">
+            <span style="--h: 15px"></span><span style="--h: 24px"></span
+            ><span style="--h: 34px"></span><span style="--h: 19px"></span
+            ><span style="--h: 48px"></span><span style="--h: 28px"></span
+            ><span style="--h: 66px"></span><span style="--h: 39px"></span
+            ><span style="--h: 52px"></span><span style="--h: 25px"></span
+            ><span style="--h: 70px"></span><span style="--h: 36px"></span
+            ><span style="--h: 50px"></span><span style="--h: 29px"></span
+            ><span style="--h: 62px"></span><span style="--h: 31px"></span
+            ><span style="--h: 45px"></span><span style="--h: 23px"></span
+            ><span style="--h: 54px"></span><span style="--h: 34px"></span
+            ><span style="--h: 21px"></span><span style="--h: 43px"></span
+            ><span style="--h: 27px"></span>
+          </div>
+          <div class="voice-caption" id="voice-caption">
+            Tap to speak<small>Recording is sent when you finish</small>
           </div>
         </div>
-        <p class="provenance" id="provenance"></p>
-        <div class="rule"></div>
-        <p class="explore-title">Explore further</p>
-        <div class="prompt-chips">
-          <button class="prompt-chip" type="button">Explain more simply</button>
-          <button class="prompt-chip" type="button">What evidence did you use?</button>
-          <button class="prompt-chip" type="button">What should I do next?</button>
+        <p
+          class="voice-state"
+          id="voice-state"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          Ready when you are
+        </p>
+        <p class="voice-help" id="voice-help">
+          Start a recording when you’re ready. Your microphone stays off until
+          you choose.
+        </p>
+        <div class="session-controls" id="session-controls">
+          <button
+            class="session-control primary"
+            id="voice-toggle"
+            type="button"
+            aria-label="Start voice recording"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              aria-hidden="true"
+            >
+              <rect
+                x="9"
+                y="3"
+                width="6"
+                height="12"
+                rx="3"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              /></svg
+            ><span>Start voice</span>
+          </button>
+          <button class="session-control" id="choose-audio" type="button">
+            Upload WAV
+          </button>
         </div>
-        <form class="follow-form" id="follow-form">
-          <label class="sr-only" for="follow-input">Ask a follow-up question</label>
-          <input class="follow-input" id="follow-input" maxlength="16384" placeholder="Ask a follow-up…" autocomplete="off">
-          <button class="follow-send" type="submit">Send ↗</button>
-        </form>
-      </article>
-    </section>
-  </main>
-  <dialog id="image-dialog" aria-label="Screenshot preview">
-    <button type="button" id="close-image-dialog" aria-label="Close screenshot preview">Close</button>
-    <img id="dialog-image" alt="Full-size screenshot attached to this task">
-  </dialog>
-  <div id="announcements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-  <div class="legacy-ui">
-    <form id="text-form"><input id="text" type="text"><button type="submit">Send final</button></form>
-    <input id="audio" type="file" accept="audio/wav,.wav">
-    <button id="mic" type="button"></button><button id="stop-mic" type="button" disabled></button>
-    <input id="image" type="file" accept="image/png,.png">
-  </div>
+        <div class="preview-controls" id="preview-controls" hidden>
+          <span class="preview-control primary" id="preview-primary"></span>
+          <span class="preview-control" id="preview-secondary">Mute mic</span>
+          <span class="preview-control" id="preview-tertiary">End conversation</span>
+        </div>
+        <div class="caption-wrap">
+          <span class="caption-label" id="caption-label">Your words</span>
+          <div class="request-summary" id="request-summary">
+            Your latest message will appear here.
+          </div>
+        </div>
+        <div class="voice-compose">
+          <label class="compose-label" for="follow-input"
+            >Or type a message</label
+          >
+          <form class="follow-form" id="follow-form">
+            <input
+              class="follow-input"
+              id="follow-input"
+              maxlength="16384"
+              placeholder="What’s on your mind?"
+              autocomplete="off"
+            />
+            <button class="follow-send" type="submit" aria-label="Send message">
+              Send <span aria-hidden="true">↗</span>
+            </button>
+          </form>
+        </div>
+        <div class="attachment-actions">
+          <button
+            class="attachment-button"
+            id="drop-zone"
+            type="button"
+            aria-label="Add a PNG image"
+            aria-description="Drop a PNG image here or choose a file"
+          >
+            ＋ Add image
+          </button>
+          <span class="attachment-limit">PNG or WAV · up to 8 MiB each</span>
+        </div>
+        <div class="staged-list" id="staged-list" aria-live="polite"></div>
+        <p class="dock-error" id="dock-error" role="alert"></p>
+        <label class="sr-only" for="task-text">Message being prepared</label>
+        <textarea
+          class="task-input"
+          id="task-text"
+          hidden
+          maxlength="16384"
+          aria-describedby="dock-note dock-error"
+        ></textarea>
+        <span class="sr-only" id="char-count">0 / 16,384</span>
+        <button class="run-button" id="run-task" type="button" disabled hidden>
+          <span>Send attached request</span>
+        </button>
+        <p class="dock-note" id="dock-note">
+          Voice is recorded in this browser and uploaded to the current demo
+          backend after you finish.
+        </p>
+      </aside>
+      <section class="answer-stage" aria-label="Task response">
+        <div class="stage-top">
+          <div class="answer-context" id="answer-context">
+            Conversation · connecting
+          </div>
+          <button
+            class="connection-indicator"
+            id="connection-indicator"
+            type="button"
+            disabled
+          >
+            Connecting
+          </button>
+          <div class="speak-pill" id="speak-pill" role="status">
+            <span class="sound-bars" aria-hidden="true"
+              ><i></i><i></i><i></i><i></i></span
+            ><span>AccessFlow is speaking…</span
+            ><button class="stop-speech" id="stop-speaking" type="button">
+              Stop speaking
+            </button>
+          </div>
+        </div>
+        <div class="empty-state" id="empty-state">
+          <div class="empty-kicker">Ready when you are</div>
+          <h1>A little more room to think.</h1>
+          <p>
+            Ask a question, talk it through, or share an image. We’ll work
+            through the details together, at your pace.
+          </p>
+          <div class="empty-examples" aria-label="Try an example">
+            <button class="prompt-chip" type="button">
+              Why do leaves change color?
+            </button>
+            <button class="prompt-chip" type="button">
+              Help me make sense of this photo
+            </button>
+          </div>
+        </div>
+        <div class="processing" id="processing" role="status">
+          <span class="spinner" aria-hidden="true"></span
+          ><span>Bringing your request together…</span>
+        </div>
+        <div class="error-banner" id="answer-error" role="alert"></div>
+        <article class="answer-wrap" id="answer-wrap">
+          <h1 class="answer-title" id="answer-title"></h1>
+          <p class="answer-intro" id="answer-intro" hidden></p>
+          <div class="answer-grid" id="answer-grid">
+            <div class="answer-media" id="answer-media" hidden>
+              <button
+                class="answer-image-button"
+                id="answer-image-button"
+                type="button"
+                aria-label="Open attached image preview"
+                hidden
+              >
+                <img
+                  class="answer-image"
+                  id="answer-image"
+                  alt="Image attached to this request"
+                />
+              </button>
+              <span class="answer-image-caption" id="answer-image-caption" hidden></span>
+            </div>
+            <div class="answer-copy">
+              <div class="answer-body" id="answer-body"></div>
+              <div class="answer-meta" id="answer-meta"></div>
+            </div>
+          </div>
+          <section class="meeting-draft" id="meeting-draft" aria-labelledby="meeting-draft-heading" hidden>
+            <div class="meeting-draft-head">
+              <h2 id="meeting-draft-heading">Meeting</h2>
+              <span class="meeting-draft-badge">Draft</span>
+            </div>
+            <div class="meeting-draft-fields">
+              <div><span class="meeting-field-label">Day</span><span class="meeting-field-value important changed">Wednesday</span></div>
+              <div><span class="meeting-field-label">Time</span><span class="meeting-field-value important">5:00 PM</span></div>
+              <div><span class="meeting-field-label">People</span><span class="meeting-field-value">Not added yet</span></div>
+              <div><span class="meeting-field-label">Duration</span><span class="meeting-field-value">Not set</span></div>
+            </div>
+            <p class="meeting-draft-note">Draft only. No invitation sent.</p>
+          </section>
+          <p class="provenance" id="provenance"></p>
+          <div class="rule"></div>
+          <p class="explore-title">Explore further</p>
+          <div class="prompt-chips">
+            <button class="prompt-chip" type="button">
+              Explain more simply
+            </button>
+            <button class="prompt-chip" type="button">
+              What evidence did you use?
+            </button>
+            <button class="prompt-chip" type="button">
+              What should I do next?
+            </button>
+          </div>
+        </article>
+      </section>
+    </main>
+    <dialog id="image-dialog" aria-label="Image preview">
+      <button
+        type="button"
+        id="close-image-dialog"
+        aria-label="Close image preview"
+      >
+        Close
+      </button>
+      <img id="dialog-image" alt="Full-size image attached to this request" />
+    </dialog>
+    <div
+      id="announcements"
+      class="sr-only"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+    <div class="legacy-ui">
+      <form id="text-form">
+        <input id="text" type="text" /><button type="submit">Send final</button>
+      </form>
+      <input id="audio" type="file" accept="audio/wav,.wav" />
+      <button id="mic" type="button"></button
+      ><button id="stop-mic" type="button" disabled></button>
+      <input id="image" type="file" accept="image/png,.png" />
+    </div>
 
-  <script>
-    const socket = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws');
-    const micButton = document.querySelector('#mic');
-    const stopMicButton = document.querySelector('#stop-mic');
-    let revision = 0;
-    let utterance = 0;
-    let activeUtteranceId = null;
-    let mediaSequence = 0;
-    let eventSequence = 0;
-    let microphone = null;
-    let mediaSendChain = Promise.resolve();
-    let draftTimer = null;
-    let microphoneTimer = null;
-    let microphoneStartedAt = 0;
-    let recordedWavBytes = null;
-    let stagedImageUrl = null;
-    let latestMediaSourceId = null;
-    let finalSourceId = null;
-    let finalObservationSeen = false;
-    let runInProgress = false;
-    let responseTimer = null;
-    let responseBackend = 'demo/mock';
-    let ttsUtterance = null;
-    let ttsEnabled = false;
-    let hasRunBefore = false;
-    let lastSubmittedSignature = null;
-    let activeInputKinds = [];
-    const pendingMessages = [];
-    const maxPendingMessages = 16;
-    const maxAnnouncementChars = 240;
-    const maxMediaBytes = 8 * 1024 * 1024;
-    const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2);
+    <script>
+      const previewVariant = new URLSearchParams(location.search).get("preview");
+      const previewMode = ["1", "photo", "meeting"].includes(previewVariant);
+      const socket = previewMode
+        ? null
+        : new WebSocket(
+            (location.protocol === "https:" ? "wss" : "ws") +
+              "://" +
+              location.host +
+              "/ws",
+          );
+      const micButton = document.querySelector("#mic");
+      const stopMicButton = document.querySelector("#stop-mic");
+      let revision = 0;
+      let utterance = 0;
+      let activeUtteranceId = null;
+      let mediaSequence = 0;
+      let eventSequence = 0;
+      let microphone = null;
+      let mediaSendChain = Promise.resolve();
+      let draftTimer = null;
+      let microphoneTimer = null;
+      let microphoneStartedAt = 0;
+      let recordedWavBytes = null;
+      let stagedImageUrl = null;
+      let latestMediaSourceId = null;
+      let finalSourceId = null;
+      let finalObservationSeen = false;
+      let runInProgress = false;
+      let responseTimer = null;
+      let responseBackend = "demo/mock";
+      let ttsUtterance = null;
+      let ttsEnabled = false;
+      let hasRunBefore = false;
+      let lastSubmittedSignature = null;
+      let activeInputKinds = [];
+      const pendingMessages = [];
+      const maxPendingMessages = 16;
+      const maxAnnouncementChars = 240;
+      const maxMediaBytes = 8 * 1024 * 1024;
+      const maxMicrophoneSamples = Math.floor((maxMediaBytes - 44) / 2);
 
-    function show(event) {
-      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-      document.querySelector('#announcements').textContent = announce(event);
-      if (event.kind === 'demo_status' && typeof payload.connected === 'boolean') {
-        const indicator = document.querySelector('#connection-indicator');
-        indicator.classList.toggle('connected', payload.connected);
-        indicator.classList.toggle('disconnected', !payload.connected);
-        indicator.disabled = payload.connected;
-        indicator.textContent = payload.connected ? 'Connected' : 'Reconnect';
+      function modeLabel() {
+        if (previewMode) return "Design preview";
+        return responseBackend.toLowerCase().includes("mock")
+          ? "Mock tools"
+          : "Live backend";
       }
-      if (event.kind === 'demo_status' && payload.perception_backend) {
-        const reasoner = payload.reasoner_backend;
-        responseBackend = reasoner
-          ? payload.perception_backend + ' · ' + reasoner
-          : payload.perception_backend;
-        return;
-      }
-      if (event.kind === 'demo_status' && payload.media_received) {
-        const kind = payload.media_received === 'frame' ? 'Screenshot' : 'Voice recording';
-        document.querySelector('#processing').lastElementChild.textContent = kind + ' received · bringing your request together…';
-        return;
-      }
-      if (event.kind === 'demo_status' && payload.connected === false) {
-        document.querySelector('#answer-error').textContent = 'The session disconnected. Select Reconnect to start a fresh session; the current draft will reset.';
-        document.querySelector('#answer-error').classList.add('visible');
-        if (runInProgress) finishRun();
-        return;
-      }
-      if (event.kind === 'demo_observation') {
-        if (payload.modality === 'text' && typeof payload.text === 'string') {
-          document.querySelector('#request-summary').textContent = payload.text || 'Text request';
-        } else if (payload.modality === 'audio') {
-          const isMockAudio = String(payload.backend || '').includes('mock');
-          document.querySelector('#request-summary').textContent = isMockAudio
-            ? 'Voice input received · demo/mock mode does not transcribe audio.'
-            : payload.text || 'Voice request received.';
-        }
-        if (payload.final === true && payload.source_id === finalSourceId) {
-          finalObservationSeen = true;
-        }
-        return;
-      }
-      if (event.kind === 'final' || event.kind === 'clarify') {
-        if (runInProgress && !finalObservationSeen) return;
-        renderResponse(event);
-        finishRun();
-        return;
-      }
-      if (event.kind === 'error' || event.kind === 'demo_error') {
-        const message = typeof payload.message === 'string' ? payload.message : 'Something went wrong. You can try again.';
-        document.querySelector('#answer-error').textContent = message;
-        document.querySelector('#answer-error').classList.add('visible');
-        if (runInProgress) finishRun();
-      }
-      return;
-    }
 
-    function renderResponse(event) {
-      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-      const text = typeof payload.text === 'string' ? payload.text.trim() : '';
-      const answer = text || (typeof payload.message === 'string' ? payload.message : 'No response text was returned.');
-      const firstBreak = answer.indexOf('\n');
-      const firstSentence = answer.search(/[.!?](?:\s|$)/);
-      const splitAt = firstBreak >= 0 ? firstBreak : (firstSentence >= 0 ? firstSentence + 1 : answer.length);
-      const title = answer.slice(0, splitAt).trim();
-      const body = answer.slice(splitAt).trim();
-      document.querySelector('#answer-title').textContent = title || answer;
-      document.querySelector('#answer-body').textContent = body;
-      document.querySelector('#answer-title').classList.toggle('clarification', event.kind === 'clarify');
-      const image = document.querySelector('#answer-image');
-      const imageButton = document.querySelector('#answer-image-button');
-      const grid = document.querySelector('#answer-grid');
-      if (stagedImageUrl) {
-        image.src = stagedImageUrl;
-        imageButton.hidden = false;
-        grid.classList.add('with-image');
-      } else {
-        imageButton.hidden = true;
-        grid.classList.remove('with-image');
-      }
-      const meta = document.querySelector('#answer-meta');
-      meta.replaceChildren();
-      for (const kind of activeInputKinds) {
-        const chip = document.createElement('span');
-        chip.className = 'meta-chip';
-        chip.textContent = kind === 'frame' ? 'PNG screenshot' : kind === 'audio' ? 'Voice input' : 'Text request';
-        meta.append(chip);
-      }
-      document.querySelector('#provenance').textContent = 'Demo response · ' + responseBackend;
-      document.querySelector('#answer-error').classList.remove('visible');
-      document.querySelector('#empty-state').hidden = true;
-      document.querySelector('#answer-wrap').classList.add('visible');
-      if (ttsEnabled) speak(answer);
-    }
-
-    function finishRun() {
-      runInProgress = false;
-      finalSourceId = null;
-      finalObservationSeen = false;
-      if (responseTimer) clearTimeout(responseTimer);
-      responseTimer = null;
-      document.querySelector('#processing').classList.remove('visible');
-      hasRunBefore = true;
-      setMediaControlsLocked(false);
-      updateRunButton();
-    }
-
-    function speak(text) {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      ttsUtterance = new SpeechSynthesisUtterance(text);
-      ttsUtterance.onstart = () => document.querySelector('#speak-pill').classList.add('visible');
-      ttsUtterance.onend = ttsUtterance.onerror = () => document.querySelector('#speak-pill').classList.remove('visible');
-      window.speechSynthesis.speak(ttsUtterance);
-    }
-
-    function announce(event) {
-      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-      if (typeof payload.message === 'string' && payload.message) {
-        return `${event.kind}: ${compactAnnouncement(payload.message)}`;
-      }
-      if (event.kind === 'final' && typeof payload.text === 'string' && payload.text) {
-        return `Final response: ${compactAnnouncement(payload.text)}`;
-      }
-      if (event.kind === 'clarify' && typeof payload.text === 'string' && payload.text) {
-        return `Clarification requested: ${compactAnnouncement(payload.text)}`;
-      }
-      if (event.kind === 'demo_status' && payload.connected === true) {
-        return 'Session connected.';
-      }
-      if (event.kind === 'demo_status' && payload.connected === false) {
-        return 'Session disconnected.';
-      }
-      return `${String(event.kind || 'event').replaceAll('_', ' ')} received.`;
-    }
-
-    function compactAnnouncement(value) {
-      const normalized = value.replace(/\s+/g, ' ').trim();
-      return normalized.length > maxAnnouncementChars
-        ? normalized.slice(0, maxAnnouncementChars - 3) + '...'
-        : normalized;
-    }
-
-    function messageFor(kind, payload) {
-      const sourceTimestamp = payload.timestamp ?? (
-        performance.timeOrigin / 1000 + performance.now() / 1000
-      );
-      const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
-      return JSON.stringify({ kind, timestamp: sourceTimestamp, sequence: ++eventSequence, payload: eventPayload });
-    }
-
-    function send(kind, payloadOrFactory) {
-      if (socket.readyState === WebSocket.CONNECTING) {
-        if (pendingMessages.length >= maxPendingMessages) {
-          show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The connection queue is full.' } });
-          return false;
-        }
-        const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
-        const message = messageFor(kind, payload);
-        pendingMessages.push(message);
-        show({ kind: 'demo_status', payload: { backend: 'browser/transport', queued: true } });
-        return true;
-      }
-      if (socket.readyState !== WebSocket.OPEN) {
-        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session is closed.' } });
-        return false;
-      }
-      const payload = typeof payloadOrFactory === 'function' ? payloadOrFactory() : payloadOrFactory;
-      const message = messageFor(kind, payload);
-      return sendSerialized(message);
-    }
-
-    function sendSerialized(message) {
-      try {
-        socket.send(message);
-        return true;
-      } catch {
-        show({ kind: 'demo_error', payload: { backend: 'browser/transport', message: 'The session closed before the event could be sent.' } });
-        return false;
-      }
-    }
-
-    function transcript(final) {
-      if (activeUtteranceId === null) {
-        utterance += 1;
-        activeUtteranceId = 'browser-' + utterance;
-        revision = 0;
-      } else {
-        revision += 1;
-      }
-      const result = {
-        utterance_id: activeUtteranceId,
-        revision,
-        text: document.querySelector('#text').value,
-        final
-      };
-      if (final) {
-        activeUtteranceId = null;
-        revision = 0;
-      }
-      return result;
-    }
-
-    function nextMediaId(prefix) {
-      mediaSequence += 1;
-      return prefix + '-' + mediaSequence;
-    }
-
-    function sendInterrupt(scope) {
-      return send('interrupt', () => ({
-        scope,
-        utterance_id: activeUtteranceId ?? undefined
-      }));
-    }
-
-    function bytesToBase64(bytes) {
-      let binary = '';
-      const chunkSize = 0x8000;
-      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + chunkSize));
-      }
-      return btoa(binary);
-    }
-
-    async function fileToBase64(file) {
-      return bytesToBase64(new Uint8Array(await file.arrayBuffer()));
-    }
-
-    function encodeWav(chunks, sampleRate) {
-      const sampleCount = chunks.reduce((total, chunk) => total + chunk.length, 0);
-      const buffer = new ArrayBuffer(44 + sampleCount * 2);
-      const view = new DataView(buffer);
-      const writeText = (offset, value) => {
-        for (let index = 0; index < value.length; index += 1) {
-          view.setUint8(offset + index, value.charCodeAt(index));
-        }
-      };
-      writeText(0, 'RIFF');
-      view.setUint32(4, 36 + sampleCount * 2, true);
-      writeText(8, 'WAVE');
-      writeText(12, 'fmt ');
-      view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true);
-      view.setUint16(22, 1, true);
-      view.setUint32(24, sampleRate, true);
-      view.setUint32(28, sampleRate * 2, true);
-      view.setUint16(32, 2, true);
-      view.setUint16(34, 16, true);
-      writeText(36, 'data');
-      view.setUint32(40, sampleCount * 2, true);
-      let offset = 44;
-      for (const chunk of chunks) {
-        for (const sample of chunk) {
-          const clipped = Math.max(-1, Math.min(1, sample));
-          view.setInt16(offset, clipped < 0 ? clipped * 0x8000 : clipped * 0x7fff, true);
-          offset += 2;
-        }
-      }
-      return new Uint8Array(buffer);
-    }
-
-    function setMicrophoneButtons(recording) {
-      micButton.disabled = recording;
-      stopMicButton.disabled = !recording;
-      const toggle = document.querySelector('#voice-toggle');
-      toggle.classList.toggle('recording', recording);
-      toggle.setAttribute('aria-label', recording ? 'Finish recording' : 'Start recording');
-      if (recording) {
-        microphoneStartedAt = performance.now();
-        setVoiceCaption('Recording · 00:00', 'Tap again to finish');
-        document.querySelector('#voice-tile').classList.add('is-recording');
-        microphoneTimer = window.setInterval(() => {
-          const elapsed = Math.floor((performance.now() - microphoneStartedAt) / 1000);
-          const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
-          const seconds = String(elapsed % 60).padStart(2, '0');
-          setVoiceCaption('Recording · ' + minutes + ':' + seconds, 'Tap again to finish');
-        }, 500);
-      } else {
-        clearInterval(microphoneTimer);
-        microphoneTimer = null;
-        document.querySelector('#voice-tile').classList.remove('is-recording');
-        if (!recordedWavBytes) setVoiceCaption('Tap to record', 'Or upload an existing recording');
-      }
-    }
-
-    function setVoiceCaption(title, detail) {
-      const caption = document.querySelector('#voice-caption');
-      const hint = document.createElement('small');
-      hint.textContent = detail;
-      caption.replaceChildren(document.createTextNode(title), hint);
-    }
-
-    function restartSession() {
-      if (runInProgress || document.querySelector('#voice-toggle').classList.contains('recording')) {
-        if (!window.confirm('Start a new session? This ends the current task and clears its local draft.')) return;
-      }
-      if (microphone) {
-        microphone.stream.getTracks().forEach((track) => track.stop());
-        microphone.context.close();
-        microphone = null;
-      }
-      if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
-      window.speechSynthesis?.cancel();
-      window.location.reload();
-    }
-
-    async function startMicrophone() {
-      window.speechSynthesis?.cancel();
-      document.querySelector('#speak-pill').classList.remove('visible');
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: 'This browser does not expose microphone capture.' } });
-        return;
-      }
-      let stream;
-      let context;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        context = new AudioContext();
-        if (!context.audioWorklet) {
-          throw new Error('This browser does not support AudioWorklet microphone capture.');
-        }
-        await context.audioWorklet.addModule('/recorder-worklet.js');
-        const source = context.createMediaStreamSource(stream);
-        const recorder = new AudioWorkletNode(context, 'accessflow-recorder');
-        const silentGain = context.createGain();
-        silentGain.gain.value = 0;
-        const chunks = [];
-        let microphoneSamples = 0;
-        let microphoneLimitReached = false;
-        recorder.port.onmessage = (event) => {
-          if (microphoneLimitReached || microphone?.recorder !== recorder) return;
-          const incoming = new Float32Array(event.data);
-          const remaining = maxMicrophoneSamples - microphoneSamples;
-          if (remaining <= 0) {
-            microphoneLimitReached = true;
-            void stopMicrophone('limit');
-            return;
+      function show(event) {
+        const payload =
+          event.payload && typeof event.payload === "object"
+            ? event.payload
+            : {};
+        document.querySelector("#announcements").textContent = announce(event);
+        if (
+          event.kind === "demo_status" &&
+          typeof payload.connected === "boolean"
+        ) {
+          const indicator = document.querySelector("#connection-indicator");
+          indicator.classList.toggle("connected", payload.connected);
+          indicator.classList.toggle("disconnected", !payload.connected);
+          indicator.disabled = payload.connected;
+          indicator.textContent = payload.connected ? "Connected" : "Reconnect";
+          if (!payload.connected) {
+            document.querySelector("#voice-state").textContent =
+              "Connection lost";
+            document.querySelector("#voice-help").textContent =
+              "Your text and current answer remain here. Reconnect starts a fresh session.";
+          } else if (!runInProgress && !microphone) {
+            document.querySelector("#voice-state").textContent =
+              "Ready when you are";
+            document.querySelector("#voice-help").textContent =
+              "Start a recording when you’re ready. Your microphone stays off until you choose.";
           }
-          const accepted = incoming.length <= remaining ? incoming : incoming.slice(0, remaining);
-          if (accepted.length > 0) {
-            chunks.push(accepted);
-            microphoneSamples += accepted.length;
-          }
-          if (microphoneSamples >= maxMicrophoneSamples) {
-            microphoneLimitReached = true;
-            void stopMicrophone('limit');
-          }
-        };
-        source.connect(recorder);
-        recorder.connect(silentGain);
-        silentGain.connect(context.destination);
-        microphone = { stream, context, source, recorder, silentGain, chunks, sampleRate: context.sampleRate };
-        if (document.querySelector('#audio').files[0]) {
-          document.querySelector('#audio').value = '';
-          document.querySelector('#dock-error').textContent = 'Microphone recording selected instead of the uploaded WAV.';
-          renderStagedMedia();
-          updateRunButton();
         }
-        setMicrophoneButtons(true);
-        show({ kind: 'demo_status', payload: { backend: 'browser/microphone-capture', recording: true } });
-      } catch (error) {
-        stream?.getTracks().forEach((track) => track.stop());
-        await context?.close();
-        show({ kind: 'demo_error', payload: { backend: 'browser/microphone-capture', message: error.message } });
-      }
-    }
-
-    async function stopMicrophone(reason = null) {
-      if (!microphone) return;
-      const current = microphone;
-      microphone = null;
-      current.recorder.port.close();
-      current.recorder.disconnect();
-      current.source.disconnect();
-      current.silentGain.disconnect();
-      current.stream.getTracks().forEach((track) => track.stop());
-      await current.context.close();
-      setMicrophoneButtons(false);
-      if (reason === 'limit') {
-        show({ kind: 'demo_error', payload: {
-          backend: 'browser/microphone-capture',
-          message: 'Microphone recording reached the 8 MiB limit and was stopped.'
-        } });
-      }
-      recordedWavBytes = encodeWav(current.chunks, current.sampleRate);
-      setVoiceCaption('Voice recording ready', 'It will be sent with your task');
-      renderStagedMedia();
-      updateRunButton();
-    }
-
-    function enqueueMediaAction(action) {
-      mediaSendChain = mediaSendChain.then(action, action);
-      return mediaSendChain;
-    }
-
-    function sendFile(kind, selector, fallback) {
-      const file = document.querySelector(selector).files[0];
-      const action = async () => {
-        if (!file) return false;
-        const mediaLabel = kind === 'audio' ? 'voice recording' : 'screenshot';
-        document.querySelector('#processing').lastElementChild.textContent = 'Preparing ' + mediaLabel + '…';
-        if (file.size > maxMediaBytes) {
-          show({ kind: 'demo_error', payload: {
-            backend: 'browser/media',
-            message: 'Selected media file exceeds the 8 MiB limit.'
-          } });
+        if (event.kind === "demo_status" && payload.perception_backend) {
+          const reasoner = payload.reasoner_backend;
+          responseBackend = reasoner
+            ? payload.perception_backend + " · " + reasoner
+            : payload.perception_backend;
+          document.querySelector("#answer-context").textContent =
+            modeLabel() + " · Conversation";
           return;
         }
-        try {
-          const dataBase64 = await fileToBase64(file);
-          document.querySelector('#processing').lastElementChild.textContent = 'Sending ' + mediaLabel + '…';
-          const sourceId = nextMediaId(kind === 'audio' ? 'upload-audio' : 'upload-frame');
-          latestMediaSourceId = sourceId;
-          return send(kind, () => ({
-            data_base64: dataBase64,
-            filename: file.name,
-            utterance_id: kind === 'audio' ? sourceId : undefined,
-            frame_id: kind === 'frame' ? sourceId : undefined
-          }));
-        } catch (error) {
-          show({ kind: 'demo_error', payload: { backend: 'demo/mock', message: error.message } });
+        if (event.kind === "demo_status" && payload.media_received) {
+          const kind =
+            payload.media_received === "frame"
+              ? "Screenshot"
+              : "Voice recording";
+          document.querySelector("#processing").lastElementChild.textContent =
+            kind + " received · bringing your request together…";
+          return;
         }
-      };
-      return enqueueMediaAction(action);
-    }
-
-    function canRun() {
-      return Boolean(document.querySelector('#task-text').value.trim()
-        || document.querySelector('#audio').files[0]
-        || recordedWavBytes);
-    }
-
-    function updateRunButton() {
-      const button = document.querySelector('#run-task');
-      button.disabled = !canRun() || runInProgress;
-      if (runInProgress) button.querySelector('span').textContent = 'Working…';
-      else button.querySelector('span').textContent = hasRunBefore && getDraftSignature() !== lastSubmittedSignature ? 'Run updated task' : 'Run task';
-      if (document.querySelector('#image').files[0] && !canRun()) {
-        document.querySelector('#dock-error').textContent = 'Add a text or voice request to run with this screenshot.';
+        if (event.kind === "demo_status" && payload.connected === false) {
+          document.querySelector("#answer-error").textContent =
+            "The session disconnected. Select Reconnect to start a fresh session; the current draft will reset.";
+          document.querySelector("#answer-error").classList.add("visible");
+          if (runInProgress) finishRun();
+          return;
+        }
+        if (event.kind === "demo_observation") {
+          if (payload.modality === "text" && typeof payload.text === "string") {
+            document.querySelector("#request-summary").textContent =
+              payload.text || "Text request";
+          } else if (payload.modality === "audio") {
+            const isMockAudio = String(payload.backend || "").includes("mock");
+            document.querySelector("#request-summary").textContent = isMockAudio
+              ? "Voice input received · demo/mock mode does not transcribe audio."
+              : payload.text || "Voice request received.";
+          }
+          if (payload.final === true && payload.source_id === finalSourceId) {
+            finalObservationSeen = true;
+          }
+          return;
+        }
+        if (event.kind === "final" || event.kind === "clarify") {
+          if (runInProgress && !finalObservationSeen) return;
+          renderResponse(event);
+          finishRun();
+          return;
+        }
+        if (event.kind === "error" || event.kind === "demo_error") {
+          const message =
+            typeof payload.message === "string"
+              ? payload.message
+              : "Something went wrong. You can try again.";
+          document.querySelector("#answer-error").textContent = message;
+          document.querySelector("#answer-error").classList.add("visible");
+          if (runInProgress) finishRun();
+        }
+        return;
       }
-    }
 
-    function getDraftSignature() {
-      const audio = document.querySelector('#audio').files[0];
-      const image = document.querySelector('#image').files[0];
-      return JSON.stringify([
-        document.querySelector('#task-text').value,
-        audio ? [audio.name, audio.size, audio.lastModified] : recordedWavBytes ? ['microphone', recordedWavBytes.byteLength] : null,
-        image ? [image.name, image.size, image.lastModified] : null
-      ]);
-    }
+      function renderResponse(event) {
+        const payload =
+          event.payload && typeof event.payload === "object"
+            ? event.payload
+            : {};
+        const text =
+          typeof payload.text === "string" ? payload.text.trim() : "";
+        const answer =
+          text ||
+          (typeof payload.message === "string"
+            ? payload.message
+            : "No response text was returned.");
+        const firstBreak = answer.indexOf("\n");
+        const firstSentence = answer.search(/[.!?](?:\s|$)/);
+        const splitAt =
+          firstBreak >= 0
+            ? firstBreak
+            : firstSentence >= 0
+              ? firstSentence + 1
+              : answer.length;
+        const title = answer.slice(0, splitAt).trim();
+        const body = answer.slice(splitAt).trim();
+        document.querySelector("#answer-title").textContent = title || answer;
+        document.querySelector("#answer-body").textContent = body;
+        document
+          .querySelector("#answer-title")
+          .classList.toggle("clarification", event.kind === "clarify");
+        const image = document.querySelector("#answer-image");
+        const imageButton = document.querySelector("#answer-image-button");
+        const grid = document.querySelector("#answer-grid");
+        if (stagedImageUrl) {
+          image.src = stagedImageUrl;
+          imageButton.hidden = false;
+          document.querySelector("#answer-media").hidden = false;
+          const imageCaption = document.querySelector("#answer-image-caption");
+          imageCaption.textContent = "Your uploaded photo";
+          imageCaption.hidden = false;
+          grid.classList.add("with-image");
+        } else {
+          imageButton.hidden = true;
+          document.querySelector("#answer-media").hidden = true;
+          grid.classList.remove("with-image");
+        }
+        grid.hidden = false;
+        document.querySelector("#meeting-draft").hidden = true;
+        document.querySelector("#answer-intro").hidden = true;
+        const meta = document.querySelector("#answer-meta");
+        meta.replaceChildren();
+        for (const kind of activeInputKinds) {
+          const chip = document.createElement("span");
+          chip.className = "meta-chip";
+          chip.textContent =
+            kind === "frame"
+              ? "PNG screenshot"
+              : kind === "audio"
+                ? "Voice input"
+                : "Text request";
+          meta.append(chip);
+        }
+        document.querySelector("#provenance").textContent = previewMode
+          ? "Design preview · deterministic sample content"
+          : "Demo response · " + responseBackend;
+        document.querySelector("#answer-context").textContent =
+          "Your answer · " +
+          (activeInputKinds.includes("frame")
+            ? "Uploaded image"
+            : activeInputKinds.includes("audio")
+              ? "Voice conversation"
+              : "Conversation") +
+          " · " +
+          modeLabel();
+        document.querySelector("#answer-error").classList.remove("visible");
+        document.querySelector("#empty-state").hidden = true;
+        document.querySelector("#answer-wrap").classList.add("visible");
+        if (ttsEnabled) speak(answer);
+      }
 
-    function setMediaControlsLocked(locked) {
-      document.querySelector('#choose-audio').disabled = locked;
-      document.querySelector('#voice-toggle').disabled = locked;
-      const dropZone = document.querySelector('#drop-zone');
-      dropZone.setAttribute('aria-disabled', String(locked));
-      dropZone.tabIndex = locked ? -1 : 0;
-      dropZone.inert = locked;
-    }
+      function finishRun() {
+        runInProgress = false;
+        finalSourceId = null;
+        finalObservationSeen = false;
+        if (responseTimer) clearTimeout(responseTimer);
+        responseTimer = null;
+        document.querySelector("#processing").classList.remove("visible");
+        hasRunBefore = true;
+        if (
+          !microphone &&
+          !document.querySelector("#speak-pill").classList.contains("visible")
+        ) {
+          document.querySelector("#voice-state").textContent =
+            "Ready when you are";
+          document.querySelector("#voice-help").textContent =
+            "Your microphone stays off until you choose. Type any time.";
+        }
+        setMediaControlsLocked(false);
+        updateRunButton();
+      }
 
-    function stageImage(file) {
-      if (!file || runInProgress) return;
-      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
-      if (!isPng || file.size > maxMediaBytes) {
-        document.querySelector('#dock-error').textContent = file.size > maxMediaBytes
-          ? 'That PNG is larger than 8 MiB.'
-          : 'Choose a PNG screenshot.';
-        document.querySelector('#image').value = '';
+      function speak(text) {
+        if (!("speechSynthesis" in window)) return;
+        window.speechSynthesis.cancel();
+        ttsUtterance = new SpeechSynthesisUtterance(text);
+        ttsUtterance.onstart = () => {
+          document.querySelector("#speak-pill").classList.add("visible");
+          document.querySelector("#voice-state").textContent =
+            "AccessFlow is speaking";
+          document.querySelector("#voice-help").textContent =
+            "Stop speaking is available separately from ending this conversation.";
+        };
+        ttsUtterance.onend = ttsUtterance.onerror = () => {
+          document.querySelector("#speak-pill").classList.remove("visible");
+          document.querySelector("#voice-state").textContent =
+            "Ready when you are";
+          document.querySelector("#voice-help").textContent =
+            "Your microphone stays off until you choose. Type any time.";
+        };
+        window.speechSynthesis.speak(ttsUtterance);
+      }
+
+      function announce(event) {
+        const payload =
+          event.payload && typeof event.payload === "object"
+            ? event.payload
+            : {};
+        if (typeof payload.message === "string" && payload.message) {
+          return `${event.kind}: ${compactAnnouncement(payload.message)}`;
+        }
+        if (
+          event.kind === "final" &&
+          typeof payload.text === "string" &&
+          payload.text
+        ) {
+          return `Final response: ${compactAnnouncement(payload.text)}`;
+        }
+        if (
+          event.kind === "clarify" &&
+          typeof payload.text === "string" &&
+          payload.text
+        ) {
+          return `Clarification requested: ${compactAnnouncement(payload.text)}`;
+        }
+        if (event.kind === "demo_status" && payload.connected === true) {
+          return "Session connected.";
+        }
+        if (event.kind === "demo_status" && payload.connected === false) {
+          return "Session disconnected.";
+        }
+        return `${String(event.kind || "event").replaceAll("_", " ")} received.`;
+      }
+
+      function compactAnnouncement(value) {
+        const normalized = value.replace(/\s+/g, " ").trim();
+        return normalized.length > maxAnnouncementChars
+          ? normalized.slice(0, maxAnnouncementChars - 3) + "..."
+          : normalized;
+      }
+
+      function messageFor(kind, payload) {
+        const sourceTimestamp =
+          payload.timestamp ??
+          performance.timeOrigin / 1000 + performance.now() / 1000;
+        const { timestamp: _payloadTimestamp, ...eventPayload } = payload;
+        return JSON.stringify({
+          kind,
+          timestamp: sourceTimestamp,
+          sequence: ++eventSequence,
+          payload: eventPayload,
+        });
+      }
+
+      function send(kind, payloadOrFactory) {
+        if (previewMode || !socket) {
+          show({
+            kind: "demo_error",
+            payload: {
+              backend: "design-preview",
+              message:
+                "This deterministic preview is read-only. Open the page without ?preview=1 to start a conversation.",
+            },
+          });
+          return false;
+        }
+        if (socket.readyState === WebSocket.CONNECTING) {
+          if (pendingMessages.length >= maxPendingMessages) {
+            show({
+              kind: "demo_error",
+              payload: {
+                backend: "browser/transport",
+                message: "The connection queue is full.",
+              },
+            });
+            return false;
+          }
+          const payload =
+            typeof payloadOrFactory === "function"
+              ? payloadOrFactory()
+              : payloadOrFactory;
+          const message = messageFor(kind, payload);
+          pendingMessages.push(message);
+          show({
+            kind: "demo_status",
+            payload: { backend: "browser/transport", queued: true },
+          });
+          return true;
+        }
+        if (socket.readyState !== WebSocket.OPEN) {
+          show({
+            kind: "demo_error",
+            payload: {
+              backend: "browser/transport",
+              message: "The session is closed.",
+            },
+          });
+          return false;
+        }
+        const payload =
+          typeof payloadOrFactory === "function"
+            ? payloadOrFactory()
+            : payloadOrFactory;
+        const message = messageFor(kind, payload);
+        return sendSerialized(message);
+      }
+
+      function sendSerialized(message) {
+        try {
+          socket.send(message);
+          return true;
+        } catch {
+          show({
+            kind: "demo_error",
+            payload: {
+              backend: "browser/transport",
+              message: "The session closed before the event could be sent.",
+            },
+          });
+          return false;
+        }
+      }
+
+      function transcript(final) {
+        if (activeUtteranceId === null) {
+          utterance += 1;
+          activeUtteranceId = "browser-" + utterance;
+          revision = 0;
+        } else {
+          revision += 1;
+        }
+        const result = {
+          utterance_id: activeUtteranceId,
+          revision,
+          text: document.querySelector("#text").value,
+          final,
+        };
+        if (final) {
+          activeUtteranceId = null;
+          revision = 0;
+        }
+        return result;
+      }
+
+      function nextMediaId(prefix) {
+        mediaSequence += 1;
+        return prefix + "-" + mediaSequence;
+      }
+
+      function sendInterrupt(scope) {
+        return send("interrupt", () => ({
+          scope,
+          utterance_id: activeUtteranceId ?? undefined,
+        }));
+      }
+
+      function bytesToBase64(bytes) {
+        let binary = "";
+        const chunkSize = 0x8000;
+        for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+          binary += String.fromCharCode.apply(
+            null,
+            bytes.subarray(offset, offset + chunkSize),
+          );
+        }
+        return btoa(binary);
+      }
+
+      async function fileToBase64(file) {
+        return bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+      }
+
+      function encodeWav(chunks, sampleRate) {
+        const sampleCount = chunks.reduce(
+          (total, chunk) => total + chunk.length,
+          0,
+        );
+        const buffer = new ArrayBuffer(44 + sampleCount * 2);
+        const view = new DataView(buffer);
+        const writeText = (offset, value) => {
+          for (let index = 0; index < value.length; index += 1) {
+            view.setUint8(offset + index, value.charCodeAt(index));
+          }
+        };
+        writeText(0, "RIFF");
+        view.setUint32(4, 36 + sampleCount * 2, true);
+        writeText(8, "WAVE");
+        writeText(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeText(36, "data");
+        view.setUint32(40, sampleCount * 2, true);
+        let offset = 44;
+        for (const chunk of chunks) {
+          for (const sample of chunk) {
+            const clipped = Math.max(-1, Math.min(1, sample));
+            view.setInt16(
+              offset,
+              clipped < 0 ? clipped * 0x8000 : clipped * 0x7fff,
+              true,
+            );
+            offset += 2;
+          }
+        }
+        return new Uint8Array(buffer);
+      }
+
+      function setMicrophoneButtons(recording) {
+        micButton.disabled = recording;
+        stopMicButton.disabled = !recording;
+        const toggle = document.querySelector("#voice-toggle");
+        toggle.classList.toggle("recording", recording);
+        toggle.setAttribute(
+          "aria-label",
+          recording ? "Finish recording and send" : "Start voice recording",
+        );
+        toggle.lastElementChild.textContent = recording
+          ? "Finish & send"
+          : "Start voice";
+        if (recording) {
+          microphoneStartedAt = performance.now();
+          setVoiceCaption("Recording · 00:00", "Tap again to finish");
+          document.querySelector("#voice-state").textContent = "Recording";
+          document.querySelector("#voice-help").textContent =
+            "Your voice stays on this device until you finish the recording.";
+          document.querySelector("#voice-tile").classList.add("is-recording");
+          microphoneTimer = window.setInterval(() => {
+            const elapsed = Math.floor(
+              (performance.now() - microphoneStartedAt) / 1000,
+            );
+            const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+            const seconds = String(elapsed % 60).padStart(2, "0");
+            setVoiceCaption(
+              "Recording · " + minutes + ":" + seconds,
+              "Tap again to finish",
+            );
+          }, 500);
+        } else {
+          clearInterval(microphoneTimer);
+          microphoneTimer = null;
+          document
+            .querySelector("#voice-tile")
+            .classList.remove("is-recording");
+          document
+            .querySelectorAll("#voice-waveform span")
+            .forEach((bar) => bar.style.removeProperty("--energy"));
+          if (!recordedWavBytes) {
+            setVoiceCaption(
+              "Tap to speak",
+              "Recording is sent when you finish",
+            );
+            document.querySelector("#voice-state").textContent =
+              "Ready when you are";
+            document.querySelector("#voice-help").textContent =
+              "Start a recording when you’re ready. Your microphone stays off until you choose.";
+          }
+        }
+      }
+
+      function setVoiceCaption(title, detail) {
+        const caption = document.querySelector("#voice-caption");
+        const hint = document.createElement("small");
+        hint.textContent = detail;
+        caption.replaceChildren(document.createTextNode(title), hint);
+      }
+
+      function restartSession() {
+        if (
+          runInProgress ||
+          document
+            .querySelector("#voice-toggle")
+            .classList.contains("recording")
+        ) {
+          if (
+            !window.confirm(
+              "Start a new session? This ends the current task and clears its local draft.",
+            )
+          )
+            return;
+        }
+        if (microphone) {
+          microphone.stream.getTracks().forEach((track) => track.stop());
+          microphone.context.close();
+          microphone = null;
+        }
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
-        stagedImageUrl = null;
-        document.querySelector('#answer-image').hidden = true;
-        document.querySelector('#answer-grid').classList.remove('with-image');
+        window.speechSynthesis?.cancel();
+        window.location.reload();
+      }
+
+      async function startMicrophone() {
+        if (document.querySelector("#speak-pill").classList.contains("visible"))
+          sendInterrupt("speech");
+        window.speechSynthesis?.cancel();
+        document.querySelector("#speak-pill").classList.remove("visible");
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          document.querySelector("#voice-state").textContent =
+            "Microphone unavailable";
+          document.querySelector("#voice-help").textContent =
+            "You can still type a message or upload a WAV recording.";
+          show({
+            kind: "demo_error",
+            payload: {
+              backend: "demo/mock",
+              message: "This browser does not expose microphone capture.",
+            },
+          });
+          return;
+        }
+        let stream;
+        let context;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          context = new AudioContext();
+          if (!context.audioWorklet) {
+            throw new Error(
+              "This browser does not support AudioWorklet microphone capture.",
+            );
+          }
+          await context.audioWorklet.addModule("/recorder-worklet.js");
+          const source = context.createMediaStreamSource(stream);
+          const recorder = new AudioWorkletNode(context, "accessflow-recorder");
+          const silentGain = context.createGain();
+          silentGain.gain.value = 0;
+          const chunks = [];
+          let microphoneSamples = 0;
+          let microphoneLimitReached = false;
+          let smoothedEnergy = 0;
+          recorder.port.onmessage = (event) => {
+            if (microphoneLimitReached || microphone?.recorder !== recorder)
+              return;
+            const incoming = new Float32Array(event.data);
+            const remaining = maxMicrophoneSamples - microphoneSamples;
+            if (remaining <= 0) {
+              microphoneLimitReached = true;
+              void stopMicrophone("limit");
+              return;
+            }
+            const accepted =
+              incoming.length <= remaining
+                ? incoming
+                : incoming.slice(0, remaining);
+            if (accepted.length > 0) {
+              chunks.push(accepted);
+              microphoneSamples += accepted.length;
+              let energy = 0;
+              for (let index = 0; index < accepted.length; index += 1)
+                energy += accepted[index] * accepted[index];
+              const rms = Math.sqrt(energy / accepted.length);
+              smoothedEnergy = smoothedEnergy * 0.72 + rms * 0.28;
+              document
+                .querySelectorAll("#voice-waveform span")
+                .forEach((bar, index) => {
+                  const variation = 0.74 + ((index * 7) % 11) / 18;
+                  const height = Math.max(
+                    0.12,
+                    Math.min(1, 0.1 + smoothedEnergy * 7.5 * variation),
+                  );
+                  bar.style.setProperty("--energy", height.toFixed(2));
+                });
+            }
+            if (microphoneSamples >= maxMicrophoneSamples) {
+              microphoneLimitReached = true;
+              void stopMicrophone("limit");
+            }
+          };
+          source.connect(recorder);
+          recorder.connect(silentGain);
+          silentGain.connect(context.destination);
+          microphone = {
+            stream,
+            context,
+            source,
+            recorder,
+            silentGain,
+            chunks,
+            sampleRate: context.sampleRate,
+          };
+          if (document.querySelector("#audio").files[0]) {
+            document.querySelector("#audio").value = "";
+            document.querySelector("#dock-error").textContent =
+              "Microphone recording selected instead of the uploaded WAV.";
+            renderStagedMedia();
+            updateRunButton();
+          }
+          setMicrophoneButtons(true);
+          show({
+            kind: "demo_status",
+            payload: { backend: "browser/microphone-capture", recording: true },
+          });
+        } catch (error) {
+          stream?.getTracks().forEach((track) => track.stop());
+          await context?.close();
+          document.querySelector("#voice-state").textContent =
+            "Microphone not started";
+          document.querySelector("#voice-help").textContent =
+            "Check your browser permission, or continue by typing.";
+          setVoiceCaption(
+            "Microphone not started",
+            "Text input remains available",
+          );
+          show({
+            kind: "demo_error",
+            payload: {
+              backend: "browser/microphone-capture",
+              message: error.message,
+            },
+          });
+        }
+      }
+
+      async function stopMicrophone(reason = null) {
+        if (!microphone) return;
+        const current = microphone;
+        microphone = null;
+        current.recorder.port.close();
+        current.recorder.disconnect();
+        current.source.disconnect();
+        current.silentGain.disconnect();
+        current.stream.getTracks().forEach((track) => track.stop());
+        await current.context.close();
+        setMicrophoneButtons(false);
+        if (reason === "limit") {
+          show({
+            kind: "demo_error",
+            payload: {
+              backend: "browser/microphone-capture",
+              message:
+                "Microphone recording reached the 8 MiB limit and was stopped.",
+            },
+          });
+        }
+        recordedWavBytes = encodeWav(current.chunks, current.sampleRate);
+        setVoiceCaption("Recording finished", "Sending your voice request now");
+        document.querySelector("#voice-state").textContent =
+          "Sending your recording";
+        document.querySelector("#voice-help").textContent =
+          "The recording uploads after capture ends; it is not streamed live.";
         renderStagedMedia();
         updateRunButton();
-        return;
       }
-      if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
-      stagedImageUrl = URL.createObjectURL(file);
-      document.querySelector('#answer-image-button').hidden = true;
-      document.querySelector('#answer-grid').classList.remove('with-image');
-      document.querySelector('#dock-error').textContent = '';
-      renderStagedMedia();
-      updateRunButton();
-    }
 
-    function renderStagedMedia() {
-      const list = document.querySelector('#staged-list');
-      list.replaceChildren();
-      const audioFile = document.querySelector('#audio').files[0];
-      if (audioFile || recordedWavBytes) {
-        const row = document.createElement('div');
-        row.className = 'staged-item';
-        const icon = document.createElement('span');
-        icon.className = 'staged-audio-icon';
-        icon.textContent = '♫';
-        const copy = document.createElement('span');
-        copy.className = 'staged-copy';
-        const name = document.createElement('span');
-        name.className = 'staged-name';
-        name.textContent = audioFile ? audioFile.name : 'Microphone recording.wav';
-        const size = document.createElement('span');
-        size.className = 'staged-size';
-        size.textContent = formatBytes(audioFile ? audioFile.size : recordedWavBytes.byteLength) + ' · staged locally';
-        copy.append(name, size);
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'remove-media';
-        remove.disabled = runInProgress;
-        remove.setAttribute('aria-label', 'Remove voice recording');
-        remove.textContent = '×';
-        remove.onclick = () => {
-          document.querySelector('#audio').value = '';
-          recordedWavBytes = null;
-          setVoiceCaption('Tap to record', 'Or upload an existing recording');
-          renderStagedMedia();
-          updateRunButton();
-        };
-        row.append(icon, copy, remove);
-        list.append(row);
+      function enqueueMediaAction(action) {
+        mediaSendChain = mediaSendChain.then(action, action);
+        return mediaSendChain;
       }
-      const imageFile = document.querySelector('#image').files[0];
-      if (imageFile && stagedImageUrl) {
-        const row = document.createElement('div');
-        row.className = 'staged-item';
-        const thumb = document.createElement('img');
-        thumb.className = 'staged-thumb';
-        thumb.src = stagedImageUrl;
-        thumb.alt = '';
-        const copy = document.createElement('span');
-        copy.className = 'staged-copy';
-        const name = document.createElement('span');
-        name.className = 'staged-name';
-        name.textContent = imageFile.name;
-        const size = document.createElement('span');
-        size.className = 'staged-size';
-        size.textContent = formatBytes(imageFile.size) + ' · staged locally';
-        copy.append(name, size);
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'remove-media';
-        remove.disabled = runInProgress;
-        remove.setAttribute('aria-label', 'Remove screenshot');
-        remove.textContent = '×';
-        remove.onclick = () => {
-          document.querySelector('#image').value = '';
-          URL.revokeObjectURL(stagedImageUrl);
+
+      function sendFile(kind, selector, fallback) {
+        const file = document.querySelector(selector).files[0];
+        const action = async () => {
+          if (!file) return false;
+          const mediaLabel =
+            kind === "audio" ? "voice recording" : "screenshot";
+          document.querySelector("#processing").lastElementChild.textContent =
+            "Preparing " + mediaLabel + "…";
+          if (file.size > maxMediaBytes) {
+            show({
+              kind: "demo_error",
+              payload: {
+                backend: "browser/media",
+                message: "Selected media file exceeds the 8 MiB limit.",
+              },
+            });
+            return;
+          }
+          try {
+            const dataBase64 = await fileToBase64(file);
+            document.querySelector("#processing").lastElementChild.textContent =
+              "Sending " + mediaLabel + "…";
+            const sourceId = nextMediaId(
+              kind === "audio" ? "upload-audio" : "upload-frame",
+            );
+            latestMediaSourceId = sourceId;
+            return send(kind, () => ({
+              data_base64: dataBase64,
+              filename: file.name,
+              utterance_id: kind === "audio" ? sourceId : undefined,
+              frame_id: kind === "frame" ? sourceId : undefined,
+            }));
+          } catch (error) {
+            show({
+              kind: "demo_error",
+              payload: { backend: "demo/mock", message: error.message },
+            });
+          }
+        };
+        return enqueueMediaAction(action);
+      }
+
+      function canRun() {
+        return Boolean(
+          document.querySelector("#task-text").value.trim() ||
+            document.querySelector("#audio").files[0] ||
+            recordedWavBytes,
+        );
+      }
+
+      function updateRunButton() {
+        const button = document.querySelector("#run-task");
+        const hasAttachment = Boolean(
+          document.querySelector("#audio").files[0] ||
+            recordedWavBytes ||
+            document.querySelector("#image").files[0],
+        );
+        const available = hasAttachment && canRun() && !runInProgress;
+        button.hidden = !available;
+        button.classList.toggle("available", available);
+        button.disabled = !available;
+        if (runInProgress)
+          button.querySelector("span").textContent = "Sending…";
+        else
+          button.querySelector("span").textContent =
+            hasRunBefore && getDraftSignature() !== lastSubmittedSignature
+              ? "Send updated request"
+              : "Send with attachment";
+        if (document.querySelector("#image").files[0] && !canRun()) {
+          document.querySelector("#dock-error").textContent =
+            "Add a text or voice request to run with this screenshot.";
+        }
+      }
+
+      function getDraftSignature() {
+        const audio = document.querySelector("#audio").files[0];
+        const image = document.querySelector("#image").files[0];
+        return JSON.stringify([
+          document.querySelector("#task-text").value,
+          audio
+            ? [audio.name, audio.size, audio.lastModified]
+            : recordedWavBytes
+              ? ["microphone", recordedWavBytes.byteLength]
+              : null,
+          image ? [image.name, image.size, image.lastModified] : null,
+        ]);
+      }
+
+      function setMediaControlsLocked(locked) {
+        document.querySelector("#choose-audio").disabled = locked;
+        document.querySelector("#voice-toggle").disabled = locked;
+        document.querySelector("#voice-toggle").disabled = locked;
+        const dropZone = document.querySelector("#drop-zone");
+        dropZone.setAttribute("aria-disabled", String(locked));
+        dropZone.tabIndex = locked ? -1 : 0;
+        dropZone.inert = locked;
+      }
+
+      function stageImage(file) {
+        if (!file || runInProgress) return;
+        const isPng =
+          file.type === "image/png" || file.name.toLowerCase().endsWith(".png");
+        if (!isPng || file.size > maxMediaBytes) {
+          document.querySelector("#dock-error").textContent =
+            file.size > maxMediaBytes
+              ? "That PNG is larger than 8 MiB."
+              : "Choose a PNG screenshot.";
+          document.querySelector("#image").value = "";
+          if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
           stagedImageUrl = null;
-          document.querySelector('#answer-image-button').hidden = true;
-          document.querySelector('#answer-grid').classList.remove('with-image');
+          document.querySelector("#answer-image").hidden = true;
+          document.querySelector("#answer-grid").classList.remove("with-image");
           renderStagedMedia();
           updateRunButton();
-        };
-        row.append(thumb, copy, remove);
-        list.append(row);
+          return;
+        }
+        if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+        stagedImageUrl = URL.createObjectURL(file);
+        document.querySelector("#answer-image-button").hidden = true;
+        document.querySelector("#answer-grid").classList.remove("with-image");
+        document.querySelector("#dock-error").textContent = "";
+        renderStagedMedia();
+        updateRunButton();
       }
-    }
 
-    function formatBytes(bytes) {
-      return bytes < 1024 * 1024
-        ? Math.max(1, Math.round(bytes / 1024)) + ' KB'
-        : (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-
-    async function runTask() {
-      if (runInProgress) return;
-      const text = document.querySelector('#task-text').value.trim();
-      const audioFile = document.querySelector('#audio').files[0];
-      const imageFile = document.querySelector('#image').files[0];
-      if (!text && !audioFile && !recordedWavBytes) {
-        document.querySelector('#dock-error').textContent = 'Add a text or voice request before running your task.';
-        return;
+      function renderStagedMedia() {
+        const list = document.querySelector("#staged-list");
+        list.replaceChildren();
+        const audioFile = document.querySelector("#audio").files[0];
+        if (audioFile || recordedWavBytes) {
+          const row = document.createElement("div");
+          row.className = "staged-item";
+          const icon = document.createElement("span");
+          icon.className = "staged-audio-icon";
+          icon.textContent = "♫";
+          const copy = document.createElement("span");
+          copy.className = "staged-copy";
+          const name = document.createElement("span");
+          name.className = "staged-name";
+          name.textContent = audioFile
+            ? audioFile.name
+            : "Microphone recording.wav";
+          const size = document.createElement("span");
+          size.className = "staged-size";
+          size.textContent =
+            formatBytes(
+              audioFile ? audioFile.size : recordedWavBytes.byteLength,
+            ) + " · staged locally";
+          copy.append(name, size);
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "remove-media";
+          remove.disabled = runInProgress;
+          remove.setAttribute("aria-label", "Remove voice recording");
+          remove.textContent = "×";
+          remove.onclick = () => {
+            document.querySelector("#audio").value = "";
+            recordedWavBytes = null;
+            setVoiceCaption("Tap to record", "Or upload an existing recording");
+            renderStagedMedia();
+            updateRunButton();
+          };
+          row.append(icon, copy, remove);
+          list.append(row);
+        }
+        const imageFile = document.querySelector("#image").files[0];
+        if (imageFile && stagedImageUrl) {
+          const row = document.createElement("div");
+          row.className = "staged-item";
+          const thumb = document.createElement("img");
+          thumb.className = "staged-thumb";
+          thumb.src = stagedImageUrl;
+          thumb.alt = "";
+          const copy = document.createElement("span");
+          copy.className = "staged-copy";
+          const name = document.createElement("span");
+          name.className = "staged-name";
+          name.textContent = imageFile.name;
+          const size = document.createElement("span");
+          size.className = "staged-size";
+          size.textContent = formatBytes(imageFile.size) + " · staged locally";
+          copy.append(name, size);
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "remove-media";
+          remove.disabled = runInProgress;
+          remove.setAttribute("aria-label", "Remove screenshot");
+          remove.textContent = "×";
+          remove.onclick = () => {
+            document.querySelector("#image").value = "";
+            URL.revokeObjectURL(stagedImageUrl);
+            stagedImageUrl = null;
+            document.querySelector("#answer-image-button").hidden = true;
+            document
+              .querySelector("#answer-grid")
+              .classList.remove("with-image");
+            renderStagedMedia();
+            updateRunButton();
+          };
+          row.append(thumb, copy, remove);
+          list.append(row);
+        }
       }
-      clearTimeout(draftTimer);
-      draftTimer = null;
-      runInProgress = true;
-      finalObservationSeen = false;
-      finalSourceId = null;
-      activeInputKinds = [];
-      document.querySelector('#answer-error').classList.remove('visible');
-      document.querySelector('#processing').classList.add('visible');
-      document.querySelector('#processing').lastElementChild.textContent = 'Bringing your request together…';
-      document.querySelector('#run-task').disabled = true;
-      document.querySelector('#run-task').querySelector('span').textContent = 'Working…';
-      document.querySelector('#empty-state').hidden = true;
-      setMediaControlsLocked(true);
-      lastSubmittedSignature = getDraftSignature();
-      document.querySelector('#request-summary').textContent = text || (audioFile || recordedWavBytes ? 'Voice request · listening for the details' : 'Preparing your request…');
-      try {
-        if (recordedWavBytes) {
-          const sourceId = nextMediaId('mic-audio');
-          latestMediaSourceId = sourceId;
-          const sent = await enqueueMediaAction(() => send('audio', {
-            data_base64: bytesToBase64(recordedWavBytes),
-            filename: 'browser-microphone.wav',
-            utterance_id: sourceId
-          }));
-          if (!sent) throw new Error('The voice recording could not be sent.');
-          finalSourceId = sourceId;
-          activeInputKinds.push('audio');
-        } else if (audioFile) {
-          latestMediaSourceId = null;
-          const sent = await sendFile('audio', '#audio');
-          if (!sent) throw new Error('The WAV could not be sent.');
-          finalSourceId = latestMediaSourceId;
-          activeInputKinds.push('audio');
+
+      function formatBytes(bytes) {
+        return bytes < 1024 * 1024
+          ? Math.max(1, Math.round(bytes / 1024)) + " KB"
+          : (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      async function runTask() {
+        if (runInProgress) return;
+        const text = document.querySelector("#task-text").value.trim();
+        const audioFile = document.querySelector("#audio").files[0];
+        const imageFile = document.querySelector("#image").files[0];
+        if (!text && !audioFile && !recordedWavBytes) {
+          document.querySelector("#dock-error").textContent =
+            "Add a text or voice request before running your task.";
+          return;
         }
-        if (imageFile) {
-          latestMediaSourceId = null;
-          const sent = await sendFile('frame', '#image');
-          if (!sent) throw new Error('The screenshot could not be sent.');
-          if (!text) finalSourceId = latestMediaSourceId;
-          activeInputKinds.push('frame');
-        }
-        if (text) {
-          document.querySelector('#text').value = text;
-          const finalTranscript = transcript(true);
-          finalSourceId = finalTranscript.utterance_id;
-          const sent = send('transcript', finalTranscript);
-          if (!sent) throw new Error('Your request could not be sent.');
-          activeInputKinds.push('text');
-          document.querySelector('#request-summary').textContent = text;
-        }
-        if (!finalSourceId) throw new Error('No request could be sent. Check your connection and try again.');
-        responseTimer = window.setTimeout(() => {
-          if (!runInProgress) return;
-          document.querySelector('#answer-error').textContent = 'This is taking longer than expected. Your session is still open; you can try again.';
-          document.querySelector('#answer-error').classList.add('visible');
+        clearTimeout(draftTimer);
+        draftTimer = null;
+        runInProgress = true;
+        finalObservationSeen = false;
+        finalSourceId = null;
+        activeInputKinds = [];
+        document.querySelector("#answer-error").classList.remove("visible");
+        document.querySelector("#processing").classList.add("visible");
+        document.querySelector("#processing").lastElementChild.textContent =
+          "Bringing your request together…";
+        document.querySelector("#voice-state").textContent = "Thinking";
+        document.querySelector("#voice-help").textContent =
+          "Your request is with AccessFlow. You can continue typing while it works.";
+        document.querySelector("#run-task").disabled = true;
+        document.querySelector("#run-task").querySelector("span").textContent =
+          "Working…";
+        document.querySelector("#empty-state").hidden = true;
+        setMediaControlsLocked(true);
+        lastSubmittedSignature = getDraftSignature();
+        document.querySelector("#request-summary").textContent =
+          text ||
+          (audioFile || recordedWavBytes
+            ? "Voice request · listening for the details"
+            : "Preparing your request…");
+        try {
+          if (recordedWavBytes) {
+            const sourceId = nextMediaId("mic-audio");
+            latestMediaSourceId = sourceId;
+            const sent = await enqueueMediaAction(() =>
+              send("audio", {
+                data_base64: bytesToBase64(recordedWavBytes),
+                filename: "browser-microphone.wav",
+                utterance_id: sourceId,
+              }),
+            );
+            if (!sent)
+              throw new Error("The voice recording could not be sent.");
+            finalSourceId = sourceId;
+            activeInputKinds.push("audio");
+          } else if (audioFile) {
+            latestMediaSourceId = null;
+            const sent = await sendFile("audio", "#audio");
+            if (!sent) throw new Error("The WAV could not be sent.");
+            finalSourceId = latestMediaSourceId;
+            activeInputKinds.push("audio");
+          }
+          if (imageFile) {
+            latestMediaSourceId = null;
+            const sent = await sendFile("frame", "#image");
+            if (!sent) throw new Error("The screenshot could not be sent.");
+            if (!text) finalSourceId = latestMediaSourceId;
+            activeInputKinds.push("frame");
+          }
+          if (text) {
+            document.querySelector("#text").value = text;
+            const finalTranscript = transcript(true);
+            finalSourceId = finalTranscript.utterance_id;
+            const sent = send("transcript", finalTranscript);
+            if (!sent) throw new Error("Your request could not be sent.");
+            activeInputKinds.push("text");
+            document.querySelector("#request-summary").textContent = text;
+          }
+          if (!finalSourceId)
+            throw new Error(
+              "No request could be sent. Check your connection and try again.",
+            );
+          responseTimer = window.setTimeout(() => {
+            if (!runInProgress) return;
+            document.querySelector("#answer-error").textContent =
+              "This is taking longer than expected. Your session is still open; you can try again.";
+            document.querySelector("#answer-error").classList.add("visible");
+            finishRun();
+          }, 90000);
+        } catch (error) {
+          document.querySelector("#answer-error").textContent =
+            error.message || "Your request could not be sent.";
+          document.querySelector("#answer-error").classList.add("visible");
+          lastSubmittedSignature = null;
           finishRun();
-        }, 90000);
-      } catch (error) {
-        document.querySelector('#answer-error').textContent = error.message || 'Your request could not be sent.';
-        document.querySelector('#answer-error').classList.add('visible');
-        lastSubmittedSignature = null;
-        finishRun();
-      }
-    }
-
-    function openImagePreview() {
-      if (!stagedImageUrl) return;
-      const dialog = document.querySelector('#image-dialog');
-      document.querySelector('#dialog-image').src = stagedImageUrl;
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-    }
-
-    socket.onmessage = (message) => show(JSON.parse(message.data));
-    socket.onopen = () => {
-      let drained = true;
-      while (pendingMessages.length && socket.readyState === WebSocket.OPEN) {
-        if (!sendSerialized(pendingMessages.shift())) {
-          pendingMessages.length = 0;
-          drained = false;
         }
       }
-      if (drained) {
-        show({ kind: 'demo_status', payload: { connected: true } });
-      }
-    };
-    socket.onclose = () => {
-      pendingMessages.length = 0;
-      show({ kind: 'demo_status', payload: { connected: false } });
-    };
-    socket.onerror = () => show({ kind: 'demo_status', payload: { backend: 'demo/mock', connected: false } });
 
-    document.querySelector('#text-form').onsubmit = (event) => {
-      event.preventDefault();
-      send('transcript', () => transcript(true));
-    };
-    micButton.onclick = () => void startMicrophone();
-    stopMicButton.onclick = () => void stopMicrophone();
-    document.querySelector('#new-task').onclick = restartSession;
-    document.querySelector('#stop-speaking').onclick = () => {
-      window.speechSynthesis?.cancel();
-      document.querySelector('#speak-pill').classList.remove('visible');
-      sendInterrupt('speech');
-    };
-    document.querySelector('#tts-toggle').onchange = (event) => {
-      ttsEnabled = event.target.checked;
-      if (!ttsEnabled) {
-        if (document.querySelector('#speak-pill').classList.contains('visible')) sendInterrupt('speech');
-        window.speechSynthesis?.cancel();
-        document.querySelector('#speak-pill').classList.remove('visible');
+      function openImagePreview() {
+        if (!stagedImageUrl) return;
+        const dialog = document.querySelector("#image-dialog");
+        document.querySelector("#dialog-image").src = stagedImageUrl;
+        if (typeof dialog.showModal === "function") dialog.showModal();
       }
-    };
-    if (!('speechSynthesis' in window)) {
-      document.querySelector('#tts-toggle').disabled = true;
-      document.querySelector('.tts-control span').textContent = 'Read aloud unavailable';
-    }
-    document.querySelector('#voice-toggle').onclick = () => {
-      if (microphone) void stopMicrophone();
-      else void startMicrophone();
-    };
-    document.querySelector('#choose-audio').onclick = () => document.querySelector('#audio').click();
-    document.querySelector('#audio').onchange = () => {
-      const file = document.querySelector('#audio').files[0];
-      if (!file) return;
-      if (file.size > maxMediaBytes || (!file.name.toLowerCase().endsWith('.wav') && !['audio/wav', 'audio/x-wav'].includes(file.type))) {
-        document.querySelector('#dock-error').textContent = file.size > maxMediaBytes ? 'That WAV is larger than 8 MiB.' : 'Choose a WAV audio file.';
-        document.querySelector('#audio').value = '';
-        return;
+
+      if (socket) {
+        socket.onmessage = (message) => show(JSON.parse(message.data));
+        socket.onopen = () => {
+          let drained = true;
+          while (
+            pendingMessages.length &&
+            socket.readyState === WebSocket.OPEN
+          ) {
+            if (!sendSerialized(pendingMessages.shift())) {
+              pendingMessages.length = 0;
+              drained = false;
+            }
+          }
+          if (drained) {
+            show({ kind: "demo_status", payload: { connected: true } });
+          }
+        };
+        socket.onclose = () => {
+          pendingMessages.length = 0;
+          show({ kind: "demo_status", payload: { connected: false } });
+        };
+        socket.onerror = () =>
+          show({
+            kind: "demo_status",
+            payload: { backend: "demo/mock", connected: false },
+          });
       }
-      recordedWavBytes = null;
-      setVoiceCaption('WAV ready', 'It will be sent with your task');
-      document.querySelector('#dock-error').textContent = '';
-      renderStagedMedia();
-      updateRunButton();
-    };
-    document.querySelector('#drop-zone').onclick = () => {
-      if (!runInProgress) document.querySelector('#image').click();
-    };
-    document.querySelector('#drop-zone').onkeydown = (event) => {
-      if (runInProgress) return;
-      if (event.key === 'Enter' || event.key === ' ') {
+
+      document.querySelector("#text-form").onsubmit = (event) => {
         event.preventDefault();
-        document.querySelector('#image').click();
-      }
-    };
-    document.querySelector('#image').onchange = () => stageImage(document.querySelector('#image').files[0]);
-    const dropZone = document.querySelector('#drop-zone');
-    for (const eventName of ['dragenter', 'dragover']) dropZone.addEventListener(eventName, (event) => {
-      if (runInProgress) return;
-      event.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-    for (const eventName of ['dragleave', 'drop']) dropZone.addEventListener(eventName, (event) => {
-      event.preventDefault();
-      dropZone.classList.remove('dragover');
-    });
-    dropZone.addEventListener('drop', (event) => {
-      if (runInProgress) return;
-      stageImage(event.dataTransfer.files[0]);
-    });
-    document.querySelector('#task-text').oninput = (event) => {
-      const value = event.target.value;
-      document.querySelector('#text').value = value;
-      document.querySelector('#char-count').textContent = value.length.toLocaleString() + ' / 16,384';
-      document.querySelector('#dock-error').textContent = '';
-      updateRunButton();
-      clearTimeout(draftTimer);
-      if (value.trim() && !runInProgress) {
-        draftTimer = window.setTimeout(() => send('transcript', () => transcript(false)), 600);
-      }
-    };
-    document.querySelector('#run-task').onclick = () => void runTask();
-    document.querySelector('#follow-form').onsubmit = (event) => {
-      event.preventDefault();
-      const followup = document.querySelector('#follow-input').value.trim();
-      if (!followup) return;
-      document.querySelector('#task-text').value = followup;
-      document.querySelector('#text').value = followup;
-      document.querySelector('#follow-input').value = '';
-      document.querySelector('#task-text').dispatchEvent(new Event('input', { bubbles: true }));
-      void runTask();
-    };
-    document.querySelectorAll('.prompt-chip').forEach((chip) => {
-      chip.onclick = () => {
-        const input = document.querySelector('#follow-input');
-        input.value = chip.textContent;
-        input.focus();
+        send("transcript", () => transcript(true));
       };
-    });
-    document.querySelector('#answer-image-button').onclick = openImagePreview;
-    document.querySelector('#connection-indicator').onclick = restartSession;
-    document.querySelector('#close-image-dialog').onclick = () => document.querySelector('#image-dialog').close();
-    document.querySelector('#image-dialog').addEventListener('click', (event) => {
-      if (event.target === event.currentTarget) event.currentTarget.close();
-    });
-    window.addEventListener('beforeunload', () => {
-      clearTimeout(draftTimer);
-      clearInterval(microphoneTimer);
-      window.speechSynthesis?.cancel();
-      microphone?.stream.getTracks().forEach((track) => track.stop());
-      if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
-    });
-  </script>
-</body>
+      micButton.onclick = () => void startMicrophone();
+      stopMicButton.onclick = () => void stopMicrophone();
+      document.querySelector("#new-task").onclick = restartSession;
+      document.querySelector("#stop-speaking").onclick = () => {
+        window.speechSynthesis?.cancel();
+        document.querySelector("#speak-pill").classList.remove("visible");
+        sendInterrupt("speech");
+        document.querySelector("#voice-state").textContent =
+          "Ready when you are";
+        document.querySelector("#voice-help").textContent =
+          "Playback stopped. Your conversation is still open.";
+      };
+      document.querySelector("#tts-toggle").onchange = (event) => {
+        ttsEnabled = event.target.checked;
+        if (!ttsEnabled) {
+          if (
+            document.querySelector("#speak-pill").classList.contains("visible")
+          )
+            sendInterrupt("speech");
+          window.speechSynthesis?.cancel();
+          document.querySelector("#speak-pill").classList.remove("visible");
+          document.querySelector("#voice-state").textContent =
+            "Ready when you are";
+          document.querySelector("#voice-help").textContent =
+            "Read-aloud is off. Your conversation remains available.";
+        }
+      };
+      if (!("speechSynthesis" in window)) {
+        document.querySelector("#tts-toggle").disabled = true;
+        document.querySelector(".tts-control span").textContent =
+          "Read aloud unavailable";
+      }
+      document.querySelector("#voice-toggle").onclick = async () => {
+        if (microphone) {
+          await stopMicrophone();
+          if (recordedWavBytes) void runTask();
+        } else void startMicrophone();
+      };
+      document.querySelector("#choose-audio").onclick = () =>
+        document.querySelector("#audio").click();
+      document.querySelector("#audio").onchange = () => {
+        const file = document.querySelector("#audio").files[0];
+        if (!file) return;
+        if (
+          file.size > maxMediaBytes ||
+          (!file.name.toLowerCase().endsWith(".wav") &&
+            !["audio/wav", "audio/x-wav"].includes(file.type))
+        ) {
+          document.querySelector("#dock-error").textContent =
+            file.size > maxMediaBytes
+              ? "That WAV is larger than 8 MiB."
+              : "Choose a WAV audio file.";
+          document.querySelector("#audio").value = "";
+          return;
+        }
+        recordedWavBytes = null;
+        setVoiceCaption("WAV ready", "It will be sent with your task");
+        document.querySelector("#dock-error").textContent = "";
+        renderStagedMedia();
+        updateRunButton();
+      };
+      document.querySelector("#drop-zone").onclick = () => {
+        if (!runInProgress) document.querySelector("#image").click();
+      };
+      document.querySelector("#drop-zone").onkeydown = (event) => {
+        if (runInProgress) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          document.querySelector("#image").click();
+        }
+      };
+      document.querySelector("#image").onchange = () =>
+        stageImage(document.querySelector("#image").files[0]);
+      const dropZone = document.querySelector("#drop-zone");
+      for (const eventName of ["dragenter", "dragover"])
+        dropZone.addEventListener(eventName, (event) => {
+          if (runInProgress) return;
+          event.preventDefault();
+          dropZone.classList.add("dragover");
+        });
+      for (const eventName of ["dragleave", "drop"])
+        dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropZone.classList.remove("dragover");
+        });
+      dropZone.addEventListener("drop", (event) => {
+        if (runInProgress) return;
+        stageImage(event.dataTransfer.files[0]);
+      });
+      document.querySelector("#task-text").oninput = (event) => {
+        const value = event.target.value;
+        document.querySelector("#text").value = value;
+        document.querySelector("#char-count").textContent =
+          value.length.toLocaleString() + " / 16,384";
+        document.querySelector("#dock-error").textContent = "";
+        updateRunButton();
+        clearTimeout(draftTimer);
+        if (value.trim() && !runInProgress) {
+          draftTimer = window.setTimeout(
+            () => send("transcript", () => transcript(false)),
+            600,
+          );
+        }
+      };
+      document.querySelector("#run-task").onclick = () => void runTask();
+      document.querySelector("#follow-form").onsubmit = (event) => {
+        event.preventDefault();
+        const followup = document.querySelector("#follow-input").value.trim();
+        if (!followup) return;
+        if (runInProgress) {
+          document.querySelector("#dock-error").textContent =
+            "Your current request is still working. This message stays here; send it again when the response is ready.";
+          return;
+        }
+        document.querySelector("#task-text").value = followup;
+        document.querySelector("#text").value = followup;
+        document.querySelector("#follow-input").value = "";
+        document
+          .querySelector("#task-text")
+          .dispatchEvent(new Event("input", { bubbles: true }));
+        void runTask();
+      };
+      document.querySelector("#follow-input").oninput = (event) => {
+        const taskText = document.querySelector("#task-text");
+        taskText.value = event.target.value;
+        document.querySelector("#request-summary").textContent =
+          event.target.value.trim() || "Your latest message will appear here.";
+        taskText.dispatchEvent(new Event("input", { bubbles: true }));
+      };
+      document.querySelectorAll(".prompt-chip").forEach((chip) => {
+        chip.onclick = () => {
+          const input = document.querySelector("#follow-input");
+          input.value = chip.textContent;
+          input.focus();
+        };
+      });
+      document.querySelector("#answer-image-button").onclick = openImagePreview;
+      document.querySelector("#connection-indicator").onclick = restartSession;
+      document.querySelector("#close-image-dialog").onclick = () =>
+        document.querySelector("#image-dialog").close();
+      document
+        .querySelector("#image-dialog")
+        .addEventListener("click", (event) => {
+          if (event.target === event.currentTarget) event.currentTarget.close();
+        });
+      function renderDesignPreview(variant) {
+        const photo = variant !== "meeting";
+        document.body.classList.add("preview-mode");
+        document.querySelector("#connection-indicator").textContent =
+          "Design preview";
+        document.querySelector("#connection-indicator").disabled = true;
+        document.querySelector("#answer-context").textContent =
+          photo ? "Design preview · About this photo" : "Design preview · Your meeting";
+        document.querySelector("#request-summary").textContent =
+          photo
+            ? "What kind of dog is this? Describe what you can see."
+            : "Schedule a meeting on Tuesday… actually, Wednesday at five PM.";
+        document.querySelector("#caption-label").textContent = photo
+          ? "You asked"
+          : "Live transcript · sample";
+        document.querySelector("#voice-state").textContent = photo
+          ? "AccessFlow is speaking"
+          : "Listening to you";
+        document.querySelector("#voice-help").textContent =
+          "Sample state · no microphone or audio is active.";
+        document.querySelector("#session-controls").hidden = true;
+        document.querySelector("#preview-controls").hidden = false;
+        document.querySelector("#preview-primary").textContent = photo
+          ? "Stop speaking"
+          : "End conversation";
+        document.querySelector("#preview-tertiary").hidden = !photo;
+        document.querySelector("#dock-note").textContent =
+          "Design preview only. Controls and audio are simulated; no request is sent.";
+        document.querySelector("#voice-toggle").disabled = true;
+        document.querySelector("#choose-audio").disabled = true;
+        document.querySelector("#drop-zone").disabled = true;
+        document.querySelector("#follow-input").disabled = true;
+        document.querySelector("#follow-form button").disabled = true;
+        document.querySelector("#tts-toggle").disabled = true;
+        document.querySelector("#new-task").disabled = true;
+        document.querySelector("#empty-state").hidden = true;
+        responseBackend = "design-preview/sample";
+        document.querySelector("#answer-title").textContent = photo
+          ? "A golden retriever at rest."
+          : "Wednesday at 5 PM.";
+        const intro = document.querySelector("#answer-intro");
+        intro.hidden = photo;
+        intro.textContent = photo ? "" : "The draft is updating as you speak.";
+        document.querySelector("#answer-grid").hidden = !photo;
+        document.querySelector("#meeting-draft").hidden = photo;
+        const imageButton = document.querySelector("#answer-image-button");
+        const imageCaption = document.querySelector("#answer-image-caption");
+        const media = document.querySelector("#answer-media");
+        media.hidden = !photo;
+        imageButton.hidden = !photo;
+        imageCaption.hidden = !photo;
+        if (photo) {
+          const image = document.querySelector("#answer-image");
+          image.src = "/design-preview-dog.png";
+          image.alt = "Illustrative sample of a golden retriever resting on a woven blanket indoors";
+          imageButton.setAttribute("aria-label", "Open illustrative sample photo");
+          imageCaption.textContent = "Illustrative sample image · not a user upload";
+          document.querySelector("#answer-grid").classList.add("with-image");
+          document.querySelector("#answer-body").textContent =
+            "The sample photo shows a golden-coated dog resting on a woven blanket in soft indoor light. A photo alone cannot confirm breed.";
+        } else {
+          document.querySelector("#answer-grid").classList.remove("with-image");
+        }
+        document.querySelector("#provenance").textContent =
+          "Design preview · deterministic sample content";
+        const followups = document.querySelectorAll("#answer-wrap .prompt-chip");
+        followups[0].textContent = photo
+          ? "Describe the surroundings"
+          : "Add someone";
+        followups[1].textContent = photo
+          ? "Ask about everyday care"
+          : "Set a duration";
+        followups[2].hidden = true;
+        followups.forEach((button) => { button.disabled = true; });
+        document.querySelector("#answer-wrap").classList.add("visible");
+      }
+      if (previewMode) {
+        renderDesignPreview(previewVariant);
+      }
+      window.addEventListener("beforeunload", () => {
+        clearTimeout(draftTimer);
+        clearInterval(microphoneTimer);
+        window.speechSynthesis?.cancel();
+        microphone?.stream.getTracks().forEach((track) => track.stop());
+        if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+      });
+    </script>
+  </body>
 </html>

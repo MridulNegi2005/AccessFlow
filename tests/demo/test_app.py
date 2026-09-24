@@ -509,6 +509,15 @@ def test_demo_favicon_is_served():
     assert "AccessFlow" in response.text
 
 
+def test_design_preview_sample_image_is_served():
+    with TestClient(demo_app.app) as client:
+        response = client.get("/design-preview-dog.png")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/png")
+    assert response.content.startswith(b"\x89PNG\r\n\x1a\n")
+
+
 def test_demo_recorder_worklet_is_served():
     with TestClient(demo_app.app) as client:
         response = client.get("/recorder-worklet.js")
@@ -518,11 +527,25 @@ def test_demo_recorder_worklet_is_served():
     assert "registerProcessor" in response.text
 
 
+def _normalized_demo_source() -> str:
+    document = Path("demo/index.html").read_text(encoding="utf-8")
+    before_script, remainder = document.split("<script>", maxsplit=1)
+    script, after_script = remainder.split("</script>", maxsplit=1)
+    script = re.sub(r"\s+", " ", script)
+    script = re.sub(
+        r'"([^"\\]*(?:\\.[^"\\]*)*)"', r"'\1'", script
+    )
+    return re.sub(r"\s+", " ", before_script + after_script) + script
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
-    html = Path("demo/index.html").read_text(encoding="utf-8")
+    html = _normalized_demo_source()
 
     assert 'id="task-text"' in html
-    assert '<textarea class="task-input" id="task-text"' in html
+    assert re.search(
+        r'<textarea\b(?=[^>]*\bclass="task-input")(?=[^>]*\bid="task-text")(?=[^>]*\bhidden)[^>]*>',
+        html,
+    )
     assert 'id="run-task"' in html
     assert 'id="voice-toggle"' in html
     assert 'id="drop-zone"' in html
@@ -534,6 +557,18 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="answer-wrap"' in html
     assert 'id="answer-image"' in html
     assert 'id="image-dialog"' in html
+    assert 'id="voice-state"' in html
+    assert 'id="voice-help"' in html
+    assert 'id="answer-context"' in html
+    assert '<textarea class="task-input" id="task-text" hidden' in html
+    assert "const previewMode = ['1', 'photo', 'meeting'].includes(previewVariant);" in html
+    assert 'function renderDesignPreview(variant)' in html
+    assert "document.querySelector('#meeting-draft').hidden = photo;" in html
+    assert 'Design preview only. Controls and audio are simulated; no request is sent.' in html
+    assert 'Design preview · deterministic sample content' in html
+    assert 'Send with attachment' in html
+    assert 'if (recordedWavBytes) void runTask();' in html
+    assert 'The recording uploads after capture ends; it is not streamed live.' in html
     assert 'prefers-reduced-motion: reduce' in html
     assert 'Drop a PNG image' in html
     assert 'up to 8 MiB' in html
@@ -574,7 +609,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'let mediaSendChain = Promise.resolve()' in html
     assert 'mediaSendChain = mediaSendChain.then(action, action)' in html
     assert "recordedWavBytes = encodeWav(current.chunks, current.sampleRate)" in html
-    assert "It will be sent with your task" in html
+    assert "Recording is sent when you finish" in html
     assert "nextMediaId('mic-audio')" in html
     assert "kind === 'audio' ? 'upload-audio' : 'upload-frame'" in html
     assert "event.kind === 'demo_observation'" in html
@@ -584,7 +619,7 @@ def test_demo_page_exposes_input_controls_and_backend_label():
 
 
 def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
-    html = Path("demo/index.html").read_text(encoding="utf-8")
+    html = _normalized_demo_source()
 
     recorder_handler = html.index("recorder.port.onmessage")
     stop_function = html.index("async function stopMicrophone")
@@ -595,7 +630,10 @@ def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
     assert "const remaining = maxMicrophoneSamples - microphoneSamples" in html[recorder_handler:stop_function]
     assert "incoming.slice(0, remaining)" in html[recorder_handler:stop_function]
     assert "microphoneLimitReached = true" in html[recorder_handler:stop_function]
-    assert "void stopMicrophone('limit')" in html[recorder_handler:stop_function]
+    assert re.search(
+        r'void stopMicrophone\((?:"limit"|\'limit\')\)',
+        html[recorder_handler:stop_function],
+    )
     assert stop_body.index("if (!microphone) return;") < stop_body.index("microphone = null;")
     assert "recordedWavBytes = encodeWav(current.chunks, current.sampleRate)" in stop_body
     assert "send('audio'" not in stop_body[:stop_body.index('function enqueueMediaAction')]
@@ -611,7 +649,7 @@ def test_demo_microphone_limit_stops_once_with_a_bounded_wav():
 
 
 def test_demo_selected_media_size_preflight_rejects_before_reading_or_sending():
-    html = Path("demo/index.html").read_text(encoding="utf-8")
+    html = _normalized_demo_source()
 
     send_file_start = html.index("function sendFile(kind, selector, fallback)")
     send_file_body = html[send_file_start:]
@@ -621,7 +659,10 @@ def test_demo_selected_media_size_preflight_rejects_before_reading_or_sending():
 
     assert preflight < file_read
     assert file_read < file_send
-    assert "backend: 'browser/media'" in send_file_body[preflight:file_read]
+    assert re.search(
+        r'backend:\s*(?:"browser/media"|\'browser/media\')',
+        send_file_body[preflight:file_read],
+    )
     assert "Selected media file exceeds the 8 MiB limit." in send_file_body[preflight:file_read]
     assert "return;" in send_file_body[preflight:file_read]
 
