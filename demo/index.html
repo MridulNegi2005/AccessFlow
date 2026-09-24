@@ -943,7 +943,7 @@
       #dialog-image {
         display: block;
         max-width: 100%;
-        max-height: calc(92vh - 66px);
+        max-height: calc(92vh - 105px);
         margin: 12px auto 0;
         object-fit: contain;
       }
@@ -1623,6 +1623,7 @@
       let responseTimer = null;
       let responseBackend = "demo/mock";
       let ttsUtterance = null;
+      let speechGeneration = 0;
       let ttsEnabled = false;
       let hasRunBefore = false;
       let lastSubmittedSignature = null;
@@ -1745,9 +1746,15 @@
             : firstSentence >= 0
               ? firstSentence + 1
               : answer.length;
-        const title = answer.slice(0, splitAt).trim();
-        const body = answer.slice(splitAt).trim();
-        document.querySelector("#answer-title").textContent = title || answer;
+        const firstSegment = answer.slice(0, splitAt).trim();
+        const shortHeading = firstSegment.length <= 120;
+        const title = shortHeading
+          ? firstSegment || answer
+          : event.kind === "clarify"
+            ? "A quick question"
+            : "Your answer";
+        const body = shortHeading ? answer.slice(splitAt).trim() : answer;
+        document.querySelector("#answer-title").textContent = title;
         document.querySelector("#answer-body").textContent = body;
         document
           .querySelector("#answer-title")
@@ -1823,25 +1830,39 @@
         updateRunButton();
       }
 
+      function cancelSpeech() {
+        speechGeneration += 1;
+        ttsUtterance = null;
+        window.speechSynthesis?.cancel();
+        document.querySelector("#speak-pill").classList.remove("visible");
+      }
+
       function speak(text) {
         if (!("speechSynthesis" in window)) return;
-        window.speechSynthesis.cancel();
-        ttsUtterance = new SpeechSynthesisUtterance(text);
-        ttsUtterance.onstart = () => {
+        cancelSpeech();
+        const generation = speechGeneration;
+        const utterance = new SpeechSynthesisUtterance(text);
+        ttsUtterance = utterance;
+        utterance.onstart = () => {
+          if (generation !== speechGeneration || ttsUtterance !== utterance)
+            return;
           document.querySelector("#speak-pill").classList.add("visible");
           document.querySelector("#voice-state").textContent =
             "AccessFlow is speaking";
           document.querySelector("#voice-help").textContent =
             "Stop speaking is available separately from ending this conversation.";
         };
-        ttsUtterance.onend = ttsUtterance.onerror = () => {
+        utterance.onend = utterance.onerror = () => {
+          if (generation !== speechGeneration || ttsUtterance !== utterance)
+            return;
+          ttsUtterance = null;
           document.querySelector("#speak-pill").classList.remove("visible");
           document.querySelector("#voice-state").textContent =
             "Ready when you are";
           document.querySelector("#voice-help").textContent =
             "Your microphone stays off until you choose. Type any time.";
         };
-        window.speechSynthesis.speak(ttsUtterance);
+        window.speechSynthesis.speak(utterance);
       }
 
       function announce(event) {
@@ -2132,15 +2153,14 @@
           microphone = null;
         }
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
-        window.speechSynthesis?.cancel();
+        cancelSpeech();
         window.location.reload();
       }
 
       async function startMicrophone() {
         if (document.querySelector("#speak-pill").classList.contains("visible"))
           sendInterrupt("speech");
-        window.speechSynthesis?.cancel();
-        document.querySelector("#speak-pill").classList.remove("visible");
+        cancelSpeech();
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           document.querySelector("#voice-state").textContent =
             "Microphone unavailable";
@@ -2384,7 +2404,6 @@
       function setMediaControlsLocked(locked) {
         document.querySelector("#choose-audio").disabled = locked;
         document.querySelector("#voice-toggle").disabled = locked;
-        document.querySelector("#voice-toggle").disabled = locked;
         const dropZone = document.querySelector("#drop-zone");
         dropZone.setAttribute("aria-disabled", String(locked));
         dropZone.tabIndex = locked ? -1 : 0;
@@ -2513,6 +2532,13 @@
             "Add a text or voice request before running your task.";
           return;
         }
+        const wasSpeaking = document
+          .querySelector("#speak-pill")
+          .classList.contains("visible");
+        if (wasSpeaking) {
+          cancelSpeech();
+          sendInterrupt("speech");
+        }
         clearTimeout(draftTimer);
         draftTimer = null;
         runInProgress = true;
@@ -2596,9 +2622,13 @@
       }
 
       function openImagePreview() {
-        if (!stagedImageUrl) return;
+        const imageButton = document.querySelector("#answer-image-button");
+        const image = document.querySelector("#answer-image");
+        if (imageButton.hidden || !image.complete || !image.naturalWidth) return;
         const dialog = document.querySelector("#image-dialog");
-        document.querySelector("#dialog-image").src = stagedImageUrl;
+        const dialogImage = document.querySelector("#dialog-image");
+        dialogImage.src = image.currentSrc || image.src;
+        dialogImage.alt = "Full-size preview: " + image.alt;
         if (typeof dialog.showModal === "function") dialog.showModal();
       }
 
@@ -2638,8 +2668,7 @@
       stopMicButton.onclick = () => void stopMicrophone();
       document.querySelector("#new-task").onclick = restartSession;
       document.querySelector("#stop-speaking").onclick = () => {
-        window.speechSynthesis?.cancel();
-        document.querySelector("#speak-pill").classList.remove("visible");
+        cancelSpeech();
         sendInterrupt("speech");
         document.querySelector("#voice-state").textContent =
           "Ready when you are";
@@ -2653,8 +2682,7 @@
             document.querySelector("#speak-pill").classList.contains("visible")
           )
             sendInterrupt("speech");
-          window.speechSynthesis?.cancel();
-          document.querySelector("#speak-pill").classList.remove("visible");
+          cancelSpeech();
           document.querySelector("#voice-state").textContent =
             "Ready when you are";
           document.querySelector("#voice-help").textContent =
@@ -2861,7 +2889,7 @@
       window.addEventListener("beforeunload", () => {
         clearTimeout(draftTimer);
         clearInterval(microphoneTimer);
-        window.speechSynthesis?.cancel();
+        cancelSpeech();
         microphone?.stream.getTracks().forEach((track) => track.stop());
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
       });

@@ -5,7 +5,9 @@ import importlib.util
 import inspect
 import json
 import re
+import shutil
 import struct
+import subprocess
 import threading
 import time
 import zlib
@@ -538,6 +540,18 @@ def _normalized_demo_source() -> str:
     return re.sub(r"\s+", " ", before_script + after_script) + script
 
 
+def test_browser_speech_callbacks_ignore_canceled_utterances():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("speech_lifecycle_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = _normalized_demo_source()
 
@@ -557,6 +571,10 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="answer-wrap"' in html
     assert 'id="answer-image"' in html
     assert 'id="image-dialog"' in html
+    assert 'if (imageButton.hidden || !image.complete || !image.naturalWidth) return;' in html
+    assert 'dialogImage.src = image.currentSrc || image.src;' in html
+    assert 'const shortHeading = firstSegment.length <= 120;' in html
+    assert 'const body = shortHeading ? answer.slice(splitAt).trim() : answer;' in html
     assert 'id="voice-state"' in html
     assert 'id="voice-help"' in html
     assert 'id="answer-context"' in html
@@ -565,6 +583,10 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'function renderDesignPreview(variant)' in html
     assert "document.querySelector('#meeting-draft').hidden = photo;" in html
     assert 'Design preview only. Controls and audio are simulated; no request is sent.' in html
+    assert 'function cancelSpeech()' in html
+    assert 'speechGeneration += 1;' in html
+    assert 'if (generation !== speechGeneration || ttsUtterance !== utterance) return;' in html
+    assert "if (wasSpeaking) { cancelSpeech(); sendInterrupt('speech'); }" in html
     assert 'Design preview · deterministic sample content' in html
     assert 'Send with attachment' in html
     assert 'if (recordedWavBytes) void runTask();' in html
