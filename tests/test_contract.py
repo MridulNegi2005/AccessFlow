@@ -33,3 +33,13 @@ async def test_perception_preserves_hypothesis_identity():
     assert (obs.source_id, obs.revision, obs.event_id) == ("utterance-1", 2, event.event_id)
     assert obs.text == event.payload.text
     assert obs.speech_end == 3.1
+
+
+def test_transport_speech_status_roundtrip_has_no_transcript_or_timing():
+    raw = {"kind": "speech_status", "session_id": "s",
+           "payload": {"utterance_id": "audio-turn-1", "revision": 0, "status": "pending"}}
+    event = TypeAdapter(InputEvent).validate_python(raw)
+    assert TypeAdapter(InputEvent).validate_json(event.model_dump_json()) == event
+    for extra in [{"text": "invented transcript"}, {"speech_end": 2.0}, {"final": True}]:
+        with pytest.raises(ValidationError):
+            TypeAdapter(InputEvent).validate_python({**raw, "payload": {**raw["payload"], **extra}})

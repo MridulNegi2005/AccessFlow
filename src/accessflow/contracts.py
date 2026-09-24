@@ -81,6 +81,17 @@ class Audio(Model):
     speech_end: float = Field(default=0, ge=0)
 
 
+class SpeechStatus(Model):
+    """Transport admission only: no text, acoustic timing or completed intent.
+
+    A later Transcript/Audio with the same utterance ID must have a higher revision.
+    Perception never consumes this event; the controller handles it directly.
+    """
+    utterance_id: str = Field(min_length=1, max_length=256)
+    revision: int = Field(ge=0)
+    status: Literal["pending", "failed"] = "pending"
+
+
 class Frame(Model):
     path: str
     frame_id: str
@@ -126,6 +137,11 @@ class AudioEvent(Envelope):
     payload: Audio
 
 
+class SpeechStatusEvent(Envelope):
+    kind: Literal["speech_status"] = "speech_status"
+    payload: SpeechStatus
+
+
 class FrameEvent(Envelope):
     kind: Literal["frame"] = "frame"
     payload: Frame
@@ -147,7 +163,7 @@ class EndEvent(Envelope):
 
 
 InputEvent = Annotated[
-    StartEvent | TranscriptEvent | AudioEvent | FrameEvent | InterruptEvent | ResultEvent | EndEvent,
+    StartEvent | TranscriptEvent | AudioEvent | SpeechStatusEvent | FrameEvent | InterruptEvent | ResultEvent | EndEvent,
     Field(discriminator="kind"),
 ]
 

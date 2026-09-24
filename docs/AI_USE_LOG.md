@@ -1260,3 +1260,18 @@ Request: continue A code completion. Assistance: pinned public model installatio
 Request: continue A code completion. Assistance: isolated format converter, bounded/path/lifecycle regressions, real public-clip decode and existing ASR checks. No reference transcript was passed to either worker. pub05 bad transcription retained; pub06 correction preserved. Full1294pass/2skip/1xfail. No B/shared/admission implementation or official score claimed. Human scope unchanged; no human code edits.
 
 Review amendment: a separate read-only review found repeated-cancellation orphan risk. A new regression reproduced it; shielded cleanup ownership fixed it. Final1295pass/2skip/1xfail; prior evidence preserved.
+
+## [2026-09-24 15:17] - Implementation checkpoint
+**Task:** Code completion first: real Samsung audio admission and native runtime checks.
+**Changes:** Additive controller-only speech_status,async bounded MP3 queue bridge,
+fairness/stale-result gates,23 new regression cases,package note and evidence/handoffs.
+**Status:** Software slice verified;no human review or overall readiness is implied.
+**Notes:** Full1318pass/2skip/1xfail70.10s;focused45pass;package64pass. Actual public
+audio54.6/51.5 tasks incomplete;isolated package89hashes/37pins/pub06 score54.6.
+Vision defaultsetup failed;110ssetup passed but official tail missed;directframe23.688s.
+All results retained,including early fixture errors. AI-assisted implementation/testing;
+human supplied priority,no human source edits. No B changes,accuracy tuning,main push,
+workflow,release,submission or model download. Existing local Ollama service started
+via owned hidden launcher. Scoped corpus review already completed23September.
+
+---
