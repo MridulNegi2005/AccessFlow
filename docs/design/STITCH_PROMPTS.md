@@ -3,8 +3,20 @@
 Selected workflow: Atishay follows this pack in order, reviews and retains the Stitch
 results, then implements them in his owned frontend. The user's follow-up makes this
 the first stage, superseding the earlier optional-Stitch recommendation.
-This pack has not been run in Stitch. Screen generation and click prototypes do not
-verify the real model, microphone timing, engine integration or tool cancellation.
+Status updated 24 September 2026: prompts 1–5 were run in the same AccessFlow Stitch
+project, which is accessible in the Codex in-app browser, and the canvas contains the
+requested frame names. Selected `01-photo-answer` visibly contains a dog photo and answer
+at 1280×1033; selected `02-meeting-correction` visibly contains a single Wednesday 5 PM
+draft at 1280×1025. Neither matches the requested 1536×1024 size. The approved reference
+PNGs were not attached, and the complete local DESIGN.md was not imported byte-for-byte;
+the project has a summarized canvas named DESIGN.md. ZIP Export was clicked twice, but no
+archive was visible in `C:\Users\adish\Downloads` or `docs/design/stitch/`. Therefore the
+generated canvases remain exploratory previews—not accepted production references or proof
+of behavior. Review the anchors against the approved sources, then save and verify their
+exports before claiming this stage is complete. See [the Stitch export log](stitch/README.md)
+for the verified details and remaining manual steps.
+Screen generation and click prototypes do not verify the real model, microphone timing,
+engine integration or tool cancellation.
 
 ## Preparation
 
@@ -17,7 +29,7 @@ Open [Google Stitch](https://stitch.withgoogle.com/). Start one project and prov
 Use the same project for all batches. Preserve one common shell and design system.
 Generate a separate readable screen per state, not a collage of tiny app mockups.
 Suggested canvas names below are labels for organization, not guaranteed API commands.
-Exact controls depend on the current Stitch interface; no account-specific UI was verified.
+Exact controls depend on the current Stitch interface.
 
 ## Prompt 1: establish the two approved anchors
 

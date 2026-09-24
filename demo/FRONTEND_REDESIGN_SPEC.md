@@ -1,5 +1,12 @@
 # AccessFlow frontend redesign specification
 
+> **Superseded for the approved 24 September 2026 direction:** this document describes the
+> earlier Input Dock + Answer Stage variant. The current voice-first implementation and
+> change inventory are documented in
+> [`docs/design/IMPLEMENTATION_REPORT_2026-09-24.md`](../docs/design/IMPLEMENTATION_REPORT_2026-09-24.md),
+> with visual/interaction rules in the root [`DESIGN.md`](../DESIGN.md). Keep the earlier
+> record for its historical decisions; do not use it to override the newer approved brief.
+
 **Status:** Implementation complete; target-size browser-pixel review completed in an isolated local Edge session.
 **Prepared:** 23 September 2026
 **Current surface:** The single FastAPI/WebSocket demo at `/`.

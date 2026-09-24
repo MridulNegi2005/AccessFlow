@@ -5,6 +5,15 @@ turns those approvals into an implementable brief for Atishay and a Stitch promp
 No frontend, perception, controller or shared contract implementation was changed.
 Mridul's implementation/evaluation goal remains paused.
 
+## Follow-on implementation update — 24 September 2026
+
+The approved voice-first shell is now implemented in the owned demo UI; see
+[`IMPLEMENTATION_REPORT_2026-09-24.md`](IMPLEMENTATION_REPORT_2026-09-24.md) for the exact
+change inventory, browser checks and limitations. Prompts 1–5 were subsequently run in the
+linked Stitch project, but its approved PNGs were not attached and native exports are still
+missing. See [`stitch/README.md`](stitch/README.md) for the exact manual export procedure.
+The planning notes below retain their original 23 September context.
+
 ## Selected route: Stitch first
 
 | Route | Best use | Recommendation |

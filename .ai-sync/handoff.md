@@ -1,5 +1,20 @@
 # Active Handoff
 
+## Current checkpoint — 2026-09-24
+
+Branch `atishay/perception`; the last verified pushed baseline before this continuation was `508d29d`. The approved voice-first shell is implemented in owned `demo/index.html`; the current delta and behavior are documented in `docs/design/IMPLEMENTATION_REPORT_2026-09-24.md`. The old task-dock specification is marked superseded, not erased. See Git for the moving branch HEAD.
+
+Verification: `.venv/Scripts/python.exe -m pytest -q` → 812 passed, 1 existing xfailed, 2 dependency warnings; owned demo → 127 passed, 1 xfailed. Repository Ruff, `git diff --check` and inline JavaScript parsing pass. Real local Edge checks at 1536×1024, 1440×900, 1280×720, 768×1024 and 390×844 reported no horizontal overflow. The in-app browser inspected the new photo and meeting previews and confirmed the mobile meeting card no longer collides. The photo enlarge button was reproduced broken and then verified working, including at 390×844; a long live `demo/mock` answer now retains its complete content as body copy rather than an oversized heading. A controlled Node.js regression proves stale browser-TTS callbacks are ignored after replacement/cancel, but audible speech remains unverified. A PNG fixture showed conditional send and remove behavior. Browser screenshots in `artifacts/accessflow-*.png` predate these latest checks; current screenshots were inspected in the task but not saved as Stitch assets.
+
+No engine, shared contracts, adapters, root config/lockfile or `docs/STATUS.md` were changed. Implementation commit `f0ca543` was pushed to `origin/atishay/perception` and verified; no deployment or Stitch publication occurred. Physical microphone permission, live ASR/endpointing/barge-in, speech-synthesis playback and screen-reader combinations remain unverified.
+
+Stitch prompts 1–5 were run in project `12923345623703202409`. The project is accessible in the in-app browser and the two anchor frames were inspected, but they remain 1280×1033 and 1280×1025. The two approved PNGs and full `DESIGN.md` were not attached, and no native export could be verified after two ZIP attempts. Exact manual export steps are in `docs/design/stitch/README.md`; local browser screenshots and the newly generated illustrative sample photo are not represented as Stitch assets. The demo now has read-only dog-photo (`/?preview=photo` or `1`) and corrected-meeting (`/?preview=meeting`) compositions, not live action evidence. Atishay and Mridul still need to coordinate shared transcript/action identity, causal frame/answer correlation and speech timing/interruption semantics.
+
+This work did not modify `docs/STATUS.md` because `AGENTS.md` assigns that file to Mridul.
+
+
+## Retained Mridul integration history
+
 ## Explicit package read mode — 24 September 2026
 
 Reproduced/fixed an inherited environment changing package read-answer behavior
