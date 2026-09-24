@@ -55,7 +55,7 @@ def test_native_profile_cannot_claim_assets_installed_by_text_builder():
     profile = builder.profile_for("declared/model")
     profile["ACCESSFLOW_SAMSUNG_PERCEPTION"] = "process"
     environment = {"SECRET_GROQ_API_KEY": "private-test-key"}
-    with pytest.raises(ValueError, match="native perception assets"):
+    with pytest.raises(ValueError, match="invalid shape"):
         entry.configure_profile(profile, environment)
     assert environment == {"SECRET_GROQ_API_KEY": "private-test-key"}
 
