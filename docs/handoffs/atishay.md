@@ -1106,3 +1106,34 @@ listening Ollama/vision service; the kit was absent from five bounded local
 locations, not from the organizer generally. Mridul still owns shared D1/D2/D3
 decisions and D4 registry/source guards; Atishay owns remaining browser,
 perception and human-device conformance once those seams and providers exist.
+
+## 2026-09-25 — PARTIAL D4 per-image perception correction
+
+The owned `LocalPerception` vision worker now coalesces by frame ID, not every
+frame in a session. Two separately identified images keep their own observations
+even when Image 2 is admitted before Image 1 finishes. A failure from Image 1
+is no longer hidden by Image 2's success. A same-ID replacement still suppresses
+its old result/error. When one image is active and eight distinct images are
+pending, an additional image gets an explicit queue-capacity error; the eight
+accepted pending identities are not silently evicted. The demo perception
+wrapper has a separate replacement-versus-distinct-ID regression.
+
+The new two-image test initially passed because release raced ahead of Image
+2 admission; a deterministic admission barrier exposed the intended failure
+before the code change. The first broader run had five old newest-frame-only
+test failures; those tests were revised to use same-ID replacement, preserving
+their stale-result/timeout assertions, while distinct-ID behavior has new tests.
+One demo-wrapper assertion was also still based on newest-only semantics and
+was made a two-case replacement/distinct-ID check. Focused owned perception:
+64 passed. Full Python 3.11 suite: 1381 passed, 5 skipped, 3 xfailed, 2
+dependency warnings in 86.76 s; Ruff and five Node checks passed. Three
+explicit installed-ASR opt-in tests passed separately in 28.45 s.
+
+`test_conflicting_frames_require_resolution_before_write --runxfail` still
+fails by a timeout waiting for both images in the shared reasoner view. This is
+not proof of an unsafe write. Mridul must implement the bounded D4 registry,
+admission ordinals, per-field source selection and write guards in shared
+contracts/controller; the exact proposal is in `docs/CONTRACT_PROPOSALS.md`.
+Atishay still must bind browser attachment display to accepted image IDs and
+run I01-I04 through the integrated controller. No live vision model, official
+media run or human microphone result was produced in this slice.

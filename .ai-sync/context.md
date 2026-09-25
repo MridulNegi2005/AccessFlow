@@ -1461,3 +1461,11 @@ configuration changed; no commit or push.
 **Notes:** Python 3.11 full suite 1377 passed/5 skipped/3 xfailed/2 dependency warnings; Ruff and five Node checks passed. Local-only WebSocket package was added to `.venv` for smoke testing, not to the shared lockfile. D1/D4 shared failures, actual inference attempts and four human microphone checks remain open. No Mridul-owned source or official package changed.
 
 ---
+
+## [2026-09-25 17:24 IST] - AI-assisted Atishay per-image perception
+**Task:** Preserve distinct D4 image evidence and explicit capacity in owned perception without modifying the shared controller.
+**Changes:** Keyed vision coalescing by frame ID; reject additional distinct image work when the bounded pending queue is full; added delayed-result, per-image failure/capacity and demo-wrapper replacement tests. Kept same-ID replacement stale-result tests.
+**Status:** PARTIAL. Owned perception behavior passes; shared D4 view/registry and browser Image 1/2/3 selection remain incomplete.
+**Notes:** Full Python 3.11 suite 1381 passed/5 skipped/3 xfailed/2 dependency warnings; Ruff/five Node checks passed; three explicit installed-ASR opt-in tests passed separately. The strict conflicting-frames test still times out with `--runxfail`, not an observed unsafe write. No live vision or official evaluation run and no Mridul-owned code changed.
+
+---

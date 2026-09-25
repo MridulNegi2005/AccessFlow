@@ -1523,3 +1523,13 @@ The local browser smoke inspected the rendered mock page without microphone
 permission. One read-only sidecar checked bounded local model/service/kit
 availability without reading credential values. No real reasoning/vision,
 physical microphone, booking, official scoring or publication is claimed.
+
+## 25 September 2026 - AI-assisted per-image perception repair
+
+Assistance reproduced the old newest-frame-only behavior with a deterministic
+delayed-image test, then changed owned vision coalescing to retain distinct
+frame IDs and reject full-queue admissions explicitly. Same-ID replacement
+tests, failure identity, demo-wrapper behavior and the full repository suite
+were checked. The shared conflicting-frames test still fails under `--runxfail`;
+no controller/contract implementation, live vision inference, human recording,
+official score or completed multi-image feature is claimed.

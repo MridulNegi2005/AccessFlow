@@ -3030,7 +3030,13 @@ def test_websocket_vision_failure_recovers_to_multimodal_session(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_demo_perception_coalesces_rapid_frames_per_session(tmp_path: Path):
+@pytest.mark.parametrize(
+    ("second_frame_id", "first_retained"),
+    [("frame-1", False), ("frame-2", True)],
+)
+async def test_demo_perception_distinguishes_replacement_from_another_image(
+    tmp_path: Path, second_frame_id: str, first_retained: bool,
+):
     first_path = tmp_path / "first.png"
     second_path = tmp_path / "second.png"
     first_path.write_bytes(_png_bytes())
@@ -3056,13 +3062,17 @@ async def test_demo_perception_coalesces_rapid_frames_per_session(tmp_path: Path
     )
     second_event = FrameEvent(
         session_id="demo-session",
-        payload=demo_app.Frame(path=str(second_path), frame_id="frame-2"),
+        payload=demo_app.Frame(path=str(second_path), frame_id=second_frame_id),
     )
     first_task = asyncio.create_task(collect(perception, first_event))
     try:
         assert await asyncio.to_thread(provider_started.wait, 1)
+        worker = perception._vision_perception._vision_workers["demo-session"]
         second_task = asyncio.create_task(collect(perception, second_event))
-        await asyncio.sleep(0.05)
+        async def second_admitted():
+            while worker._next_token < 2:
+                await asyncio.sleep(0)
+        await asyncio.wait_for(second_admitted(), timeout=1)
         release_first.set()
         first, second = await asyncio.gather(first_task, second_task)
     finally:
@@ -3070,8 +3080,8 @@ async def test_demo_perception_coalesces_rapid_frames_per_session(tmp_path: Path
         await perception.aclose()
         await perception.aclose()
 
-    assert first == []
-    assert [item.source_id for item in second] == ["frame-2"]
+    assert [item.source_id for item in first] == (["frame-1"] if first_retained else [])
+    assert [item.source_id for item in second] == [second_frame_id]
     assert calls == [first_path, second_path]
 
 

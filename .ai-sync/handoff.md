@@ -1,5 +1,21 @@
 # Active Handoff
 
+## Atishay partial D4 per-image perception - 25 September 2026
+
+Owned vision perception now keeps separately accepted frame IDs independent;
+Image 2 admission does not suppress Image 1's valid result or its failure.
+Same-ID replacements still suppress obsolete results, and an overloaded
+per-image pending queue rejects new work explicitly without evicting older
+accepted IDs. Full Python 3.11 suite: 1381 passed, 5 skipped, 3 xfailed, 2
+dependency warnings; Ruff and five Node checks passed; three installed-ASR
+opt-in tests passed separately. The strict conflicting-
+frames case still times out under `--runxfail` because the shared reasoner view
+does not contain both accepted images. See `docs/CONTRACT_PROPOSALS.md` and
+`docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md`. This is PARTIAL; D4
+registry, ordinal/source selection and write guards are Mridul-owned, while
+browser attachment identity/display and integrated I01-I04 checks remain
+Atishay-owned. No shared controller, contract or package source was edited.
+
 ## Atishay partial live-voice follow-up - 25 September 2026
 
 Atishay's branch adds an opt-in browser preview/final path for configured

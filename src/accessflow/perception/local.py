@@ -376,7 +376,10 @@ class _LatestWorker:
     retained.
     """
 
-    def __init__(self, *, max_pending_keys: int = 8, max_state_keys: int = 64) -> None:
+    def __init__(
+        self, *, max_pending_keys: int = 8, max_state_keys: int = 64,
+        reject_new_keys_when_full: bool = False,
+    ) -> None:
         if max_pending_keys < 1:
             raise ValueError("max_pending_keys must be positive")
         if max_state_keys < max_pending_keys + 1:
@@ -385,6 +388,7 @@ class _LatestWorker:
         self._pending: dict[Hashable, _PendingWork] = {}
         self._max_pending_keys = max_pending_keys
         self._max_state_keys = max_state_keys
+        self._reject_new_keys_when_full = reject_new_keys_when_full
         self._latest_state: OrderedDict[Hashable, tuple[int, int | None]] = OrderedDict()
         self._next_token = 0
         self._active: _PendingWork | None = None
@@ -424,11 +428,17 @@ class _LatestWorker:
                 and revision <= previous_state[1]
             ):
                 return _SUPERSEDED
+            previous = self._pending.get(key)
+            if (
+                previous is None
+                and len(self._pending) >= self._max_pending_keys
+                and self._reject_new_keys_when_full
+            ):
+                raise RuntimeError("image perception queue capacity reached")
             self._next_token += 1
             token = self._next_token
             self._latest_state[key] = (token, revision)
             self._latest_state.move_to_end(key)
-            previous = self._pending.get(key)
             if previous is not None and not previous.result.done():
                 previous.result.set_result(_SUPERSEDED)
             if previous is None and len(self._pending) >= self._max_pending_keys:
@@ -555,20 +565,27 @@ class LocalPerception:
         self._native_tasks: set[asyncio.Task[Any]] = set()
 
     async def _worker_for(
-        self, workers: dict[str, _LatestWorker], session_id: str
+        self, workers: dict[str, _LatestWorker], session_id: str,
+        *, reject_new_keys_when_full: bool = False,
     ) -> _LatestWorker | None:
         async with self._lifecycle_lock:
             if self._closed:
                 return None
-            return self._worker_for_open(workers, session_id)
+            return self._worker_for_open(
+                workers, session_id,
+                reject_new_keys_when_full=reject_new_keys_when_full,
+            )
 
     @staticmethod
-    def _worker_for_open(workers: dict[str, _LatestWorker], session_id: str) -> _LatestWorker:
+    def _worker_for_open(
+        workers: dict[str, _LatestWorker], session_id: str,
+        *, reject_new_keys_when_full: bool = False,
+    ) -> _LatestWorker:
         worker = workers.get(session_id)
         if worker is None:
             if len(workers) >= MAX_SESSION_WORKERS:
                 raise RuntimeError("perception session worker limit reached")
-            worker = _LatestWorker()
+            worker = _LatestWorker(reject_new_keys_when_full=reject_new_keys_when_full)
             workers[session_id] = worker
         return worker
 
@@ -654,11 +671,14 @@ class LocalPerception:
                 raise RuntimeError("Image perception requires an explicit vision provider")
             path = Path(event.payload.path)
             await asyncio.to_thread(validate_png, path)
-            worker = await self._worker_for(self._vision_workers, event.session_id)
+            worker = await self._worker_for(
+                self._vision_workers, event.session_id,
+                reject_new_keys_when_full=True,
+            )
             if worker is None:
                 return
             text = await worker.submit(
-                ("frame",),
+                ("frame", event.payload.frame_id),
                 lambda: self._run_native_with_timeout(
                     self._vision_provider, path, "image", worker.native_slot
                 ),
