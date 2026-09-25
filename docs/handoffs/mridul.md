@@ -1,5 +1,14 @@
 # Mridul workstream handoff
 
+## Delivery instructions - 25 September 2026
+
+The current instruction file for Atishay's next implementation session is
+`docs/reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md`. It is written in his voice and specifies
+pulling main, debugging against the merged runtime, owner-separated repairs,
+measurable acceptance gates and evidence-based partial/blocked reporting.
+This checkpoint adds documentation only; the merged audit's open findings remain.
+No implementation or new runtime validation occurred for this brief.
+
 ## Merged completion review - 25 September 2026
 
 User-requested ordered integration is complete: Mridul 81699c9 merged

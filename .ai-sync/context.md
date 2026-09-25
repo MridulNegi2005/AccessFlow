@@ -1437,3 +1437,11 @@ configuration changed; no commit or push.
 **Notes:** 1368 pass/4 skip/1 xfail; installed ASR 2 pass separately; Ruff/4 Node checks/offline 4/4 pass. New error-filter regression and stop integration gaps reproduced. Existing frame xfail is a timeout/semantic mismatch, not evidence of an unsafe effect. Runtime adoption, live voice, real vision completion, platform and full official evaluation remain. Publication requested by user; no final release/tag.
 
 ---
+
+## [2026-09-25 12:25] - AI-assisted delivery instruction brief
+**Task:** Prepare detailed first-person instructions for Atishay's coding agent, with measurable end-product gates and truthful reporting.
+**Changes:** Added docs/reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md and artifact copy; linked the earlier B handoff; updated shared/A handoff context. Documentation only.
+**Status:** Brief completed; implementation gates remain open as recorded in the merged audit.
+**Notes:** Requires fetching/merging current main, debugging against the shared engine/factory, ownership-safe repairs, 20 behavioural cases, 9 retained real-inference attempts, 3 physical-mic checks and final regression evidence. Separates partial checkpoints from completion. No new code fix, test pass or model capability claim. User explicitly requested publication to the repository.
+
+---

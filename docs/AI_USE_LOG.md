@@ -1494,3 +1494,13 @@ recording. The two initial stop-probe attempts omitted required fixture fields
 (Start.payload, then Transcript.revision); corrected the probe, not application
 code, before recording final results. Human acceptance of proposed shared semantics
 is still pending; no release/submission is implied.
+
+## 25 September 2026 - AI-assisted delivery brief
+
+Request: write detailed instructions in Atishay's first-person voice, require
+merged-main integration and real acceptance evidence, publish the document and
+provide a short forwarding prompt. Output: dated execution brief, linked handoff
+and synchronized artifacts. Existing audited code and runtime factory were read;
+no application implementation or teammate-owned fix was performed. Behavioural,
+real-inference and physical-mic gates are instructions, not newly passed tests.
+No comparison of coding-model capabilities was inferred from teammate output.

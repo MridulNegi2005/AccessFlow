@@ -1,5 +1,10 @@
 # Atishay completion handoff - 25 September 2026
 
+Current first-person execution instructions and measurable delivery gates are in
+[ATISHAY_EXECUTION_BRIEF_2026-09-25.md](ATISHAY_EXECUTION_BRIEF_2026-09-25.md).
+Use that brief to direct the next implementation session; this file remains the
+review handoff and supporting context.
+
 ## Read first
 
 - `AGENTS.md`, `.ai-sync/handoff.md`, `docs/STATUS.md`.
