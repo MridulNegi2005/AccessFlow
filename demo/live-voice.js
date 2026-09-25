@@ -88,6 +88,12 @@
       this.turn.chunks.push(samples);
       this.turn.samples += samples.length;
       if (voice) {
+        if (this.turn.previewInFlight && now - this.turn.lastVoiceAt >= 450) {
+          // Speech resumed after a pause: a late preview describes an older
+          // prefix and must not update the current turn's displayed words.
+          this.turn.previewRevision += 1;
+          this.turn.previewInFlight = false;
+        }
         this.turn.lastVoiceAt = now;
         if (this.turn.previewText !== null) this.turn.previewText = null;
       }
