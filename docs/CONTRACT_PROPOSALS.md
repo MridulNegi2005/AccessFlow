@@ -440,3 +440,13 @@ invalidate its previous version. Reject overflow without reindexing. Existing
 single-image clients and the official input wire retain their defaults. Atishay
 can then bind browser Image 1/2/3 display and selection to the accepted registry
 IDs and run I01-I04 against the shared controller without guessing provenance.
+
+The current browser `demo_status` receipt names the accepted frame source ID,
+event ID and revision but not an authoritative ordinal or receipt time. For
+D4's attachment display, Mridul and Atishay must agree an additive projection
+from the controller's accepted-image registry into that receipt: stable ordinal,
+server receipt time/order, per-ID status and version tied to the same source ID.
+The browser must assign labels only after a matching accepted receipt, retain
+failed-image identity, and reject duplicate/old-session receipts. A local
+drop/picker staging fix now sends the previewed file, but it does not create
+the registry or justify labeling old frames as available reasoning evidence.

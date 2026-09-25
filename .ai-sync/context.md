@@ -1394,6 +1394,12 @@ own branch. Windows cleanup stopped test11436;existing11435 service stayed runni
 **Notes:** Screenshot only; raw audio, recording length, hardware/browser and timing were not retained. Uvicorn connection logs do not show audio contents. Streaming/barge-in, common runtime, C24-1/2/3 coordination, live vision and official media evaluation remain open. No Mridul-owned code/contracts changed.
 **Follow-on:** Added a pending C24-1/2 discussion draft in `docs/CONTRACT_PROPOSALS.md`; no shared semantics were implemented. Current local vision preflight found no Ollama service/API and no participant kit at its expected path.
 
+## [2026-09-25] — Atishay repetition, End-session and PNG staging follow-up
+**Task:** Advance owned V03/L05 acceptance and repair the drop/picker image mismatch found in a read-only UI sidecar.
+**Changes:** Added configured browser/controller scripted-repetition and gated mock-tool disconnect regressions; exercised the actual browser End-session handler against a late final; staged the exact PNG `File` used for both thumbnail and upload, with picker/drop Node coverage. Updated the D4 receipt projection request without editing shared implementation.
+**Status:** PARTIAL. Full Python 3.11 suite 1384 passed, 6 skipped, 3 xfailed, 2 warnings; four opt-in installed-ASR tests, Ruff, six Node checks, inline script syntax and diff check passed. Gate 1 remains FAIL; 12 real-inference and four human-microphone cases NOT RUN.
+**Notes:** First L05 test setup lacked required write dependencies; corrected the test, not controller code. The image test first used cross-realm object deep comparison; field assertions corrected it. No physical mic, real reasoning/vision, official kit run, full image history or Mridul-owned source change.
+
 ## [2026-09-25] — Atishay delayed-preview revision guard
 **Task:** Keep delayed ASR preview text from overwriting resumed speech in the owned live-voice browser path.
 **Changes:** Invalidate an in-flight preview revision after a pause followed by new voice; added a deterministic held-callback regression that rejects old text, accepts the correction and sends one higher-revision final WAV.

@@ -407,3 +407,42 @@ vm.runInContext(
 );
 assert.equal(controls.get("#voice-toggle").disabled, false,
   "a closed session must retain its fresh-session control");
+
+const endStart = html.indexOf("async function endLiveSession() {");
+const endEnd = html.indexOf("if (socket) {", endStart);
+assert.ok(endStart >= 0 && endEnd > endStart, "live End session handler exists");
+nodes.set("#choose-audio", { disabled: false });
+const voiceToggle = nodes.get("#voice-toggle");
+voiceToggle.lastElementChild = { textContent: "End session" };
+voiceToggle.setAttribute = () => {};
+context.WebSocket = { CLOSING: 2 };
+vm.runInContext(
+  `let pendingMessages = [{ kind: "audio_preview" }];
+   let closeCount = 0;
+   let voiceEndCount = 0;
+   let socket = { readyState: 1, close() { closeCount += 1; } };
+   liveVoice = { async end() { voiceEndCount += 1; } };
+   runInProgress = true;
+   ${html.slice(endStart, endEnd)}`,
+  context,
+);
+const beforeEndCancellation = vm.runInContext("playbackCancellations", context);
+const beforeEndRender = rendered.length;
+const beforeEndAnnouncement = nodes.get("#announcements").textContent;
+vm.runInContext("endLiveSession()", context).then(() => {
+  assert.equal(vm.runInContext("sessionEnded", context), true);
+  assert.equal(vm.runInContext("pendingMessages.length", context), 0);
+  assert.equal(vm.runInContext("closeCount", context), 1);
+  assert.equal(vm.runInContext("voiceEndCount", context), 1);
+  assert.equal(vm.runInContext("playbackCancellations", context), beforeEndCancellation + 1);
+  assert.equal(vm.runInContext("runInProgress", context), false);
+  assert.equal(nodes.get("#voice-state").textContent, "Session ended");
+  assert.equal(nodes.get("#choose-audio").disabled, true);
+  vm.runInContext("runInProgress = true", context);
+  show({
+    kind: "final", session_id: "current-session",
+    payload: { caused_by_event_id: "recovered-event", text: "Late closed-session answer" },
+  });
+  assert.equal(rendered.length, beforeEndRender);
+  assert.equal(nodes.get("#announcements").textContent, beforeEndAnnouncement);
+}).catch((error) => { console.error(error); process.exitCode = 1; });

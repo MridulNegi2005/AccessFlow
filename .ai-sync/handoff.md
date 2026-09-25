@@ -1,5 +1,19 @@
 # Active Handoff
 
+## Atishay partial voice and PNG staging checkpoint - 25 September 2026
+
+Configured browser/controller V03 repetition produced one quantity-2 mock
+effect and no partial effect with a scripted reasoner. L05 now has gated-tool
+disconnect and browser End-session late-final checks. The PNG picker/drop path
+now uploads the file it previews, with a new Node regression. Full suite:
+1384 passed, 6 skipped, 3 xfailed, 2 dependency warnings; four explicit
+installed-ASR tests, Ruff, six Node checks and inline script syntax passed.
+See `docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md` and
+`docs/handoffs/atishay.md`. This is PARTIAL: no physical microphone, actual
+reasoner/vision run, official kit score or D4 image registry/source selection.
+The browser still stages one image. Exact D4 receipt projection is in
+`docs/CONTRACT_PROPOSALS.md`; Mridul-owned source remains untouched.
+
 ## Atishay delayed-preview correction guard - 25 September 2026
 
 Owned browser capture now invalidates a pending preview after resumed speech

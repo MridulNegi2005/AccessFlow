@@ -1176,3 +1176,37 @@ and failed a one-second start wait in
 `test_slow_image_provider_does_not_block_event_loop`; it passed alone and the
 next full suite passed. Root cause was not established, so this failed run is
 retained in the delivery report rather than erased.
+
+## 2026-09-25 — PARTIAL repetition, End-session and PNG staging checkpoint
+
+Added a configured browser/controller V03 regression: partial "two tickets"
+followed by the repeated final phrase leaves the raw repetition visible to a
+scripted reasoner and produces exactly one quantity-2 in-memory write, none
+from partial speech. This proves deterministic effect handling, not actual
+model quantity interpretation. Added L05 closure coverage for a gated mock
+write: disconnect cancels the pending path without a late effect/final. The
+browser End-session check now invokes the real handler and verifies pending
+transport input is cleared, the socket/capture/playback close, and a late final
+is ignored. Physical timing, native/remote work and committed-effect reporting
+still need verification. The first gated-write test was rejected because its
+scripted proposal omitted manifest dependencies; the corrected test reaches
+the intended pending tool and passes without shared-code changes.
+
+A read-only UI sidecar identified a real drop/picker mismatch: dropped PNGs
+were previewed but the send route read only the file picker. The owned page
+now stores the staged `File` and uses it for preview and upload. A new Node
+regression covers dropped and picker PNGs. This does not implement D4 image
+history: the page still stages one image and the shared registry/ordinal/source
+projection is absent. The exact remaining receipt seam is proposed in
+`docs/CONTRACT_PROPOSALS.md`; no Mridul-owned implementation was edited.
+
+Full Python 3.11 suite: **1384 passed, 6 skipped, 3 xfailed, 2 dependency
+warnings** in 111.29 s on the final run. Four explicit installed-ASR tests:
+**4 passed** in 67.91 s (generated WAV, mock reasoner). Ruff, six Node checks, inline script
+syntax and diff check passed. No configured reasoning provider was declared in
+this shell; loopback 11434 did not confirm a vision service. Three bounded
+local kit paths lacked `WALKTHROUGH.md`, not proof the kit is unavailable
+elsewhere. Gate 1 still fails; Gates 2/3 remain not run. Next independent
+Atishay work is receipt-bound attachment history once the authoritative D4
+projection is agreed, plus physical-mic and real-inference runs when their
+inputs/providers are available; Mridul owns shared D1/D2/D3/D4 behavior.

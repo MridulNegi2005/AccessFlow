@@ -609,6 +609,18 @@ def test_browser_disconnect_discards_microphone_without_upload():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_browser_uploads_the_staged_png_from_picker_or_drop():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("image_staging_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = _normalized_demo_source()
 
@@ -1547,6 +1559,154 @@ def test_websocket_configured_correction_commits_only_wednesday_mock_effect(monk
     assert effect["arguments"]["date"] == "2026-09-30"
     assert effect["arguments"]["time"] == "17:00"
     assert effect["arguments"]["timezone"] == "Asia/Kolkata"
+
+
+def test_websocket_repeated_quantity_commits_one_unchanged_mock_effect(monkeypatch):
+    """Deterministic V03 controller effect check; quantity parsing is scripted."""
+    partial_planned = threading.Event()
+    observed = {"texts": []}
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/scripted-repetition")
+
+        async def plan(self, view, manifests):
+            if view.results:
+                return PlanProposal(response="One mock order was recorded.", request_complete=True)
+            utterance = view.observations[-1].text.lower()
+            observed["texts"].append(utterance)
+            assert "two tickets" in utterance
+            quantity = 2
+            if not view.observations[-1].final:
+                partial_planned.set()
+            return PlanProposal(
+                intent="add_tickets", slot_updates={"quantity": quantity},
+                calls=[ProposedCall(
+                    tool="mock_ticket_order", arguments={"quantity": quantity},
+                    dependencies=["quantity"],
+                )],
+                request_complete=view.observations[-1].final,
+                write_requested=True,
+            )
+
+    async def factory(**kwargs):
+        agent = Agent(
+            demo_app.LocalPerception(), HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"], partial_debounce_s=0,
+        )
+        agent.perception_configuration = SimpleNamespace(mode="text")
+        agent.perception_warmup_backends = {}
+        observed["executor"] = kwargs["executor"]
+        return agent
+
+    tool = ToolManifest(
+        name="mock_ticket_order", description="In-memory quantity test effect",
+        effect="write", parameters={
+            "type": "object", "properties": {"quantity": {"type": "integer", "minimum": 1}},
+            "required": ["quantity"], "additionalProperties": False,
+        },
+    )
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    monkeypatch.setattr(demo_app, "_mock_external_tools", lambda: [tool])
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            assert socket.receive_json()["payload"]["agent_mode"] == "configured"
+            socket.send_json({
+                "kind": "transcript", "payload": {
+                    "utterance_id": "ticket-turn", "revision": 0, "final": False,
+                    "text": "Order two tickets",
+                },
+            })
+            assert partial_planned.wait(2)
+            assert not observed["executor"].effects
+            socket.send_json({
+                "kind": "transcript", "payload": {
+                    "utterance_id": "ticket-turn", "revision": 1, "final": True,
+                    "text": "Order two tickets. Two tickets, please.",
+                },
+            })
+            outputs = _receive_controller_outputs(socket)
+
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert final["payload"]["basis"] == "confirmed_tool_effect"
+    assert observed["texts"] == ["order two tickets", "order two tickets. two tickets, please."]
+    assert len(observed["executor"].effects) == 1
+    assert len([call for call in observed["executor"].calls if call.effect == "write"]) == 1
+    effect = next(iter(observed["executor"].effects.values()))
+    assert effect["arguments"] == {"quantity": 2}
+
+
+@pytest.mark.asyncio
+async def test_websocket_disconnect_during_mock_tool_wait_emits_no_late_final(monkeypatch):
+    """L05 transport closure while the actual controller waits on a mock write."""
+    gate = asyncio.Event()
+    executor = FakeTools(gate=gate)
+    sent = []
+    arguments = {
+        "title": "Project meeting", "date": "2026-09-30",
+        "time": "17:00", "timezone": "Asia/Kolkata",
+    }
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/gated-tool")
+
+        async def plan(self, view, manifests):
+            if view.results:
+                return PlanProposal(response="Mock action completed", request_complete=True)
+            return PlanProposal(
+                intent="schedule_meeting", slot_updates=arguments,
+                calls=[ProposedCall(
+                    tool="mock_calendar_create", arguments=arguments,
+                    dependencies=list(arguments),
+                )],
+                request_complete=True, write_requested=True,
+            )
+
+    async def factory(**kwargs):
+        agent = Agent(
+            demo_app.LocalPerception(), HeuristicTurnPolicy(), Reasoner(),
+            executor, kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="text")
+        agent.perception_warmup_backends = {}
+        return agent
+
+    class DisconnectDuringTool:
+        def __init__(self):
+            self.receives = 0
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            sent.append(event)
+
+        async def receive_json(self):
+            self.receives += 1
+            if self.receives == 1:
+                return {"kind": "transcript", "payload": {
+                    "text": "Schedule the project meeting Wednesday at five",
+                    "utterance_id": "pending-tool", "revision": 0, "final": True,
+                }}
+            deadline = time.monotonic() + 2
+            while not executor.calls and time.monotonic() < deadline:
+                await asyncio.sleep(0.001)
+            assert executor.calls, [(item["kind"], item.get("payload")) for item in sent]
+            raise WebSocketDisconnect(code=1001)
+
+        async def close(self, code=None):
+            return None
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    await asyncio.wait_for(demo_app.websocket(DisconnectDuringTool()), timeout=4)
+    gate.set()
+    for _ in range(10):
+        await asyncio.sleep(0)
+
+    assert len(executor.calls) == 1
+    assert not executor.effects
+    assert not any(item["kind"] == "final" for item in sent)
 
 
 def test_websocket_local_perception_timeout_is_recoverable(monkeypatch):
