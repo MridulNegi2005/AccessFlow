@@ -1302,3 +1302,25 @@ The current Python 3.11 standard suite passed **1388 passed, 6 skipped,
 3 xfailed, 2 warnings** in 76.63 s; seven Node checks and Ruff passed.
 The fixture preflight passed again after the WAVs moved into the owned
 test area. See `docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md`.
+
+## 2026-09-25 — PARTIAL action-pause and image-status correction
+
+Two owned browser failures were first reproduced with Node assertions. A
+2.5-second quiet gap after a complete-looking Tuesday booking preview sent
+final audio before a later Wednesday correction; a final image observation
+could be relabeled `failed` by a later controller error, and an unrelated
+tool error could mark a pending image unreadable. Live capture now uses a
+configurable, bounded 4.2-second quiet window for action-like previews that
+have not expressed a correction; ordinary informational previews retain the
+2.2-second default. A completed correction can finish after the ordinary
+window. The image ledger only changes a received PNG to failed on a
+pre-observation backend failure; an observed PNG stays observed. All seven
+owned Node checks, Ruff and the Python 3.11 standard suite passed: **1388
+passed, 6 skipped, 3 xfailed, 2 warnings** (113.51 s).
+
+These are deterministic browser checks, not physical speech or actual model
+answers. The lexical action guard can still misclassify speech and cannot
+protect arbitrarily long pauses; D1 controller hold and D4 source registry
+remain Mridul-owned. Gate 2 remains 12/12 NOT RUN and Gate 3 remains 4/4
+NOT RUN. Per user direction, the memory-limited installed-ASR opt-in was not
+retried. No shared implementation or configuration changed.

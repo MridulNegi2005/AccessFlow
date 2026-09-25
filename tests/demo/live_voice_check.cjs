@@ -112,6 +112,35 @@ function harness(timing = {}) {
     "the completed correction still finishes hands-free");
   await unfinished.voice.end();
 
+  const correctionAfterPause = harness();
+  assert.equal(await correctionAfterPause.voice.start(), true);
+  correctionAfterPause.feed(1500, true);
+  const correctionId = correctionAfterPause.sent.status[0][0];
+  assert.equal(correctionAfterPause.voice.previewResult(
+    correctionId, 1, "Schedule a repair appointment Tuesday at three", null), true);
+  correctionAfterPause.feed(2500, false);
+  assert.equal(correctionAfterPause.sent.finals.length, 0,
+    "an actionable prefix must leave room for a correction after a natural pause");
+  correctionAfterPause.feed(400, true);
+  assert.equal(correctionAfterPause.sent.previews.length, 2);
+  assert.equal(correctionAfterPause.voice.previewResult(
+    correctionId, 2, "Schedule a repair appointment Tuesday at three, actually Wednesday at five", null), true);
+  correctionAfterPause.feed(2300, false);
+  assert.equal(correctionAfterPause.sent.finals.length, 1,
+    "the corrected request still completes automatically");
+  assert.equal(correctionAfterPause.sent.finals[0][0], correctionId);
+  await correctionAfterPause.voice.end();
+
+  const fluentAction = harness();
+  assert.equal(await fluentAction.voice.start(), true);
+  fluentAction.feed(1500, true);
+  fluentAction.voice.previewResult(fluentAction.sent.status[0][0], 1,
+    "Schedule a repair appointment Tuesday at three", null);
+  fluentAction.feed(4500, false);
+  assert.equal(fluentAction.sent.finals.length, 1,
+    "a fluent action still completes hands-free after the longer safety window");
+  await fluentAction.voice.end();
+
   const abandoned = harness();
   assert.equal(await abandoned.voice.start(), true);
   abandoned.feed(1500, true);
@@ -159,6 +188,18 @@ function harness(timing = {}) {
 
   assert.throws(() => harness({ quietCompleteMs: 6000, quietFailureMs: 5500 }),
     /quietFailureMs must exceed/i);
+  assert.throws(() => harness({ actionQuietMs: 200 }), /actionQuietMs must be an integer/i);
+  const configuredAction = harness({ actionQuietMs: 3000 });
+  assert.equal(await configuredAction.voice.start(), true);
+  configuredAction.feed(1500, true);
+  configuredAction.voice.previewResult(configuredAction.sent.status[0][0], 1,
+    "Please book Tuesday at three", null);
+  configuredAction.feed(2500, false);
+  assert.equal(configuredAction.sent.finals.length, 0);
+  configuredAction.feed(600, false);
+  assert.equal(configuredAction.sent.finals.length, 1,
+    "the action pause is configurable without a Finish button");
+  await configuredAction.voice.end();
   const patient = harness({ quietCompleteMs: 3000, quietFailureMs: 6500 });
   assert.equal(await patient.voice.start(), true);
   patient.feed(1500, true);

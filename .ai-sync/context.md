@@ -1510,3 +1510,9 @@ configuration changed; no commit or push.
 **Changes:** Added a generated correction/repetition WAV, a generated arithmetic WAV, exact SHA-256 fixture manifest, twelve attempt IDs and an owned fixture-integrity test. Existing single- and two-image PNGs retain their original bytes and visually verified labels.
 **Status:** PARTIAL. Fixture check and current standard suite passed (1388 passed, 6 skipped, 3 xfailed, 2 warnings); seven Node checks and Ruff passed. All twelve real-inference attempts remain NOT RUN.
 **Notes:** No installed-ASR retry, actual reasoner/vision answer, human microphone or official kit run. Mridul owns the memory resource issue and D4 shared source selection; Atishay owns later result recording once those dependencies are available. No Mridul-owned code changed.
+
+## [2026-09-25 23:27 IST] — Atishay action-pause and image-status repair
+**Task:** Improve owned D2 pause/correction behavior and D4 browser evidence status without touching shared authority.
+**Changes:** Added failing Node reproducers for a 2.5-second pause before a Wednesday correction and for late task/tool errors mislabeling accepted PNGs; added a bounded configurable 4.2-second action quiet window and restricted image-failure display to pre-observation backend failures. Updated partial gate evidence.
+**Status:** PARTIAL. Current Python 3.11 full suite 1388 passed, 6 skipped, 3 xfailed, 2 warnings in 113.51 s; seven Node checks and Ruff passed. No installed-ASR opt-in was run.
+**Notes:** The lexical pause guard is not a physical-mic or model result; longer pauses remain possible. D1/D4 controller contracts, 12 real-inference attempts and four human microphone cases remain open. No Mridul-owned source/configuration changed.

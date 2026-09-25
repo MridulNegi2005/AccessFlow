@@ -66,6 +66,8 @@ assert.equal(history.observe("session-a", "frame-a", "event-a", 0, "vision/real"
 assert.equal(history.fail("session-old", "event-b"), false);
 assert.equal(history.fail("session-a", "event-b"), true);
 assert.deepEqual(history.items().map((item) => item.status), ["observed", "failed"]);
+assert.equal(history.fail("session-a", "event-a"), false,
+  "an observed PNG remains usable evidence after a later task error");
 render(history.items());
 assert.match(list.children[1].children[1].children[1].textContent, /not available as evidence/);
 assert.equal(history.items()[1].url, "blob:second.png",

@@ -1521,3 +1521,20 @@ real vision and official kit/media remain open. Details in Atishay handoff.
   warnings; seven Node checks and Ruff passed. No shared source or config was
   edited. Gate 1, Gate 2 and Gate 3 are still incomplete; this push is a
   partial checkpoint, not a completion claim.
+
+## 2026-09-25 — Atishay PARTIAL browser correction checkpoint
+
+- An owned Node reproducer showed an action-like Tuesday preview finalized
+  across a 2.5-second pause before a Wednesday correction. `demo/live-voice.js`
+  now has a bounded/configurable 4.2-second quiet window for action prefixes
+  without a resolved correction; informational speech retains 2.2 seconds.
+  A corrected preview still finishes hands-free after the normal window.
+- A separate Node reproducer showed downstream errors relabeling observed or
+  merely received images as failed. Only a pre-observation backend failure
+  now marks a received PNG unavailable; later task/tool errors do not erase
+  observed image evidence. This is browser display correctness, not D4
+  controller source selection.
+- Python 3.11 standard suite: 1388 passed, 6 skipped, 3 xfailed, 2 warnings
+  (113.51 s); seven Node checks and Ruff passed. No model retry. Gate 1
+  remains partial/failed at D1/D4, Gate 2 NOT RUN and Gate 3 NOT RUN.
+  Mridul's shared controller and memory work remain separate.
