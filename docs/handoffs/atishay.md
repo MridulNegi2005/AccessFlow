@@ -1021,3 +1021,29 @@ has not been run. The screenshot-backed human-microphone upload/ASR smoke is
 documented separately and has no retained audio/timing evidence. No additional
 speech was requested or recorded. Working changes remain uncommitted and
 unpushed; no Mridul-owned source/contracts/configuration were changed.
+
+## 2026-09-25 — PARTIAL configured-demo and error/stop checkpoint
+
+See [`ATISHAY_DELIVERY_RESULTS_2026-09-25.md`](../feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md)
+for the 26-case checklist and narrow D1/D2/D3/D4 interface proposals. Merged
+main `5dd2a56ce7f063335fb2fcb0fbfe4f127640e9a6` is an ancestor of this
+branch. Browser error correlation and authoritative output-stop projection
+are implemented, while two strict D1 Agent conformance tests still xfail.
+
+The demo now has an explicit `ACCESSFLOW_DEMO_AGENT_MODE=configured` path to
+Mridul's `build_configured_agent`, retaining its reasoner and policy, providing
+a declared in-memory calendar mock manifest/executor, displaying backend
+labels and projecting final observations without changing inference. Missing
+backend settings never fall back to the mock demo. A fake-factory integration
+test proves the adapter seam; a separate opt-in test reached installed Faster
+Whisper through the browser WebSocket and common Agent with a mock reasoner,
+then closed its native child after disconnect. This is not a completed real
+reasoning/calendar/vision task.
+
+Python 3.11.15 full suite: **1372 passed, 5 skipped, 3 xfailed, 2 dependency
+warnings**; repository Ruff and four Node checks passed. Explicit installed
+ASR selection ran three relevant tests successfully. Full Gate 1, twelve
+real-model attempts, live automatic speech/end-session, image history and
+four human-microphone cases remain open. No new human speech was requested or
+recorded. No provider was configured in this shell and Ollama port 11434 was
+closed; kit files were absent in the bounded local locations checked.

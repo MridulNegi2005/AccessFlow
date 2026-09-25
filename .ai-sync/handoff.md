@@ -1374,3 +1374,23 @@ real vision and official kit/media remain open. Details in Atishay handoff.
 - No Mridul-owned source/contracts/configuration changed. Atishay changes remain
   uncommitted and unpushed; tests use the existing Python 3.12.10 venv because
   the pinned Python 3.11 uv minor link is missing.
+
+## 2026-09-25 — Atishay PARTIAL execution checkpoint
+
+- Merged `origin/main@5dd2a56` into `atishay/perception`; current branch contains
+  that ancestor. The previous owned browser error/stop checkpoint was pushed as
+  `edfcf7c`; the configured-demo follow-up is separately documented in
+  `docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md`.
+- The demo can explicitly select `build_configured_agent`, advertises only a
+  declared in-memory calendar mock tool, projects actual observation/backend
+  identity and fails visibly on missing provider settings. A generated WAV
+  reached installed Faster Whisper through this browser adapter and a mock
+  reasoner; the worker exited after disconnect. No real-model answer/effect,
+  live endpointing, human speech or official Samsung result is claimed.
+- Python 3.11.15: full suite 1372 passed/5 skipped/3 xfailed; Ruff/four Node
+  checks pass; three opt-in installed-ASR tests pass. Two xfails explicitly
+  reproduce missing D1 shared-controller semantics. D1 hold/output-only,
+  D2/D3 live timebase/closure and D4 image registry/source guards need the
+  narrow Mridul-owned additions recorded in the linked results; Atishay still
+  owns browser capture/UI/per-image tests. No Mridul-owned implementation was
+  changed.

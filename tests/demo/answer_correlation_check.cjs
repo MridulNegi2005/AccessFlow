@@ -4,9 +4,11 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const html = fs.readFileSync(path.join(__dirname, "../../demo/index.html"), "utf8");
+const modeStart = html.indexOf("function modeLabel() {");
 const start = html.indexOf("function show(event) {");
 const end = html.indexOf("function renderResponse(event)", start);
-assert.ok(start >= 0 && end > start, "answer projection function exists");
+assert.ok(modeStart >= 0 && start > modeStart && end > start,
+  "answer projection and mode label functions exist");
 
 const nodes = new Map();
 for (const selector of [
@@ -54,14 +56,14 @@ vm.runInContext(
    let pendingAnswers = [];
    let inputsDispatched = true;
    let responseBackend = "demo/mock";
+   let agentMode = "mock";
+   let previewMode = false;
    let playbackCancellations = 0;
    function cancelSpeech() { playbackCancellations += 1; }
    function announce(event) { return event.kind; }
-    function modeLabel() {
-      return responseBackend.toLowerCase().includes("mock") ? "Mock tools" : "Live backend";
-    }
     function renderResponse(event) { rendered.push(event); }
     function finishRun() { runInProgress = false; }
+    ${html.slice(modeStart, start)}
     ${html.slice(start, end)}`,
   context,
 );
@@ -75,7 +77,14 @@ assert.equal(
   nodes.get("#backend-status").textContent,
   "Perception: local/Faster Whisper CPU INT8 audio · Reasoner: demo/mock-reasoner",
 );
-assert.equal(nodes.get("#answer-context").textContent, "Mock tools · Conversation");
+assert.equal(nodes.get("#answer-context").textContent, "Demo · mock tools · Conversation");
+show({ kind: "demo_status", session_id: "configured-session", payload: {
+  agent_mode: "configured", tool_environment: "mock",
+  perception_backend: "faster-whisper/cpu-int8", reasoner_backend: "ollama/gemma3:4b",
+} });
+assert.equal(nodes.get("#answer-context").textContent,
+  "Configured agent · mock tools · Conversation");
+vm.runInContext('activeSessionId = null; agentMode = "mock";', context);
 
 show({ kind: "demo_observation", payload: {
   source_id: "old-source", event_id: "old-event", modality: "text", text: "Old request", final: true,
@@ -314,3 +323,26 @@ show({
 });
 assert.equal(vm.runInContext("runInProgress", context), false);
 assert.equal(nodes.get("#answer-error").textContent, "Current input rejected");
+
+const duplicateBaseline = rendered.length;
+show({
+  kind: "error", session_id: "current-session",
+  payload: { caused_by_event_id: "new-event", code: "backend_failure" },
+});
+assert.equal(rendered.length, duplicateBaseline);
+assert.equal(nodes.get("#answer-error").textContent, "Current input rejected");
+vm.runInContext(
+  `runInProgress = true;
+   requestSourceIds = new Set(["recovered-source"]);
+   requestEventIds = new Map([["recovered-source", "recovered-event"]]);
+   requestRevisions = new Map([["recovered-source", 0]]);
+   requestResolvedSources = new Set(["recovered-source"]);
+   inputsDispatched = true;`,
+  context,
+);
+show({
+  kind: "final", session_id: "current-session",
+  payload: { caused_by_event_id: "recovered-event", text: "Recovered request" },
+});
+assert.equal(rendered.length, duplicateBaseline + 1);
+assert.equal(rendered.at(-1).payload.text, "Recovered request");
