@@ -351,3 +351,59 @@ show({
 });
 assert.equal(rendered.length, duplicateBaseline + 1);
 assert.equal(rendered.at(-1).payload.text, "Recovered request");
+
+const finishStart = html.indexOf("function finishRun() {");
+const finishEnd = html.indexOf("function cancelSpeech()", finishStart);
+const controlsStart = html.indexOf("function setMediaControlsLocked(locked) {");
+const controlsEnd = html.indexOf("function stageImage(file)", controlsStart);
+assert.ok(finishStart >= 0 && finishEnd > finishStart &&
+  controlsStart >= 0 && controlsEnd > controlsStart);
+const controls = new Map([
+  ["#processing", { classList: { remove() {} } }],
+  ["#voice-state", { textContent: "" }],
+  ["#voice-help", { textContent: "" }],
+  ["#speak-pill", { classList: { contains() { return false; } } }],
+  ["#choose-audio", { disabled: false }],
+  ["#voice-toggle", { disabled: false }],
+  ["#drop-zone", { setAttribute() {}, tabIndex: 0, inert: false }],
+]);
+const availabilityContext = {
+  document: { querySelector(selector) {
+    assert.ok(controls.has(selector), `Unexpected selector: ${selector}`);
+    return controls.get(selector);
+  } },
+};
+vm.createContext(availabilityContext);
+vm.runInContext(
+  `let runInProgress = true;
+   let finalSourceId = "source";
+   let requestSourceIds = new Set(["source"]);
+   let requestEventIds = new Map();
+   let requestRevisions = new Map();
+   let requestResolvedSources = new Set();
+   let pendingAnswers = [];
+   let inputsDispatched = true;
+   let responseTimer = null;
+   let hasRunBefore = false;
+   let liveVoice = null;
+   let livePreviewAvailable = false;
+   let sessionEnded = false;
+   let microphone = null;
+   function updateRunButton() {}
+   ${html.slice(finishStart, finishEnd)}
+   ${html.slice(controlsStart, controlsEnd)}
+   finishRun();`,
+  availabilityContext,
+);
+assert.equal(controls.get("#voice-toggle").disabled, true,
+  "a mock-mode answer must not enable unavailable live voice");
+assert.match(controls.get("#voice-help").textContent, /needs the configured agent/i);
+vm.runInContext("liveVoice = { active: true }; setMediaControlsLocked(true);", availabilityContext);
+assert.equal(controls.get("#voice-toggle").disabled, false,
+  "an active session must retain its End session control");
+vm.runInContext(
+  "liveVoice = { active: false }; sessionEnded = true; setMediaControlsLocked(true);",
+  availabilityContext,
+);
+assert.equal(controls.get("#voice-toggle").disabled, false,
+  "a closed session must retain its fresh-session control");

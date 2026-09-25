@@ -19,6 +19,7 @@ from urllib.error import HTTPError
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from accessflow.contracts import (
     AudioEvent,
@@ -1195,6 +1196,88 @@ def test_audio_preview_decodes_before_final_without_reaching_controller(monkeypa
     assert observed["plans"] == 1
 
 
+@pytest.mark.asyncio
+async def test_websocket_disconnect_cancels_inflight_preview_without_final(monkeypatch):
+    fixture = Path(__file__).parents[1] / "fixtures/audio/synthetic_tone.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    sent = []
+
+    class PendingPerception:
+        def __init__(self):
+            self.started = asyncio.Event()
+            self.cancelled = asyncio.Event()
+            self.closed = False
+
+        def validate_media_source(self, _event):
+            return None
+
+        async def observe(self, _event):
+            self.started.set()
+            try:
+                await asyncio.Future()
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+            if False:
+                yield None
+
+        async def aclose(self):
+            self.closed = True
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/no-plan")
+
+        async def plan(self, _view, _manifests):
+            raise AssertionError("a provisional preview reached the planner")
+
+    perception = PendingPerception()
+
+    async def factory(**kwargs):
+        agent = Agent(
+            perception, HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="process", vision_provider="none")
+        agent.perception_warmup_backends = {}
+        return agent
+
+    class DisconnectAfterPreview:
+        def __init__(self):
+            self.receives = 0
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, event):
+            sent.append(event)
+
+        async def receive_json(self):
+            self.receives += 1
+            if self.receives == 1:
+                return {
+                    "kind": "audio_preview",
+                    "payload": {
+                        "utterance_id": "unfinished", "revision": 1,
+                        "data_base64": encoded,
+                    },
+                }
+            await perception.started.wait()
+            raise WebSocketDisconnect(code=1001)
+
+        async def close(self, code=None):
+            return None
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    await asyncio.wait_for(demo_app.websocket(DisconnectAfterPreview()), timeout=3)
+
+    assert perception.started.is_set()
+    assert perception.cancelled.is_set()
+    assert perception.closed
+    assert not any(item["kind"] in {"demo_preview", "demo_observation", "final"}
+                   for item in sent)
+
+
 def test_websocket_configured_setup_failure_has_no_fake_fallback(monkeypatch):
     async def failing_factory(**_kwargs):
         raise RuntimeError("private provider response must not reach the browser")
@@ -1247,6 +1330,7 @@ def test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner(monke
         backend = SimpleNamespace(name="test/mock-reasoner")
 
         async def plan(self, view, manifests):
+            observed["plans"] = observed.get("plans", 0) + 1
             observed["text"] = view.observations[-1].text
             return PlanProposal(response="Mock reasoner received actual ASR", request_complete=True)
 
@@ -1266,8 +1350,32 @@ def test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner(monke
     with TestClient(demo_app.app) as client:
         with client.websocket_connect("/ws") as socket:
             status = socket.receive_json()
+            socket.send_json({
+                "kind": "speech_status",
+                "payload": {"utterance_id": "real-asr", "revision": 0, "status": "pending"},
+            })
+            pending = []
+            while not any(item["kind"] == "acknowledge" for item in pending):
+                pending.append(socket.receive_json())
+            socket.send_json({
+                "kind": "audio_preview",
+                "payload": {
+                    "data_base64": encoded, "utterance_id": "real-asr", "revision": 1,
+                },
+            })
+            preview = socket.receive_json()
+            assert preview["kind"] == "demo_preview"
+            assert preview["source_id"] == "real-asr"
+            assert preview["revision"] == 1
+            assert preview["backend"] == "faster-whisper/cpu-int8"
+            assert preview["text"].lower().count("tuesday") == 2
+            assert "wednesday" in preview["text"].lower()
+            assert observed.get("plans", 0) == 0
+            assert not any(item["kind"] in {"tool_call", "final"} for item in pending)
             socket.send_json(
-                {"kind": "audio", "payload": {"data_base64": encoded, "utterance_id": "real-asr"}}
+                {"kind": "audio", "payload": {
+                    "data_base64": encoded, "utterance_id": "real-asr", "revision": 2,
+                }}
             )
             receipt = socket.receive_json()
             outputs = _receive_controller_outputs(socket)
@@ -1283,6 +1391,7 @@ def test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner(monke
     assert receipt["accepted_event_id"] == observation["payload"]["event_id"]
     assert final["payload"]["caused_by_event_id"] == receipt["accepted_event_id"]
     assert observation["payload"]["backend"] == "faster-whisper/cpu-int8"
+    assert observed["plans"] == 1
     assert observed["text"].lower().count("tuesday") == 2
     assert "wednesday" in observed["text"].lower()
 
