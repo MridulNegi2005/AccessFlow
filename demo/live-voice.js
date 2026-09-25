@@ -12,12 +12,19 @@
     return /\b(?:actually|instead|but|and|or)$/.test(words);
   }
 
+  function needsActionPause(text) {
+    if (/\b(?:actually|instead)\b/i.test(text)) return false;
+    const actionPrefix = /^(?:(?:please|could you|can you|i want to|i need to)\s+)*(?:book|schedule|reserve|reschedule|cancel|delete|send|pay|buy|order|transfer|set|create|change|move)\b/i;
+    return actionPrefix.test(text.trim());
+  }
+
   class AccessFlowLiveVoice {
     constructor(options) {
       this.options = options;
       const configured = options.timing || {};
       this.timing = {
         quietCompleteMs: timingSetting(configured.quietCompleteMs, 2200, 800, 10000, "quietCompleteMs"),
+        actionQuietMs: timingSetting(configured.actionQuietMs, 4200, 800, 15000, "actionQuietMs"),
         quietFailureMs: timingSetting(configured.quietFailureMs, 5500, 1500, 15000, "quietFailureMs"),
         previewIntervalMs: timingSetting(configured.previewIntervalMs, 1000, 500, 5000, "previewIntervalMs"),
         maxPreviewsPerTurn: timingSetting(configured.maxPreviewsPerTurn, 12, 1, 30, "maxPreviewsPerTurn"),
@@ -181,7 +188,11 @@
         }
         this.options.onState("previewing");
       }
-      if (quietMs >= this.timing.quietCompleteMs && turn.previewText &&
+      const quietCompleteMs = turn.previewText && needsActionPause(turn.previewText)
+        ? Math.max(this.timing.quietCompleteMs,
+          Math.min(this.timing.actionQuietMs, this.timing.quietFailureMs - 100))
+        : this.timing.quietCompleteMs;
+      if (quietMs >= quietCompleteMs && turn.previewText &&
           !awaitsMoreSpeech(turn.previewText)) {
         this.completeTurn();
       } else if (quietMs >= this.timing.quietFailureMs) {

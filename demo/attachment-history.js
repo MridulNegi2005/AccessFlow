@@ -68,7 +68,8 @@
     fail(sessionId, eventId) {
       if (!this.current(sessionId)) return false;
       const item = this.accepted.find((entry) => entry.eventId === eventId);
-      if (!item || item.status === "failed") return false;
+      // A later task failure does not erase an already completed vision result.
+      if (!item || item.status !== "received") return false;
       item.status = "failed";
       item.backend = null;
       this.notify();

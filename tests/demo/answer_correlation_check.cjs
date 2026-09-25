@@ -401,6 +401,18 @@ show({ kind: "demo_observation", session_id: "old-session", payload: {
   revision: 0, final: true, text: "stale result",
 } });
 assert.equal(attachmentHistory.items()[1].status, "failed");
+show({ kind: "error", session_id: "image-session", payload: {
+  caused_by_event_id: "image-a", code: "backend_failure",
+} });
+assert.equal(attachmentHistory.items()[0].status, "observed",
+  "an already observed image remains evidence after a later error");
+attachmentHistory.prepare("frame-c", { name: "third.png" });
+attachmentHistory.accept("image-session", "frame-c", "image-c", 0);
+show({ kind: "error", session_id: "image-session", payload: {
+  caused_by_event_id: "image-c", code: "tool_failed",
+} });
+assert.equal(attachmentHistory.items()[2].status, "received",
+  "a tool failure is not proof that PNG perception failed");
 
 const finishStart = html.indexOf("function finishRun() {");
 const finishEnd = html.indexOf("function cancelSpeech()", finishStart);

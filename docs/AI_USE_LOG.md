@@ -1622,3 +1622,14 @@ report and handoff. The standard Python 3.11 suite passed 1388/6 skipped/3
 xfails with two warnings; seven Node checks and Ruff passed. All real-inference
 attempts remain NOT RUN. The user directed that the low-memory ASR path not be
 retried; no shared source, human recording or official evaluation was changed.
+
+## 25 September 2026 - AI-assisted action pause and image evidence status
+
+Assistance reproduced two owned browser failures with Node assertions before
+editing: a complete-looking action preview could finalize before a correction
+after 2.5 seconds of silence, and downstream errors could falsely mark an
+observed or pending PNG as unreadable. It added a bounded configurable
+action-pause window and restricted image-failure status to pre-observation
+backend failure. Seven Node checks, Ruff and the standard Python 3.11 suite
+passed (1388/6 skipped/3 xfailed/2 warnings). No memory-limited model run,
+physical-mic recording, shared controller change or official kit run occurred.
