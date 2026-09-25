@@ -62,6 +62,63 @@ No new public authorization field; the independent authorization provider still 
 - Compatibility plan: Keep v0.1 transcript/audio events and TurnPolicy unchanged. A translating adapter can drop timing metadata for older consumers; the current owned timing summary remains offline until the proposal is accepted.
 - Decision: Pending review by Mridul; no shared contract files changed.
 
+## 2026-09-25 — C24-1/2 audio-turn examples for joint review
+
+**Status:** Discussion draft only. No shared contract, controller behavior, or
+official MP3 adapter changed.
+
+**Current gap (verified in this checkout):** `Transcript` already carries an
+utterance ID, revision, `final`, and speech start/end numbers; `Audio` carries a
+file path, utterance ID, revision, and speech start/end numbers. However, the
+meaning/timebase of those numbers is not settled here. One completed `AudioEvent`
+is transcribed by `LocalPerception` into a single `Observation(final=True)`. The
+owned `ActivitySummary` can describe activity windows and pauses, but the engine
+does not currently pass it to the turn policy. Thus the browser's WAV upload
+works after Stop, but it cannot express live partial hypotheses or acoustic
+pause evidence to the engine.
+
+**Small examples the shared contract must make unambiguous:**
+
+1. **Pause then continuation:** one utterance begins “Set a reminder for Tuesday
+   at 3,” pauses for about two seconds, then continues “Actually, Wednesday at
+   5.” A pause/activity fact is not itself turn completion; the later corrected
+   revision must remain associated with the same utterance.
+2. **Repetition without correction:** “Tuesday, Tuesday at 3” must preserve the
+   repeated words but must not become a semantic correction solely because a
+   word repeats.
+3. **Correction after a hypothesis:** revision 1 says “Tuesday at 3”; revision 2
+   says “Tuesday at 3—actually Wednesday at 5.” A delayed older revision must
+   not replace the newer one. ASR/backend estimates remain raw, attributed
+   evidence—not calibrated confidence or permission to act.
+4. **Three stop meanings:** “Stop speaking” requests stopping assistant output;
+   “Stop the washing machine” is an ordinary device request; “Cancel this task”
+   requests task cancellation. Only the last may map to global task stop. The
+   contract must define how output-only stop is represented separately from
+   task cancellation and ordinary commands.
+
+**Decisions requested from both owners:**
+
+- Define whether transcript/audio speech offsets are clip-relative monotonic
+  seconds and how they map to the controller/session clock; define the timebase
+  of the envelope timestamp separately.
+- Define whether `Transcript.final` means “no more revisions for this utterance”
+  or “the user's task turn is complete.” Proposed: it means only the first;
+  turn completion stays an independent policy/controller decision.
+- Decide how bounded activity windows and pause candidates are keyed to
+  utterance ID and revision, and ensure they are evidence only—not a synthetic
+  `complete` decision.
+- Specify how an interruption invalidates or ignores late ASR results and how
+  output-only stop differs from task cancel.
+- Agree whether backend uncertainty is absent/unknown, a raw decoder estimate
+  with provenance, or a calibrated shared score. Do not invent calibration.
+
+**Ownership:** Atishay supplies perception/activity production, timing and
+turn-policy examples/tests, and browser capture/playback wiring. Mridul owns the
+shared contract, controller interpretation, official MP3 clip boundary, and
+cancellation effects. Both must agree the fields/semantics before either side
+integrates them. Until then the current proposal remains offline and no live
+streaming or automatic barge-in claim is made.
+
 ## 2026-09-15 - Vision provider in the perception worker
 
 - Author: Mridul Workstream A
@@ -304,3 +361,55 @@ as verified real effects. Final payloads retain this marker and mock confirmatio
 explicitly say "mock action". Model/tool-result fields cannot select the marker.
 Samsung's mock harness and the mock-only authorizer declare it. B can display this
 metadata but must not infer action authority or real integrations from it.
+
+
+## 24 September 2026 - A-owned transport speech status
+
+Owner: Mridul. Implemented additive controller-only SpeechStatusEvent with
+utterance_id,nonnegative revision,status pending/failed. Reproducing examples:
+tests/engine/test_speech_status.py and test_samsung_audio.py cover pending speech
+with a current frame,cancelled writes,late old observations and final WAV recovery.
+Directly passing each MP3 as Audio would falsely finalize partial turns; treating
+new pending speech as the old broad interrupt would discard current frame evidence.
+
+Compatibility: existing Audio/Observation/worker signatures remain unchanged. New
+speech_status inputs never reach perception. Samsung emits revision0 first pending,
+revision1 for a multi-clip final boundary,revision2 for complete WAV/failure; later
+ordinary speech evidence must have a higher revision than pending status. Only
+organizer end_of_turn controls assembly finality; no acoustic endpoints are invented.
+
+Decision: implemented within A ownership from AGENTS.md after choosing this narrow
+adapter/controller route. This supersedes earlier broad MP3 ownership deferral for
+this route only; no teammate approval or browser adoption is claimed. Both teammates
+must coordinate browser use,acoustic timing and any optional vision worker settings.
+No B source/tests changed. Details: SAMSUNG_AUDIO_ADMISSION_2026-09-24.md.
+
+## 25 September 2026 - Confirmed product decisions D1-D4; implementation pending
+
+The user explicitly settled product behaviour in PRODUCT_DECISIONS_2026-09-25.md:
+vague stop holds actions and clarifies; output-only stop is distinct from task
+cancellation; live sessions process speech and complete turns automatically;
+End session closes without flushing audio or requesting a final answer; multiple
+images remain ordered, timestamped and addressable by ordinal or explicit source.
+A date from Image 1 and details from Image 2 must retain distinct provenance.
+
+These accepted requirements supersede newest-image-only recommendations and
+required Finish/Send interaction. They do not mean the current controller supports
+them. Product meaning no longer needs approval; exact additive interfaces still
+require owner coordination. Preserve official wire/timing and old-client defaults.
+
+Mridul: stop/hold/clarify and closure semantics; additive image registry/view and
+source-bound planning/write guards; timebase/finality and shared runtime hooks.
+Atishay: detection, capture/turn policy, playback/transport closure, per-image
+perception/attachment identity/display and owned acceptance tests. Both coordinate
+schema examples and lifecycle conformance. Do not silently reinterpret final or
+remove source/dependency checks to expose more images.
+
+Current single-active-frame replacement is now insufficient for the requested
+image history. A late still-valid result can populate its own old-image entry
+without superseding selected sources or resurrecting stale plans. Historical
+replacement tests need explicit compatibility coverage, not wholesale deletion.
+New acceptance cases and launch/verification requirements are in
+reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md (26 deterministic cases, 12 actual
+inference attempts, 4 physical-mic cases). These gates have not been run/passed
+by this documentation change. No shared schema or implementation changed here.

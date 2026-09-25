@@ -1,5 +1,16 @@
 # My execution instructions for AccessFlow - 25 September 2026
 
+## Confirmed decisions supersede earlier open questions
+
+Read `docs/PRODUCT_DECISIONS_2026-09-25.md` before implementing. Product behaviour
+is now settled: vague stop means hold and clarify; live voice is hands-free with
+automatic completion and background processing during speech; End session never
+flushes unfinished audio; ordered, timestamped images remain individually
+addressable and can supply different fields. The earlier newest-image-only
+recommendation and required Finish/Send interaction are superseded. Shared technical
+contracts still need work in the proper owner's files. These are requirements,
+not implemented capabilities. Do not ask the user to reconfirm these choices.
+
 ## Who is speaking and what I want
 
 I am **Atishay**. These are my instructions to my coding agent. **Mridul** is my
@@ -31,8 +42,9 @@ In a fully specified deterministic test, exactly one confirmed **mock** calendar
 effect uses Wednesday 17:00; no Tuesday effect is committed. The interface shows
 what actually happened, not a hard-coded meeting card or a transcript echo.
 
-The same integrated runtime must also answer an informational request and process
-an actual PNG. Errors must be visible and recoverable. No real calendar booking,
+The same integrated runtime must also answer an informational request, process
+actual PNGs and combine explicitly selected information from older/newer images
+with source identity preserved. Errors must be visible and recoverable. No real calendar booking,
 payment, external service action or private recording publication is needed.
 
 This is the desired integrated result. It includes shared dependencies: you must
@@ -65,7 +77,8 @@ Read, in this order:
 
 - `AGENTS.md`, `.ai-sync/handoff.md`, current `docs/STATUS.md`, and the relevant
   recent `.ai-sync/context.md` entries and artifacts.
-- `docs/reviews/MERGED_READINESS_2026-09-25.md`.
+- `docs/PRODUCT_DECISIONS_2026-09-25.md` (confirmed product behaviour).
+- `docs/reviews/MERGED_READINESS_2026-09-25.md` (historical source audit).
 - `docs/reviews/ATISHAY_COMPLETION_2026-09-25.md`.
 - `docs/CONFIGURED_RUNTIME_2026-09-24.md` for the factory/API, then the newer
   `docs/SAMSUNG_AUDIO_ADMISSION_2026-09-24.md` and
@@ -154,9 +167,12 @@ machine" and "Cancel this task". Bare "Stop"/"Cancel" currently go to planning;
 "Stop speaking" currently produces no output-stop signal. The browser also ignores
 controller `stop_output=True`, although local button cancellation exists.
 
-**Both Mridul and I must coordinate** the meaning of bare stop, output-only stop,
-task stop and partial hypotheses. I own classification and playback; he owns any
-new shared decision/controller behaviour. Wire existing authoritative stop-output
+The product meaning is fixed by D1: vague stop/wait or unclear cancel means stop
+playback, hold actions and ask what the user means. "Stop speaking" stops output
+only; "Cancel this task" abandons the task; booking cancellation needs a known
+target, not repeated authorization. **Both Mridul and I must coordinate** the
+additive implementation. I own classification/playback; he owns shared decisions
+and controller effects. Wire existing authoritative stop-output
 events into playback with correct current-session handling now. Do not reintroduce
 the blanket stop-prefix regex or translate every stop into a new task cancellation.
 
@@ -188,12 +204,17 @@ A mock echo or fixture-provided answer cannot satisfy this gate.
 
 ### Slice D: minimum live microphone and image behaviour
 
-Capture currently uploads a finished WAV. That is useful upload/ASR support, but
-not streaming, acoustic endpoint detection or speech-triggered barge-in.
-Implement the smallest agreed live capture/activity path that interrupts current
-output/work, preserves an internal pause and admits a superseding corrected request.
-Continuous streaming partial ASR is not a separate requirement if the chosen bounded
-capture design genuinely meets these behaviours; describe its actual limitations.
+The user starts one live session, then speaks and interrupts hands-free. Implement
+automatic turn completion with patient pause handling and bounded processing
+during speech. Do not wait for a Finish button to submit each turn. Capture/activity,
+ASR and provisional interpretation can start before completion; state-changing
+actions cannot. File uploads may remain as a separate input route.
+
+The manual **End session** control closes the entire session: stop capture/playback,
+block new dispatch, cancel owned work, ignore late results, and do not flush
+unfinished audio or request one final AI reply. Restart creates a fresh session.
+This differs from spoken vague stop, which clarifies while keeping the session
+available. Follow D2/D3 for resource and already-committed-effect limits.
 
 **Both Mridul and I must coordinate** capture/session timebases, source/revision,
 pending speech and finality. Use the existing controller-only `SpeechStatusEvent`
@@ -207,13 +228,25 @@ before broad vision accuracy tuning. Do not lengthen official evaluator timing o
 use filenames/reference captions as recognition. Worker options requiring package
 changes are a joint interface task, not permission to edit Mridul's configuration.
 
+Implement ordered multi-image history under D4: stable image IDs, receipt/capture
+timestamps, immutable admission ordinals and field-level provenance. Users can
+reference Image 1/2/3 or combine a date from an old image with details from a new
+one. Clarify ambiguous references. Do not discard earlier images or renumber by
+inference completion; keep bounded session memory with explicit capacity errors.
+
+**Both Mridul and I must coordinate:** he owns the registry/view and selected-source
+write dependencies; I own per-image perception, attachment display and browser
+tests. A valid late old-image result may populate its own record without becoming
+the new image or reviving obsolete work. Keep the official wire format unchanged.
+Test the agreed seam independently until the shared implementation lands.
+
 ## 5. Acceptance gates: explicit cases, not an inflated test count
 
 Create an acceptance checklist with stable IDs below, test names/commands and result
 paths. Existing tests may satisfy a case if they assert the actual required outcome.
-Do not create 20 superficial duplicates merely to hit a number.
+Do not create 26 superficial duplicates merely to hit a number.
 
-### Gate 1: all 20 deterministic behavioural cases pass
+### Gate 1: all 26 deterministic behavioural cases pass
 
 | ID | Required behaviour |
 | --- | --- |
@@ -228,7 +261,7 @@ Do not create 20 superficial duplicates merely to hit a number.
 | S03 | Output-only stop preserves the jointly agreed task context. |
 | S04 | Task cancel during pending mock write produces no subsequently accepted obsolete effect. |
 | S05 | Booking cancellation and washing-machine stop remain ordinary requests. |
-| S06 | Bare stop and incomplete stop hypotheses follow documented agreed semantics. |
+| S06 | Vague stop/wait holds actions and asks clarification without assuming cancellation; partial stop hypotheses cannot authorize an effect. |
 | V01 | Fully specified Tuesday-to-Wednesday correction: one Wednesday 17:00 mock effect, zero Tuesday effects. |
 | V02 | Internal pause followed by continuation does not finalize an unfinished request. |
 | V03 | Repetition without correction neither duplicates an effect nor silently changes quantity. |
@@ -236,25 +269,34 @@ Do not create 20 superficial duplicates merely to hit a number.
 | L01 | Pending/denied microphone permission is recoverable; late grants leave no live track. |
 | L02 | Disconnect while recording/processing cleans up owned capture/session resources. |
 | L03 | Reconnect starts cleanly; old-session output cannot appear as the new result. |
-| L04 | New frame supersedes late old-frame output under the agreed frame contract. |
+| L04 | A delayed older image result stays attached to that image; it cannot impersonate the newest image or revive an obsolete plan. |
+| V05 | Processing begins during live speech; automatic completion needs no Finish/Send button and early work cannot authorize a write. |
+| L05 | End session during capture/inference/tool wait discards unfinished audio, prevents further dispatch/output, and cleans up owned resources. |
+| I01 | Three images retain Image 1/2/3 order despite shuffled completion or equal/out-of-order capture timestamps. |
+| I02 | Explicitly combine date from Image 1 and details from Image 2 with field-level provenance; do not silently swap sources. |
+| I03 | Ambiguous old-image reference or unreadable selected field causes clarification and no guessed action. |
+| I04 | Capacity failure is explicit; existing ordinals survive, failed perception remains identifiable, and a fresh session inherits no images. |
 
 Use injected failures, deterministic clocks and gates to control races. Test seams
 through the real controller where required, even though inference/tools are fakes.
 Report a shared-controller failure as a joint blocker with a reproducer; do not
 weaken assertions or implement Mridul's fix inside my UI.
 
-The old conflicting-frames xfail expects simultaneous old/new frames while the
-controller replaces the old frame. **Both must resolve that semantic mismatch.**
-Do not delete its marker or claim it proves an unsafe effect without inspecting
-the actual failure. Keep any unresolved acceptance explicitly open.
+D4 requires multi-image history and explicit source selection; the current
+single-active-frame contract is insufficient. **Both must coordinate the additive
+implementation**, including the old conflicting-frames test. Do not simply unmark
+that xfail: distinguish intentional source combinations from genuinely ambiguous
+conflicting evidence. Add I01-I04 and keep unresolved acceptance explicitly open.
 
-### Gate 2: nine recorded runs through real inference
+### Gate 2: twelve recorded runs through real inference
 
-Use three fully specified development cases, **three attempts each**:
+Use four fully specified development cases, **three attempts each**:
 
 1. Recorded WAV with pause/repetition and Tuesday-to-Wednesday correction.
 2. A simple informational WAV with an independently checkable answer.
 3. Actual PNG plus spoken/text question requiring information from its pixels.
+4. Two actual PNGs with independently labeled fields: explicitly take the date
+   from Image 1 and another detail from Image 2; retain source evidence.
 
 Use real installed ASR, selected reasoning and declared vision on applicable paths.
 External tools remain mock. Every attempt must record commit/configuration, backend,
@@ -264,24 +306,27 @@ cases after observing results. These are exposed development smokes, not held-ou
 evaluation or a substitute for Mridul's official repeated Samsung run.
 
 **Minimum functional gate:** at least one genuine completed task for each of the
-three paths, all nine outcomes retained, zero known wrong/duplicate/obsolete mock
+four paths, all twelve outcomes retained, zero known wrong/duplicate/obsolete mock
 writes. A path with no completion, a crash, protocol break or unhandled failure is
 not complete. Record remaining recognition/answer variability separately for later
-accuracy work; nine perfect answers are not a prerequisite for reporting a working
+accuracy work; twelve perfect answers are not a prerequisite for reporting a working
 path, and one successful answer is not evidence of reliable accuracy.
 
 If credentials, quota or models prevent a run, mark it NOT RUN with the exact
 dependency. Do not silently substitute fake inference, buy quota or rerun endlessly.
 
-### Gate 3: three physical-microphone checks after implementation
+### Gate 3: four physical-microphone checks after implementation
 
 With my agreement to capture speech, run: (M01) pause then correction, (M02) speak
-during audible output, (M03) correction during an intentionally delayed mock tool.
+during audible output, (M03) correction during an intentionally delayed mock tool,
+and (M04) End session during unfinished speech/pending output: no final upload,
+further spoken answer or new effect; microphone released. M01-M03 require automatic
+turn completion without pressing Finish/Send.
 Record browser/device, configuration, recognized text, corrected state, output-stop
 and substantive-response timing, effects and any observed limitations. Separate
 local stop-signal dispatch from actual audible playback stopping.
 
-All three must demonstrate their named behaviour before claiming physical-mic
+All four must demonstrate their named behaviour before claiming physical-mic
 acceptance. A screenshot of ASR plus mock echo is insufficient. If I am unavailable,
 finish independent code/tests and label this gate NOT RUN; do not invent a manual
 test or ask for recordings before there is implemented behaviour to verify.

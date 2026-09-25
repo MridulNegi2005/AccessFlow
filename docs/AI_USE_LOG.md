@@ -1504,3 +1504,12 @@ and synchronized artifacts. Existing audited code and runtime factory were read;
 no application implementation or teammate-owned fix was performed. Behavioural,
 real-inference and physical-mic gates are instructions, not newly passed tests.
 No comparison of coding-model capabilities was inferred from teammate output.
+
+## 25 September 2026 - AI-assisted confirmed product decision record
+
+The user approved clarification for vague stop, automatic hands-free voice with
+background processing and an End session control, and corrected the image policy
+to retain timestamped/ordered multi-image references. Assistance converted those
+instructions into D1-D4, owner-separated implementation guidance and expanded
+acceptance gates. These are requirements, not code changes or verified model
+capabilities. No recording, new inference run or source repair occurred.

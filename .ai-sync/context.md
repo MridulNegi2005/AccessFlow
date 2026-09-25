@@ -1445,3 +1445,11 @@ configuration changed; no commit or push.
 **Notes:** Requires fetching/merging current main, debugging against the shared engine/factory, ownership-safe repairs, 20 behavioural cases, 9 retained real-inference attempts, 3 physical-mic checks and final regression evidence. Separates partial checkpoints from completion. No new code fix, test pass or model capability claim. User explicitly requested publication to the repository.
 
 ---
+
+## [2026-09-25 12:37] - AI-assisted confirmed decision update
+**Task:** Record user-approved stop/clarification and live-session behaviour, plus corrected multi-image requirements.
+**Changes:** Added PRODUCT_DECISIONS_2026-09-25.md; updated B execution brief, contract decision record, review precedence notes, shared/A status/handoff and artifact copies.
+**Status:** Decisions documented; implementation remains open.
+**Notes:** No further product confirmation needed. Vague stop clarifies; End session is not send; keep ordered images for cross-image field selection. Existing newest-only controller is insufficient. A/B ownership preserved. 26/12/4 are future acceptance gates, not fresh results. User-authorized documentation publication only; no source changes.
+
+---

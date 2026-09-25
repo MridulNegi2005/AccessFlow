@@ -1,5 +1,24 @@
 # Mridul workstream handoff
 
+## Confirmed product decisions - 25 September 2026
+
+Read `docs/PRODUCT_DECISIONS_2026-09-25.md` first. User-approved D1-D4: vague stop
+holds actions and clarifies; explicit known-target cancellation needs no repeated
+authorization; opt-in live voice processes during speech and completes turns
+hands-free; End session discards unfinished audio and prevents further output/work;
+images remain numbered/timestamped and can contribute separately selected fields.
+
+Newest-image-only context and required Finish/Send are superseded. Product choices
+are settled, not implemented. Mridul owns additive state/contracts/authority and
+closure; Atishay owns capture/policy/perception/playback/UI. Both coordinate exact
+interfaces and conformance; neither edits the other's work. B can continue error
+recovery and other independent fixes immediately. Current single-active-frame
+controller needs A-owned work for image history. Update compatibility tests safely.
+
+Current B instructions: docs/reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md, now with
+26 behavioural cases, 12 real-inference attempts and 4 physical-mic checks. This
+checkpoint is documentation only; no new implementation or test success claimed.
+
 ## Delivery instructions - 25 September 2026
 
 The current instruction file for Atishay's next implementation session is

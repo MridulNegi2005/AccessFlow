@@ -383,3 +383,33 @@ adapter/controller route. This supersedes earlier broad MP3 ownership deferral f
 this route only; no teammate approval or browser adoption is claimed. Both teammates
 must coordinate browser use,acoustic timing and any optional vision worker settings.
 No B source/tests changed. Details: SAMSUNG_AUDIO_ADMISSION_2026-09-24.md.
+
+## 25 September 2026 - Confirmed product decisions D1-D4; implementation pending
+
+The user explicitly settled product behaviour in PRODUCT_DECISIONS_2026-09-25.md:
+vague stop holds actions and clarifies; output-only stop is distinct from task
+cancellation; live sessions process speech and complete turns automatically;
+End session closes without flushing audio or requesting a final answer; multiple
+images remain ordered, timestamped and addressable by ordinal or explicit source.
+A date from Image 1 and details from Image 2 must retain distinct provenance.
+
+These accepted requirements supersede newest-image-only recommendations and
+required Finish/Send interaction. They do not mean the current controller supports
+them. Product meaning no longer needs approval; exact additive interfaces still
+require owner coordination. Preserve official wire/timing and old-client defaults.
+
+Mridul: stop/hold/clarify and closure semantics; additive image registry/view and
+source-bound planning/write guards; timebase/finality and shared runtime hooks.
+Atishay: detection, capture/turn policy, playback/transport closure, per-image
+perception/attachment identity/display and owned acceptance tests. Both coordinate
+schema examples and lifecycle conformance. Do not silently reinterpret final or
+remove source/dependency checks to expose more images.
+
+Current single-active-frame replacement is now insufficient for the requested
+image history. A late still-valid result can populate its own old-image entry
+without superseding selected sources or resurrecting stale plans. Historical
+replacement tests need explicit compatibility coverage, not wholesale deletion.
+New acceptance cases and launch/verification requirements are in
+reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md (26 deterministic cases, 12 actual
+inference attempts, 4 physical-mic cases). These gates have not been run/passed
+by this documentation change. No shared schema or implementation changed here.

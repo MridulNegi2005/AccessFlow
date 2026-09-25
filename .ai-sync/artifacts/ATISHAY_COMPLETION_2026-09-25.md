@@ -1,5 +1,11 @@
 # Atishay completion handoff - 25 September 2026
 
+Later user decision on 25 September: [confirmed D1-D4 requirements](../PRODUCT_DECISIONS_2026-09-25.md)
+now settle stop/clarification, hands-free voice, End session and ordered multi-image
+history. They supersede open product questions or single-image recommendations in
+this earlier review. The updated execution brief is the current implementation
+instruction; the audit evidence below remains historical, not a claim of new fixes.
+
 Current first-person execution instructions and measurable delivery gates are in
 [ATISHAY_EXECUTION_BRIEF_2026-09-25.md](ATISHAY_EXECUTION_BRIEF_2026-09-25.md).
 Use that brief to direct the next implementation session; this file remains the

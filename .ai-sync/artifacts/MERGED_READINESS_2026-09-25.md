@@ -1,5 +1,11 @@
 # Merged code readiness review - 25 September 2026
 
+Later user decision on 25 September: [confirmed D1-D4 requirements](../PRODUCT_DECISIONS_2026-09-25.md)
+now settle stop/clarification, hands-free voice, End session and ordered multi-image
+history. They supersede open product questions or single-image recommendations in
+this earlier review. The updated execution brief is the current implementation
+instruction; the audit evidence below remains historical, not a claim of new fixes.
+
 ## Verdict
 
 Both workstreams are integrated in the requested order. The combined regression
