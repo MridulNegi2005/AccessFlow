@@ -125,6 +125,82 @@ MP3/turn ownership and C24 shared seams remain coordination items; no B implemen
 The old pending-frame stash remains as a backup only; its incomplete patch must not be
 reapplied over this completed repair. Push own branch; main remains the earlier merged
 checkpoint unless the user requests another integration. Overall goal remains active.
+## Browser correlation recovery — 25 September 2026
+
+The browser now accepts terminal replies caused by the latest known event from
+any input source in the active task, and replays early queued finals by the same
+task-local event set. Engine errors with missing or stale event identities no
+longer interrupt the current task. Uncorrelated input/transport `demo_error`
+events remain visible. Deterministic regression, Node syntax/correlation checks,
+the demo suite (150 passed, 1 retained xfailed) and focused lint passed. This is
+only the owned browser slice, not proof of configured live reasoning or action.
+No shared contract, engine, adapter, or Mridul-owned configuration changed;
+C24-1/2/3, runtime, physical-mic timing/interruption, real vision, and official
+raw-media gates remain open. See `docs/handoffs/atishay.md` for evidence.
+
+## Turn-policy apology correction — 25 September 2026
+
+The owned heuristic no longer treats a leading “Sorry, …” or “I'm/I am sorry,
+…” as a semantic correction; “Tuesday, sorry—Wednesday” remains a correction.
+The regression failed before the change. Final combined owned demo/timing/
+policy/audio/local-perception suite: 317 passed, 1 retained xfailed, 2 existing
+warnings; Ruff and Node correlation check passed. This is not ASR accuracy or
+booking proof. C24-2 timing and output-only-stop semantics still need agreement.
+
+## Atishay ASR evidence-retention checkpoint — 25 September 2026
+
+The direct owned `LocalPerception` path now keeps immutable raw Faster Whisper
+segment/word estimates, language output and event/source/revision identity in
+an optional diagnostic sink. It explicitly labels decoder estimates as
+uncalibrated, leaves timestamps WAV-relative, and does not expose these values
+to the shared `Observation`, turn decision or action controller. Empty decodes
+reach the sink before the existing empty-transcript error; sink failures are
+logged without dropping valid transcript text. This is not integrated through
+the Mridul-owned process adapter and requires C24-1/2 agreement before shared
+use.
+
+Final verification: full suite 1218 passed, 4 skipped, 1 xfailed, 2 dependency
+warnings; repository Ruff, four Node browser checks and `git diff --check`
+passed. Installed Faster Whisper 1.2.1 base.en CPU INT8 tests with generated
+audio: 2 passed in 12.58 s, including direct metadata retention and the actual
+child/Agent seam with mock reasoning and no tools. A 0.5 s generated tone
+yielded no decoded segments; this does not prove silence detection. A first
+full run exposed scheduler sensitivity in a 50 ms native-frame test; two test
+deadlines now use 500 ms, and a fresh full run passed. No human audio, official
+kit/media, live vision/reasoning or real effect was tested. No Mridul-owned
+source, shared contract or configuration changed.
+
+## Atishay microphone checkpoint — 25 September 2026
+
+One user-provided browser screenshot shows local/Faster Whisper CPU INT8
+perception and demo/mock-reasoner. The displayed recognition preserves the
+Tuesday-at-3 to Wednesday-at-5 correction; the mock agent echoes it rather than
+resolving it or creating a reminder. This verifies one human-mic upload/local
+ASR display smoke only. No raw audio, timing, device/browser details, live
+partials or barge-in were captured. Uvicorn connection logs do not expose audio
+payloads or transcripts. Evidence and limitations:
+`docs/feedback/MICROPHONE_TEST_2026-09-25.md`.
+
+The ASR run sheet now points at the configured 8001 instance, distinguishes
+real-ASR perception from the mock reasoner, and asks the user only to say
+“done”; the reviewer must inspect the page/screenshot rather than ask the user
+to report statuses. The owned backend-status UI delta passes its focused test
+and the 150-test demo suite (1 retained xfail); correlation, microphone
+pending/disconnect and speech-lifecycle Node checks pass. No controller,
+shared contract, or Mridul-owned file changed.
+
+A separate discussion draft in `docs/CONTRACT_PROPOSALS.md` now gives the
+smallest C24-1/2 examples and decisions needed on clock, finality, activity,
+uncertainty and output-stop/task-stop semantics. It is not an agreed contract.
+Current preflight found no local Ollama service and no participant kit at the
+expected path; no live vision or official raw-media evaluation ran.
+
+Fresh local-model recheck: the opt-in generated-WAV test passed through the
+real Faster Whisper child, actual Agent and B-owned turn policy (1 passed in
+8.67 s; tool effects zero; child closed). Focused B timing/audio/policy suite:
+103 passed. This still uses generated speech and a mock reasoner; it does not
+verify live conversation reasoning or endpointing. Details and fixture hash are
+in `docs/feedback/ASR_MEASUREMENTS.md`.
 
 ## Merged readiness and ownership handoff — 24 September 2026
 
@@ -149,6 +225,22 @@ merge, review and handoff. No implementation fix or new live evaluation in this 
 Next A: pending-frame correctness and configured Samsung media runtime; next B: owned
 correlation/timing, real ASR/vision/microphone tests. Both coordinate shared contracts.
 No release tag, submission, workflow activation, model downloads or external messages.
+
+## Atishay ASR evidence checkpoint — 2026-09-24
+
+On `atishay/perception`, B added an opt-in direct-model ASR probe in owned
+perception code. Actual local Faster Whisper base.en CPU INT8 runs on three
+generated WAVs retained segment/word offsets and raw decoder estimates;
+`docs/feedback/ASR_MEASUREMENTS.md` has provenance, hashes and timings. This
+does not feed the agent and is not a physical microphone, human-speech,
+calibrated-confidence or official Samsung result. Owned tests: 376 passed,
+1 retained xfailed; full suite: 1208 passed, 2 skipped, 1 retained xfailed;
+Ruff clean. The shared Observation still lacks uncertainty and timing fields.
+Both teammates must settle C24-1/2 clip/utterance timing, clock mapping,
+revision/finality, uncertainty and output-stop effects before integration.
+Mridul's runtime factory remains unmerged into this checkout; C24-3/4/5 and
+the original participant kit are still open. See B handoff for exact next
+steps; no A-owned source or configuration changed.
 
 ## Current checkpoint — 2026-09-24
 
@@ -1122,3 +1214,108 @@ evidence. No engine, contract, lockfile or dependency manifest changes were made
 2026-09-15: Added pre-decode encoded upload limit derived from the 8 MiB raw-media budget; oversized PNG regression passes. Full suite: 114 passed, 3 strict xfailed; no protected files changed.
 
 2026-09-15: Configured OllamaVisionProvider timeout regression now covers WebSocket backend_failure and same-session transcript recovery. Full suite: 115 passed, 3 strict xfailed; no protected files changed.
+
+2026-09-24: Demo-only answer correlation now carries Observation.event_id to the
+browser and accepts final/clarify only for the latest request's matching
+caused_by_event_id. Early finals are buffered through serialized media sends;
+late/unattributed finals are ignored. Owned browser/WebSocket regressions pass.
+Focused demo: 128 passed, 1 existing xfailed; full suite: 813 passed,
+1 existing xfailed, 2 warnings. Real local demo/mock text request rendered and
+390px mobile had no horizontal overflow. Native Stitch export and same-state
+reference QA remain blocked; no engine/contracts/config change. Atishay and
+Mridul need to coordinate authoritative action identity/outcome and speech timing.
+
+2026-09-24: Atishay merged updated main (`749fe23`) into `atishay/perception`
+at `f84bea7`, preserving prior owned edits and identical untracked review notes
+in a named backup stash. Current owned voice slice narrows task-stop to final
+task-cancel phrases; partial cancel and output-only stop no longer cancel the
+task, while device stop remains a complete request. The output-only typed action
+still needs joint C24-2 agreement. The configured demo reasoner test now checks
+the spoken question's causal final and distinct combined evidence. Before-fix
+policy reproduction: four failures; owned tests: 371 passed/1 xfailed; full:
+1203 passed/2 skipped/1 xfailed. Actual generated WAV through installed local
+ASR produced text but flattened segment timing/finality in the public observation.
+Physical mic permission remained prompt, so no real capture was verified; live
+vision, Qwen/mock effect and official media evaluation remain open. Kit files
+were not found at the documented location. C24-1 through C24-5 examples, splits
+and exact limits are in `docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md`.
+No Mridul-owned source/config, release, direct-main push or deployment action.
+
+2026-09-24: Atishay-owned browser microphone permission-wait repair. A new
+deterministic regression first observed two simultaneous getUserMedia requests;
+the demo now shows waiting/not-recording, blocks duplicates, restores controls
+after denial and stops late-granted tracks after task/disconnect/restart/exit
+invalidation. Live page confirmed the waiting state, not physical capture.
+Owned demo/perception 372 passed, 1 xfailed; Ruff and diff check clean. Details
+in docs/feedback/VOICE_PERCEPTION_CHECKPOINT_2026-09-24.md. No shared engine,
+contracts, Samsung adapter or submission change.
+
+2026-09-24: Browser capture teardown now discards active microphone resources
+on WebSocket close, session restart and unload without uploading abandoned
+audio. Owned Node regression covers track/context/port cleanup and idempotency.
+No physical disconnect or human ASR evidence is claimed.
+
+The owned disconnect harness also reproduced late WAV staging after the socket
+closed during AudioContext shutdown; a stop-path guard now drops that capture.
+
+Final B capture-slice checks: owned373pass/1xfail; full1205pass/2skip/1xfail,
+2 dependency warnings; Ruff and browser-script parse clean. Actual mic
+permission and human speech remain unverified.
+
+Read-only A update: origin/mridul/engine@81699c9 contains MP3 turn admission
+and the configured factory, still unmerged into this B checkout. Its reported
+23.688s real public-frame observation missed the visual tail. B documented an
+optional, unimplemented vision generation-cap experiment and joint file split
+in the voice/perception feedback checkpoint. Local vision service unavailable;
+no B real-pixel result, A file edit or implicit contract acceptance.
+
+Atishay follow-up: the offline timing replay no longer counts a partial
+transcript's provisional endpoint as a final-speech-end match. A deterministic
+owned test failed before the change and now passes; acoustic candidates and
+partial revision identity remain visible. Focused replay 8 passed; full suite
+1209 passed, 2 skipped, 1 retained xfailed; this is
+not streaming or controller finality. The local browser reached a microphone
+permission wait, so physical capture remains unverified until the user allows
+it. See B handoff and voice checkpoint for the event example and limits.
+
+Atishay corrected-final follow-up: constructed offline replay now measures
+aggregate wait/miss against the newest final revision, not an earlier final
+that a correction superseded. Two parametrized cases failed before the fix
+and focused replay now has 10 passing tests; full suite 1211 passed,
+2 skipped, 1 retained xfailed. Older acoustic candidates remain
+visible. This does not implement the C24-1/2 agent contract or verify physical
+capture; see B handoff for exact timing examples and remaining inputs.
+
+Atishay installed-ASR worker checkpoint: the real ProcessPerception child ran
+Faster Whisper base.en CPU INT8 on two generated WAVs, retained source/event/
+backend provenance, reused its PID and stopped after close. A separate actual
+Agent run with the child ASR and a deterministic mock reasoner produced a final
+caused by the intended audio event and no tool calls/effects. An opt-in owned
+test now covers this seam; with the installed model selected, full suite 1212
+passed, 2 skipped, 1 retained xfailed. This is not human microphone, official
+MP3, real reasoning or booking proof. C24-1/2/3 and kit/vision gates remain;
+see B handoff and ASR measurements. No A-owned source/config changed.
+
+2026-09-25: Atishay fixed a reproduced owned turn-policy scope bug: “Cancel
+this booking” had returned the engine-level task-stop decision. Only explicit
+task-stop language now returns stop; booking cancellation/device stop remain
+ordinary complete requests. Focused policy 22 passed, full suite 1215 passed,
+3 skipped, 1 xfailed. Added a no-real-effect user mic run sheet at
+`docs/feedback/MICROPHONE_TEST_PROTOCOL.md`; user should first verify the page
+reports a real ASR backend, because demo/mock replies are not transcription
+evidence. No user audio recorded. C24-2 output-stop scope, common runtime,
+real vision and official kit/media remain open. Details in Atishay handoff.
+
+## 2026-09-25 — Atishay final owned-tree verification
+
+- Full suite: 1,221 passed, 4 skipped, 1 retained xfailed, two existing
+  dependency warnings (53.86 s); Ruff and four Node browser checks passed.
+- Installed Faster Whisper opt-in generated-media checks: 2 passed (8.90 s).
+  Reasoning remains a deterministic mock with no tool effects; no speech was
+  newly recorded.
+- Outstanding: C24-1/2/3 shared runtime/timing decisions with Mridul, real
+  streaming interruption/timing, live vision/model endpoint, and official kit
+  media runs. Expected kit path/files and local Ollama ports were unavailable.
+- No Mridul-owned source/contracts/configuration changed. Atishay changes remain
+  uncommitted and unpushed; tests use the existing Python 3.12.10 venv because
+  the pinned Python 3.11 uv minor link is missing.

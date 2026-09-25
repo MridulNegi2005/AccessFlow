@@ -98,3 +98,90 @@ held-out human speech accuracy, generalization, accessibility benefit or clinica
 | Total | 18 | 18 adapter observations completed |
 
 The fixtures are generated voice or generated acoustic material. The scores compare known local scripts and do not establish human speech accuracy, generalization, accessibility benefit, vision quality, reasoning quality or end-to-end task completion.
+
+## 2026-09-24 - Opt-in ASR timing and decoder-evidence probe
+
+`python -m accessflow.perception.asr_evidence` directly invokes the installed Faster Whisper model with `beam_size=5` and `word_timestamps=True`. It records the fixture SHA-256 and format, model snapshot, segment and word offsets, decoder estimates, and model load/inference time. It is a **diagnostic direct-model probe**, not `LocalPerception.observe`, a browser microphone test, an agent turn, or an official Samsung run. The probe does not infer turn finality or calibrated confidence. It emits JSON to stdout and does not save raw audio.
+
+Backend: Faster Whisper 1.2.1, `Systran/faster-whisper-base.en`, snapshot `3d3d5dee26484f91867d81cb899cfcf72b96be6c`, CPU INT8 on Intel Core Ultra 5 125H. The runs below used the already-installed local model and checked-in **generated** WAV fixtures. Timings are individual warm-machine observations, not a latency distribution.
+
+| Fixture (SHA-256 prefix) | Model load | Inference | Decoded evidence |
+|---|---:|---:|---|
+| `synthetic_pause_correction.wav` (`49b0b26f`) | 1.713 s | 2.150 s | `Book Tuesday Actually, Wednesday at 5`; two segments at 0.00–0.64 s and 2.68–5.04 s. |
+| `held_out/heldout_repetition.wav` (`d16355e7`) | 1.096 s | 1.676 s | `I want Tuesday, Tuesday, actually Wednesday at 5.`; one segment at 0.00–3.74 s. Separate word offsets retain both `Tuesday` tokens (0.40–0.74 s and 1.34–1.82 s) and `Wednesday` (2.64–3.10 s). |
+| `synthetic_tone.wav` (`9038a655`) | 1.025 s | 1.432 s | No decoded segments on one generated half-second tone. This is not a silence-detection benchmark. |
+
+For the repetition clip, the model emitted word decoder probabilities of approximately 0.986 and 0.989 for the two `Tuesday` tokens and 0.997 for `Wednesday`; the segment's `avg_logprob` was -0.285 and `no_speech_prob` was 0.000354. These are **raw decoder estimates, not calibrated correctness probabilities**. The generated source and exposure history prevent calling the case fresh unseen human speech. The probe's `word_timestamps=True` path can alter the exact punctuation/text and runtime relative to the default live `LocalPerception` path; the earlier adapter transcript and timing above must not be treated as directly comparable. Segment offsets are model-relative to the submitted WAV, not session-clock capture timestamps or proof of when a turn is complete.
+
+The public `Observation` currently flattens transcript text and sets audio finality without carrying these offsets/estimates. Until Atishay and Mridul agree C24-1/2's provenance, clock, revision, finality and uncertainty fields—and Mridul changes the shared contract/controller—this probe does **not** feed agent decisions. Real microphone capture, human speech, physical interruption and official raw-MP3 evaluation remain unverified.
+
+## 2026-09-25 — No-speech microphone boundary
+
+The user explicitly requested that no speech be required. The local page at `http://127.0.0.1:8000/` showed microphone permission state `prompt` and waited for browser permission; the in-app browser did not expose an actionable permission dialog. Reloading canceled the pending capture request and returned the page to its microphone-off “Tap to speak” state. No microphone bytes were captured or uploaded, and no spoken phrase was requested. This is a permission/UI observation only, not a microphone or acoustic test. Ollama and local model manifests were absent and ports 11434/11435 were closed, so no live vision model result was available. Generated-fixture ASR and the model-backed worker/Agent regression remain the available non-human evidence.
+
+## 2026-09-24 - Real child-worker and Agent seam on generated WAVs
+
+The existing installed Faster Whisper 1.2.1 `Systran/faster-whisper-base.en` snapshot `3d3d5dee26484f91867d81cb899cfcf72b96be6c` ran through the actual `ProcessPerception` child process on this Intel Core Ultra 5 125H/Windows host (Python 3.12.10, CPU INT8). Sources were the checked-in **generated** `held_out/heldout_repetition.wav` (SHA-256 `d16355e7d1e702ebc309227e18bd9925a3ec7290cc7d454754d89dbaae55853f`) and `synthetic_pause_correction.wav` (SHA-256 `49b0b26fd1ebcae0772b2559a4aba3782444f59fab7e7e7038122f06157c872b`).
+
+- Direct child-worker call 1, including spawn/model load: 4.921 s; transcript `I want Tuesday, Tuesday, actually Wednesday at 5.`
+- Same live child-worker call 2: 1.650 s; transcript `Book Tuesday. Actually, Wednesday at 5.` The child PID was reused and was no longer alive after `aclose()`.
+- One separate run through the actual `Agent` controller plus the real ASR child worker took 4.678 s from queued audio to a final. The reasoner was a deterministic **mock**, the policy was the final-flag baseline, and the tool manifest was empty. Its view contained the recognized repeated-Tuesday/corrected-Wednesday audio observation with matching event/source IDs and `faster-whisper/cpu-int8` provenance; the final's `caused_by_event_id` matched the audio event. There were zero tool calls/effects and the child stopped after close.
+
+The opt-in owned regression `tests/perception/test_live_worker_agent.py` checks the Agent/worker seam with `ACCESSFLOW_TEST_WHISPER_MODEL_PATH` set to an installed snapshot; it skips when no path is supplied rather than downloading a model. It now uses Atishay’s `HeuristicTurnPolicy` and verifies that the ASR correction causes an acknowledgment and a final tied to the same audio event, with zero mock tool effects. The focused local run passed. This is actual local ASR on generated voice, **not** human microphone audio, official MP3 admission, a real reasoning-model result or booking behavior. The worker returned `final=True` and `speech_start=speech_end=0.0` because the current shared audio contract has no clip finality or measured clock mapping; C24-1/2 remains unresolved. Single-run wall times are not latency percentiles.
+
+## 2026-09-25 — Current-branch model-backed Agent recheck
+
+On the current `atishay/perception` checkout, reran the opt-in test with the
+already-installed Faster Whisper base.en CPU INT8 snapshot configured through
+`ACCESSFLOW_TEST_WHISPER_MODEL_PATH`:
+
+```powershell
+$env:ACCESSFLOW_TEST_WHISPER_MODEL_PATH = 'E:\Downloads\Samsung Stuff\AccessFlow\models\models--Systran--faster-whisper-base.en\snapshots\3d3d5dee26484f91867d81cb899cfcf72b96be6c'
+.\.venv\Scripts\python.exe -m pytest -q tests/perception/test_live_worker_agent.py
+Remove-Item Env:ACCESSFLOW_TEST_WHISPER_MODEL_PATH
+```
+
+Result: **1 passed in 8.67 s**. The test used the checked-in generated
+`held_out/heldout_repetition.wav` (SHA-256
+`d16355e7d1e702ebc309227e18bd9925a3ec7290cc7d454754d89dbaae55853f`; 208,378
+bytes), actual `ProcessPerception` child worker and `Agent`, and Atishay's
+`HeuristicTurnPolicy`. It asserts two `Tuesday` tokens and `Wednesday` in the
+ASR observation, matching audio-event causality for acknowledgment/final, zero
+tool calls/effects, and child-process cleanup. The reasoner and tools remain
+test doubles. The 8.67 s is the complete focused pytest run, not a standalone
+ASR latency measurement. This adds a fresh current-checkout plumbing check, not
+new human-speech, endpointing, live-reasoning, official MP3 or booking evidence.
+
+## 2026-09-25 — Raw decoder evidence on the owned LocalPerception path
+
+The regular installed-Faster-Whisper `LocalPerception` path now requests word
+timestamps and can send an immutable `ASRDecodeEvidence` record to an optional
+diagnostic sink. The record preserves the input event ID, utterance/source ID,
+revision, backend, transcript, language estimates, segment timestamps and raw
+decoder estimates (`avg_logprob`, `no_speech_prob`, compression ratio and word
+probabilities). Estimates are explicitly uncalibrated; segment/word offsets
+remain relative to the WAV. No controller/session clock mapping or turn
+finality is inferred, and this diagnostic record is not added to the shared
+`Observation` or used by the agent to authorize an action. Sink failures are
+logged and do not suppress a valid transcript. An empty decode is captured
+before the existing empty-text error, so diagnostic evidence is not silently
+lost; it is not relabeled as silence.
+
+Fake-model regressions verify populated evidence, source/revision correlation,
+empty decodes and sink failure behavior. A fresh opt-in run against the
+installed Faster Whisper 1.2.1 base.en CPU INT8 model on the generated
+`held_out/heldout_repetition.wav` passed both the actual child-worker/Agent
+check and the direct `LocalPerception` evidence check: **2 passed in 12.58 s**.
+The Agent's reasoner/tools are test doubles and no effects were executed; the
+metadata check is on generated speech, not human or official media.
+
+A separate direct-model probe of checked-in `tests/fixtures/audio/synthetic_tone.wav`
+(SHA-256 `9038a6555bc5598b60b954d69637dc83bfc2322c9a55a6abf644863eb67df8b5`,
+0.5 s mono 16 kHz PCM) returned `no_decoded_segments`, empty transcript,
+language `en`, language probability `1.0`; model inference was 2.16 s for this
+single fixture. This is not evidence that the signal is silence or that all
+noise is rejected. In the normal local path the empty transcript still raises
+the established perception error after the diagnostic callback. Proper
+no-speech/recovery semantics and transport through `ProcessPerception` remain
+open; the latter is Mridul-owned, and any shared-field/controller use requires
+C24-1 agreement.

@@ -82,3 +82,10 @@ Stitch deliverables.
 The demo's `/?preview=photo` and `/?preview=meeting` are separately implemented local
 sample states. The photo uses a newly generated, clearly labeled illustrative image;
 neither preview is a saved Stitch export or evidence of live perception/calendar behavior.
+
+On 24 September, the selected `01-photo-answer` frame's **More → Download**
+action was tried again in the in-app browser. The frame toolbar still reported
+1280×1033. No new file appeared in the checked `C:\Users\adish\Downloads`
+folder or this folder, so the action remains unverified and the manual export
+steps above remain necessary. A later browser reset prevented another verified
+download attempt; no export success is inferred from the click.

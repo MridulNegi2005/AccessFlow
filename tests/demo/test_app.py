@@ -465,6 +465,7 @@ async def test_demo_perception_publishes_display_only_observation_notice():
     assert len(observations) == 1
     assert notices == [
         {
+            "event_id": event.event_id,
             "modality": "text",
             "source_id": "browser-4",
             "revision": 2,
@@ -552,6 +553,42 @@ def test_browser_speech_callbacks_ignore_canceled_utterances():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_browser_answers_require_current_request_causality():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("answer_correlation_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_browser_microphone_permission_wait_is_single_and_recoverable():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("microphone_pending_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_browser_disconnect_discards_microphone_without_upload():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("microphone_disconnect_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = _normalized_demo_source()
 
@@ -578,6 +615,9 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert 'id="voice-state"' in html
     assert 'id="voice-help"' in html
     assert 'id="answer-context"' in html
+    assert 'id="backend-status" role="status" aria-live="polite"' in html
+    assert "'Perception: ' + payload.perception_backend" in html
+    assert "Reasoner: ' + reasoner" in html
     assert '<textarea class="task-input" id="task-text" hidden' in html
     assert "const previewMode = ['1', 'photo', 'meeting'].includes(previewVariant);" in html
     assert 'function renderDesignPreview(variant)' in html
@@ -635,7 +675,9 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "nextMediaId('mic-audio')" in html
     assert "kind === 'audio' ? 'upload-audio' : 'upload-frame'" in html
     assert "event.kind === 'demo_observation'" in html
-    assert "payload.source_id === finalSourceId" in html
+    assert "Array.from(requestEventIds.values()).includes(cause)" in html
+    assert "function replayPendingAnswer()" in html
+    assert "requestSourceIds.has(payload.source_id)" in html
     assert "demo/mock mode does not transcribe audio." in html
     assert 'Date.now()' not in html
 
@@ -848,6 +890,8 @@ def test_websocket_returns_controller_output_event():
     outputs = [item for item in received if item["kind"] in {"acknowledge", "final"}]
     assert {item["kind"] for item in outputs} == {"acknowledge", "final"}
     final = next(item for item in outputs if item["kind"] == "final")
+    observation = next(item for item in received if item["kind"] == "demo_observation")
+    assert final["payload"]["caused_by_event_id"] == observation["payload"]["event_id"]
     assert final["payload"]["basis"] == "informational"
     assert "Book Wednesday" in final["payload"]["text"]
     assert final["state"]["status"] == "listening"
@@ -1006,6 +1050,7 @@ def test_websocket_audio_upload_reaches_mock_controller():
     assert observation["payload"]["backend"] == "demo/mock-audio"
     assert observation["payload"]["final"] is True
     final = next(item for item in received if item["kind"] == "final")
+    assert final["payload"]["caused_by_event_id"] == observation["payload"]["event_id"]
     assert "Mock agent received audio input" in final["payload"]["text"]
     assert final["payload"]["backend"] == "reasoner"
 
@@ -1519,8 +1564,9 @@ def test_websocket_real_local_perception_and_vision_share_context(monkeypatch, t
     class WhisperModel:
         calls = []
 
-        def transcribe(self, path, *, beam_size):
+        def transcribe(self, path, *, beam_size, word_timestamps):
             WhisperModel.calls.append((path, beam_size))
+            assert word_timestamps is True
             text = (
                 "Please inspect the initial screen"
                 if len(WhisperModel.calls) == 1

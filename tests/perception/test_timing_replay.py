@@ -119,6 +119,7 @@ def test_replay_uses_revision_available_at_each_pause():
     assert report.candidates[0].pause_start_s == pytest.approx(1.88)
     assert report.candidates[0].pause_end_s == pytest.approx(3.86)
     assert report.missed_final_count == 0
+    assert report.added_wait_after_speech_end_s is None  # Newer partial supersedes it.
 
 
 def test_stale_or_mismatched_revisions_cannot_gate_a_candidate():
@@ -168,3 +169,59 @@ def test_replay_rejects_duplicate_revision_identity():
             (revision, revision),
             source_id="duplicate",
         )
+
+
+def test_partial_revision_cannot_count_as_matched_final_in_acoustic_baseline():
+    frames = (
+        ActivityFrame(0.0, 1.0, 0, True),
+        ActivityFrame(1.0, 1.8, 0, False),
+        ActivityFrame(1.8, 2.4, 0, True),
+        ActivityFrame(2.4, 3.0, 0, False),
+    )
+    revisions = (
+        TranscriptRevision("utterance-1", 0, False, 1.0, 1.0),
+        TranscriptRevision("utterance-1", 1, True, 3.2, 2.4),
+    )
+
+    report = replay_endpoint_candidates(
+        frames, revisions, source_id="utterance-1", require_final=False
+    )
+
+    assert len(report.candidates) == 2  # Acoustic candidates remain visible.
+    assert all(candidate.revision == 0 for candidate in report.candidates)
+    assert all(candidate.wait_after_speech_end_s is None for candidate in report.candidates)
+    assert report.missed_final_count == 1
+    assert report.added_wait_after_speech_end_s is None
+
+
+@pytest.mark.parametrize(
+    ("corrected_available_at_s", "expected_missed", "expected_wait"),
+    [(2.6, 0, 0.6), (3.2, 1, None)],
+)
+def test_report_targets_latest_final_correction_not_earlier_final(
+    corrected_available_at_s: float, expected_missed: int, expected_wait: float | None
+):
+    frames = (
+        ActivityFrame(0.0, 1.0, 0, True),
+        ActivityFrame(1.0, 1.8, 0, False),
+        ActivityFrame(1.8, 2.4, 0, True),
+        ActivityFrame(2.4, 3.0, 0, False),
+    )
+    revisions = (
+        TranscriptRevision("correction", 1, True, 1.0, 1.0),
+        TranscriptRevision("correction", 2, True, corrected_available_at_s, 2.4),
+    )
+
+    report = replay_endpoint_candidates(
+        frames, revisions, source_id="correction", require_final=False
+    )
+
+    assert len(report.candidates) == 2
+    assert report.candidates[0].revision == 1
+    assert report.candidates[0].wait_after_speech_end_s == pytest.approx(0.8)
+    assert report.missed_final_count == expected_missed
+    if expected_wait is None:
+        assert report.added_wait_after_speech_end_s is None
+    else:
+        assert report.candidates[1].revision == 2
+        assert report.added_wait_after_speech_end_s == pytest.approx(expected_wait)
