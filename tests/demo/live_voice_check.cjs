@@ -93,6 +93,36 @@ function harness() {
   assert.equal(delayed.sent.finals[0][1], freshRevision + 1);
   await delayed.voice.end();
 
+  const unfinished = harness();
+  assert.equal(await unfinished.voice.start(), true);
+  unfinished.feed(1500, true);
+  const unfinishedId = unfinished.sent.status[0][0];
+  assert.equal(unfinished.voice.previewResult(
+    unfinishedId, 1, "Book Tuesday, actually", null), true);
+  unfinished.feed(2600, false);
+  assert.equal(unfinished.sent.finals.length, 0,
+    "an explicit correction cue cannot become a final request on quiet alone");
+  unfinished.feed(400, true);
+  assert.equal(unfinished.sent.previews.length, 2);
+  assert.equal(unfinished.voice.previewResult(
+    unfinishedId, 2, "Book Tuesday, actually Wednesday at five", null), true);
+  unfinished.feed(2300, false);
+  assert.equal(unfinished.sent.finals.length, 1,
+    "the completed correction still finishes hands-free");
+  await unfinished.voice.end();
+
+  const abandoned = harness();
+  assert.equal(await abandoned.voice.start(), true);
+  abandoned.feed(1500, true);
+  const abandonedId = abandoned.sent.status[0][0];
+  abandoned.voice.previewResult(abandonedId, 1, "Book Tuesday, actually...", null);
+  abandoned.feed(5600, false);
+  assert.equal(abandoned.sent.finals.length, 0,
+    "a never-completed correction must not authorize final audio");
+  assert.deepEqual(abandoned.sent.status[1].slice(1), [2, "failed"]);
+  assert.match(abandoned.sent.errors.at(-1), /unfinished/i);
+  await abandoned.voice.end();
+
   live.feed(400, true);
   assert.equal(live.sent.status.length, 2);
   await live.voice.end();
