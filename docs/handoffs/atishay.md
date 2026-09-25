@@ -1324,3 +1324,23 @@ protect arbitrarily long pauses; D1 controller hold and D4 source registry
 remain Mridul-owned. Gate 2 remains 12/12 NOT RUN and Gate 3 remains 4/4
 NOT RUN. Per user direction, the memory-limited installed-ASR opt-in was not
 retried. No shared implementation or configuration changed.
+
+## 2026-09-25 — PARTIAL late-image receipt isolation
+
+An owned Node reproducer showed a PNG receipt arriving after the request
+timeout was dropped: `finishRun()` cleared its pending file and the browser
+required the old request still be active before accepting the receipt. The
+browser now keeps bounded pending images until their same-session receipt or
+session end. A late receipt can add its image row, and a late observation can
+update that row, but neither enters a new request's event map or revives an
+answer. Wrong-session and duplicate receipts remain rejected. A separate
+failing send test showed a thrown transport send could strand a pending PNG;
+that slot now releases on the throw. Both regressions failed before repair
+and passed afterward.
+
+This is owned UI evidence retention only: Mridul's controller still has a
+single active frame and cannot safely reason with Image 1 plus Image 2 or
+assign authoritative ordinals/receipt times. Python 3.11 standard suite:
+**1388 passed, 6 skipped, 3 xfailed, 2 warnings** (123.56 s); seven Node
+checks and Ruff passed. Real reasoning/vision and physical-mic gates remain
+unrun. No memory-limited ASR retry or shared code edit occurred.

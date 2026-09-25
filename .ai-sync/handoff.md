@@ -1538,3 +1538,19 @@ real vision and official kit/media remain open. Details in Atishay handoff.
   (113.51 s); seven Node checks and Ruff passed. No model retry. Gate 1
   remains partial/failed at D1/D4, Gate 2 NOT RUN and Gate 3 NOT RUN.
   Mridul's shared controller and memory work remain separate.
+
+## 2026-09-25 — Atishay PARTIAL late-image receipt checkpoint
+
+- The browser now retains a pending PNG across a task timeout until its
+  matching same-session server receipt or session end. A late receipt/vision
+  observation updates only that image's row; it cannot revive the old answer
+  or enter a newer request's event map. A wrong-session receipt is rejected.
+  A thrown, unsent upload releases its pending slot.
+- `answer_correlation_check.cjs` and `image_staging_check.cjs` failed on the
+  old behavior and pass after the owned repair. Current Python 3.11 suite:
+  1388 passed/6 skipped/3 xfailed/2 warnings in 123.56 s; seven Node checks
+  and Ruff passed. Installed-ASR was not retried per user direction.
+- D4 authoritative ordinals, timestamp/source registry and field-level write
+  guards still require Mridul. Gate 1 remains incomplete; 12 real-inference
+  attempts and four physical-mic checks remain NOT RUN. No shared source or
+  configuration was edited.

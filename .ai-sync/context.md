@@ -1516,3 +1516,9 @@ configuration changed; no commit or push.
 **Changes:** Added failing Node reproducers for a 2.5-second pause before a Wednesday correction and for late task/tool errors mislabeling accepted PNGs; added a bounded configurable 4.2-second action quiet window and restricted image-failure display to pre-observation backend failures. Updated partial gate evidence.
 **Status:** PARTIAL. Current Python 3.11 full suite 1388 passed, 6 skipped, 3 xfailed, 2 warnings in 113.51 s; seven Node checks and Ruff passed. No installed-ASR opt-in was run.
 **Notes:** The lexical pause guard is not a physical-mic or model result; longer pauses remain possible. D1/D4 controller contracts, 12 real-inference attempts and four human microphone cases remain open. No Mridul-owned source/configuration changed.
+
+## [2026-09-25 23:37 IST] — Atishay late-image receipt isolation
+**Task:** Preserve accepted PNG identity when its server receipt arrives after an owned browser request times out.
+**Changes:** Added failing Node cases for a late same-session receipt/observation and for a throwing unsent upload. Retained bounded pending image records across task completion, accepted matching late receipts into image history without changing a newer request/answer, rejected wrong-session receipts, and released failed sends.
+**Status:** PARTIAL. Python 3.11 standard suite 1388 passed, 6 skipped, 3 xfailed, 2 warnings in 123.56 s; seven Node checks and Ruff passed. No actual inference or human microphone run.
+**Notes:** The browser history is not Mridul's D4 registry or authority to use multiple images in a write. No installed-ASR memory retry, shared source change, or official kit run.

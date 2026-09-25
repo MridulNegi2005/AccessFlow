@@ -413,6 +413,31 @@ show({ kind: "error", session_id: "image-session", payload: {
 } });
 assert.equal(attachmentHistory.items()[2].status, "received",
   "a tool failure is not proof that PNG perception failed");
+attachmentHistory.prepare("frame-late", { name: "late.png" });
+vm.runInContext("runInProgress = false; requestSourceIds = new Set();", context);
+const beforeLateReceiptRender = rendered.length;
+show({ kind: "demo_status", session_id: "old-session",
+  accepted_event_id: "wrong-session-late", accepted_revision: 0,
+  payload: { media_received: "frame", source_id: "frame-late" } });
+assert.equal(attachmentHistory.items().at(-1)?.sourceId, "frame-c",
+  "a late receipt from another session cannot claim the pending image");
+show({ kind: "demo_status", session_id: "image-session",
+  accepted_event_id: "image-late", accepted_revision: 0,
+  payload: { media_received: "frame", source_id: "frame-late" } });
+assert.equal(attachmentHistory.items().at(-1)?.sourceId, "frame-late",
+  "a late same-session server receipt retains its image after request timeout");
+assert.equal(rendered.length, beforeLateReceiptRender,
+  "the late image receipt must not revive an answer");
+assert.equal(vm.runInContext("requestEventIds.has('frame-late')", context), false,
+  "a late image receipt is not authority for a newer request");
+vm.runInContext("runInProgress = true; requestSourceIds = new Set(['new-text']);", context);
+show({ kind: "demo_observation", session_id: "image-session", payload: {
+  modality: "image", source_id: "frame-late", event_id: "image-late",
+  revision: 0, final: true, backend: "vision/actual", text: "Old image evidence",
+} });
+assert.equal(attachmentHistory.items().at(-1)?.status, "observed",
+  "an older image observation remains attached without becoming the new request");
+assert.equal(rendered.length, beforeLateReceiptRender);
 
 const finishStart = html.indexOf("function finishRun() {");
 const finishEnd = html.indexOf("function cancelSpeech()", finishStart);
@@ -429,8 +454,14 @@ const controls = new Map([
   ["#voice-toggle", { disabled: false }],
   ["#drop-zone", { setAttribute() {}, tabIndex: 0, inert: false }],
 ]);
+const pendingHistory = new AccessFlowAttachmentHistory({
+  createObjectURL: (file) => `blob:${file.name}`,
+  revokeObjectURL() {},
+});
+pendingHistory.startSession("pending-session");
+pendingHistory.prepare("pending-image", { name: "pending.png" });
 const availabilityContext = {
-  attachmentHistory: { discardPending() {} },
+  attachmentHistory: pendingHistory,
   document: { querySelector(selector) {
     assert.ok(controls.has(selector), `Unexpected selector: ${selector}`);
     return controls.get(selector);
@@ -460,6 +491,8 @@ vm.runInContext(
 );
 assert.equal(controls.get("#voice-toggle").disabled, true,
   "a mock-mode answer must not enable unavailable live voice");
+assert.equal(pendingHistory.accept("pending-session", "pending-image", "late-event", 0), true,
+  "finishing a request must keep its pending PNG until a server receipt or session end");
 assert.match(controls.get("#voice-help").textContent, /needs the configured agent/i);
 vm.runInContext("liveVoice = { active: true }; setMediaControlsLocked(true);", availabilityContext);
 assert.equal(controls.get("#voice-toggle").disabled, false,

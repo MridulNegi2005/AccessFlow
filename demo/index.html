@@ -1807,19 +1807,18 @@
           return;
         }
         if (event.kind === "demo_status" && payload.media_received) {
-          if (!runInProgress || !requestSourceIds.has(payload.source_id)) return;
           if (activeSessionId && event.session_id !== activeSessionId) return;
-          const accepted = rememberRequestEvent(
-            payload.source_id,
-            event.accepted_event_id,
-            event.accepted_revision,
+          const currentRequest = runInProgress && requestSourceIds.has(payload.source_id);
+          const accepted = currentRequest && rememberRequestEvent(
+            payload.source_id, event.accepted_event_id, event.accepted_revision,
           );
-          if (accepted && payload.media_received === "frame") {
+          if (payload.media_received === "frame" && (!currentRequest || accepted)) {
             attachmentHistory.accept(
               event.session_id, payload.source_id,
               event.accepted_event_id, event.accepted_revision,
             );
           }
+          if (!currentRequest) return;
           const kind =
             payload.media_received === "frame"
               ? "Screenshot"
@@ -2002,7 +2001,6 @@
       }
 
       function finishRun() {
-        attachmentHistory.discardPending();
         runInProgress = false;
         finalSourceId = null;
         requestSourceIds = new Set();
@@ -2601,12 +2599,13 @@
             });
             return;
           }
+          let sourceId = null;
           try {
             const dataBase64 = await fileToBase64(file);
             if (!runInProgress) return false;
             document.querySelector("#processing").lastElementChild.textContent =
               "Sending " + mediaLabel + "…";
-            const sourceId = nextMediaId(
+            sourceId = nextMediaId(
               kind === "audio" ? "upload-audio" : "upload-frame",
             );
             if (kind === "frame" && !attachmentHistory.current(activeSessionId)) {
@@ -2640,6 +2639,7 @@
             if (!sent && kind === "frame") attachmentHistory.discard(sourceId);
             return sent;
           } catch (error) {
+            if (kind === "frame" && sourceId) attachmentHistory.discard(sourceId);
             show({
               kind: "demo_error",
               payload: { backend: "demo/mock", message: error.message },
