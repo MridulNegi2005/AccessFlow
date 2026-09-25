@@ -1,5 +1,16 @@
 # Active Handoff
 
+## Atishay bounded long-turn voice previews - 25 September 2026
+
+Owned browser capture no longer consumes its entire preview allowance after
+three updates and then misreports continued speech as unrecognized. Quiet,
+preview and turn limits are now validated options with finite defaults (12
+previews/60 seconds); exhaustion fails without final audio. Deterministic
+continued-speech and configurable-pause tests pass. Final standard suite:
+1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks and Ruff
+passed. No memory-limited ASR rerun per user direction. This remains PARTIAL:
+physical mic, actual reasoning/vision and shared controller gates are open.
+
 ## Atishay receipt-bound browser image display - 25 September 2026
 
 Owned browser code now shows multiple PNGs only after matching server receipts,

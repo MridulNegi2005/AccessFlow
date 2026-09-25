@@ -1498,3 +1498,9 @@ configuration changed; no commit or push.
 **Changes:** Added a bounded session-local attachment ledger, explicit script route and visible list; bound accepted source/event/revision to the server receipt, retained observed/failed status, rejected duplicate/old-session updates and ninth local image, and stopped old staged previews from appearing on later answers. Added deterministic Node/pytest checks and updated the D4 proposal/handoff.
 **Status:** PARTIAL. Final standard suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks, Ruff and syntax passed. Installed-ASR opt-in was not retried with roughly 1 GB free physical RAM after the earlier `mkl_malloc` failure.
 **Notes:** No Mridul-owned source changed. Browser list is not the shared multi-image registry or field-level provenance; no physical microphone, real reasoner/vision or official kit run is claimed.
+
+## [2026-09-25] — Atishay bounded long-turn voice previews
+**Task:** Keep provisional ASR useful for continued speech without unbounded requests or silent finalization.
+**Changes:** Added a failing continued-speech test past three previews, then configurable validated quiet/preview/turn limits in owned live capture; long or exhausted turns fail explicitly without final WAV. Added tests for a patient quiet interval and invalid timing. Updated feedback and handoff.
+**Status:** PARTIAL. Standard full suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks, Ruff and syntax passed. Memory-limited ASR opt-in not run per user direction.
+**Notes:** No Mridul-owned source changed. No physical mic, real reasoner/vision or official kit run. Controller authority/finality and D4 remain shared dependencies.
