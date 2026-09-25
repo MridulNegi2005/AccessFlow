@@ -148,6 +148,13 @@ function harness(timing = {}) {
   assert.equal(bounded.sent.finals.length, 0);
   assert.equal(bounded.sent.status.at(-1)[2], "failed");
   assert.match(bounded.sent.errors.at(-1), /too long/i);
+  bounded.feed(1000, true);
+  assert.equal(bounded.sent.status.length, 2,
+    "continuous speech after a capped turn must not start a suffix-only request");
+  bounded.feed(700, false);
+  bounded.feed(400, true);
+  assert.equal(bounded.sent.status.length, 3,
+    "a new turn may start only after the speaker has gone quiet");
   await bounded.voice.end();
 
   assert.throws(() => harness({ quietCompleteMs: 6000, quietFailureMs: 5500 }),

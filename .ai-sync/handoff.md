@@ -6,8 +6,10 @@ Owned browser capture no longer consumes its entire preview allowance after
 three updates and then misreports continued speech as unrecognized. Quiet,
 preview and turn limits are now validated options with finite defaults (12
 previews/60 seconds); exhaustion fails without final audio. Deterministic
-continued-speech and configurable-pause tests pass. Final standard suite:
-1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks and Ruff
+continued-speech and configurable-pause tests pass. A post-check regression
+also prevents speech still underway after a cap from starting a suffix-only
+turn; it waits for a fresh quiet period. Final post-guard standard suite:
+1387 passed, 6 skipped, 3 xfailed, 2 warnings in 69.82 s; seven Node checks and Ruff
 passed. No memory-limited ASR rerun per user direction. This remains PARTIAL:
 physical mic, actual reasoning/vision and shared controller gates are open.
 

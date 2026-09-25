@@ -1501,6 +1501,6 @@ configuration changed; no commit or push.
 
 ## [2026-09-25] — Atishay bounded long-turn voice previews
 **Task:** Keep provisional ASR useful for continued speech without unbounded requests or silent finalization.
-**Changes:** Added a failing continued-speech test past three previews, then configurable validated quiet/preview/turn limits in owned live capture; long or exhausted turns fail explicitly without final WAV. Added tests for a patient quiet interval and invalid timing. Updated feedback and handoff.
-**Status:** PARTIAL. Standard full suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks, Ruff and syntax passed. Memory-limited ASR opt-in not run per user direction.
+**Changes:** Added a failing continued-speech test past three previews, then configurable validated quiet/preview/turn limits in owned live capture; long or exhausted turns fail explicitly without final WAV. A post-check regression found continuous speech could start a suffix-only turn after a cap; added a fresh-quiet reset guard. Added tests for a patient quiet interval and invalid timing. Updated feedback and handoff.
+**Status:** PARTIAL. Post-guard standard full suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings in 69.82 s; seven Node checks, Ruff and syntax passed. Memory-limited ASR opt-in not run per user direction.
 **Notes:** No Mridul-owned source changed. No physical mic, real reasoner/vision or official kit run. Controller authority/finality and D4 remain shared dependencies.

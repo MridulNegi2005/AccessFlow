@@ -1608,5 +1608,6 @@ tests for continued speech, patient quiet completion, invalid timing and
 explicit no-final failure at turn/preview limits. Default limits were chosen
 as development settings, not measured physical-microphone optimums. Standard
 suite passed 1387/6 skipped/3 xfailed with two warnings; seven Node checks
-and Ruff passed. The user explicitly directed that memory-limited model tests
+and Ruff passed before a follow-up quiet-reset guard; its focused regression
+passed and the standard suite was rerun afterward. The user explicitly directed that memory-limited model tests
 not be retried; no shared controller, model backend or device result is claimed.

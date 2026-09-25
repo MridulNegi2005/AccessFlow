@@ -1272,12 +1272,14 @@ browser now allows later revisions within a bounded default of 12 previews
 and 60 seconds per turn. Quiet completion (2.2 s), failure timeout (5.5 s),
 preview interval (1 s), preview count and turn duration are validated timing
 options. A long or preview-exhausted turn fails with a specific recoverable
-message and **no final WAV**. A configured longer quiet interval is tested.
+message and **no final WAV**. A long/oversize turn also requires a fresh quiet
+period before continuous speech can start another request, preventing a
+suffix-only action. A configured longer quiet interval is tested.
 This improves independent D2/V05 behavior but does not establish acoustic
 endpoint quality, controller action authority or real microphone timing.
 
-The standard full suite passed **1387 passed, 6 skipped, 3 xfailed, 2 warnings**
-in 67.46 s; seven Node checks, Ruff and live-voice syntax passed. The
+The post-guard standard full suite passed **1387 passed, 6 skipped, 3 xfailed,
+2 warnings** in 69.82 s; seven Node checks, Ruff and live-voice syntax passed. The
 memory-limited installed-ASR opt-in was not run per user direction. Mridul
 owns that resource issue and the shared D1/D2/D3/D4 decisions; human-mic and
 actual reasoning/vision gates remain unverified.
