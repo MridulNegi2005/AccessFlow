@@ -1632,6 +1632,7 @@
       let microphoneTimer = null;
       let microphoneStartedAt = 0;
       let recordedWavBytes = null;
+      let stagedImageFile = null;
       let stagedImageUrl = null;
       let latestMediaSourceId = null;
       let finalSourceId = null;
@@ -2535,7 +2536,9 @@
       }
 
       function sendFile(kind, selector, fallback) {
-        const file = document.querySelector(selector).files[0];
+        const file = kind === "frame"
+          ? stagedImageFile
+          : document.querySelector(selector).files[0];
         const action = async () => {
           if (!file) return false;
           const mediaLabel =
@@ -2591,7 +2594,7 @@
         const hasAttachment = Boolean(
           document.querySelector("#audio").files[0] ||
             recordedWavBytes ||
-            document.querySelector("#image").files[0],
+            stagedImageFile,
         );
         const available = hasAttachment && canRun() && !runInProgress;
         button.hidden = !available;
@@ -2604,7 +2607,7 @@
             hasRunBefore && getDraftSignature() !== lastSubmittedSignature
               ? "Send updated request"
               : "Send with attachment";
-        if (document.querySelector("#image").files[0] && !canRun()) {
+        if (stagedImageFile && !canRun()) {
           document.querySelector("#dock-error").textContent =
             "Add a text or voice request to run with this screenshot.";
         }
@@ -2612,7 +2615,7 @@
 
       function getDraftSignature() {
         const audio = document.querySelector("#audio").files[0];
-        const image = document.querySelector("#image").files[0];
+        const image = stagedImageFile;
         return JSON.stringify([
           document.querySelector("#task-text").value,
           audio
@@ -2646,6 +2649,7 @@
               : "Choose a PNG screenshot.";
           document.querySelector("#image").value = "";
           if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+          stagedImageFile = null;
           stagedImageUrl = null;
           document.querySelector("#answer-image").hidden = true;
           document.querySelector("#answer-grid").classList.remove("with-image");
@@ -2654,6 +2658,7 @@
           return;
         }
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+        stagedImageFile = file;
         stagedImageUrl = URL.createObjectURL(file);
         document.querySelector("#answer-image-button").hidden = true;
         document.querySelector("#answer-grid").classList.remove("with-image");
@@ -2702,7 +2707,7 @@
           row.append(icon, copy, remove);
           list.append(row);
         }
-        const imageFile = document.querySelector("#image").files[0];
+        const imageFile = stagedImageFile;
         if (imageFile && stagedImageUrl) {
           const row = document.createElement("div");
           row.className = "staged-item";
@@ -2728,6 +2733,7 @@
           remove.onclick = () => {
             document.querySelector("#image").value = "";
             URL.revokeObjectURL(stagedImageUrl);
+            stagedImageFile = null;
             stagedImageUrl = null;
             document.querySelector("#answer-image-button").hidden = true;
             document
@@ -2751,7 +2757,7 @@
         if (runInProgress) return;
         const text = document.querySelector("#task-text").value.trim();
         const audioFile = document.querySelector("#audio").files[0];
-        const imageFile = document.querySelector("#image").files[0];
+        const imageFile = stagedImageFile;
         if (!text && !audioFile && !recordedWavBytes) {
           document.querySelector("#dock-error").textContent =
             "Add a text or voice request before running your task.";

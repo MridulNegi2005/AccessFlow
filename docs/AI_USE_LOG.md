@@ -1558,3 +1558,16 @@ actual delayed ASR output was used; V04 remains partial pending integration.
 The first full rerun failed one image timing test with `MemoryError`; the
 isolated test and the next full run passed. The failure and uncertain cause
 are recorded in the delivery results.
+
+## 25 September 2026 - AI-assisted repetition, closure and PNG staging
+
+Assistance added owned configured-browser tests for repeated-quantity mock
+effects and disconnect during a gated mock write, plus a browser End-session
+late-final regression. A read-only subagent inspected the D4 image UI and
+identified that drag-and-drop preview and picker-based upload used different
+file sources; assistance repaired that owned path and tested picker/drop
+payload identity. The first tool-wait test proposal omitted required write
+dependencies and was rightly rejected; the test setup was fixed. The first
+new Node test compared cross-realm objects by prototype and was corrected to
+assert fields. No shared engine/contract/adapter edit, physical mic, actual
+reasoner/vision attempt, real external effect or official kit score is claimed.
