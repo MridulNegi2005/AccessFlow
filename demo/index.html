@@ -1640,6 +1640,7 @@
       let runInProgress = false;
       let responseTimer = null;
       let responseBackend = "demo/mock";
+      let agentMode = "mock";
       let ttsUtterance = null;
       let speechGeneration = 0;
       let ttsEnabled = false;
@@ -1654,9 +1655,9 @@
 
       function modeLabel() {
         if (previewMode) return "Design preview";
-        return responseBackend.toLowerCase().includes("mock")
-          ? "Mock tools"
-          : "Live backend";
+        return agentMode === "configured"
+          ? "Configured agent · mock tools"
+          : "Demo · mock tools";
       }
 
       function show(event) {
@@ -1736,6 +1737,7 @@
         if (event.kind === "demo_status" && payload.perception_backend) {
           if (typeof event.session_id === "string")
             activeSessionId = event.session_id;
+          agentMode = payload.agent_mode === "configured" ? "configured" : "mock";
           const reasoner = payload.reasoner_backend;
           responseBackend = reasoner
             ? payload.perception_backend + " · " + reasoner

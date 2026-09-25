@@ -4,6 +4,7 @@ import base64
 import importlib.util
 import inspect
 import json
+import os
 import re
 import shutil
 import struct
@@ -11,6 +12,7 @@ import subprocess
 import threading
 import time
 import zlib
+from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
@@ -34,8 +36,10 @@ from accessflow.contracts import (
     ToolManifest,
 )
 from accessflow.engine import Agent
+from accessflow.adapters.process_perception import ProcessPerception
 from accessflow.fakes import FakeTools, FinalFlagPolicy, MockOnlyAuthorization
 from accessflow.perception import modality_coverage
+from accessflow.turn_policy import HeuristicTurnPolicy
 
 
 demo_path = Path(__file__).parents[2] / "demo" / "app.py"
@@ -1053,6 +1057,155 @@ def test_websocket_audio_upload_reaches_mock_controller():
     assert final["payload"]["caused_by_event_id"] == observation["payload"]["event_id"]
     assert "Mock agent received audio input" in final["payload"]["text"]
     assert final["payload"]["backend"] == "reasoner"
+
+
+def test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools(monkeypatch):
+    observed = {}
+
+    class Perception(demo_app.LocalPerception):
+        closed = False
+
+        async def aclose(self):
+            self.closed = True
+            await super().aclose()
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/configured-backend")
+
+        async def plan(self, view, manifests):
+            observed["manifest_names"] = [manifest.name for manifest in manifests]
+            return PlanProposal(response="Configured agent answer", request_complete=True)
+
+    async def factory(**kwargs):
+        observed["factory_arguments"] = kwargs
+        agent = Agent(
+            Perception(), HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="text")
+        agent.perception_warmup_backends = {}
+        observed["agent"] = agent
+        return agent
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "What is the answer?"}}
+            )
+            outputs = _receive_controller_outputs(socket)
+
+    assert status["payload"] == {
+        "agent_mode": "configured",
+        "tool_environment": "mock",
+        "perception_backend": "configured/text-only",
+        "reasoner_backend": "test/configured-backend",
+    }
+    assert isinstance(observed["factory_arguments"]["executor"], FakeTools)
+    assert isinstance(observed["factory_arguments"]["authorization"], MockOnlyAuthorization)
+    assert observed["manifest_names"] == ["mock_calendar_create"]
+    assert any(
+        item["kind"] == "demo_observation" and item["payload"]["backend"] == "local/text-pass-through"
+        for item in outputs
+    )
+    assert next(item for item in outputs if item["kind"] == "final")["payload"]["text"] == (
+        "Configured agent answer"
+    )
+    assert observed["agent"].perception.inner.closed
+
+
+def test_websocket_configured_setup_failure_has_no_fake_fallback(monkeypatch):
+    async def failing_factory(**_kwargs):
+        raise RuntimeError("private provider response must not reach the browser")
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", failing_factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert failure == {
+        "kind": "demo_error",
+        "payload": {
+            "backend": "demo/config",
+            "message": "Configured agent setup failed. Check local model, provider and service settings.",
+        },
+    }
+
+
+def test_websocket_configured_factory_requires_explicit_backend(monkeypatch):
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setenv("ACCESSFLOW_SAMSUNG_PERCEPTION", "text")
+    monkeypatch.delenv("ACCESSFLOW_SAMSUNG_BACKEND", raising=False)
+    for key in demo_app.build_configured_agent.__globals__["PERCEPTION_ENV_KEYS"]:
+        if key != "ACCESSFLOW_SAMSUNG_PERCEPTION":
+            monkeypatch.delenv(key, raising=False)
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert failure["kind"] == "demo_error"
+    assert failure["payload"]["backend"] == "demo/config"
+    assert "setup failed" in failure["payload"]["message"]
+    assert "mock" not in failure["payload"]["message"]
+
+
+def test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner(monkeypatch):
+    """Opt-in actual ASR path, not actual configured reasoning or human speech."""
+    model_path = os.environ.get("ACCESSFLOW_TEST_WHISPER_MODEL_PATH")
+    if not model_path:
+        pytest.skip("Set ACCESSFLOW_TEST_WHISPER_MODEL_PATH for opt-in browser ASR")
+    model = Path(model_path)
+    assert model.is_dir()
+    fixture = Path(__file__).parents[1] / "fixtures/audio/held_out/heldout_repetition.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    observed = {}
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/mock-reasoner")
+
+        async def plan(self, view, manifests):
+            observed["text"] = view.observations[-1].text
+            return PlanProposal(response="Mock reasoner received actual ASR", request_complete=True)
+
+    async def factory(**kwargs):
+        perception = ProcessPerception(model_path=model, observation_timeout_s=30)
+        agent = Agent(
+            perception, HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="process", vision_provider="none")
+        agent.perception_warmup_backends = {}
+        observed["perception"] = perception
+        return agent
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json(
+                {"kind": "audio", "payload": {"data_base64": encoded, "utterance_id": "real-asr"}}
+            )
+            receipt = socket.receive_json()
+            outputs = _receive_controller_outputs(socket)
+        deadline = time.monotonic() + 5
+        while observed["perception"].child_alive and time.monotonic() < deadline:
+            time.sleep(0.05)
+        assert observed["perception"]._closed
+        assert not observed["perception"].child_alive
+
+    observation = next(item for item in outputs if item["kind"] == "demo_observation")
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert status["payload"]["perception_backend"] == "audio: unverified"
+    assert receipt["accepted_event_id"] == observation["payload"]["event_id"]
+    assert final["payload"]["caused_by_event_id"] == receipt["accepted_event_id"]
+    assert observation["payload"]["backend"] == "faster-whisper/cpu-int8"
+    assert observed["text"].lower().count("tuesday") == 2
+    assert "wednesday" in observed["text"].lower()
 
 
 def test_websocket_local_perception_timeout_is_recoverable(monkeypatch):

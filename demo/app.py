@@ -18,6 +18,7 @@ from typing import Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 
+from accessflow.adapters.configured_agent import build_configured_agent
 from accessflow.contracts import (
     Audio,
     AudioEvent,
@@ -31,6 +32,7 @@ from accessflow.contracts import (
     PlanProposal,
     Start,
     StartEvent,
+    ToolManifest,
     Transcript,
     TranscriptEvent,
 )
@@ -60,7 +62,81 @@ MAX_REASONER_CONTEXT_CHARS = _reasoner_module.MAX_REASONER_CONTEXT_CHARS
 MAX_REASONER_RESPONSE_BYTES = _reasoner_module.MAX_REASONER_RESPONSE_BYTES
 OllamaReasoner = _reasoner_module.OllamaReasoner
 
-app = FastAPI(title="AccessFlow mock demo")
+app = FastAPI(title="AccessFlow demo")
+
+
+def _demo_agent_mode() -> str:
+    mode = os.environ.get("ACCESSFLOW_DEMO_AGENT_MODE", "mock").strip()
+    if mode not in {"mock", "configured"}:
+        raise ValueError("ACCESSFLOW_DEMO_AGENT_MODE must be mock or configured")
+    return mode
+
+
+def _mock_external_tools() -> list[ToolManifest]:
+    """Only the configured demo advertises this in-memory, non-calendar effect."""
+    return [
+        ToolManifest(
+            name="mock_calendar_create",
+            description="Create a mock calendar event in this session only; no real calendar is changed.",
+            effect="write",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "minLength": 1},
+                    "date": {"type": "string", "format": "date"},
+                    "time": {"type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"},
+                    "timezone": {"type": "string", "minLength": 1},
+                    "operation_id": {"type": "string"},
+                },
+                "required": ["title", "date", "time", "timezone", "operation_id"],
+                "additionalProperties": False,
+            },
+            idempotency_parameter="operation_id",
+        ),
+    ]
+
+
+class _ObservedConfiguredPerception:
+    """Demo-only final-observation projection; inference remains the factory's."""
+
+    def __init__(self, inner, callback, label: str):
+        self.inner = inner
+        self.observation_callback = callback
+        self.backend_label = label
+
+    def validate_media_source(self, event: Any) -> None:
+        if isinstance(event, (AudioEvent, FrameEvent)) and not Path(event.payload.path).is_file():
+            raise ValueError("configured perception requires uploaded media bytes")
+
+    async def observe(self, event):
+        async for observation in self.inner.observe(event):
+            if observation.final:
+                self.observation_callback(
+                    {
+                        "event_id": observation.event_id,
+                        "modality": observation.modality,
+                        "source_id": observation.source_id,
+                        "revision": observation.revision,
+                        "text": observation.text,
+                        "backend": observation.backend,
+                        "final": True,
+                    }
+                )
+            yield observation
+
+    async def aclose(self) -> None:
+        await self.inner.aclose()
+
+
+def _configured_perception_label(agent: Agent) -> str:
+    configuration = agent.perception_configuration
+    if configuration.mode == "text":
+        return "configured/text-only"
+    observed = agent.perception_warmup_backends
+    labels = [f"audio: {observed.get('audio', 'unverified')}"]
+    if configuration.vision_provider != "none":
+        labels.append(f"image: {observed.get('image', 'unverified')}")
+    return " · ".join(labels)
 
 
 class DemoPerception:
@@ -612,13 +688,41 @@ async def websocket(websocket: WebSocket) -> None:
 
     sender = asyncio.create_task(send_outputs())
     perception = None
+    agent = None
+    mode = None
     try:
-        perception = DemoPerception.from_environment()
-        reasoner_factory = getattr(DemoReasoner, "from_environment", None)
-        reasoner = reasoner_factory() if callable(reasoner_factory) else DemoReasoner()
-    except ValueError as error:
+        mode = _demo_agent_mode()
+        if mode == "configured":
+            agent = await build_configured_agent(
+                root=Path(os.environ.get("ACCESSFLOW_DEMO_ASSETS_ROOT", ROOT.parent)),
+                authorization=MockOnlyAuthorization(),
+                executor=FakeTools(),
+            )
+            perception = agent.perception
+            perception_label = _configured_perception_label(agent)
+            reasoner_label = agent.reasoner.backend.name
+            manifests = _mock_external_tools()
+        else:
+            perception = DemoPerception.from_environment()
+            reasoner_factory = getattr(DemoReasoner, "from_environment", None)
+            reasoner = reasoner_factory() if callable(reasoner_factory) else DemoReasoner()
+            agent = Agent(
+                perception,
+                FinalFlagPolicy(),
+                reasoner,
+                FakeTools(),
+                MockOnlyAuthorization(),
+            )
+            perception_label = perception.backend_label
+            reasoner_label = getattr(reasoner, "backend_name", "demo/unknown-reasoner")
+            manifests = []
+    except Exception as error:
+        message = (
+            str(error) if isinstance(error, ValueError) and mode == "mock"
+            else "Configured agent setup failed. Check local model, provider and service settings."
+        )
         await outgoing.put(
-            {"kind": "demo_error", "payload": {"backend": "demo/config", "message": str(error)}}
+            {"kind": "demo_error", "payload": {"backend": "demo/config", "message": message}}
         )
         await outgoing.put(None)
         await asyncio.gather(sender, return_exceptions=True)
@@ -631,8 +735,10 @@ async def websocket(websocket: WebSocket) -> None:
             "kind": "demo_status",
             "session_id": session_id,
             "payload": {
-                "perception_backend": perception.backend_label,
-                "reasoner_backend": getattr(reasoner, "backend_name", "demo/unknown-reasoner"),
+                "agent_mode": mode,
+                "tool_environment": "mock",
+                "perception_backend": perception_label,
+                "reasoner_backend": reasoner_label,
             },
         }
     )
@@ -643,19 +749,19 @@ async def websocket(websocket: WebSocket) -> None:
         except asyncio.QueueFull as error:
             raise RuntimeError("demo output queue is full") from error
 
-    perception.observation_callback = lambda payload: enqueue_output(
-        {"kind": "demo_observation", "session_id": session_id, "payload": payload}
-    )
-
-    agent = Agent(
-        perception,
-        FinalFlagPolicy(),
-        reasoner,
-        FakeTools(),
-        MockOnlyAuthorization(),
-    )
+    def observation_callback(payload: dict[str, Any]) -> None:
+        enqueue_output(
+            {"kind": "demo_observation", "session_id": session_id, "payload": payload}
+        )
+    if mode == "configured":
+        perception = _ObservedConfiguredPerception(
+            perception, observation_callback, perception_label
+        )
+        agent.perception = perception
+    else:
+        perception.observation_callback = observation_callback
     agent_task = asyncio.create_task(agent.run(incoming, outgoing))
-    await incoming.put(StartEvent(session_id=session_id, payload=Start()))
+    await incoming.put(StartEvent(session_id=session_id, payload=Start(tools=manifests)))
 
     with tempfile.TemporaryDirectory(prefix="accessflow-demo-") as media_dir:
         media_root = Path(media_dir)
@@ -729,38 +835,41 @@ async def websocket(websocket: WebSocket) -> None:
         except (WebSocketDisconnect, RuntimeError, ValueError):
             pass
         finally:
-            for task in (receiver,):
-                if not task.done():
-                    task.cancel()
-            await asyncio.gather(receiver, return_exceptions=True)
-            if materialization_tasks:
-                await asyncio.gather(*materialization_tasks, return_exceptions=True)
-                materialization_tasks.clear()
+            try:
+                if not receiver.done():
+                    receiver.cancel()
+                await asyncio.gather(receiver, return_exceptions=True)
+                if materialization_tasks:
+                    await asyncio.gather(*materialization_tasks, return_exceptions=True)
+                    materialization_tasks.clear()
 
-            agent_cancelled = False
-            if agent.running and not agent_task.done():
-                try:
-                    incoming.put_nowait(EndEvent(session_id=session_id))
-                except asyncio.QueueFull:
-                    agent_task.cancel()
-                    agent_cancelled = True
-            if not agent_cancelled and not agent_task.done():
-                try:
-                    await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
-                except (asyncio.TimeoutError, RuntimeError):
-                    agent_task.cancel()
-            await asyncio.gather(agent_task, return_exceptions=True)
-            if not sender.done():
-                try:
-                    outgoing.put_nowait(None)
-                except asyncio.QueueFull:
-                    pass
-                try:
-                    await asyncio.wait_for(asyncio.shield(sender), timeout=1)
-                except (asyncio.TimeoutError, RuntimeError):
-                    sender.cancel()
-            await asyncio.gather(sender, return_exceptions=True)
-            await perception.aclose()
+                agent_cancelled = False
+                if agent.running and not agent_task.done():
+                    try:
+                        incoming.put_nowait(EndEvent(session_id=session_id))
+                    except asyncio.QueueFull:
+                        agent_task.cancel()
+                        agent_cancelled = True
+                if not agent_cancelled and not agent_task.done():
+                    try:
+                        await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
+                    except (asyncio.TimeoutError, RuntimeError):
+                        agent_task.cancel()
+                await asyncio.gather(agent_task, return_exceptions=True)
+                if not sender.done():
+                    try:
+                        outgoing.put_nowait(None)
+                    except asyncio.QueueFull:
+                        pass
+                    try:
+                        await asyncio.wait_for(asyncio.shield(sender), timeout=1)
+                    except (asyncio.TimeoutError, RuntimeError):
+                        sender.cancel()
+                await asyncio.gather(sender, return_exceptions=True)
+            finally:
+                # Starlette may cancel this handler while cleanup is awaiting a
+                # receiver or controller. The native child still belongs to us.
+                await perception.aclose()
 
 
 if __name__ == "__main__":
