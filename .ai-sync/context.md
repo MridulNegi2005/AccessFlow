@@ -1394,6 +1394,18 @@ own branch. Windows cleanup stopped test11436;existing11435 service stayed runni
 **Notes:** Screenshot only; raw audio, recording length, hardware/browser and timing were not retained. Uvicorn connection logs do not show audio contents. Streaming/barge-in, common runtime, C24-1/2/3 coordination, live vision and official media evaluation remain open. No Mridul-owned code/contracts changed.
 **Follow-on:** Added a pending C24-1/2 discussion draft in `docs/CONTRACT_PROPOSALS.md`; no shared semantics were implemented. Current local vision preflight found no Ollama service/API and no participant kit at its expected path.
 
+## [2026-09-25] — Atishay delayed-preview revision guard
+**Task:** Keep delayed ASR preview text from overwriting resumed speech in the owned live-voice browser path.
+**Changes:** Invalidate an in-flight preview revision after a pause followed by new voice; added a deterministic held-callback regression that rejects old text, accepts the correction and sends one higher-revision final WAV.
+**Status:** V04 PARTIAL; five Node checks, browser syntax and Ruff passed. Final full Python rerun: 1381 passed, 6 skipped, 3 xfailed, 2 warnings. A preceding full rerun had one image timing failure with `MemoryError`; isolated test and next full rerun passed. No physical-mic or real delayed-model result is claimed.
+**Notes:** No shared controller, contract or process adapter edit; D2/D3 authority/closure coordination with Mridul remains open.
+
+## [2026-09-25] — Atishay configured-process reconnect regression
+**Task:** Close bounded L03 evidence without touching shared controller or adapter ownership.
+**Changes:** Added an opt-in two-WebSocket generated-WAV test with installed Faster Whisper CPU INT8 and a mock reasoner. Session 1 preview/worker close before session 2; session 2's observation, plan view and final retain only its own source and event identity. Kept the TestClient loop alive until both child processes were reaped; no production source change.
+**Status:** Full Python 3.11 suite 1381 passed, 6 skipped, 3 xfailed, 2 warnings; four opt-in installed-ASR tests, Ruff and five Node checks passed. L03 is deterministic/process-ASR PASS, while aggregate Gate 1 remains FAIL and Gates 2/3 are NOT RUN.
+**Notes:** No physical microphone, real reasoning/vision provider, official kit run, or Mridul-owned source change. See `docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md` for limits and D1-D4 coordination.
+
 ## [2026-09-25] — Current-branch model-backed Agent seam recheck
 **Task:** Re-verify the installed local ASR path through the real child worker and Agent without requiring more human speech.
 **Changes:** No production source changes. Re-ran the opt-in generated-WAV test with the installed Faster Whisper base.en CPU INT8 model; confirmed two Tuesday tokens, Wednesday correction, input-event causality, zero effects, and child cleanup. Added a C24-1/2 proposal draft without editing shared contracts.

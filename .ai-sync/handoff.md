@@ -1,5 +1,27 @@
 # Active Handoff
 
+## Atishay delayed-preview correction guard - 25 September 2026
+
+Owned browser capture now invalidates a pending preview after resumed speech
+following a pause. A deterministic Node check rejects late old text, accepts
+the later correction and emits one higher-revision final audio event. V04 is
+PARTIAL, not live mic or controller-authority evidence. This is alongside the
+L03 configured-process reconnect test below; shared D1/D2/D3/D4 contracts
+and controller changes remain Mridul-owned.
+
+## Atishay configured-process reconnect regression - 25 September 2026
+
+L03 now has an opt-in two-WebSocket regression with the installed Faster
+Whisper CPU INT8 worker and a generated WAV. Session 1's preview and worker
+end on disconnect; session 2 uses a new ID/worker and its final and mock
+reasoner view contain only session 2's audio source. Full suite: 1381 passed,
+6 skipped, 3 xfailed, 2 dependency warnings; four installed-ASR opt-in tests,
+Ruff and five Node checks passed. Details in
+`docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md` and
+`docs/handoffs/atishay.md`. This remains PARTIAL: no physical mic, configured
+real reasoner/vision, official 12-run ledger, or complete D1/D4 shared
+semantics. No shared controller/contract/adapter files were edited.
+
 ## Atishay partial D4 per-image perception - 25 September 2026
 
 Owned vision perception now keeps separately accepted frame IDs independent;

@@ -13,26 +13,35 @@ implementation or configuration was edited.
 | A — error correlation | PASS, deterministic | `pytest tests/demo/test_app.py -q`; `node tests/demo/answer_correlation_check.cjs` | Admission receipt maps source/revision to server event before ASR or vision can fail; current errors show safe text and controls recover. | Physical browser/model failure smoke remains part of Gate 2/3, Atishay. |
 | B — stop | FAIL, partial | `pytest tests/perception/test_confirmed_stop_semantics.py -q --runxfail` exposes two intended failures; Node output-stop regression passes. | Current authoritative output-stop cancels browser TTS; old session/cause ignored. Device/booking classification remains distinct. | Mridul must add output-only and hold/clarify controller decisions; Atishay will map the classifier and verify task/playback behavior. See proposal below. |
 | C — configured agent | PASS for adapter seam; NOT RUN end-to-end real inference | `test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools`, `test_websocket_configured_factory_requires_explicit_backend`, opt-in browser ASR test | Explicit `ACCESSFLOW_DEMO_AGENT_MODE=configured` uses `build_configured_agent`, its reasoner/policy/perception, declared in-memory calendar mock manifest/executor, source-preserving observation projection, backend labels and worker cleanup. Setup fails visibly with no fake fallback. | No configured reasoning backend was available in this environment. Actual common-agent answer and mock calendar outcome require a configured installed provider, Atishay; shared action semantics remain Mridul's. |
-| D — hands-free voice/images | PARTIAL | Deterministic live-voice harness, installed-ASR preview/final test, and per-image perception regressions | The browser has opt-in provisional ASR and automatic final capture. Distinct accepted image IDs no longer suppress one another in owned perception; a full image queue rejects the new input explicitly. No synthetic recording is called live microphone evidence. | Physical-mic timing, semantic endpoint quality, committed-effect closure, ordered multi-image registry/field selection and actual vision remain open. D2/D3 controller hooks and D4 registry/source guards require Mridul; browser capture/display belongs to Atishay. |
+| D — hands-free voice/images | PARTIAL | Deterministic live-voice harness, installed-ASR preview/final and reconnect tests, and per-image perception regressions | The browser has opt-in provisional ASR and automatic final capture. A resumed-speech revision now invalidates an in-flight old preview before its delayed callback can replace displayed words. Distinct accepted image IDs no longer suppress one another in owned perception; a full image queue rejects the new input explicitly. No synthetic recording is called live microphone evidence. | Physical-mic timing, semantic endpoint quality, committed-effect closure, ordered multi-image registry/field selection and actual vision remain open. D2/D3 controller hooks and D4 registry/source guards require Mridul; browser capture/display belongs to Atishay. |
 | Gate 1 — 26 cases | FAIL | Checklist below | Error, selected stop/playback/capture, and a deterministic corrected mock action pass. | D1/D2/D3/D4 and actual live action cases remain. |
 | Gate 2 — 12 actual-inference attempts | NOT RUN | No declared reasoning provider or listening Ollama service; no run ledger created | Installed ASR can decode a generated fixture through the browser adapter. | Predeclare four development cases and run 3 attempts each with actual ASR/reasoning/vision where applicable, Atishay. Never count fake reasoner or fixture response. |
 | Gate 3 — four human microphone cases | NOT RUN | No new human audio captured | None claimed. | Run M01–M04 only after hands-free implementation and the user's capture agreement, Atishay. |
-| Gate 4 — regression | PASS for current code; acceptance still partial | Python 3.11.15: `python -m pytest -q` **1381 passed, 5 skipped, 3 xfailed, 2 dependency warnings** (86.76 s); `ruff check .` and five Node checks passed. Three explicit installed-ASR opt-in tests: **3 passed** (28.45 s). | Owned perception now preserves separate image IDs/failures and rejects queue overflow; installed Faster Whisper decoded a generated WAV for preview and final without an early mock-planner call. | `test_conflicting_frames_require_resolution_before_write --runxfail` still fails by timeout. Two D1 xfails and this D4 xfail remain deliverable failures; physical-mic timing and configured reasoning remain unverified. |
+| Gate 4 — regression | PASS on final rerun for current code; acceptance still partial | Python 3.11.15: `python -m pytest -q` **1381 passed, 6 skipped, 3 xfailed, 2 dependency warnings** (107.04 s final rerun); `ruff check .` and five Node checks passed. Four explicit installed-ASR opt-in tests: **4 passed** (36.88 s). | Owned perception preserves separate image IDs/failures and rejects queue overflow; installed Faster Whisper decoded a generated WAV for preview/final and a configured-process reconnect regression. | One preceding full run failed a one-second image-provider-start wait with `MemoryError`; the test passed alone and the full suite passed on rerun. `test_conflicting_frames_require_resolution_before_write --runxfail` still fails by timeout. Two D1 xfails and this D4 xfail remain deliverable failures; physical-mic timing and configured reasoning remain unverified. |
 
-The two warnings are Starlette TestClient/httpx deprecations. The five skips
-were: `test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner`
-and both tests in `test_live_worker_agent.py` because the opt-in model variable
-was not set for the default suite; `test_corpus_boundary.py` and
+The two warnings are Starlette TestClient/httpx deprecations. The six skips
+were: `test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner`,
+`test_websocket_reconnect_with_installed_asr_starts_fresh_session` and both
+tests in `test_live_worker_agent.py` because the opt-in model variable was not
+set for the default suite; `test_corpus_boundary.py` and
 `test_tool_metadata.py` because native symlinks were unavailable. The three
 xfails were `test_conflicting_frames_require_resolution_before_write` (D4
 controller gap) and the two strict D1 cases named in Slice B. The symlink
 skips are environment/packaging checks, not proof of media acceptance; the
-other three were run separately with the installed model. The opt-in
+other four were run separately with the installed model. The opt-in
 command was run separately with `ACCESSFLOW_TEST_WHISPER_MODEL_PATH` explicitly
 set to the installed `Systran/faster-whisper-base.en` snapshot. That run used
 actual Faster Whisper CPU INT8 on a **generated** WAV, but a **mock reasoner**;
 it proved event/source identity and bounded native child teardown, not a real
 answer, booking, human microphone result or Samsung score.
+
+After the delayed-preview change, the first full-suite rerun had **1 failure**
+(`test_slow_image_provider_does_not_block_event_loop`): its provider did not
+start within the test's one-second wait, and the task logged `MemoryError`.
+The same test passed in isolation (0.99 s); no AccessFlow worker process was
+left running in a read-only process check, and the next full run passed. This
+is a transient/environmental hypothesis, not a proven root cause or a
+silently discarded failure.
 
 Browser QA status: **IN PROGRESS**. The local mock page was opened in the Codex
 in-app browser at 1280 CSS-pixel width. I inspected pixels in the initial and
@@ -68,10 +77,10 @@ gate or the real-inference/human-device gates.
 | V01 | PASS, deterministic only | `test_websocket_configured_correction_commits_only_wednesday_mock_effect`: browser → actual controller, scripted planner double, partial Tuesday produces no effect; final correction creates one 2026-09-30 17:00 Asia/Kolkata mock effect and no Tuesday write. Real configured reasoning/mic remains Gate 2/3. |
 | V02 | PARTIAL | `live_voice_check.cjs` covers a simulated internal pause and resumed speech without finalizing; acoustic timing and semantic endpoint quality on a physical microphone remain unverified. |
 | V03 | NOT RUN | No integrated repetition/effect check. |
-| V04 | NOT RUN | Source/revision tests exist, but no hands-free delayed-ASR correction conformance. |
+| V04 | PARTIAL | `live_voice_check.cjs` now holds an ASR preview callback across a pause and resumed speech: the old revision is rejected before a newer preview arrives, the newer correction is displayed, a still-later old callback is ignored, and the final WAV gets a higher revision. Server preview-only routing and final admission are covered separately. No physical audio timing, actual delayed model result, or controller-authority race has been exercised. |
 | L01 | PASS | `microphone_pending_check.cjs`: pending/denied/late-grant capture cleanup. Not physical permission evidence. |
 | L02 | PASS | `microphone_disconnect_check.cjs` and opt-in browser ASR disconnect test cover owned track/context and worker release in separate deterministic seams. |
-| L03 | NOT RUN | No fresh-session reconnect regression through a configured process worker. |
+| L03 | PASS, generated-audio/process-ASR regression only | `test_websocket_reconnect_with_installed_asr_starts_fresh_session`: first session receives a real Faster Whisper preview, its child closes on disconnect, and the next WebSocket has a new session ID, new process worker, only the new audio source in its reasoner view, and a correctly correlated final. Both children close. Browser old-session output filtering is separately covered by `answer_correlation_check.cjs`. This is not a physical-mic or actual-reasoner result. |
 | L04 | BLOCKED at controller | `test_distinct_image_ids_keep_both_results_after_later_admission` proves a valid old-image result survives a newer ID in owned perception; shared single-active-frame controller still lacks D4 registry/source-bound selection, Mridul. Atishay still needs UI/source display. |
 | V05 | PARTIAL | `live_voice_check.cjs` sends a bounded provisional preview before an automatic final; the explicit installed-ASR WebSocket test returns a Faster Whisper preview before final admission and sees zero mock planner calls until final. No physical-mic or real-reasoner action proof. |
 | L05 | PARTIAL | `live_voice_check.cjs` discards an unfinished turn and closes owned capture resources on End session; `test_websocket_disconnect_cancels_inflight_preview_without_final` proves a pending preview is cancelled and perception closed without a final. Cancellation during real tool wait and committed-effect reporting remain unverified. |

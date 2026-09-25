@@ -1533,3 +1533,28 @@ tests, failure identity, demo-wrapper behavior and the full repository suite
 were checked. The shared conflicting-frames test still fails under `--runxfail`;
 no controller/contract implementation, live vision inference, human recording,
 official score or completed multi-image feature is claimed.
+
+## 25 September 2026 - AI-assisted configured-process reconnect regression
+
+Assistance added an owned opt-in L03 test that uses the installed Faster Whisper
+CPU INT8 worker on a generated WAV in two sequential browser WebSocket
+sessions. The first preview and native child close on disconnect; the second
+uses a fresh session and source, with mock reasoning and event-correlated final.
+The first test run failed because its TestClient event loop closed before the
+second worker's asynchronous reap; moving the cleanup check inside the active
+client made the test pass without modifying shared adapter/controller code.
+Full suite, four installed-ASR opt-in tests, Ruff and five browser checks passed.
+This is neither human-mic nor actual-reasoner/vision evidence; the aggregate
+acceptance gates remain incomplete.
+
+## 25 September 2026 - AI-assisted delayed-preview revision guard
+
+Assistance found an owned browser capture race: resumed speech could still
+accept an older in-flight ASR preview before the next preview was sent. It
+invalidated that revision on a post-pause continuation and added a held-callback
+Node regression covering stale rejection, later correction and one final WAV.
+The change does not alter controller authority. No physical microphone or
+actual delayed ASR output was used; V04 remains partial pending integration.
+The first full rerun failed one image timing test with `MemoryError`; the
+isolated test and the next full run passed. The failure and uncertain cause
+are recorded in the delivery results.

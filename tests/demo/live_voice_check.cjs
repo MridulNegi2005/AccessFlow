@@ -71,6 +71,28 @@ function harness() {
   assert.equal(live.sent.finals[0][1], 3);
   assert.equal(live.voice.active, true, "automatic turn completion keeps the session open");
 
+  const delayed = harness();
+  assert.equal(await delayed.voice.start(), true);
+  delayed.feed(1500, true);
+  const delayedId = delayed.sent.status[0][0];
+  assert.equal(delayed.sent.previews[0][1], 1);
+  delayed.feed(600, false);
+  delayed.feed(400, true);
+  assert.equal(delayed.voice.previewResult(delayedId, 1, "stale Tuesday", null), false,
+    "resumed speech invalidates an in-flight preview before its callback arrives");
+  assert.equal(delayed.voice.turn.previewText, null);
+  delayed.feed(600, true);
+  assert.equal(delayed.sent.previews.length, 2);
+  const freshRevision = delayed.sent.previews[1][1];
+  assert.ok(freshRevision > 1);
+  assert.equal(delayed.voice.previewResult(delayedId, freshRevision,
+    "actually Wednesday at five", null), true);
+  assert.equal(delayed.voice.previewResult(delayedId, 1, "late Tuesday", null), false);
+  delayed.feed(2400, false);
+  assert.equal(delayed.sent.finals.length, 1);
+  assert.equal(delayed.sent.finals[0][1], freshRevision + 1);
+  await delayed.voice.end();
+
   live.feed(400, true);
   assert.equal(live.sent.status.length, 2);
   await live.voice.end();

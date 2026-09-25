@@ -1396,6 +1396,84 @@ def test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner(monke
     assert "wednesday" in observed["text"].lower()
 
 
+def test_websocket_reconnect_with_installed_asr_starts_fresh_session(monkeypatch):
+    """Opt-in process-ASR reconnect; reasoning and audio fixture are not live."""
+    model_path = os.environ.get("ACCESSFLOW_TEST_WHISPER_MODEL_PATH")
+    if not model_path:
+        pytest.skip("Set ACCESSFLOW_TEST_WHISPER_MODEL_PATH for opt-in reconnect ASR")
+    model = Path(model_path)
+    assert model.is_dir()
+    fixture = Path(__file__).parents[1] / "fixtures/audio/held_out/heldout_repetition.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    workers = []
+    planned_sources = []
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/mock-reasoner")
+
+        async def plan(self, view, manifests):
+            planned_sources.append([item.source_id for item in view.observations])
+            return PlanProposal(response="Mock reasoner received fresh ASR", request_complete=True)
+
+    async def factory(**kwargs):
+        perception = ProcessPerception(model_path=model, observation_timeout_s=30)
+        workers.append(perception)
+        agent = Agent(
+            perception, HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="process", vision_provider="none")
+        agent.perception_warmup_backends = {}
+        return agent
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as first_socket:
+            first_status = first_socket.receive_json()
+            first_socket.send_json({
+                "kind": "audio_preview",
+                "payload": {"data_base64": encoded, "utterance_id": "old-audio", "revision": 1},
+            })
+            first_preview = first_socket.receive_json()
+            assert first_preview["kind"] == "demo_preview"
+            assert first_preview["session_id"] == first_status["session_id"]
+            assert first_preview["source_id"] == "old-audio"
+            assert first_preview["backend"] == "faster-whisper/cpu-int8"
+
+        first_deadline = time.monotonic() + 5
+        while workers[0].child_alive and time.monotonic() < first_deadline:
+            time.sleep(0.05)
+        assert workers[0]._closed and not workers[0].child_alive
+
+        with client.websocket_connect("/ws") as second_socket:
+            second_status = second_socket.receive_json()
+            second_socket.send_json({
+                "kind": "audio",
+                "payload": {"data_base64": encoded, "utterance_id": "new-audio", "revision": 1},
+            })
+            receipt = second_socket.receive_json()
+            outputs = _receive_controller_outputs(second_socket)
+
+        deadline = time.monotonic() + 5
+        while any(worker.child_alive for worker in workers) and time.monotonic() < deadline:
+            time.sleep(0.05)
+    assert len(workers) == 2
+    assert all(worker._closed and not worker.child_alive for worker in workers), [
+        (worker._closed, worker.child_alive) for worker in workers
+    ]
+    assert first_status["session_id"] != second_status["session_id"]
+    assert receipt["session_id"] == second_status["session_id"]
+    assert all(item["session_id"] == second_status["session_id"] for item in outputs)
+    observation = next(item for item in outputs if item["kind"] == "demo_observation")
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert observation["payload"]["source_id"] == "new-audio"
+    assert observation["payload"]["backend"] == "faster-whisper/cpu-int8"
+    assert receipt["accepted_event_id"] == observation["payload"]["event_id"]
+    assert final["payload"]["caused_by_event_id"] == receipt["accepted_event_id"]
+    assert planned_sources == [["new-audio"]]
+
+
 def test_websocket_configured_correction_commits_only_wednesday_mock_effect(monkeypatch):
     """Deterministic planner double; verifies controller authority, not model accuracy."""
     partial_planned = threading.Event()

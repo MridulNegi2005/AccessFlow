@@ -1137,3 +1137,42 @@ contracts/controller; the exact proposal is in `docs/CONTRACT_PROPOSALS.md`.
 Atishay still must bind browser attachment display to accepted image IDs and
 run I01-I04 through the integrated controller. No live vision model, official
 media run or human microphone result was produced in this slice.
+
+## 2026-09-25 — PARTIAL configured-process reconnect checkpoint
+
+Added an opt-in L03 regression across two sequential configured WebSockets.
+The first receives an actual Faster Whisper CPU INT8 preview from a generated
+WAV, disconnects, and releases its native worker. The second receives a fresh
+session ID and worker, decodes only its own final audio, and returns an
+event-correlated mock-reasoner answer. Both workers close while the server
+test loop remains alive. The first draft of the test shut that loop down before
+the second worker's async reap completed; waiting inside `TestClient` corrected
+the harness, without changing the shared process adapter or controller.
+
+Full Python 3.11 suite: 1381 passed, 6 skipped, 3 xfailed, 2 dependency
+warnings in 111.81 s; Ruff and five Node checks passed. Four explicit
+installed-ASR opt-in tests passed in 36.88 s. L03 is PASS for this bounded
+generated-audio/process-ASR route, not for physical microphone timing or an
+actual reasoning/vision provider. D1 stop and D4 image-history xfails remain;
+26-case aggregate Gate 1 fails, 12 actual-inference attempts and four agreed
+human-microphone cases are still not run. Mridul's D1-D4 shared decisions and
+controller work remain separate; no teammate-owned source was changed.
+
+## 2026-09-25 — PARTIAL delayed-preview revision checkpoint
+
+The owned live-voice capture now invalidates an in-flight preview when speech
+resumes after a pause. A delayed old callback cannot put stale recognized
+words back into the current turn; a later preview must use a newer revision,
+and the final audio revision follows it. The deterministic browser harness
+holds the old callback, resumes speech, verifies rejection before and after
+the correction callback, and confirms one final WAV. This is V04 partial
+evidence only: no physical microphone, actual delayed ASR response or shared
+controller-authority race was tested. No Mridul-owned source was edited.
+
+Final full Python rerun after this browser change: 1381 passed, 6 skipped,
+3 xfailed, 2 dependency warnings in 107.04 s; five Node checks, browser
+syntax, Ruff and diff check passed. An earlier full rerun had a `MemoryError`
+and failed a one-second start wait in
+`test_slow_image_provider_does_not_block_event_loop`; it passed alone and the
+next full suite passed. Root cause was not established, so this failed run is
+retained in the delivery report rather than erased.
