@@ -304,3 +304,25 @@ as verified real effects. Final payloads retain this marker and mock confirmatio
 explicitly say "mock action". Model/tool-result fields cannot select the marker.
 Samsung's mock harness and the mock-only authorizer declare it. B can display this
 metadata but must not infer action authority or real integrations from it.
+
+
+## 24 September 2026 - A-owned transport speech status
+
+Owner: Mridul. Implemented additive controller-only SpeechStatusEvent with
+utterance_id,nonnegative revision,status pending/failed. Reproducing examples:
+tests/engine/test_speech_status.py and test_samsung_audio.py cover pending speech
+with a current frame,cancelled writes,late old observations and final WAV recovery.
+Directly passing each MP3 as Audio would falsely finalize partial turns; treating
+new pending speech as the old broad interrupt would discard current frame evidence.
+
+Compatibility: existing Audio/Observation/worker signatures remain unchanged. New
+speech_status inputs never reach perception. Samsung emits revision0 first pending,
+revision1 for a multi-clip final boundary,revision2 for complete WAV/failure; later
+ordinary speech evidence must have a higher revision than pending status. Only
+organizer end_of_turn controls assembly finality; no acoustic endpoints are invented.
+
+Decision: implemented within A ownership from AGENTS.md after choosing this narrow
+adapter/controller route. This supersedes earlier broad MP3 ownership deferral for
+this route only; no teammate approval or browser adoption is claimed. Both teammates
+must coordinate browser use,acoustic timing and any optional vision worker settings.
+No B source/tests changed. Details: SAMSUNG_AUDIO_ADMISSION_2026-09-24.md.

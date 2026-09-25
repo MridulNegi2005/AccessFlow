@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="62" time="4.605" timestamp="2026-09-24T14:17:41.255966+05:30" hostname="JARVIS"><testcase classname="tests.engine.test_configured_agent" name="test_text_configuration_rejects_ignored_native_settings" time="0.016" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION-fake]" time="0.005" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION_TIMEOUT_S-nan]" time="0.005" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION_TIMEOUT_S-0]" time="0.005" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION_TIMEOUT_S-111]" time="0.006" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[ASR_MODEL_PATH-missing]" time="0.006" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[WARMUP_AUDIO-missing.wav]" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_PROVIDER-silent-fallback]" time="0.009" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_URL-https://name:password@example.test]" time="0.008" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_URL-https://example.test/path]" time="0.006" /><testcase classname="tests.engine.test_configured_agent" name="test_samsung_setup_uses_shared_real_composition_and_warms_both_routes" time="0.015" /><testcase classname="tests.engine.test_configured_agent" name="test_failed_warmup_closes_resources_and_never_silently_uses_text[audio]" time="0.013" /><testcase classname="tests.engine.test_configured_agent" name="test_failed_warmup_closes_resources_and_never_silently_uses_text[image]" time="0.012" /><testcase classname="tests.engine.test_configured_agent" name="test_failed_warmup_closes_resources_and_never_silently_uses_text[wrong_source]" time="0.013" /><testcase classname="tests.engine.test_configured_agent" name="test_reasoner_setup_failure_also_closes_warmed_perception" time="0.013" /><testcase classname="tests.engine.test_configured_agent" name="test_configured_factory_can_be_used_by_demo_with_explicit_executor" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_total_warmup_budget_closes_native_worker" time="0.047" /><testcase classname="tests.engine.test_configured_agent" name="test_official_frame_reaches_reasoner_through_configured_child" time="2.335"><failure message="TimeoutError">queue = &lt;Queue at 0x216e0e43810 maxsize=0&gt;, kind = 'final_response'
+
+    async def action(queue, kind):
+        async with asyncio.timeout(2):
+            while True:
+&gt;               item = await queue.get()
+                       ^^^^^^^^^^^^^^^^^
+
+tests\engine\test_samsung_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x216e0e43810 maxsize=0&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('D:/Temp/pytest-of-JARVIS/pytest-618/test_official_frame_reaches_re0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000216E0E26550&gt;
+fake_runtime = None
+
+    async def test_official_frame_reaches_reasoner_through_configured_child(tmp_path, monkeypatch, fake_runtime):
+        """Real process/controller/protocol; deliberately fake ASR, pixels and inference."""
+        from accessflow.adapters.process_perception import ProcessPerception
+        from tests.engine.test_samsung_runtime import action, event
+    
+        for name, value in native_environment(tmp_path, vision=True).items():
+            monkeypatch.setenv(name, value)
+        requests = []
+    
+        async def generate(self, system, data, schema, **kwargs):
+            requests.append(data)
+            proposal = PlanProposal(request_complete=True, response="Fixture image received.").model_dump(mode="json")
+            if "_validator" in kwargs:
+                kwargs["_validator"](proposal)
+            return proposal
+    
+        def child(model_path, **kwargs):
+            return ProcessPerception(model_path, observation_timeout_s=kwargs["observation_timeout_s"],
+                                     worker_module="tests.engine.worker_fixture")
+    
+        monkeypatch.setattr(Backend, "generate", generate, raising=False)
+        monkeypatch.setattr(runtime, "ProcessPerception", child)
+        participant = ParticipantAgent(asyncio.Queue(), asyncio.Queue(), media_root=tmp_path)
+        await participant.setup()
+        assert participant.agent.perception_warmup_backends == {"audio": "fixture/native", "image": "fixture/native"}
+        task = asyncio.create_task(participant.run())
+        try:
+            await participant.in_queue.put(event("tool_manifest", {"schema_version": "1.0", "tools": {}}))
+            await participant.in_queue.put(event("video_frame", {"frame_ref": "warm.png", "frame_id": "current"}, 10))
+            await participant.in_queue.put(event("user_speech_chunk", {"text": "Describe this image.", "end_of_turn": True}, 20))
+&gt;           result = await action(participant.out_queue, "final_response")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\engine\test_configured_agent.py:209: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\engine\test_samsung_runtime.py:20: in action
+    async with asyncio.timeout(2):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Timeout [expired]&gt;
+exc_type = &lt;class 'asyncio.exceptions.CancelledError'&gt;
+exc_val = CancelledError(), exc_tb = &lt;traceback object at 0x00000216E0E2F4C0&gt;
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -&gt; Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() &lt;= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+&gt;               raise TimeoutError from exc_val
+E               TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\timeouts.py:115: TimeoutError</failure></testcase><testcase classname="tests.engine.test_samsung_package" name="test_pins_reject_nonportable_or_ambiguous_exports[]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_pins_reject_nonportable_or_ambiguous_exports[thing&gt;=2]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_pins_reject_nonportable_or_ambiguous_exports[thing @ https://example.test/thing.whl]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_pins_reject_nonportable_or_ambiguous_exports[-e .]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_pins_reject_nonportable_or_ambiguous_exports[thing==2; python_version &lt; &quot;3.12&quot;]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_pins_reject_nonportable_or_ambiguous_exports[thing==2\nthing==3]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_pins_discard_comments_without_losing_versions" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_profile_maps_portal_secret_without_copying_it_into_profile" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_default_package_refuses_inherited_evidence_mode_without_mutation" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_PERCEPTION]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_VISION_MODEL]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_VISION_PROVIDER]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_VISION_URL]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_WARMUP_AUDIO]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_text_package_refuses_inherited_native_perception_before_mutation[ACCESSFLOW_SAMSUNG_WARMUP_IMAGE]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_native_profile_cannot_claim_assets_installed_by_text_builder" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_candidate_profile_is_explicit_and_installs_both_modes" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_invalid_package_modes_fail_before_environment_mutation[ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE-guess]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_invalid_package_modes_fail_before_environment_mutation[ACCESSFLOW_SAMSUNG_PROMPT_PROFILE-compact-v99]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_packaged_setup_delivers_profile_to_controller_and_reasoner[full-prose]" time="0.013" /><testcase classname="tests.engine.test_samsung_package" name="test_packaged_setup_delivers_profile_to_controller_and_reasoner[compact-v2-evidence]" time="0.018" /><testcase classname="tests.engine.test_samsung_package" name="test_invalid_environment_fails_without_partial_mutation_or_secret_echo[overrides0]" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_invalid_environment_fails_without_partial_mutation_or_secret_echo[overrides1]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_invalid_environment_fails_without_partial_mutation_or_secret_echo[overrides2]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_invalid_environment_fails_without_partial_mutation_or_secret_echo[overrides3]" time="0.002" /><testcase classname="tests.engine.test_samsung_package" name="test_profile_cannot_supply_arbitrary_environment_or_endpoint" time="0.001" /><testcase classname="tests.engine.test_samsung_package" name="test_assembly_copies_only_selected_inputs_and_records_exact_bytes" time="0.077" /><testcase classname="tests.engine.test_samsung_package" name="test_assembly_records_candidate_profile_and_rejects_invalid_before_creation" time="0.074" /><testcase classname="tests.engine.test_samsung_package" name="test_assembly_never_overwrites_and_rejects_output_outside_artifacts" time="0.034" /><testcase classname="tests.engine.test_samsung_package" name="test_missing_kit_input_fails_before_destination_is_created" time="0.054" /><testcase classname="tests.engine.test_samsung_package" name="test_file_boundary_rejects_outside_file" time="0.008" /><testcase classname="tests.engine.test_samsung_package" name="test_packaged_constructor_does_not_require_keys_or_contact_a_provider" time="0.008" /><testcase classname="tests.engine.test_samsung_runtime" name="test_real_controller_finishes_tool_during_official_tail" time="0.052" /><testcase classname="tests.engine.test_samsung_runtime" name="test_input_failure_stops_all_pumps_instead_of_silently_hanging" time="0.009" /><testcase classname="tests.engine.test_samsung_runtime" name="test_early_speech_waits_for_manifest_then_replays_in_order" time="0.016" /><testcase classname="tests.engine.test_samsung_runtime" name="test_startup_buffer_overflow_stops_runtime_without_actions[count]" time="0.011" /><testcase classname="tests.engine.test_samsung_runtime" name="test_startup_buffer_overflow_stops_runtime_without_actions[bytes]" time="0.010" /><testcase classname="tests.engine.test_samsung_runtime" name="test_early_tool_result_is_not_admitted_as_buffered_evidence" time="0.009" /><testcase classname="tests.engine.test_samsung_runtime" name="test_cancel_before_manifest_cleans_up_without_model_work" time="0.008" /><testcase classname="tests.engine.test_samsung_runtime" name="test_requires_setup_and_one_instance_per_session" time="0.009" /><testcase classname="tests.engine.test_samsung_runtime" name="test_failed_setup_does_not_retry_a_model_on_the_scenario_clock" time="0.009" /><testcase classname="tests.engine.test_samsung_runtime" name="test_missing_media_cancels_pending_write_and_keeps_session_alive" time="0.023" /></testsuite></testsuites>

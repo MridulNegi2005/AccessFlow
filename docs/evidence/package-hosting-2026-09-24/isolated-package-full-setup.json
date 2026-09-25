@@ -1,0 +1,51 @@
+{
+  "mode": "isolated-package-installed-service-and-full-real-setup",
+  "python": "3.11.15 (main, May 10 2026, 19:31:25) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "package_files_verified": 95,
+  "pins_verified": 37,
+  "profile": {
+    "ACCESSFLOW_SAMSUNG_BACKEND": "groq",
+    "ACCESSFLOW_GROQ_MODEL": "qwen/qwen3.8-27b",
+    "ACCESSFLOW_GROQ_URL": "https://api.groq.com/openai/v1",
+    "ACCESSFLOW_GROQ_STRUCTURED": "0",
+    "ACCESSFLOW_MAX_OUTPUT_TOKENS": "950",
+    "ACCESSFLOW_MAX_CONTEXT_CHARS": "32768",
+    "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
+    "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1",
+    "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": "full",
+    "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": "prose",
+    "ACCESSFLOW_SAMSUNG_PERCEPTION": "process",
+    "ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH": "assets/asr",
+    "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO": "assets/warmup.wav",
+    "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S": "110.0",
+    "ACCESSFLOW_SAMSUNG_VISION_PROVIDER": "ollama",
+    "ACCESSFLOW_SAMSUNG_VISION_MODEL": "gemma3:4b",
+    "ACCESSFLOW_SAMSUNG_VISION_URL": "http://127.0.0.1:11436",
+    "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE": "assets/warmup.png"
+  },
+  "package_manifest_sha256": "a0b2bd2470836514eeadd2d5ab2af4c14a6de712122818ec0e6d84a141e095b1",
+  "limitations": [
+    "Reused isolated Windows venv; no Docker/Linux execution.",
+    "Setup uses installation fixtures and hosted Qwen readiness only; no official task score."
+  ],
+  "service": {
+    "state": "ready",
+    "pid": 27908,
+    "version": "0.34.0",
+    "model": "gemma3:4b",
+    "model_digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "origin": "http://127.0.0.1:11436",
+    "startup_s": 6.125,
+    "inference_verified": false,
+    "weights_downloaded": false
+  },
+  "warmup_backends": {
+    "audio": "faster-whisper/cpu-int8",
+    "image": "ollama/gemma3:4b"
+  },
+  "reasoner_backend": "groq/qwen/qwen3.8-27b",
+  "setup_s": 47.90600000000086,
+  "service_exit_code": 1,
+  "failure": null
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="11" time="1.509" timestamp="2026-09-24T15:26:01.908322+05:30" hostname="JARVIS"><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION-fake]" time="0.022" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION_TIMEOUT_S-nan]" time="0.006" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION_TIMEOUT_S-0]" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[PERCEPTION_TIMEOUT_S-111]" time="0.006" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[ASR_MODEL_PATH-missing]" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[WARMUP_AUDIO-missing.wav]" time="0.008" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_PROVIDER-silent-fallback]" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_URL-https://name:password@example.test]" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_URL-https://example.test/path]" time="0.007" /><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_URL-http://example.test:11434]" time="0.009"><failure message="Failed: DID NOT RAISE &lt;class 'ValueError'&gt;">tmp_path = WindowsPath('D:/Temp/pytest-of-JARVIS/pytest-639/test_invalid_media_configurati9')
+field = 'VISION_URL', value = 'http://example.test:11434'
+
+    @pytest.mark.parametrize("field,value", [("PERCEPTION", "fake"), ("PERCEPTION_TIMEOUT_S", "nan"),
+        ("PERCEPTION_TIMEOUT_S", "0"), ("PERCEPTION_TIMEOUT_S", "111"), ("ASR_MODEL_PATH", "missing"),
+        ("WARMUP_AUDIO", "missing.wav"), ("VISION_PROVIDER", "silent-fallback"),
+        ("VISION_URL", "https://name:password@example.test"), ("VISION_URL", "https://example.test/path"),
+        ("VISION_URL", "http://example.test:11434"), ("VISION_URL", "http://0.0.0.0:11434")])
+    def test_invalid_media_configuration_fails_before_model_work(tmp_path, field, value):
+        env = native_environment(tmp_path, vision=True)
+        env["ACCESSFLOW_SAMSUNG_" + field] = value
+&gt;       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE &lt;class 'ValueError'&gt;
+
+tests\engine\test_configured_agent.py:91: Failed</failure></testcase><testcase classname="tests.engine.test_configured_agent" name="test_invalid_media_configuration_fails_before_model_work[VISION_URL-http://0.0.0.0:11434]" time="0.007"><failure message="Failed: DID NOT RAISE &lt;class 'ValueError'&gt;">tmp_path = WindowsPath('D:/Temp/pytest-of-JARVIS/pytest-639/test_invalid_media_configurati10')
+field = 'VISION_URL', value = 'http://0.0.0.0:11434'
+
+    @pytest.mark.parametrize("field,value", [("PERCEPTION", "fake"), ("PERCEPTION_TIMEOUT_S", "nan"),
+        ("PERCEPTION_TIMEOUT_S", "0"), ("PERCEPTION_TIMEOUT_S", "111"), ("ASR_MODEL_PATH", "missing"),
+        ("WARMUP_AUDIO", "missing.wav"), ("VISION_PROVIDER", "silent-fallback"),
+        ("VISION_URL", "https://name:password@example.test"), ("VISION_URL", "https://example.test/path"),
+        ("VISION_URL", "http://example.test:11434"), ("VISION_URL", "http://0.0.0.0:11434")])
+    def test_invalid_media_configuration_fails_before_model_work(tmp_path, field, value):
+        env = native_environment(tmp_path, vision=True)
+        env["ACCESSFLOW_SAMSUNG_" + field] = value
+&gt;       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE &lt;class 'ValueError'&gt;
+
+tests\engine\test_configured_agent.py:91: Failed</failure></testcase></testsuite></testsuites>

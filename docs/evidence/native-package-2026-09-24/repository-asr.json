@@ -1,0 +1,25 @@
+{
+  "mode": "live-local-asr-only",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "python": "3.11.15",
+  "warmup_seconds": 5.161061400000108,
+  "subsequent_seconds": 1.3863954999997077,
+  "warmup_backends": {
+    "audio": "faster-whisper/cpu-int8"
+  },
+  "fixture_sha256": "b42354f90462a08ad23df835256289116defde4287ab2ac3d9d3cf2e87bcd5e6",
+  "observations": [
+    {
+      "event_id": "714aed18-004d-4065-b739-c4d85b61fc95",
+      "source_id": "existing-generated-speech",
+      "revision": 0,
+      "modality": "audio",
+      "text": "My screen keeps flickering after the update. Book Wednesday at 5.",
+      "final": true,
+      "speech_start": 0.0,
+      "speech_end": 0.0,
+      "backend": "faster-whisper/cpu-int8"
+    }
+  ],
+  "limit": "Existing generated development voice; no official audio queue, reasoning, vision, mic or task completion evaluated."
+}

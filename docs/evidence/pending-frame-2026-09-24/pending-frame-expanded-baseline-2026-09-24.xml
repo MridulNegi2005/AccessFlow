@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="13" time="8.331" timestamp="2026-09-24T13:55:23.542082+05:30" hostname="JARVIS"><testcase classname="tests.engine.test_pending_frame" name="test_current_image_delays_final_and_write_but_allows_read_prefetch[final]" time="0.027" /><testcase classname="tests.engine.test_pending_frame" name="test_current_image_delays_final_and_write_but_allows_read_prefetch[write]" time="0.027" /><testcase classname="tests.engine.test_pending_frame" name="test_current_image_delays_final_and_write_but_allows_read_prefetch[read]" time="0.026" /><testcase classname="tests.engine.test_pending_frame" name="test_current_frame_failure_requires_new_input_before_resuming[final]" time="2.038"><failure message="TimeoutError">output = &lt;Queue at 0x257abf6dc50 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='212ad34d-d446-...e=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=4&gt;
+predicate = &lt;function test_current_frame_failure_requires_new_input_before_resuming.&lt;locals&gt;.&lt;lambda&gt; at 0x00000257ABF447C0&gt;
+
+    async def wait_for(output, predicate):
+        async with asyncio.timeout(2):
+            while True:
+&gt;               event = await output.get()
+                        ^^^^^^^^^^^^^^^^^^
+
+tests\engine\test_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x257abf6dc50 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='212ad34d-d446-...e=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=4&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+kind = 'final'
+
+    @pytest.mark.parametrize("kind", ["final", "write"])
+    async def test_current_frame_failure_requires_new_input_before_resuming(kind):
+        agent, iq, oq, task = await setup(kind)
+        agent.perception.fail.add("f1")
+        try:
+            await speech_after_pending_frame(agent, iq, frame())
+            while not oq.empty():
+                oq.get_nowait()
+            agent.perception.release["f1"].set()
+            error = await wait_for(oq, lambda e: e.kind == "error")
+            assert error.payload["code"] == "backend_failure"
+&gt;           await wait_for(oq, lambda e: e.kind == "clarify")
+
+tests\engine\test_pending_frame.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\engine\test_safety.py:31: in wait_for
+    async with asyncio.timeout(2):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Timeout [expired]&gt;
+exc_type = &lt;class 'asyncio.exceptions.CancelledError'&gt;
+exc_val = CancelledError(), exc_tb = &lt;traceback object at 0x00000257ABF6C4C0&gt;
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -&gt; Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() &lt;= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+&gt;               raise TimeoutError from exc_val
+E               TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\timeouts.py:115: TimeoutError</failure></testcase><testcase classname="tests.engine.test_pending_frame" name="test_current_frame_failure_requires_new_input_before_resuming[write]" time="2.037"><failure message="TimeoutError">output = &lt;Queue at 0x257ac096c90 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='3b441a2b-e95f-...-9b6f-451f-80b4-f3601a119b5f'], revision=1)}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=5&gt;
+predicate = &lt;function test_current_frame_failure_requires_new_input_before_resuming.&lt;locals&gt;.&lt;lambda&gt; at 0x00000257ABF1A480&gt;
+
+    async def wait_for(output, predicate):
+        async with asyncio.timeout(2):
+            while True:
+&gt;               event = await output.get()
+                        ^^^^^^^^^^^^^^^^^^
+
+tests\engine\test_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x257ac096c90 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='3b441a2b-e95f-...-9b6f-451f-80b4-f3601a119b5f'], revision=1)}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=5&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+kind = 'write'
+
+    @pytest.mark.parametrize("kind", ["final", "write"])
+    async def test_current_frame_failure_requires_new_input_before_resuming(kind):
+        agent, iq, oq, task = await setup(kind)
+        agent.perception.fail.add("f1")
+        try:
+            await speech_after_pending_frame(agent, iq, frame())
+            while not oq.empty():
+                oq.get_nowait()
+            agent.perception.release["f1"].set()
+            error = await wait_for(oq, lambda e: e.kind == "error")
+            assert error.payload["code"] == "backend_failure"
+&gt;           await wait_for(oq, lambda e: e.kind == "clarify")
+
+tests\engine\test_pending_frame.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\engine\test_safety.py:31: in wait_for
+    async with asyncio.timeout(2):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Timeout [expired]&gt;
+exc_type = &lt;class 'asyncio.exceptions.CancelledError'&gt;
+exc_val = CancelledError(), exc_tb = &lt;traceback object at 0x00000257AC094580&gt;
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -&gt; Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() &lt;= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+&gt;               raise TimeoutError from exc_val
+E               TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\timeouts.py:115: TimeoutError</failure></testcase><testcase classname="tests.engine.test_pending_frame" name="test_frame_without_admissible_final_reports_failure_instead_of_hanging[empty]" time="0.022"><failure message="assert not True&#10; +  where True = &lt;test_pending_frame.RecordingAgent object at 0x00000257AC0BD250&gt;.speech_ready">mode = 'empty'
+
+    @pytest.mark.parametrize("mode", ["empty", "partial", "wrong_revision"])
+    async def test_frame_without_admissible_final_reports_failure_instead_of_hanging(mode):
+        agent, iq, oq, task = await setup()
+        if mode == "empty":
+            agent.perception.empty.add("f1")
+        else:
+            agent.perception.overrides["f1"] = {"final": False} if mode == "partial" else {"revision": 1}
+        try:
+            await speech_after_pending_frame(agent, iq, frame())
+            agent.perception.release["f1"].set()
+            await wait_for(oq, lambda e: e.kind == "error" and e.payload["code"] == "backend_failure")
+            assert agent.pending_frame_token is None
+            assert ("image", "f1") not in agent.observations
+&gt;           assert not agent.speech_ready
+E           assert not True
+E            +  where True = &lt;test_pending_frame.RecordingAgent object at 0x00000257AC0BD250&gt;.speech_ready
+
+tests\engine\test_pending_frame.py:163: AssertionError</failure></testcase><testcase classname="tests.engine.test_pending_frame" name="test_frame_without_admissible_final_reports_failure_instead_of_hanging[partial]" time="0.020"><failure message="AssertionError: assert ('image', 'f1') not in {('image', 'f1'): Observation(event_id='c291dbb7-f877-4ac5-9559-051db90bf956', source_id='f1', revision=0, modality='i...evision=0, modality='audio', text='Book Wednesday', final=True, speech_start=0, speech_end=0, backend='offline/gated')}&#10; +  where {('image', 'f1'): Observation(event_id='c291dbb7-f877-4ac5-9559-051db90bf956', source_id='f1', revision=0, modality='i...evision=0, modality='audio', text='Book Wednesday', final=True, speech_start=0, speech_end=0, backend='offline/gated')} = &lt;test_pending_frame.RecordingAgent object at 0x00000257AC094910&gt;.observations">mode = 'partial'
+
+    @pytest.mark.parametrize("mode", ["empty", "partial", "wrong_revision"])
+    async def test_frame_without_admissible_final_reports_failure_instead_of_hanging(mode):
+        agent, iq, oq, task = await setup()
+        if mode == "empty":
+            agent.perception.empty.add("f1")
+        else:
+            agent.perception.overrides["f1"] = {"final": False} if mode == "partial" else {"revision": 1}
+        try:
+            await speech_after_pending_frame(agent, iq, frame())
+            agent.perception.release["f1"].set()
+            await wait_for(oq, lambda e: e.kind == "error" and e.payload["code"] == "backend_failure")
+            assert agent.pending_frame_token is None
+&gt;           assert ("image", "f1") not in agent.observations
+E           AssertionError: assert ('image', 'f1') not in {('image', 'f1'): Observation(event_id='c291dbb7-f877-4ac5-9559-051db90bf956', source_id='f1', revision=0, modality='i...evision=0, modality='audio', text='Book Wednesday', final=True, speech_start=0, speech_end=0, backend='offline/gated')}
+E            +  where {('image', 'f1'): Observation(event_id='c291dbb7-f877-4ac5-9559-051db90bf956', source_id='f1', revision=0, modality='i...evision=0, modality='audio', text='Book Wednesday', final=True, speech_start=0, speech_end=0, backend='offline/gated')} = &lt;test_pending_frame.RecordingAgent object at 0x00000257AC094910&gt;.observations
+
+tests\engine\test_pending_frame.py:162: AssertionError</failure></testcase><testcase classname="tests.engine.test_pending_frame" name="test_frame_without_admissible_final_reports_failure_instead_of_hanging[wrong_revision]" time="2.027"><failure message="TimeoutError">output = &lt;Queue at 0x257ac0bde50 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='670bdc3f-a21d-...e=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=2&gt;
+predicate = &lt;function test_frame_without_admissible_final_reports_failure_instead_of_hanging.&lt;locals&gt;.&lt;lambda&gt; at 0x00000257ABF1ACA0&gt;
+
+    async def wait_for(output, predicate):
+        async with asyncio.timeout(2):
+            while True:
+&gt;               event = await output.get()
+                        ^^^^^^^^^^^^^^^^^^
+
+tests\engine\test_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x257ac0bde50 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='s', event_id='670bdc3f-a21d-...e=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=False))] tasks=2&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+mode = 'wrong_revision'
+
+    @pytest.mark.parametrize("mode", ["empty", "partial", "wrong_revision"])
+    async def test_frame_without_admissible_final_reports_failure_instead_of_hanging(mode):
+        agent, iq, oq, task = await setup()
+        if mode == "empty":
+            agent.perception.empty.add("f1")
+        else:
+            agent.perception.overrides["f1"] = {"final": False} if mode == "partial" else {"revision": 1}
+        try:
+            await speech_after_pending_frame(agent, iq, frame())
+            agent.perception.release["f1"].set()
+&gt;           await wait_for(oq, lambda e: e.kind == "error" and e.payload["code"] == "backend_failure")
+
+tests\engine\test_pending_frame.py:160: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\engine\test_safety.py:31: in wait_for
+    async with asyncio.timeout(2):
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Timeout [expired]&gt;
+exc_type = &lt;class 'asyncio.exceptions.CancelledError'&gt;
+exc_val = CancelledError(), exc_tb = &lt;traceback object at 0x00000257AC0BFC00&gt;
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -&gt; Optional[bool]:
+        assert self._state in (_State.ENTERED, _State.EXPIRING)
+    
+        if self._timeout_handler is not None:
+            self._timeout_handler.cancel()
+            self._timeout_handler = None
+    
+        if self._state is _State.EXPIRING:
+            self._state = _State.EXPIRED
+    
+            if self._task.uncancel() &lt;= self._cancelling and exc_type is exceptions.CancelledError:
+                # Since there are no new cancel requests, we're
+                # handling this.
+&gt;               raise TimeoutError from exc_val
+E               TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\timeouts.py:115: TimeoutError</failure></testcase><testcase classname="tests.engine.test_pending_frame" name="test_replaced_frame_cannot_release_new_frame_gate[observation]" time="0.020" /><testcase classname="tests.engine.test_pending_frame" name="test_replaced_frame_cannot_release_new_frame_gate[frame_failure]" time="0.021" /><testcase classname="tests.engine.test_pending_frame" name="test_interrupt_clears_frame_gate_and_rejects_late_failure[speech]" time="0.014" /><testcase classname="tests.engine.test_pending_frame" name="test_interrupt_clears_frame_gate_and_rejects_late_failure[task]" time="0.018" /><testcase classname="tests.engine.test_pending_frame" name="test_completed_image_does_not_finish_partial_speech_or_authorize_write" time="0.019" /></testsuite></testsuites>

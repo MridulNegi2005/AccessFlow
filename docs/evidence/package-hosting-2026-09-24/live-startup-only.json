@@ -1,0 +1,24 @@
+{
+  "mode": "actual-installed-vision-service-startup-and-cleanup",
+  "exit": 0,
+  "wall_s": 6.5,
+  "records": [
+    {
+      "state": "ready",
+      "pid": 26384,
+      "version": "0.34.0",
+      "model": "gemma3:4b",
+      "model_digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "origin": "http://127.0.0.1:11436",
+      "startup_s": 6.016000000001441,
+      "inference_verified": false,
+      "weights_downloaded": false
+    },
+    {
+      "state": "stopped",
+      "owned_child_only": true
+    }
+  ],
+  "stderr": "",
+  "limitation": "Separate port11436; no model inference, download or Docker run."
+}

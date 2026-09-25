@@ -1,0 +1,21 @@
+{
+  "source_normalization": "CRLF to LF",
+  "source": {
+    "scripts/build_samsung_package.py": "9b71e02e4db5f66dfab3ef77c7ba77cb2a5c58e7df83ee1f9405a3003441647b",
+    "scripts/package_media.py": "8aa198eb59c2bb14aac9ec7f27d4e2d13f2315d789930cec36ae9395d8520697",
+    "scripts/install_asr_model.py": "2f25dbbf2c91088421ae50099cf9985b56707b7b31118bdca2d38a975b9c15ef",
+    "scripts/submission_entry.py": "6b8d1c4834d36123704326988acd0d15fb011fa598416a763edfd5bff36a1a60",
+    "tests/engine/test_package_media.py": "ef6b1fcb1c5610b92aba439f9a1cc743eb4a16e61e27dd66b2820d7d03cf6d32",
+    "tests/engine/test_samsung_package.py": "5b2a9c54b80aea4a3ff8fdf2ef3b3fcb0b6f543cb2ebe18d407d9b03c26d19c7"
+  },
+  "evidence_exact_bytes": {
+    "focused-initial.xml": "6f5c76d1f611d401020e5017d83887d0232a07f109a368f81d9a4f875014e7a2",
+    "focused.xml": "f4ff7d0505b061adec722302f1f8a5f57d620206efc30fbfd268d63c2f8fc237",
+    "full.xml": "25f675a57d3d3b02a530d8a03b9856b931869d3cdee7380d549081667eb627e3",
+    "model-installation.json": "f4649a6e5796a2daf7e0610d34d7f8ee03e6756f1d84ac45e98854e451802b59",
+    "package-verification.json": "bd4e093d56f9cf9e327437b0f922d57f5229556d72670a0da0c5d3816fcdb332",
+    "repository-asr.json": "2c41e9d62185d7e71a05041cfab910b0ba5b382f11322bdfd4189be849ce885a",
+    "requirements.txt": "90c28039360ad2cdcb7d393676b5cd8612e507fcc608233c10aaecf9e3954f11",
+    "runtime_profile.json": "62c0eab95120986f9ca3bb87792e6ebddcf307cc04f291d8409f12948238134f"
+  }
+}

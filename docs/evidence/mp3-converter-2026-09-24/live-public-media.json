@@ -1,0 +1,106 @@
+{
+  "mode": "live-local-public-MP3-conversion-and-ASR",
+  "python": "3.11.15",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "warmup_seconds": 3.840239200000724,
+  "warmup_backends": {
+    "audio": "faster-whisper/cpu-int8"
+  },
+  "turns": [
+    {
+      "references": [
+        "audio/pub_05_turn1.mp3"
+      ],
+      "encoded_sha256": [
+        "ee4fe09f87439d0dfb7fa99508bebb9f3aafb035ea540049445885d7a730357e"
+      ],
+      "decoded_wav_sha256": "536c6690da1356ac4554775bfe99bfa39970102fca254b2c3f6baac9c932b47a",
+      "frames": 49152,
+      "clip_frames": [
+        49152
+      ],
+      "duration_s": 3.072,
+      "decode_seconds": 0.8527260999999271,
+      "asr_seconds": 1.1929086999998617,
+      "observations": [
+        {
+          "event_id": "341ac1ad-8329-4e85-8b39-cf17634e0178",
+          "source_id": "public-turn-0",
+          "revision": 0,
+          "modality": "audio",
+          "text": "I broke up, and I did too fast.",
+          "final": true,
+          "speech_start": 0.0,
+          "speech_end": 0.0,
+          "backend": "faster-whisper/cpu-int8"
+        }
+      ]
+    },
+    {
+      "references": [
+        "audio/pub_05_turn2.mp3"
+      ],
+      "encoded_sha256": [
+        "d93ed9eed0eaf5e57ea0b3cc0669bca4afea20aed63ad213a5f740dcf086ea4b"
+      ],
+      "decoded_wav_sha256": "d44f234c8325f9c5de20acad4b0215e7db01420bb55dc1bbf89059023378cbd2",
+      "frames": 25045,
+      "clip_frames": [
+        25045
+      ],
+      "duration_s": 1.5653125,
+      "decode_seconds": 0.8622528999994756,
+      "asr_seconds": 1.1231444000004558,
+      "observations": [
+        {
+          "event_id": "0ba524c9-a427-42c8-b475-5626fa0e81ac",
+          "source_id": "public-turn-1",
+          "revision": 0,
+          "modality": "audio",
+          "text": "I said Boston.",
+          "final": true,
+          "speech_start": 0.0,
+          "speech_end": 0.0,
+          "backend": "faster-whisper/cpu-int8"
+        }
+      ]
+    },
+    {
+      "references": [
+        "audio/pub_06_turn1_part1.mp3",
+        "audio/pub_06_turn1_part2.mp3"
+      ],
+      "encoded_sha256": [
+        "ace4692c472ce4a9e1c12457387137f8754ba965cea6eebda45f155c95e04266",
+        "1705bdd349a674a3b546e2dd91f8601bf106ea352b29a23915cafa46e30477d1"
+      ],
+      "decoded_wav_sha256": "a2f98fac0a88c27cf9e2ee6c6a6bb54d4d4c64b7d145454e90d923e88fad6e16",
+      "frames": 119808,
+      "clip_frames": [
+        66048,
+        53760
+      ],
+      "duration_s": 7.488,
+      "decode_seconds": 0.9714995999993334,
+      "asr_seconds": 1.346810000000005,
+      "observations": [
+        {
+          "event_id": "f37c6b4b-ed87-41c2-b8c4-a3cc1eadcc6d",
+          "source_id": "public-turn-2",
+          "revision": 0,
+          "modality": "audio",
+          "text": "Book a flight to Boston. Actually make that New York.",
+          "final": true,
+          "speech_start": 0.0,
+          "speech_end": 0.0,
+          "backend": "faster-whisper/cpu-int8"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Explicit file lists only; no scenario annotation/ground truth passed to either worker.",
+    "No Samsung input-pump integration, semantic timing, reasoning, tools, microphone or official score.",
+    "Public development inputs; not held-out."
+  ]
+}

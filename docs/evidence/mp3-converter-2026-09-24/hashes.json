@@ -1,0 +1,21 @@
+{
+  "source_normalization": "CRLF to LF",
+  "source_at_live_check": {
+    "src/accessflow/adapters/mp3_decode.py": "3d6407839eba56c4c8dd0317cc1286dbcccce41b350fb5a250c7fd924c45ea61",
+    "src/accessflow/adapters/mp3_decode_worker.py": "80a6c03d485c1c7ec90a3ff2dc77ef571033e4b303c8494148b87b49052f6982",
+    "tests/engine/test_mp3_decode.py": "92f9d7fa2d66ecf7150e26d8eb7f30c5039359261c8e41269b97d5ebf3964e1f"
+  },
+  "source": {
+    "src/accessflow/adapters/mp3_decode.py": "a3618f2534cf885166587e982f10b045c635a921352e7f95bd31d74db0ab8953",
+    "src/accessflow/adapters/mp3_decode_worker.py": "80a6c03d485c1c7ec90a3ff2dc77ef571033e4b303c8494148b87b49052f6982",
+    "tests/engine/test_mp3_decode.py": "5e2fd3f49ce27acacfcd3efc0e00085bc330ee15afc9ed86c6dbf5526f789517"
+  },
+  "evidence_exact_bytes": {
+    "double-cancel-before.xml": "26cd5cb47dafb5086af45bc395ffac1177f66ee74befb4d4e9c838ee3c06feb6",
+    "focused-initial.xml": "0beba4b5f10950679897ee8b6afb983b6ee7aff14d92240d3ba16b10c8081f5c",
+    "focused.xml": "f874407a1ece0baa5cc52fedabaae06027260ec29099e0e39aac288bc73f604b",
+    "full-initial.xml": "ccb608b02f5acdbdb75c411fceec539ed2c2eb7afc1b650ce6f19f270c49aabe",
+    "full.xml": "329c4665c89f9cd7a0229416b3e4463d219e468032657db6d866525d534fee39",
+    "live-public-media.json": "671c42225c9e3c2b454dc3167d3bc2dcd995d576178d4fd8492c436d81a5fc45"
+  }
+}

@@ -1242,3 +1242,51 @@ changed.
 ## 2026-09-24 13:49 — Merge and readiness review
 
 Request: merge Mridul first, then Atishay; inspect remaining work and give Atishay a detailed first-person prompt prioritizing voice/testing over frontend polish. Assistance: inspected fetched code and official local kit, resolved shared documentation conflicts, ran offline validation and exported failing audit probes, drafted the three linked review/handoff documents. Human input: ownership and priority instructions; no human source edits in this slice. Output checked against source, retained tests and provenance; no model training, live-media evaluation, deployment or submission.
+
+## 2026-09-24 14:05 — Current-frame controller repair
+
+Request: continue Mridul-owned implementation; prioritize complete submission code before accuracy tuning. Assistance: controller lifecycle repair, deterministic regressions, read-only review and evidence documentation. Review found partial-image promotion and malformed-final gaps; implementation and tests addressed them. One earlier test fixture was migrated to completed image/partial speech while retaining provisional rollback assertions. Final1216pass/2skip/1xfail; no live-model or microphone claims. Human input changed priorities; no human source edits in this slice.
+
+## 2026-09-24 14:20 — Configured runtime
+
+Request: prioritize runnable submission code before accuracy. Assistance: shared factory, explicit native configuration, setup deadlines/cleanup, package profile isolation and regressions. Corrected new fixture input from frame_ref to image_ref after failed integration; final1243pass/2skip/1xfail. Inference in tests is fake, including real child-process transport test. No live media claims or B edits. Human priority steering only; no human code edits recorded.
+
+## 2026-09-24 14:35 — Native package and actual ASR verification
+
+Request: continue A code completion. Assistance: pinned public model installation, native assets/profile packaging, strict dependency target resolution,28 regressions, fresh-environment checks and reports. Initial conditional lock export was rejected; implementation now resolves declared target pins and verified the actual Samsung YAML parser. Real ASR used B's existing generated fixture and unchanged worker. Full1271pass/2skip/1xfail; no live reasoning, vision, microphone or official audio-task score. Human supplied scope; no human code edits recorded.
+
+## 2026-09-24 14:45 — Bounded MP3 conversion
+
+Request: continue A code completion. Assistance: isolated format converter, bounded/path/lifecycle regressions, real public-clip decode and existing ASR checks. No reference transcript was passed to either worker. pub05 bad transcription retained; pub06 correction preserved. Full1294pass/2skip/1xfail. No B/shared/admission implementation or official score claimed. Human scope unchanged; no human code edits.
+
+Review amendment: a separate read-only review found repeated-cancellation orphan risk. A new regression reproduced it; shielded cleanup ownership fixed it. Final1295pass/2skip/1xfail; prior evidence preserved.
+
+## [2026-09-24 15:17] - Implementation checkpoint
+**Task:** Code completion first: real Samsung audio admission and native runtime checks.
+**Changes:** Additive controller-only speech_status,async bounded MP3 queue bridge,
+fairness/stale-result gates,23 new regression cases,package note and evidence/handoffs.
+**Status:** Software slice verified;no human review or overall readiness is implied.
+**Notes:** Full1318pass/2skip/1xfail70.10s;focused45pass;package64pass. Actual public
+audio54.6/51.5 tasks incomplete;isolated package89hashes/37pins/pub06 score54.6.
+Vision defaultsetup failed;110ssetup passed but official tail missed;directframe23.688s.
+All results retained,including early fixture errors. AI-assisted implementation/testing;
+human supplied priority,no human source edits. No B changes,accuracy tuning,main push,
+workflow,release,submission or model download. Existing local Ollama service started
+via owned hidden launcher. Scoped corpus review already completed23September.
+
+---
+
+## [2026-09-24 15:44] - Package hosting checkpoint
+**Task:** Complete A packaging/startup paths before accuracy tuning.
+**Changes:** Generated real-evaluator Docker recipe/allowlist,portable installed-vision
+launcher,loopback/port validation,26 added tests,setup evidence and own handoffs.
+**Status:** Tested software slice;overall goal active,platform/media/repeated gates open.
+**Notes:** Full1344pass/2skip/1xfail79.52s;Ruff clean. Actual isolated candidate95hashes,
+37pins,service6.125s and real ASR/vision/Qwen setup47.906s. Default real-Docker execution
+is unverified;no Docker/Podman/WSL distro available. Review fixed tokenizer exclusion and
+COPY destination mistakes before final tests. AI-assisted implementation/testing;human
+supplied priorities,no human source edits. No B change,main merge,workflow,release,
+submission or model download. Remote B3926690 is newer and unmerged;tests cover current
+own branch. Windows cleanup stopped test11436;existing11435 service stayed running.
+
+---

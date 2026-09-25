@@ -1,5 +1,131 @@
 # Implementation status
 
+## Package hosting checkpoint - 24 September 2026
+
+Generated packages now include a real-evaluator Docker recipe and a checked portable
+vision-service launcher. The root Dockerfile remains labeled offline-only. Configuration
+rejects unsupported remote origins,invalid ports and empty userinfo before model work.
+No B source/tests changed relative to the starting6055ff8 tree.
+
+Full1344pass/2skip/1xfail79.52s;Ruff clean. Rebuilt candidate95hashes/37pins/officialimport
+verified in reused isolated Windows venv. Packaged service started6.125s;actual ASR,
+Gemma vision and hosted Qwen setup passed47.906s. Service cleanup left existing11435
+untouched. Startup-only live identity check also passed. No Docker/Linux runtime exists
+here;generated recipe remains unexecuted. No new official task score or accuracy claim.
+
+Read docs/PACKAGE_HOSTING_2026-09-24.md and retained evidence/package-hosting-2026-09-24.
+Remaining A: actual container/platform validation,integrate agreed B media options and
+latest branch changes,then repeated packaged public tests and integration repairs.
+B owns microphone/endpointing/vision speed;both coordinate settings and timing. Atishay's
+remote reference advanced to3926690 during this slice;it is NOT merged or covered by
+these tests. Our tree retains the earlier merged B code. Push own branch only.
+Code completion first;PPT/video excluded;goal active. No workflow,main merge,release,
+submission,new model download or B implementation edits.
+
+## Audio admission and native runtime checkpoint - 24 September 2026
+
+Samsung MP3 input is now admitted through an asynchronous bounded turn bridge using
+its explicit end_of_turn. Additive controller-only speech_status preserves current
+frames while blocking unfinished speech/write authority. B receives ordinary WAVs;
+no B code/tests changed. New raw-input/decode fairness and stale-result gates tested.
+
+Full1318pass/2skip/1xfail70.10s; focused45pass; package64pass; Ruff clean.
+Actual official audio Qwen+CPU-ASR scores54.6/51.5: pipeline ran,but tasks did not
+complete. Retained poor transcription,missing-detail clarification and repeated
+filler penalty; no accuracy tuning. Rebuilt isolated audio package verified89 hashes,
+37 pins,official import and actual pub06;setup5.375s,total12.906s,score54.6.
+
+Existing D: portable Ollama/Gemma installation was found and started,not downloaded.
+Default30s vision setup failed without a retained cause;110s setup passed26.765s.
+Official visual attempt66.2 had no image-grounded final. Direct actual frame took
+23.688s,exceeding the six-second tail. Vision latency/service deployment and B
+microphone/endpointing remain readiness gaps. Raising timeout is not a fix.
+
+Read docs/SAMSUNG_AUDIO_ADMISSION_2026-09-24.md and
+ docs/MEDIA_COMPLETION_COORDINATION_2026-09-24.md. A owns contracts/admission/package;
+B owns vision/provider/assigned worker and microphone;both coordinate optional worker
+settings and browser/acoustic adoption. Earlier broad MP3 ownership wording is
+superseded for this A-only explicit-end_of_turn bridge;teammate approval is not claimed.
+
+Next A: declared vision deployment/options integration and platform/package checks;
+then repeated official evaluation and accuracy improvements. Scoped corpus review was
+already completed23September;do not reopen it from stale older summaries. Docker/Linux,
+whole-system security review and hidden/repeated results are unverified. Code completion
+first;PPT/video excluded;goal active. Commit/push Mridul branch only;no main merge/tag.
+
+## MP3 converter checkpoint - 24 September 2026
+
+A standalone A-owned bounded subprocess converter now joins ordered MP3 clips as mono
+PCM16/16k WAV, with rooted refs, byte/sample limits, cancellation/deadline cleanup and
+actual-Windows spawn-race coverage. No shared contract, B code or Samsung admission
+changed: _reject_audio still remains until the joint pending-speech/finality integration.
+
+Final1295pass/2skip/1xfail63.69s; focused24pass; Ruff clean. Real public MP3->ASR checked
+three turns: pub06 preserves Boston then NewYork correction; pub05 first transcription
+is poor and retained, not patched with expected text. Decode0.85-0.97s; ASR1.12-1.35s.
+Review reproduced/fixed repeated-cancel orphan race; before/final tests retained.
+Actual clip duration differs from supplied event duration_ms; no calibrated endpoint
+claim. See docs/MP3_CONVERTER_2026-09-24.md and evidence/mp3-converter-2026-09-24.
+
+Next: joint C24-1/2 pending speech/finality integration preserving latest image context,
+real vision service/full official tasks and remaining platform checks. Broader turn-bridge
+ownership is not silently resolved by this format utility. No B work, release or main push.
+Code completion first; goal active, PPT/video excluded.
+
+## Native package checkpoint - 24 September 2026
+
+Optional native packaging now includes a pinned/hash-checked ASR installation, explicit
+warm-up fixtures/provenance and frozen relative media settings. The public-snapshot installer
+was exercised at revision3d3d5dee26484f91867d81cb899cfcf72b96be6c. Dependencies use37 exact
+pins selected for declared Python3.11.15 Windows/Linux x64 targets; only Windows was measured.
+Fresh package venv verified86 hashes,all37 installed pins,official import/YAML,and actual
+ASR warm-up5.418s. Repository worker warm-up5.161s,second transcription1.386s using B's
+unchanged generated development fixture. No microphone or official task score implied.
+
+Final1271pass/2skip/1xfail62.21s; Ruff clean; no B code/tests changed. Read
+ docs/NATIVE_PACKAGE_2026-09-24.md and evidence/native-package-2026-09-24.
+Text remains default; vision weights/server are not bundled. MP3 ownership/turn bridge,
+actual vision/full queue tasks, platform/Docker and repeated official gates remain open.
+Native assets/packages remain ignored; code/evidence pushed only to Mridul branch.
+Overall goal active; completion before accuracy; PPT/video excluded.
+
+## Configured runtime checkpoint - 24 September 2026
+
+Samsung now uses the shared configured-agent factory. Explicit process mode validates
+installed ASR/vision resources, warms both media routes and reasoning within a combined
+290-second budget, and closes native work on failure. No fake inference fallback.
+Generated packages are explicitly frozen to text mode until native assets are packaged.
+Final1243pass/2skip/1xfail59.13s; focused62pass; Ruff clean. Real subprocess integration
+uses fake inference and does not establish actual ASR/vision quality. One intermediate
+new-test failure used an incorrect official field; corrected to image_ref.
+
+Read docs/CONFIGURED_RUNTIME_2026-09-24.md for settings and the joint demo adoption seam.
+No B code/tests changed. MP3 assembly, portable media installation and real public-case
+runs remain A completion work, with turn/ownership coordination where needed. B owns
+microphone/endpointing/barge-in and demo adoption. Code completion precedes accuracy;
+PPT/video are excluded. Push own branch only; overall goal remains active.
+
+## Pending-frame correctness checkpoint — 24 September 2026
+
+Completed the preserved A-controller guard. Pending current images now block final/write
+while allowing speech-based read prefetch; final revision-zero/current-token evidence is
+required. Failed/partial/malformed/timed-out streams cannot release authority, and stale
+results after replacement/interrupt cannot restore it. Image failure asks completed speakers
+to resend/continue; a valid replacement retains their prior spoken authority.
+
+Final suite1216pass/2skip/1xfail in71.49s; focused25pass; Ruff clean. Earlier integration
+1fail/991pass retained: migrated the A provisional-slot rollback fixture to completed vision
+with partial speech, preserving rollback/cancellation assertions. No B files changed.
+Read docs/PENDING_FRAME_GUARD_2026-09-24.md and evidence/pending-frame-2026-09-24.
+
+Current priority from the user: complete runnable submission CODE before accuracy tuning;
+PPT/video/deck work is excluded from this milestone. Next A work is Samsung real-perception
+configuration and missing media/package paths. No more prompt/accuracy experiments now.
+MP3/turn ownership and C24 shared seams remain coordination items; no B implementation.
+The old pending-frame stash remains as a backup only; its incomplete patch must not be
+reapplied over this completed repair. Push own branch; main remains the earlier merged
+checkpoint unless the user requests another integration. Overall goal remains active.
+
 ## Merged readiness and ownership handoff — 24 September 2026
 
 Merged Mridul 0c12ba0 into main first (c564754), then Atishay 8083ebf (e7c95f5).

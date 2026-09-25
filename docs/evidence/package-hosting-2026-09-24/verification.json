@@ -1,0 +1,32 @@
+{
+  "created_at": "2026-09-24T10:14:38.542411+00:00",
+  "base_commit": "6055ff8f507e7f472fd7044d9310f17783783804",
+  "source_dirty": true,
+  "sources_normalized_crlf_to_lf": {
+    "Dockerfile": "4b7ef3d29334ada6db8335c45eeacbea3932dce16e05db8c16af4fd21cd205e9",
+    "scripts/build_samsung_package.py": "0e84538537f6d34bdd27df54747b99f53b9652ac1686f5da1e05c3a69a016d37",
+    "scripts/package_container.py": "44694f2e5e815448182fdbdc6257572a218036c053a7da84f8ce3b05cd08e09d",
+    "scripts/start_vision_server.py": "8265fb4993c1148d3dbdb3a599b354283cc6a1afb4f727f337da947f6bd622c8",
+    "src/accessflow/adapters/configured_agent.py": "0b392dbd98e47a08a038ddbcda5daf23c8f266b82fd9a31659767de2bb66174c",
+    "tests/engine/test_configured_agent.py": "503f92268155ff31746b6c5f2784b73f211f838c94d97f21096dcdc867a6a7c8",
+    "tests/engine/test_package_container.py": "7d863e63d44d935d2eb1eeda9a759ae6f5def976284726f501a853b0dacd3b9f",
+    "tests/engine/test_vision_service.py": "64b3c1716070148ccab20849785b2d67dd64ac17233c35dc1a1fb3912d6fafac",
+    "tests/engine/test_samsung_package.py": "17f71420375cb0d44e7661bbf05a5f2c17f590be7dbc00297af1520850af9895"
+  },
+  "evidence_sha256": {
+    "config-boundary-before.xml": "f401b42d400ef1ed67bb7122665ccf5967816a3b2212d22f6bc456760253a74e",
+    "Dockerfile": "b30911e8c90eaa053196c91276cc8c4d96060113fd51634ffb9080fef6a3f45d",
+    "dockerignore.txt": "f4315275c074a5c2005526b1e2255fa186c719686e76eca342014b85ca5903bb",
+    "full-before-final-url-validation.xml": "d9d747e135c6116b25fa8cf7b53864af69d2425122baf0136ed0c52f923d76a7",
+    "full-final.xml": "fe90a67bbfc49ebbc7533d977b6f4d692f77c89ff2757b4bed397997f702771b",
+    "hosting-focused.xml": "b6a889edf245b4503147f410b12f1f41a4553a813da27bd2f72ffbc2dfa28fdc",
+    "isolated-package-full-setup.json": "23cb8ae51f80c6ef4c08d2c40e5883022d7d707be93a58ac627793fa073f5a07",
+    "live-startup-only.json": "6ec1a13d2659d9d7a3d6ef77f9819c5241e79445fb91af50d17ebb615dd319df",
+    "package-focused.xml": "918c14220ab6c7ebe551b335834a536a63f3d64f20092f4f0457e8e9d523b918",
+    "package_manifest.json": "a0b2bd2470836514eeadd2d5ab2af4c14a6de712122818ec0e6d84a141e095b1",
+    "README.md": "d11da758b2f6fcc77f060be5a1f1ecbb26d24c133cb744824d29fca593284fae",
+    "requirements.txt": "90c28039360ad2cdcb7d393676b5cd8612e507fcc608233c10aaecf9e3954f11",
+    "runtime_profile.json": "3ab3d4e37133c417d138a123d8d07bcd43cc20817e13c1ab85ff0049adaee3e1",
+    "verify_hosting_candidate.py": "7545dbbd99b5ff654c64d61ece071701e402c65fa464ca35acd466a1dff6eb7e"
+  }
+}

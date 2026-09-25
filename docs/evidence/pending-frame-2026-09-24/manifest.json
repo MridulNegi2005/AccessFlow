@@ -1,0 +1,18 @@
+{
+  "base_commit": "749fe23aac10e5d79b74f75fdb257500702fee65",
+  "final_sources": {
+    "src/accessflow/engine.py": "a1fe1ebf85d6487c166fd95777045db92c59263f97ca4f439fe3416e8cbf54d7",
+    "tests/engine/test_pending_frame.py": "f7ab886c97e0a32cf153273d85dbe6dc1e03c29737d7bb7881c48e7d5d1d7e95",
+    "tests/engine/test_source_ownership.py": "1953aef9edacf17b58c254fa159000d7d86dc13871cd5e8a4d562e09214b3ffa"
+  },
+  "source_hash_encoding": "UTF-8 bytes with CRLF normalized to LF",
+  "evidence_sha256": {
+    "pending-frame-expanded-baseline-2026-09-24.xml": "9029c81b374ccda589fc513e2888ea407545505a6b5d1b6d0aa49eef290aaeee",
+    "pending-frame-expanded-fixed-2026-09-24.xml": "98e165f4f74b95023c4ee4e9f4b585941209e3ed56397bdd71b06449aa91607d",
+    "pending-frame-focused-2026-09-24.xml": "37f2d7b3238cdd7afb3353429aa79b2b7d7257a9bab5ea01b8fbe7e45ab8ebdd",
+    "pending-frame-focused-final-2026-09-24.xml": "2ee1c3509b011ed3baa475c623a1134a5fa04cc62484fec14fe3114387503ac0",
+    "pending-frame-integration-2026-09-24.xml": "43a8365770b9c3dc2b53bf6d57ed91c225b2f95ddf34ac54fec11bea10bacc34",
+    "pending-frame-focused-release-2026-09-24.xml": "a0490abb72a77c1140eef981432a911224426a3fe75c890b31bffc174ba7ff32",
+    "pending-frame-full-2026-09-24.xml": "12cce1faeb697fcbda3b4069ab8108a31144c0322b2daa5ec76c7d77d28067b7"
+  }
+}

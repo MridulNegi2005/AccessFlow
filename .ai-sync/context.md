@@ -1242,3 +1242,67 @@ Notes: Evidence is deterministic injected-thread and loopback protocol evidence.
 **Notes:** Mridul0c12ba0 then Atishay8083ebf; applicatione7c95f5. Full1197pass/2skip/1xfail; separate pending-frame4fail; Ruff/JS/Node/offline4pass. Initial probe collection path error retained separately. Preserved unfinished local patch outside main. AI-assisted merge/review/documentation; no human code edits in this slice. No assistant signoff/coauthor, workflow activation, release, submission, live provider calls or B implementation edits. See current review and evidence before resuming.
 
 ---
+
+## [2026-09-24 14:05] — Implementation checkpoint
+**Task:** Complete A current-frame readiness and failure handling after the merge handoff.
+**Changes:** Controller guard/failure fences,19 new regression cases, one migrated A rollback fixture, retained evidence and own handoff.
+**Status:** Tested slice complete; overall goal active, code completion now precedes accuracy tuning.
+**Notes:** Final1216pass/2skip/1xfail71.49s; focused25pass; Ruff clean. Earlier5fail expanded baseline and1fail integration retained and explained. Read-only review identified partial-evidence and revision gaps; fixed and tested. No B source/tests, schema, dependency, workflow, main push, live inference, release or submission changes. AI-assisted implementation/testing with human priority steering, no human code edits. Existing stash remains historical backup only.
+
+---
+
+## [2026-09-24 14:20] — Implementation checkpoint
+**Task:** Complete configured real-perception runtime wiring before accuracy tuning.
+**Changes:** Common factory, validated native settings, media/reasoner warm-up budget and cleanup, text package profile isolation, 27 regressions, runtime handoff and evidence.
+**Status:** Tested slice complete; general goal active.
+**Notes:** Full1243pass/2skip/1xfail59.13s; focused62pass; Ruff clean. Intermediate wrong-field test failure retained. No B changes, live inference, dependency/model installation, main push, release or submission. AI-assisted implementation/testing; human supplied priorities, no human code edits. Native media package and MP3 integration remain open.
+
+---
+
+## [2026-09-24 14:35] — Native package checkpoint
+**Task:** Complete independent A native installation/package path while audio ownership remains pending.
+**Changes:** Explicit public pinned ASR installer, allowlisted/hash-checked model and fixture packaging, frozen relative media profile,37-pin native target resolution,28 regressions and actual installation/ASR evidence.
+**Status:** Tested native packaging slice; overall goal active.
+**Notes:** Full1271pass/2skip/1xfail62.21s, Ruff clean. Fresh same-host venv37pins/86hashes/officialimport/parser/ASRwarmup5.418s; repoASR5.161s/1.386s. Initial marker export failed explicitly; fixed and verified against actual parser. AI-assisted implementation/testing; no human code edits. Existing B generated fixture reused without mutation; no new recordings, B source/tests, provider reasoning calls, main push, workflow, release or submission. Vision service and MP3/full-task gates remain open.
+
+---
+
+## [2026-09-24 14:45] — MP3 format checkpoint
+**Task:** Implement independent A format-conversion component without deciding disputed shared turn semantics.
+**Changes:** Bounded MP3 worker/context API,23 lifecycle/codec/path regressions,actual public media->ASR evidence and coordination notes.
+**Status:** Converter verified; official input admission and full tasks remain open; goal active.
+**Notes:** Full1295pass/2skip/1xfail63.69s; Ruff clean. Real pub06 correction retained; poor pub05 first transcript retained. Event metadata durations differ from decoded samples. AI-assisted implementation/testing; no human source edits. No shared schema/B implementation/new speech fixture, model reasoning call, main push,workflow,release or submission.
+
+---
+
+2026-09-24 14:47 review completion: independent review found double-cancel startup orphan risk; reproduced before repair. Dedicated shielded cleanup retains PID ownership through repeated caller cancellation. Focused24pass/full1295pass final; earlier1294pass and failing reproduction retained. Live ASR report predates only cleanup hardening and is explicitly labeled.
+
+## [2026-09-24 15:17] - Implementation checkpoint
+**Task:** Code completion first: real Samsung audio admission and native runtime checks.
+**Changes:** Additive controller-only speech_status,async bounded MP3 queue bridge,
+fairness/stale-result gates,23 new regression cases,package note and evidence/handoffs.
+**Status:** Audio slice verified;goal active;vision/platform/real-microphone gates open.
+**Notes:** Full1318pass/2skip/1xfail70.10s;focused45pass;package64pass. Actual public
+audio54.6/51.5 tasks incomplete;isolated package89hashes/37pins/pub06 score54.6.
+Vision defaultsetup failed;110ssetup passed but official tail missed;directframe23.688s.
+All results retained,including early fixture errors. AI-assisted implementation/testing;
+human supplied priority,no human source edits. No B changes,accuracy tuning,main push,
+workflow,release,submission or model download. Existing local Ollama service started
+via owned hidden launcher. Scoped corpus review already completed23September.
+
+---
+
+## [2026-09-24 15:44] - Package hosting checkpoint
+**Task:** Complete A packaging/startup paths before accuracy tuning.
+**Changes:** Generated real-evaluator Docker recipe/allowlist,portable installed-vision
+launcher,loopback/port validation,26 added tests,setup evidence and own handoffs.
+**Status:** Tested software slice;overall goal active,platform/media/repeated gates open.
+**Notes:** Full1344pass/2skip/1xfail79.52s;Ruff clean. Actual isolated candidate95hashes,
+37pins,service6.125s and real ASR/vision/Qwen setup47.906s. Default real-Docker execution
+is unverified;no Docker/Podman/WSL distro available. Review fixed tokenizer exclusion and
+COPY destination mistakes before final tests. AI-assisted implementation/testing;human
+supplied priorities,no human source edits. No B change,main merge,workflow,release,
+submission or model download. Remote B3926690 is newer and unmerged;tests cover current
+own branch. Windows cleanup stopped test11436;existing11435 service stayed running.
+
+---

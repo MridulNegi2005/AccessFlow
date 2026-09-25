@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="11" time="1.248" timestamp="2026-09-24T14:52:57.081843+05:30" hostname="JARVIS"><testcase classname="tests.engine.test_speech_status" name="test_pending_transport_keeps_frame_without_final_write_or_clarification[final]" time="0.016" /><testcase classname="tests.engine.test_speech_status" name="test_pending_transport_keeps_frame_without_final_write_or_clarification[write]" time="0.018" /><testcase classname="tests.engine.test_speech_status" name="test_pending_transport_keeps_frame_without_final_write_or_clarification[clarify]" time="0.012" /><testcase classname="tests.engine.test_speech_status" name="test_pending_activity_cancels_write_and_late_speech_cannot_restore_authority" time="0.015"><failure message="AssertionError: assert 'b5ae9014-c1fb-4ee6-934a-549eea624de6' in set()&#10; +  where set() = &lt;accessflow.fakes.FakeTools object at 0x00000159D9686310&gt;.cancelled&#10; +    where &lt;accessflow.fakes.FakeTools object at 0x00000159D9686310&gt; = &lt;tests.engine.test_pending_frame.RecordingAgent object at 0x00000159D9687E50&gt;.executor">async def test_pending_activity_cancels_write_and_late_speech_cannot_restore_authority():
+        agent, iq, oq, task = await setup("write")
+        agent.executor.gate = asyncio.Event()
+        try:
+            await iq.put(AudioEvent(session_id="s", payload=Audio(path="fixture.wav", utterance_id="old")))
+            call = await wait_for(oq, lambda item: item.kind == "tool_call")
+            old = agent.observations[("speech", "old")].model_copy(deep=True)
+            activity = status()
+            await iq.put(activity)
+            await accepted(oq, activity)
+&gt;           assert call.payload["call_id"] in agent.executor.cancelled
+E           AssertionError: assert 'b5ae9014-c1fb-4ee6-934a-549eea624de6' in set()
+E            +  where set() = &lt;accessflow.fakes.FakeTools object at 0x00000159D9686310&gt;.cancelled
+E            +    where &lt;accessflow.fakes.FakeTools object at 0x00000159D9686310&gt; = &lt;tests.engine.test_pending_frame.RecordingAgent object at 0x00000159D9687E50&gt;.executor
+
+tests\engine\test_speech_status.py:72: AssertionError</failure></testcase><testcase classname="tests.engine.test_speech_status" name="test_failed_audio_preserves_image_and_requires_fresh_input_to_finish" time="0.013"><failure message="pydantic_core._pydantic_core.ValidationError: 1 validation error for Transcript&#10;revision&#10;  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='Please describe this device', input_type=str]&#10;    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing">async def test_failed_audio_preserves_image_and_requires_fresh_input_to_finish():
+        agent, iq, oq, task = await setup("final")
+        activity = status()
+        failed = status(revision=1, failed=True)
+        try:
+            await iq.put(activity)
+            await accepted(oq, activity)
+            await iq.put(frame())
+            await asyncio.wait_for(agent.perception.started.get(), 2)
+            await iq.put(failed)
+            clarification = await accepted(oq, failed)
+            assert clarification.kind == "clarify"
+            agent.perception.release["f1"].set()
+            await asyncio.wait_for(agent.applied.get(), 2)
+            assert not any(item.kind == "final" for item in list(oq._queue))
+            assert not agent.latest_complete
+&gt;           await iq.put(transcript("recovery", "Please describe this device"))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\engine\test_speech_status.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+text = 'recovery', revision = 'Please describe this device', final = True
+utterance = 'u'
+
+    def transcript(text="Book Wednesday", revision=0, final=True, utterance="u"):
+&gt;       return TranscriptEvent(session_id="s", payload=Transcript(utterance_id=utterance, revision=revision,
+                                                                  text=text, final=final))
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Transcript
+E       revision
+E         Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='Please describe this device', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+
+tests\engine\test_safety.py:26: ValidationError</failure></testcase><testcase classname="tests.engine.test_speech_status" name="test_old_pending_revision_cannot_reopen_completed_audio" time="0.014" /><testcase classname="tests.test_contract" name="test_golden_roundtrip" time="0.006" /><testcase classname="tests.test_contract" name="test_wrong_version_rejected" time="0.003" /><testcase classname="tests.test_contract" name="test_manifest_schema_checked" time="0.002" /><testcase classname="tests.test_contract" name="test_perception_preserves_hypothesis_identity" time="0.008" /><testcase classname="tests.test_contract" name="test_transport_speech_status_roundtrip_has_no_transcript_or_timing" time="0.009" /></testsuite></testsuites>

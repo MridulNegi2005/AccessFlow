@@ -1,0 +1,195 @@
+{
+  "mode": "isolated-native-package/live-public-audio/single-attempt",
+  "python": "3.11.15 (main, May 10 2026, 19:31:25) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.26220-SP0",
+  "files_verified": 89,
+  "pins_verified": 37,
+  "import_errors": [],
+  "profile": {
+    "ACCESSFLOW_SAMSUNG_BACKEND": "groq",
+    "ACCESSFLOW_GROQ_MODEL": "qwen/qwen3.8-27b",
+    "ACCESSFLOW_GROQ_URL": "https://api.groq.com/openai/v1",
+    "ACCESSFLOW_GROQ_STRUCTURED": "0",
+    "ACCESSFLOW_MAX_OUTPUT_TOKENS": "950",
+    "ACCESSFLOW_MAX_CONTEXT_CHARS": "32768",
+    "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
+    "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1",
+    "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": "full",
+    "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": "prose",
+    "ACCESSFLOW_SAMSUNG_PERCEPTION": "process",
+    "ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH": "assets/asr",
+    "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO": "assets/warmup.wav",
+    "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S": "30",
+    "ACCESSFLOW_SAMSUNG_VISION_PROVIDER": "none"
+  },
+  "warmup_backends": {
+    "audio": "faster-whisper/cpu-int8"
+  },
+  "setup_s": 5.375,
+  "wall_s": 12.905999999999949,
+  "package_manifest_sha256": "99843f2c0fefa32e384c73fac333d76138ecfa63c2bbcec913aa3fb5d2fbca1f",
+  "trace": [
+    {
+      "kind": "agent_setup",
+      "wall_ms": 5375.0,
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "tool_manifest",
+      "payload": {
+        "tools": [
+          "book_flight",
+          "cancel_booking",
+          "create_support_ticket",
+          "flight_search",
+          "lookup_manual"
+        ]
+      },
+      "t_ms": 0.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_audio_chunk",
+      "payload": {
+        "audio_ref": "audio/pub_06_turn1_part1.mp3",
+        "duration_ms": 1200,
+        "end_of_turn": false
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'm listening."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 110.0
+    },
+    {
+      "kind": "event",
+      "event_type": "user_audio_chunk",
+      "payload": {
+        "audio_ref": "audio/pub_06_turn1_part2.mp3",
+        "duration_ms": 1100,
+        "end_of_turn": true
+      },
+      "t_ms": 1422.0
+    },
+    {
+      "kind": "event",
+      "event_type": "scenario_end",
+      "payload": {},
+      "t_ms": 1422.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'm listening."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 1438.0
+    },
+    {
+      "kind": "action",
+      "action": "filler_speech",
+      "payload": {
+        "text": "I'll check that."
+      },
+      "state_snapshot": {
+        "intent": null,
+        "slots": {}
+      },
+      "t_ms": 3735.0
+    },
+    {
+      "kind": "action",
+      "action": "clarification_request",
+      "payload": {
+        "text": "I have the destination as New York. To search and book a flight, I need the departure date and the passenger's full name. Could you provide those details?"
+      },
+      "state_snapshot": {
+        "intent": "book_flight",
+        "slots": {
+          "destination": "New York"
+        }
+      },
+      "t_ms": 4375.0
+    }
+  ],
+  "score": {
+    "scenario_id": "pub_06_audio_disfluency",
+    "total": 54.6,
+    "breakdown": {
+      "task": {
+        "weight": 61.5,
+        "fraction": 0.3,
+        "points": 18.5,
+        "detail": {
+          "fraction": 0.3,
+          "checkpoints": [
+            {
+              "id": "search_repaired_city",
+              "type": "tool_called",
+              "weight": 0.5,
+              "passed": false,
+              "note": "0/1 matching call(s) emitted"
+            },
+            {
+              "id": "never_searched_abandoned_city",
+              "type": "tool_not_called",
+              "weight": 0.3,
+              "passed": true,
+              "note": "0 forbidden matching call(s) found"
+            },
+            {
+              "id": "final_nyc",
+              "type": "final_response_contains",
+              "weight": 0.2,
+              "passed": false,
+              "note": "no final_response matched any_of"
+            }
+          ]
+        }
+      },
+      "latency": {
+        "weight": 23.1,
+        "fraction": 1.0,
+        "points": 23.1,
+        "detail": {
+          "fraction": 1.0,
+          "responses": [
+            {
+              "event_index": 1,
+              "delta_ms": 38.0,
+              "fraction": 1.0
+            }
+          ]
+        }
+      },
+      "safety": {
+        "weight": 15.4,
+        "fraction": 0.85,
+        "points": 13.1,
+        "detail": {
+          "fraction": 0.85,
+          "notes": [
+            "1 verbatim-repeated filler(s)"
+          ]
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Reused previously fresh isolated venv on same Windows host; every pin rechecked.",
+    "No microphone, vision, clean OS, Linux, Docker, repeated score or hidden-set claim."
+  ]
+}

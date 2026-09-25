@@ -8,9 +8,9 @@ one official input event into one or more internal events and one internal
 
 The kit's text chunks are *additive*.  AccessFlow's transcript revisions are
 replacement hypotheses, so the translator keeps a small per-turn buffer and
-emits the cumulative text at each revision.  Audio is intentionally rejected
-until an owner supplies an MP3 decoder/assembly contract; treating an MP3 path
-as a WAV path would make an apparently working evaluation dishonest.
+emits the cumulative text at each revision. MP3 decoding belongs to the async
+SamsungAudioInput bridge; this pure translator validates its metadata and
+constructs pending-speech and decoded-WAV events without doing inference.
 """
 
 from __future__ import annotations
@@ -22,6 +22,10 @@ from pathlib import Path
 from typing import Any
 
 from ..contracts import (
+    Audio,
+    AudioEvent,
+    SpeechStatus,
+    SpeechStatusEvent,
     Frame,
     FrameEvent,
     Interrupt,
@@ -48,7 +52,7 @@ class MediaInputError(SamsungProtocolError):
 
 
 class SamsungUnsupportedMediaError(MediaInputError):
-    """Raised for official media whose decoder contract is not implemented."""
+    """Raised when media requires the asynchronous runtime conversion path."""
 
 
 def _mapping(value: Any, name: str) -> Mapping[str, Any]:
@@ -403,14 +407,44 @@ class SamsungProtocol:
         return FrameEvent(session_id=self.session_id, sequence=self._next_sequence(),
                           timestamp=timestamp, payload=Frame(path=str(path), frame_id=frame_id))
 
+    def admit_audio_chunk(self, raw):
+        """Validate references/metadata only; asynchronous runtime owns conversion."""
+        event = _mapping(raw, "event")
+        if not self._manifest_seen or event.get("event_type") != "user_audio_chunk":
+            raise SamsungProtocolError("Audio admission requires a manifest and audio event")
+        payload = _mapping(event.get("payload"), "payload")
+        timestamp = _timestamp(event)
+        duration = payload.get("duration_ms")
+        if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+                or not math.isfinite(duration) or not 0 <= duration <= 120000
+                or type(payload.get("end_of_turn")) is not bool):
+            raise SamsungProtocolError("Invalid audio duration or end_of_turn")
+        ref = payload.get("audio_ref")
+        self.resolve_media_ref(ref, suffix=".mp3")
+        return {"ref": ref, "timestamp": timestamp, "final": payload["end_of_turn"]}
+
+    def audio_status(self, utterance_id, revision, timestamp, *, failed=False):
+        self._active_utterance = None
+        self._text_buffer = ""
+        self._text_revision = -1
+        return SpeechStatusEvent(session_id=self.session_id, sequence=self._next_sequence(),
+            timestamp=timestamp, payload=SpeechStatus(utterance_id=utterance_id, revision=revision,
+                                                     status="failed" if failed else "pending"))
+
+    def decoded_audio(self, utterance_id, timestamp, path):
+        # Timestamp is organizer event scheduling time, not an acoustic endpoint.
+        # Leave unknown speech_start/speech_end at their existing default values.
+        return AudioEvent(session_id=self.session_id, sequence=self._next_sequence(), timestamp=timestamp,
+                          payload=Audio(path=str(path), utterance_id=utterance_id, revision=2))
+
     @staticmethod
     def _reject_audio(payload: Mapping[str, Any]) -> None:
         ref = payload.get("audio_ref")
         suffix = Path(ref).suffix.lower() if isinstance(ref, str) else ""
         if suffix == ".mp3":
             raise SamsungUnsupportedMediaError(
-                "Samsung official audio is MP3; no MP3 decoder/assembly contract is installed, "
-                "so it cannot be translated as AccessFlow WAV audio"
+                "Samsung official audio is MP3; use ParticipantAgent's asynchronous decoder, "
+                "not direct translation as AccessFlow WAV audio"
             )
         raise SamsungUnsupportedMediaError("Samsung official audio translation is not implemented")
 
