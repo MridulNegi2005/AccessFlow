@@ -14,13 +14,20 @@ implementation or configuration was edited.
 | B — stop | FAIL, partial | `pytest tests/perception/test_confirmed_stop_semantics.py -q --runxfail` exposes two intended failures; Node output-stop regression passes. | Current authoritative output-stop cancels browser TTS; old session/cause ignored. Device/booking classification remains distinct. | Mridul must add output-only and hold/clarify controller decisions; Atishay will map the classifier and verify task/playback behavior. See proposal below. |
 | C — configured agent | PASS for adapter seam; NOT RUN end-to-end real inference | `test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools`, `test_websocket_configured_factory_requires_explicit_backend`, opt-in browser ASR test | Explicit `ACCESSFLOW_DEMO_AGENT_MODE=configured` uses `build_configured_agent`, its reasoner/policy/perception, declared in-memory calendar mock manifest/executor, source-preserving observation projection, backend labels and worker cleanup. Setup fails visibly with no fake fallback. | No configured reasoning backend was available in this environment. Actual common-agent answer and mock calendar outcome require a configured installed provider, Atishay; shared action semantics remain Mridul's. |
 | D — hands-free voice/images | NOT RUN | Existing file-upload route and offline timing tests only | WAV and PNG upload route remains; no synthetic recording is called live microphone evidence. | Automatic completion, processing while speech continues, End session, and ordered multi-image history remain to implement. D2/D3 controller hooks and D4 registry/source guards require Mridul; browser capture/display belongs to Atishay. |
-| Gate 1 — 26 cases | FAIL | Checklist below | Error and some playback/capture cases pass. | D1/D2/D3/D4 and action cases remain. |
+| Gate 1 — 26 cases | FAIL | Checklist below | Error, selected stop/playback/capture, and a deterministic corrected mock action pass. | D1/D2/D3/D4 and actual live action cases remain. |
 | Gate 2 — 12 actual-inference attempts | NOT RUN | No declared reasoning provider or listening Ollama service; no run ledger created | Installed ASR can decode a generated fixture through the browser adapter. | Predeclare four development cases and run 3 attempts each with actual ASR/reasoning/vision where applicable, Atishay. Never count fake reasoner or fixture response. |
 | Gate 3 — four human microphone cases | NOT RUN | No new human audio captured | None claimed. | Run M01–M04 only after hands-free implementation and the user's capture agreement, Atishay. |
-| Gate 4 — regression | PASS for current code; acceptance still partial | Python 3.11.15: `python -m pytest -q` **1372 passed, 5 skipped, 3 xfailed, 2 dependency warnings** (112.06 s); `ruff check .` and four Node checks passed. Explicit installed-model opt-in: **3 passed**, 135 deselected (20.49 s). | Current checked code is regression-clean; real ASR worker and browser adapter tests pass on generated WAV. | Skips include opt-in model tests when env is absent; two D1 xfails are open deliverable failures, not successes. Re-run after final implementation, Atishay. |
+| Gate 4 — regression | PASS for current code; acceptance still partial | Python 3.11.15: `python -m pytest -q -rsx` **1374 passed, 5 skipped, 3 xfailed, 2 dependency warnings** (101.73 s); `ruff check .` and four Node checks passed. Explicit installed-model opt-in: **3 passed**, 136 deselected (20.30 s). | Current checked code is regression-clean; real ASR worker and browser adapter tests pass on generated WAV. | Two D1 xfails and the conflicting-frame xfail are open deliverable failures, not successes. Re-run after final implementation, Atishay. |
 
-The two warnings are Starlette TestClient/httpx deprecations. The three retained
-xfails are one earlier demo case and two strict D1 conformance cases. The opt-in
+The two warnings are Starlette TestClient/httpx deprecations. The five skips
+were: `test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner`
+and both tests in `test_live_worker_agent.py` because the opt-in model variable
+was not set for the default suite; `test_corpus_boundary.py` and
+`test_tool_metadata.py` because native symlinks were unavailable. The three
+xfails were `test_conflicting_frames_require_resolution_before_write` (D4
+controller gap) and the two strict D1 cases named in Slice B. The symlink
+skips are environment/packaging checks, not proof of media acceptance; the
+other three were run separately with the installed model. The opt-in
 command was run separately with `ACCESSFLOW_TEST_WHISPER_MODEL_PATH` explicitly
 set to the installed `Systran/faster-whisper-base.en` snapshot. That run used
 actual Faster Whisper CPU INT8 on a **generated** WAV, but a **mock reasoner**;
@@ -43,10 +50,10 @@ gate or the real-inference/human-device gates.
 | S01 | PASS | `answer_correlation_check.cjs`: matched authoritative `stop_output` cancels playback. |
 | S02 | PASS | `speech_lifecycle_check.cjs`: cancelled generation rejects late TTS callbacks. |
 | S03 | FAIL | `test_stop_speaking_emits_output_stop_without_stopping_task` strict xfail; shared decision/controller missing. |
-| S04 | NOT RUN | New D1 task-cancel-vs-pending-write conformance needs shared controller semantics and an owned browser reproducer. |
+| S04 | PASS | `test_explicit_task_cancel_prevents_pending_mock_effect`: final spoken task cancel invalidates a gated mock write, emits cancel/output-stop, and leaves the session running. |
 | S05 | PASS | `test_stop_words_have_distinct_scopes`: booking cancellation and washing-machine stop remain ordinary complete requests. This is classification, not a real cancellation effect. |
 | S06 | FAIL | `test_vague_stop_holds_and_clarifies_without_a_final` strict xfail; partial cancel classifier is covered separately but shared hold is absent. |
-| V01 | NOT RUN | No actual configured-agent Tuesday-to-Wednesday mock calendar effect. |
+| V01 | PASS, deterministic only | `test_websocket_configured_correction_commits_only_wednesday_mock_effect`: browser → actual controller, scripted planner double, partial Tuesday produces no effect; final correction creates one 2026-09-30 17:00 Asia/Kolkata mock effect and no Tuesday write. Real configured reasoning/mic remains Gate 2/3. |
 | V02 | NOT RUN | Offline pause replay exists; live automatic endpointing is absent. |
 | V03 | NOT RUN | No integrated repetition/effect check. |
 | V04 | NOT RUN | Source/revision tests exist, but no hands-free delayed-ASR correction conformance. |

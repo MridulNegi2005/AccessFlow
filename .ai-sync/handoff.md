@@ -1387,10 +1387,14 @@ real vision and official kit/media remain open. Details in Atishay handoff.
   reached installed Faster Whisper through this browser adapter and a mock
   reasoner; the worker exited after disconnect. No real-model answer/effect,
   live endpointing, human speech or official Samsung result is claimed.
-- Python 3.11.15: full suite 1372 passed/5 skipped/3 xfailed; Ruff/four Node
+- Python 3.11.15: full suite 1374 passed/5 skipped/3 xfailed; Ruff/four Node
   checks pass; three opt-in installed-ASR tests pass. Two xfails explicitly
   reproduce missing D1 shared-controller semantics. D1 hold/output-only,
   D2/D3 live timebase/closure and D4 image registry/source guards need the
   narrow Mridul-owned additions recorded in the linked results; Atishay still
   owns browser capture/UI/per-image tests. No Mridul-owned implementation was
   changed.
+- A follow-up deterministic test now proves one Wednesday 17:00 in-memory
+  calendar effect after a final correction and none for partial Tuesday; a
+  separate spoken task-cancel test prevents a gated pending mock write. These
+  are scripted-planner/controller checks, not actual model/device results.

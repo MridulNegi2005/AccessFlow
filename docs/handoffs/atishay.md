@@ -1040,10 +1040,18 @@ Whisper through the browser WebSocket and common Agent with a mock reasoner,
 then closed its native child after disconnect. This is not a completed real
 reasoning/calendar/vision task.
 
-Python 3.11.15 full suite: **1372 passed, 5 skipped, 3 xfailed, 2 dependency
+Python 3.11.15 full suite: **1374 passed, 5 skipped, 3 xfailed, 2 dependency
 warnings**; repository Ruff and four Node checks passed. Explicit installed
 ASR selection ran three relevant tests successfully. Full Gate 1, twelve
 real-model attempts, live automatic speech/end-session, image history and
 four human-microphone cases remain open. No new human speech was requested or
 recorded. No provider was configured in this shell and Ollama port 11434 was
 closed; kit files were absent in the bounded local locations checked.
+
+Additional deterministic follow-up: a scripted planner double through the
+configured browser adapter and actual controller made no Tuesday effect from
+partial speech and exactly one Wednesday 17:00 mock effect after a final
+correction (`test_websocket_configured_correction_commits_only_wednesday_mock_effect`).
+A separate controller/turn-policy test confirms spoken "Cancel this task"
+invalidates a gated pending mock write while the session stays open. These
+close deterministic V01/S04 only; neither tests a real planner or microphone.

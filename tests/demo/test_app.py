@@ -1208,6 +1208,81 @@ def test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner(monke
     assert "wednesday" in observed["text"].lower()
 
 
+def test_websocket_configured_correction_commits_only_wednesday_mock_effect(monkeypatch):
+    """Deterministic planner double; verifies controller authority, not model accuracy."""
+    partial_planned = threading.Event()
+    observed = {}
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/scripted-correction")
+
+        async def plan(self, view, manifests):
+            if view.results:
+                return PlanProposal(response="The mock calendar effect is recorded.", request_complete=True)
+            utterance = view.observations[-1].text.lower()
+            corrected = "wednesday" in utterance
+            day = "2026-09-30" if corrected else "2026-09-29"
+            hour = "17:00" if corrected else "15:00"
+            arguments = {
+                "title": "Project meeting", "date": day, "time": hour,
+                "timezone": "Asia/Kolkata",
+            }
+            if not corrected:
+                partial_planned.set()
+            return PlanProposal(
+                intent="schedule_meeting",
+                slot_updates=arguments,
+                calls=[ProposedCall(
+                    tool="mock_calendar_create", arguments=arguments,
+                    dependencies=list(arguments),
+                )],
+                request_complete=corrected,
+                write_requested=True,
+            )
+
+    async def factory(**kwargs):
+        agent = Agent(
+            demo_app.LocalPerception(), HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"], partial_debounce_s=0,
+        )
+        agent.perception_configuration = SimpleNamespace(mode="text")
+        agent.perception_warmup_backends = {}
+        observed["executor"] = kwargs["executor"]
+        return agent
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            assert socket.receive_json()["payload"]["agent_mode"] == "configured"
+            socket.send_json({
+                "kind": "transcript",
+                "payload": {
+                    "utterance_id": "corrected-meeting", "revision": 0, "final": False,
+                    "text": "Schedule the project meeting Tuesday at 3 PM",
+                },
+            })
+            assert partial_planned.wait(2)
+            assert not observed["executor"].effects
+            socket.send_json({
+                "kind": "transcript",
+                "payload": {
+                    "utterance_id": "corrected-meeting", "revision": 1, "final": True,
+                    "text": "Schedule the project meeting Tuesday at 3 PM, actually Wednesday at 5 PM",
+                },
+            })
+            outputs = _receive_controller_outputs(socket)
+
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert final["payload"]["basis"] == "confirmed_tool_effect"
+    assert len(observed["executor"].effects) == 1
+    assert len([call for call in observed["executor"].calls if call.effect == "write"]) == 1
+    effect = next(iter(observed["executor"].effects.values()))
+    assert effect["arguments"]["date"] == "2026-09-30"
+    assert effect["arguments"]["time"] == "17:00"
+    assert effect["arguments"]["timezone"] == "Asia/Kolkata"
+
+
 def test_websocket_local_perception_timeout_is_recoverable(monkeypatch):
     started = threading.Event()
     finished = threading.Event()
