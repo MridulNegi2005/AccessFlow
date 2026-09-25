@@ -1599,3 +1599,14 @@ returned 404 in a failing test; it was added and retested. Final standard
 suite passed 1387/6 skipped/3 xfailed with two warnings, alongside seven Node
 checks and Ruff. This is not evidence of Mridul's D4 registry/source selection,
 actual vision, human mic or model reliability; no shared code was altered.
+
+## 25 September 2026 - AI-assisted bounded live-voice preview continuation
+
+Assistance reproduced the browser's three-preview ceiling during a longer
+spoken turn, added a bounded/configurable later-preview path and deterministic
+tests for continued speech, patient quiet completion, invalid timing and
+explicit no-final failure at turn/preview limits. Default limits were chosen
+as development settings, not measured physical-microphone optimums. Standard
+suite passed 1387/6 skipped/3 xfailed with two warnings; seven Node checks
+and Ruff passed. The user explicitly directed that memory-limited model tests
+not be retried; no shared controller, model backend or device result is claimed.

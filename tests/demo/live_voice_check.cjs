@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const LiveVoice = require("../../demo/live-voice.js");
 
-function harness() {
+function harness(timing = {}) {
   let now = 0;
   let ticker;
   const sent = { status: [], previews: [], finals: [], states: [], errors: [] };
@@ -18,6 +18,7 @@ function harness() {
     async close() { resources.contextsClosed += 1; },
   };
   const voice = new LiveVoice({
+    timing,
     getUserMedia: async () => stream,
     createAudioContext: () => context,
     createRecorder: () => ({
@@ -122,6 +123,57 @@ function harness() {
   assert.deepEqual(abandoned.sent.status[1].slice(1), [2, "failed"]);
   assert.match(abandoned.sent.errors.at(-1), /unfinished/i);
   await abandoned.voice.end();
+
+  const extended = harness();
+  assert.equal(await extended.voice.start(), true);
+  extended.feed(1500, true);
+  const extendedId = extended.sent.status[0][0];
+  for (let revision = 1; revision <= 3; revision += 1) {
+    assert.equal(extended.voice.previewResult(
+      extendedId, revision, `prefix ${revision}`, null), true);
+    extended.feed(1600, true);
+  }
+  assert.equal(extended.sent.previews.length, 4,
+    "speech continuing after three previews still needs a fresh bounded preview");
+  assert.equal(extended.voice.previewResult(
+    extendedId, 4, "complete corrected request", null), true);
+  extended.feed(2300, false);
+  assert.equal(extended.sent.finals.length, 1);
+  assert.equal(extended.sent.finals[0][1], 5);
+  await extended.voice.end();
+
+  const bounded = harness({ maxTurnMs: 3000 });
+  assert.equal(await bounded.voice.start(), true);
+  bounded.feed(3400, true);
+  assert.equal(bounded.sent.finals.length, 0);
+  assert.equal(bounded.sent.status.at(-1)[2], "failed");
+  assert.match(bounded.sent.errors.at(-1), /too long/i);
+  await bounded.voice.end();
+
+  assert.throws(() => harness({ quietCompleteMs: 6000, quietFailureMs: 5500 }),
+    /quietFailureMs must exceed/i);
+  const patient = harness({ quietCompleteMs: 3000, quietFailureMs: 6500 });
+  assert.equal(await patient.voice.start(), true);
+  patient.feed(1500, true);
+  const patientId = patient.sent.status[0][0];
+  patient.voice.previewResult(patientId, 1, "complete informational question", null);
+  patient.feed(2300, false);
+  assert.equal(patient.sent.finals.length, 0,
+    "a configured patient pause must override the default completion point");
+  patient.feed(800, false);
+  assert.equal(patient.sent.finals.length, 1);
+  await patient.voice.end();
+
+  const previewLimited = harness({ maxPreviewsPerTurn: 1 });
+  assert.equal(await previewLimited.voice.start(), true);
+  previewLimited.feed(1500, true);
+  const limitedId = previewLimited.sent.status[0][0];
+  previewLimited.voice.previewResult(limitedId, 1, "early prefix", null);
+  previewLimited.feed(400, true);
+  previewLimited.feed(5600, false);
+  assert.equal(previewLimited.sent.finals.length, 0);
+  assert.match(previewLimited.sent.errors.at(-1), /preview capacity/i);
+  await previewLimited.voice.end();
 
   live.feed(400, true);
   assert.equal(live.sent.status.length, 2);

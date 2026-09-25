@@ -1,5 +1,12 @@
 /* Opt-in browser capture. Previews are never controller-final speech. */
 (function (root) {
+  function timingSetting(value, fallback, minimum, maximum, name) {
+    if (value === undefined) return fallback;
+    if (!Number.isSafeInteger(value) || value < minimum || value > maximum)
+      throw new RangeError(`${name} must be an integer from ${minimum} to ${maximum}.`);
+    return value;
+  }
+
   function awaitsMoreSpeech(text) {
     const words = text.toLowerCase().trim().replace(/[.,!?]+$/, "").trim();
     return /\b(?:actually|instead|but|and|or)$/.test(words);
@@ -8,6 +15,16 @@
   class AccessFlowLiveVoice {
     constructor(options) {
       this.options = options;
+      const configured = options.timing || {};
+      this.timing = {
+        quietCompleteMs: timingSetting(configured.quietCompleteMs, 2200, 800, 10000, "quietCompleteMs"),
+        quietFailureMs: timingSetting(configured.quietFailureMs, 5500, 1500, 15000, "quietFailureMs"),
+        previewIntervalMs: timingSetting(configured.previewIntervalMs, 1000, 500, 5000, "previewIntervalMs"),
+        maxPreviewsPerTurn: timingSetting(configured.maxPreviewsPerTurn, 12, 1, 30, "maxPreviewsPerTurn"),
+        maxTurnMs: timingSetting(configured.maxTurnMs, 60000, 3000, 120000, "maxTurnMs"),
+      };
+      if (this.timing.quietFailureMs <= this.timing.quietCompleteMs)
+        throw new RangeError("quietFailureMs must exceed quietCompleteMs.");
       this.active = false;
       this.startPending = false;
       this.generation = 0;
@@ -132,10 +149,14 @@
       const now = this.options.now();
       const quietMs = now - turn.lastVoiceAt;
       const rate = this.capture.context.sampleRate;
-      if (!turn.previewInFlight && turn.previewCount < 3 &&
+      if (now - turn.startedAt >= this.timing.maxTurnMs) {
+        this.failTurn("This voice turn took too long. Please try a shorter request.");
+        return;
+      }
+      if (!turn.previewInFlight && turn.previewCount < this.timing.maxPreviewsPerTurn &&
           turn.samples >= rate * 0.4 &&
           (now - turn.startedAt >= 1200 || quietMs >= 450) &&
-          turn.previewText === null && now - turn.lastPreviewAt >= 1000) {
+          turn.previewText === null && now - turn.lastPreviewAt >= this.timing.previewIntervalMs) {
         const revision = ++turn.previewRevision;
         turn.previewCount += 1;
         turn.previewInFlight = true;
@@ -148,12 +169,14 @@
         }
         this.options.onState("previewing");
       }
-      if (quietMs >= 2200 && turn.previewText &&
+      if (quietMs >= this.timing.quietCompleteMs && turn.previewText &&
           !awaitsMoreSpeech(turn.previewText)) {
         this.completeTurn();
-      } else if (quietMs >= 5500) {
+      } else if (quietMs >= this.timing.quietFailureMs) {
         this.failTurn(turn.previewText && awaitsMoreSpeech(turn.previewText)
           ? "That request sounded unfinished. Please continue or try again."
+          : turn.previewCount >= this.timing.maxPreviewsPerTurn
+            ? "This voice turn exceeded live preview capacity. Please start a new request."
           : "Speech was not recognized. Please try again or type the request.");
       }
     }
