@@ -32,6 +32,7 @@ from accessflow.contracts import (
     Snapshot,
     Start,
     StartEvent,
+    SpeechStatusEvent,
     TranscriptEvent,
     ToolManifest,
 )
@@ -96,6 +97,20 @@ def test_browser_interrupt_message_becomes_typed_event(scope, utterance_id):
     assert event.sequence == 7
     assert event.payload.scope == scope
     assert event.payload.utterance_id == utterance_id
+
+
+def test_browser_pending_speech_status_becomes_controller_only_event():
+    event = event_from_message(
+        "session-1",
+        {"kind": "speech_status", "payload": {
+            "utterance_id": "live-turn", "revision": 0, "status": "pending",
+        }},
+    )
+
+    assert isinstance(event, SpeechStatusEvent)
+    assert event.payload.utterance_id == "live-turn"
+    assert event.payload.revision == 0
+    assert event.payload.status == "pending"
 
 
 @pytest.mark.parametrize(
@@ -633,7 +648,8 @@ def test_demo_page_exposes_input_controls_and_backend_label():
     assert "if (wasSpeaking) { cancelSpeech(); sendInterrupt('speech'); }" in html
     assert 'Design preview · deterministic sample content' in html
     assert 'Send with attachment' in html
-    assert 'if (recordedWavBytes) void runTask();' in html
+    assert 'sendFinal: (sourceId, sourceRevision, wav) => {' in html
+    assert "const sent = send('audio', {" in html
     assert 'The recording uploads after capture ends; it is not streamed live.' in html
     assert 'prefers-reduced-motion: reduce' in html
     assert 'Drop a PNG image' in html
@@ -1100,6 +1116,7 @@ def test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools(mo
     assert status["payload"] == {
         "agent_mode": "configured",
         "tool_environment": "mock",
+        "live_preview_available": False,
         "perception_backend": "configured/text-only",
         "reasoner_backend": "test/configured-backend",
     }
@@ -1114,6 +1131,68 @@ def test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools(mo
         "Configured agent answer"
     )
     assert observed["agent"].perception.inner.closed
+
+
+def test_audio_preview_decodes_before_final_without_reaching_controller(monkeypatch):
+    fixture = Path(__file__).parents[1] / "fixtures/audio/synthetic_tone.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    observed = {"plans": 0}
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/mock-reasoner")
+
+        async def plan(self, view, manifests):
+            observed["plans"] += 1
+            return PlanProposal(response="Final admitted audio only", request_complete=True)
+
+    async def factory(**kwargs):
+        agent = Agent(
+            demo_app.LocalPerception(transcriber=lambda _path: "Recognized preview words"),
+            HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="process", vision_provider="none")
+        agent.perception_warmup_backends = {}
+        return agent
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json({
+                "kind": "speech_status",
+                "payload": {"utterance_id": "live-turn", "revision": 0, "status": "pending"},
+            })
+            pending = []
+            while not any(item["kind"] == "acknowledge" for item in pending):
+                pending.append(socket.receive_json())
+            socket.send_json({
+                "kind": "audio_preview",
+                "payload": {"utterance_id": "live-turn", "revision": 1, "data_base64": encoded},
+            })
+            preview = socket.receive_json()
+            assert preview["kind"] == "demo_preview"
+            assert preview["source_id"] == "live-turn"
+            assert preview["revision"] == 1
+            assert preview["text"] == "Recognized preview words"
+            assert observed["plans"] == 0
+            assert not any(item["kind"] in {"demo_observation", "tool_call", "final"}
+                           for item in pending)
+            socket.send_json({
+                "kind": "audio",
+                "payload": {"utterance_id": "live-turn", "revision": 2, "data_base64": encoded},
+            })
+            receipt = socket.receive_json()
+            outputs = _receive_controller_outputs(socket)
+
+    final_observation = next(item for item in outputs if item["kind"] == "demo_observation")
+    final = next(item for item in outputs if item["kind"] == "final")
+    assert status["payload"]["live_preview_available"] is True
+    assert receipt["accepted_revision"] == 2
+    assert receipt["accepted_event_id"] == final_observation["payload"]["event_id"]
+    assert final["payload"]["caused_by_event_id"] == receipt["accepted_event_id"]
+    assert observed["plans"] == 1
 
 
 def test_websocket_configured_setup_failure_has_no_fake_fallback(monkeypatch):

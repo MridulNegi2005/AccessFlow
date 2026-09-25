@@ -30,6 +30,8 @@ from accessflow.contracts import (
     Observation,
     OutputEvent,
     PlanProposal,
+    SpeechStatus,
+    SpeechStatusEvent,
     Start,
     StartEvent,
     ToolManifest,
@@ -50,6 +52,7 @@ MAX_BROWSER_SOURCE_ID_CHARS = 256
 MAX_BROWSER_MESSAGE_BYTES = 12 * 1024 * 1024
 MAX_PENDING_INPUTS = 16
 MAX_PENDING_OUTPUTS = 16
+MAX_PREVIEW_SOURCES = 64
 
 _reasoner_spec = importlib.util.spec_from_file_location(
     "accessflow_demo_reasoner", ROOT / "reasoner.py"
@@ -377,6 +380,11 @@ async def recorder_worklet() -> FileResponse:
     return FileResponse(ROOT / "recorder-worklet.js", media_type="application/javascript")
 
 
+@app.get("/live-voice.js")
+async def live_voice_script() -> FileResponse:
+    return FileResponse(ROOT / "live-voice.js", media_type="application/javascript")
+
+
 class _SessionMediaBudget:
     """Monotonic per-session admission budget for decoded upload bytes."""
 
@@ -551,6 +559,20 @@ def event_from_message(
             payload=Interrupt(
                 scope=_interrupt_scope(payload),
                 utterance_id=_optional_source_id(payload, "utterance_id"),
+            ),
+        )
+    if kind == "speech_status":
+        status = payload.get("status", "pending")
+        if status not in {"pending", "failed"}:
+            raise ValueError("browser speech status must be pending or failed")
+        return SpeechStatusEvent(
+            session_id=session_id,
+            timestamp=timestamp,
+            sequence=sequence,
+            payload=SpeechStatus(
+                utterance_id=_source_id(payload, "utterance_id"),
+                revision=_revision(payload),
+                status=status,
             ),
         )
     if kind == "transcript":
@@ -737,6 +759,9 @@ async def websocket(websocket: WebSocket) -> None:
             "payload": {
                 "agent_mode": mode,
                 "tool_environment": "mock",
+                "live_preview_available": (
+                    mode == "configured" and agent.perception_configuration.mode == "process"
+                ),
                 "perception_backend": perception_label,
                 "reasoner_backend": reasoner_label,
             },
@@ -767,6 +792,40 @@ async def websocket(websocket: WebSocket) -> None:
         media_root = Path(media_dir)
         media_budget = _SessionMediaBudget()
         materialization_tasks: set[asyncio.Task[Any]] = set()
+        preview_tasks: dict[str, asyncio.Task[None]] = {}
+        preview_revisions: dict[str, int] = {}
+        preview_available = mode == "configured" and agent.perception_configuration.mode == "process"
+
+        async def process_preview(event: AudioEvent) -> None:
+            source_id = event.payload.utterance_id
+            revision = event.payload.revision
+            try:
+                observations = [
+                    item async for item in perception.inner.observe(event)
+                    if item.event_id == event.event_id and item.source_id == source_id
+                    and item.revision == revision and item.modality == "audio" and item.final
+                ]
+                if len(observations) != 1 or not observations[0].text.strip():
+                    raise RuntimeError("preview ASR did not return one usable observation")
+                if preview_revisions.get(source_id) != revision:
+                    return
+                enqueue_output({
+                    "kind": "demo_preview", "session_id": session_id,
+                    "source_id": source_id, "revision": revision,
+                    "text": observations[0].text[:2048], "backend": observations[0].backend,
+                })
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                if preview_revisions.get(source_id) == revision:
+                    enqueue_output({
+                        "kind": "demo_preview", "session_id": session_id,
+                        "source_id": source_id, "revision": revision,
+                        "error": "A speech preview could not be decoded; keep speaking or try again.",
+                    })
+            finally:
+                if preview_tasks.get(source_id) is asyncio.current_task():
+                    preview_tasks.pop(source_id, None)
 
         async def receive_inputs():
             while True:
@@ -782,6 +841,40 @@ async def websocket(websocket: WebSocket) -> None:
                             },
                         }
                     )
+                    continue
+                if isinstance(message, dict) and message.get("kind") == "audio_preview":
+                    if not preview_available:
+                        enqueue_output({
+                            "kind": "demo_error",
+                            "payload": {
+                                "backend": "demo/input",
+                                "message": "Live speech preview needs configured process ASR.",
+                            },
+                        })
+                        continue
+                    try:
+                        preview_message = {**message, "kind": "audio"}
+                        event = await _materialize_event(
+                            session_id, preview_message, media_root,
+                            materialization_tasks, media_budget,
+                        )
+                        source_id = event.payload.utterance_id
+                        revision = event.payload.revision
+                        if source_id not in preview_revisions and len(preview_revisions) >= MAX_PREVIEW_SOURCES:
+                            raise ValueError("Too many speech previews in this session")
+                        if revision <= preview_revisions.get(source_id, -1):
+                            continue
+                        old = preview_tasks.get(source_id)
+                        if old is not None:
+                            old.cancel()
+                            await asyncio.gather(old, return_exceptions=True)
+                        preview_revisions[source_id] = revision
+                        preview_tasks[source_id] = asyncio.create_task(process_preview(event))
+                    except (TypeError, ValueError) as error:
+                        enqueue_output({
+                            "kind": "demo_error",
+                            "payload": {"backend": "demo/input", "message": str(error)},
+                        })
                     continue
                 try:
                     event = await _materialize_event(
@@ -801,6 +894,17 @@ async def websocket(websocket: WebSocket) -> None:
                     )
                     continue
                 if isinstance(event, AudioEvent):
+                    old = preview_tasks.get(event.payload.utterance_id)
+                    if old is not None:
+                        old.cancel()
+                        await asyncio.gather(old, return_exceptions=True)
+                    if event.payload.utterance_id in preview_revisions:
+                        preview_revisions[event.payload.utterance_id] = max(
+                            preview_revisions[event.payload.utterance_id], event.payload.revision
+                        )
+                if isinstance(event, AudioEvent):
+                    source_id = event.payload.utterance_id
+                elif isinstance(event, SpeechStatusEvent):
                     source_id = event.payload.utterance_id
                 elif isinstance(event, FrameEvent):
                     source_id = event.payload.frame_id
@@ -842,6 +946,11 @@ async def websocket(websocket: WebSocket) -> None:
                 if materialization_tasks:
                     await asyncio.gather(*materialization_tasks, return_exceptions=True)
                     materialization_tasks.clear()
+                for task in preview_tasks.values():
+                    task.cancel()
+                if preview_tasks:
+                    await asyncio.gather(*tuple(preview_tasks.values()), return_exceptions=True)
+                    preview_tasks.clear()
 
                 agent_cancelled = False
                 if agent.running and not agent_task.done():

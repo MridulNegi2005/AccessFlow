@@ -1364,7 +1364,7 @@
             ><span style="--h: 27px"></span>
           </div>
           <div class="voice-caption" id="voice-caption">
-            Tap to speak<small>Recording is sent when you finish</small>
+            Start live voice<small>Speak hands-free when configured ASR is ready</small>
           </div>
         </div>
         <p
@@ -1377,15 +1377,15 @@
           Ready when you are
         </p>
         <p class="voice-help" id="voice-help">
-          Start a recording when you’re ready. Your microphone stays off until
-          you choose.
+          Start a live session when configured ASR is ready. Your microphone
+          stays off until you choose.
         </p>
         <div class="session-controls" id="session-controls">
           <button
             class="session-control primary"
             id="voice-toggle"
             type="button"
-            aria-label="Start voice recording"
+            aria-label="Start live voice session"
           >
             <svg
               viewBox="0 0 24 24"
@@ -1409,7 +1409,7 @@
                 stroke-width="1.8"
                 stroke-linecap="round"
               /></svg
-            ><span>Start voice</span>
+            ><span>Start live voice</span>
           </button>
           <button class="session-control" id="choose-audio" type="button">
             Upload WAV
@@ -1470,8 +1470,9 @@
           <span>Send attached request</span>
         </button>
         <p class="dock-note" id="dock-note">
-          Voice is recorded in this browser and uploaded to the current demo
-          backend after you finish.
+          In live mode, bounded speech previews go to the configured ASR while
+          you speak; only an automatically completed turn reaches the agent.
+          Upload WAV remains separate.
         </p>
         <p class="backend-status" id="backend-status" role="status" aria-live="polite">
           Checking connected backends…
@@ -1601,6 +1602,7 @@
       <input id="image" type="file" accept="image/png,.png" />
     </div>
 
+    <script src="/live-voice.js"></script>
     <script>
       const previewVariant = new URLSearchParams(location.search).get("preview");
       const previewMode = ["1", "photo", "meeting"].includes(previewVariant);
@@ -1622,6 +1624,9 @@
       let microphone = null;
       let microphoneStartPending = false;
       let microphoneStartGeneration = 0;
+      let liveVoice = null;
+      let livePreviewAvailable = false;
+      let sessionEnded = false;
       let mediaSendChain = Promise.resolve();
       let draftTimer = null;
       let microphoneTimer = null;
@@ -1661,6 +1666,7 @@
       }
 
       function show(event) {
+        if (sessionEnded) return;
         const payload =
           event.payload && typeof event.payload === "object"
             ? event.payload
@@ -1738,6 +1744,13 @@
           if (typeof event.session_id === "string")
             activeSessionId = event.session_id;
           agentMode = payload.agent_mode === "configured" ? "configured" : "mock";
+          livePreviewAvailable = payload.live_preview_available === true;
+          document.querySelector("#voice-toggle").disabled = !livePreviewAvailable;
+          if (!livePreviewAvailable) {
+            setVoiceCaption("Live voice unavailable", "Use Upload WAV or configure process ASR");
+            document.querySelector("#voice-help").textContent =
+              "Hands-free voice needs the configured agent with installed ASR. Upload WAV or type meanwhile.";
+          }
           const reasoner = payload.reasoner_backend;
           responseBackend = reasoner
             ? payload.perception_backend + " · " + reasoner
@@ -1747,6 +1760,16 @@
             : "Perception: " + payload.perception_backend;
           document.querySelector("#answer-context").textContent =
             modeLabel() + " · Conversation";
+          return;
+        }
+        if (event.kind === "demo_preview") {
+          if (activeSessionId && event.session_id !== activeSessionId) return;
+          if (liveVoice?.previewResult(event.source_id, event.revision, event.text, event.error) &&
+              typeof event.text === "string") {
+            document.querySelector("#caption-label").textContent =
+              "Provisional transcript · no action yet";
+            document.querySelector("#request-summary").textContent = event.text;
+          }
           return;
         }
         if (event.kind === "demo_status" && payload.media_received) {
@@ -1945,7 +1968,11 @@
         responseTimer = null;
         document.querySelector("#processing").classList.remove("visible");
         hasRunBefore = true;
-        if (
+        if (liveVoice?.active) {
+          document.querySelector("#voice-state").textContent = "Listening · live session";
+          document.querySelector("#voice-help").textContent =
+            "Speak naturally or choose End session. No Finish button is needed.";
+        } else if (
           !microphone &&
           !document.querySelector("#speak-pill").classList.contains("visible")
         ) {
@@ -2045,6 +2072,7 @@
       }
 
       function send(kind, payloadOrFactory) {
+        if (sessionEnded) return false;
         if (previewMode || !socket) {
           show({
             kind: "demo_error",
@@ -2098,6 +2126,7 @@
       }
 
       function sendSerialized(message) {
+        if (sessionEnded) return false;
         try {
           socket.send(message);
           return true;
@@ -2283,6 +2312,7 @@
             return;
         }
         void discardMicrophone();
+        void liveVoice?.end();
         cancelPendingMicrophoneStart();
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
         cancelSpeech();
@@ -2592,7 +2622,7 @@
 
       function setMediaControlsLocked(locked) {
         document.querySelector("#choose-audio").disabled = locked;
-        document.querySelector("#voice-toggle").disabled = locked;
+        document.querySelector("#voice-toggle").disabled = locked && !liveVoice?.active;
         const dropZone = document.querySelector("#drop-zone");
         dropZone.setAttribute("aria-disabled", String(locked));
         dropZone.tabIndex = locked ? -1 : 0;
@@ -2830,9 +2860,122 @@
         if (typeof dialog.showModal === "function") dialog.showModal();
       }
 
+      function beginLiveRun(sourceId) {
+        cancelSpeech();
+        if (runInProgress) finishRun();
+        runInProgress = true;
+        finalSourceId = sourceId;
+        requestSourceIds = new Set([sourceId]);
+        requestEventIds = new Map();
+        requestRevisions = new Map();
+        requestResolvedSources = new Set();
+        pendingAnswers = [];
+        inputsDispatched = false;
+        activeInputKinds = ["audio"];
+        document.querySelector("#answer-error").classList.remove("visible");
+        document.querySelector("#processing").classList.add("visible");
+        document.querySelector("#processing").lastElementChild.textContent =
+          "Listening and preparing speech preview…";
+        document.querySelector("#request-summary").textContent =
+          "Listening to your request…";
+        document.querySelector("#caption-label").textContent = "Your words";
+        document.querySelector("#empty-state").hidden = true;
+        setMediaControlsLocked(true);
+        document.querySelector("#voice-toggle").disabled = false;
+      }
+
+      liveVoice = new window.AccessFlowLiveVoice({
+        getUserMedia: (options) => navigator.mediaDevices.getUserMedia(options),
+        createAudioContext: () => new AudioContext(),
+        createRecorder: (context) => new AudioWorkletNode(context, "accessflow-recorder"),
+        now: () => performance.now(),
+        setInterval: (callback, delay) => window.setInterval(callback, delay),
+        clearInterval: (timer) => window.clearInterval(timer),
+        encodeWav,
+        onSpeechStart: beginLiveRun,
+        sendStatus: (sourceId, sourceRevision, status) =>
+          send("speech_status", {
+            utterance_id: sourceId, revision: sourceRevision, status,
+          }),
+        sendPreview: (sourceId, sourceRevision, wav) =>
+          send("audio_preview", {
+            utterance_id: sourceId, revision: sourceRevision,
+            data_base64: bytesToBase64(wav),
+          }),
+        sendFinal: (sourceId, sourceRevision, wav) => {
+          if (!runInProgress || sessionEnded) return false;
+          const sent = send("audio", {
+            utterance_id: sourceId, revision: sourceRevision,
+            data_base64: bytesToBase64(wav),
+          });
+          if (!sent) return false;
+          inputsDispatched = true;
+          document.querySelector("#processing").lastElementChild.textContent =
+            "Speech sent · waiting for the configured agent…";
+          if (replayPendingAnswer()) return true;
+          if (responseTimer) clearTimeout(responseTimer);
+          responseTimer = window.setTimeout(() => {
+            if (!runInProgress || sessionEnded) return;
+            document.querySelector("#answer-error").textContent =
+              "This voice request is taking longer than expected. The session remains open.";
+            document.querySelector("#answer-error").classList.add("visible");
+            finishRun();
+          }, 90000);
+          return true;
+        },
+        onPreview: () => {},
+        onState: (state) => {
+          if (sessionEnded) return;
+          const labels = {
+            listening: "Listening · live session",
+            speaking: "Hearing you",
+            previewing: "Recognizing while you speak",
+            processing: "Listening · agent processing",
+            unavailable: "Microphone unavailable",
+          };
+          if (labels[state])
+            document.querySelector("#voice-state").textContent = labels[state];
+          if (state === "listening") {
+            setVoiceCaption("Live voice on", "Speak naturally · End session to stop");
+            document.querySelector("#voice-help").textContent =
+              "Your next turn finishes automatically after a patient pause.";
+          }
+        },
+        onError: (message) => show({
+          kind: "demo_error", payload: { backend: "browser/live-voice", message },
+        }),
+      });
+
+      async function endLiveSession() {
+        if (sessionEnded) return;
+        sessionEnded = true;
+        pendingMessages.length = 0;
+        cancelSpeech();
+        if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
+        const closing = liveVoice.end();
+        finishRun();
+        document.querySelector("#voice-state").textContent = "Session ended";
+        document.querySelector("#voice-help").textContent =
+          "Microphone off. Start a new session for another voice request.";
+        document.querySelector("#voice-toggle").lastElementChild.textContent =
+          "Start new session";
+        document.querySelector("#voice-toggle").setAttribute(
+          "aria-label", "Start a new voice session",
+        );
+        document.querySelector("#voice-toggle").disabled = false;
+        document.querySelector("#choose-audio").disabled = true;
+        await closing;
+      }
+
       if (socket) {
-        socket.onmessage = (message) => show(JSON.parse(message.data));
+        socket.onmessage = (message) => {
+          if (!sessionEnded) show(JSON.parse(message.data));
+        };
         socket.onopen = () => {
+          if (sessionEnded) {
+            socket.close();
+            return;
+          }
           let drained = true;
           while (
             pendingMessages.length &&
@@ -2851,7 +2994,16 @@
           pendingMessages.length = 0;
           cancelPendingMicrophoneStart();
           void discardMicrophone();
+          void liveVoice.end();
+          if (sessionEnded) return;
           show({ kind: "demo_status", payload: { connected: false } });
+          sessionEnded = true;
+          document.querySelector("#voice-toggle").disabled = false;
+          document.querySelector("#voice-toggle").lastElementChild.textContent =
+            "Start new session";
+          document.querySelector("#voice-toggle").setAttribute(
+            "aria-label", "Start a new voice session",
+          );
         };
         socket.onerror = () =>
           show({
@@ -2895,10 +3047,29 @@
           "Read aloud unavailable";
       }
       document.querySelector("#voice-toggle").onclick = async () => {
-        if (microphone) {
-          await stopMicrophone();
-          if (recordedWavBytes) void runTask();
-        } else void startMicrophone();
+        if (sessionEnded) {
+          window.location.reload();
+          return;
+        }
+        if (liveVoice.active || liveVoice.startPending) {
+          await endLiveSession();
+          return;
+        }
+        if (!livePreviewAvailable) {
+          show({ kind: "demo_error", payload: {
+            backend: "browser/live-voice",
+            message: "Live voice needs configured process ASR. Upload a WAV or type instead.",
+          } });
+          return;
+        }
+        const toggle = document.querySelector("#voice-toggle");
+        toggle.lastElementChild.textContent = "End session";
+        toggle.setAttribute("aria-label", "End voice session");
+        const started = await liveVoice.start();
+        if (!started && !sessionEnded) {
+          toggle.lastElementChild.textContent = "Start live voice";
+          toggle.setAttribute("aria-label", "Start live voice session");
+        }
       };
       document.querySelector("#choose-audio").onclick = () =>
         document.querySelector("#audio").click();
@@ -3087,6 +3258,8 @@
         renderDesignPreview(previewVariant);
       }
       window.addEventListener("beforeunload", () => {
+        sessionEnded = true;
+        void liveVoice?.end();
         cancelPendingMicrophoneStart();
         clearTimeout(draftTimer);
         clearInterval(microphoneTimer);
