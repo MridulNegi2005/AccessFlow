@@ -2288,6 +2288,9 @@ def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeyp
     error = next(item for item in failed_outputs if item["kind"] == "error")
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert audio_status["payload"] == {"media_received": "audio", "source_id": "failed-audio"}
+    assert audio_status["accepted_event_id"] == error["payload"]["caused_by_event_id"]
+    assert audio_status["accepted_revision"] == 0
+    assert audio_status["session_id"] == error["session_id"]
     assert frame_status["payload"] == {
         "media_received": "frame",
         "source_id": "after-audio-failure",
@@ -2296,6 +2299,47 @@ def test_websocket_audio_backend_failure_keeps_multimodal_session_usable(monkeyp
     assert "What is on this screen?" in final["payload"]["text"]
     assert "screen shows the approval prompt" in final["payload"]["text"]
     assert final["payload"]["basis"] == "informational"
+
+
+def test_websocket_empty_asr_has_accepted_identity_and_recovers(monkeypatch):
+    from accessflow.perception import LocalPerception
+
+    def configured_perception(cls):
+        return DemoPerception(audio_backend=LocalPerception(transcriber=lambda _path: ""))
+
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(configured_perception),
+    )
+    fixture = Path(__file__).parents[1] / "fixtures" / "audio" / "synthetic_tone.wav"
+    encoded_audio = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            initial_status = socket.receive_json()
+            socket.send_json(
+                {
+                    "kind": "audio",
+                    "payload": {"data_base64": encoded_audio, "utterance_id": "empty-asr-audio"},
+                }
+            )
+            accepted = socket.receive_json()
+            failed_outputs = _receive_controller_outputs(socket)
+            socket.send_json(
+                {"kind": "transcript", "payload": {"text": "Recovered after empty ASR"}}
+            )
+            continued_outputs = _receive_controller_outputs(socket)
+
+    error = next(item for item in failed_outputs if item["kind"] == "error")
+    assert initial_status["session_id"] == accepted["session_id"] == error["session_id"]
+    assert accepted["payload"] == {"media_received": "audio", "source_id": "empty-asr-audio"}
+    assert accepted["accepted_event_id"] == error["payload"]["caused_by_event_id"]
+    assert accepted["accepted_revision"] == 0
+    assert error["payload"]["code"] == "backend_failure"
+    assert not any(item["kind"] in {"demo_observation", "final"} for item in failed_outputs)
+    final = next(item for item in continued_outputs if item["kind"] == "final")
+    assert "Recovered after empty ASR" in final["payload"]["text"]
 
 
 def test_websocket_audio_revision_recovers_after_failure_with_image(monkeypatch):
@@ -2470,6 +2514,9 @@ def test_websocket_configured_vision_failure_is_recoverable(monkeypatch):
     final = next(item for item in continued_outputs if item["kind"] == "final")
     assert "local/failing-vision image" in status["payload"]["perception_backend"]
     assert media_status["payload"] == {"media_received": "frame", "source_id": "frame-failure"}
+    assert media_status["accepted_event_id"] == error["payload"]["caused_by_event_id"]
+    assert media_status["accepted_revision"] == 0
+    assert media_status["session_id"] == error["session_id"]
     _assert_backend_failure(error)
     assert "Still connected" in final["payload"]["text"]
 

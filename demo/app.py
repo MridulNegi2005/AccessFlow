@@ -629,6 +629,7 @@ async def websocket(websocket: WebSocket) -> None:
     await outgoing.put(
         {
             "kind": "demo_status",
+            "session_id": session_id,
             "payload": {
                 "perception_backend": perception.backend_label,
                 "reasoner_backend": getattr(reasoner, "backend_name", "demo/unknown-reasoner"),
@@ -643,7 +644,7 @@ async def websocket(websocket: WebSocket) -> None:
             raise RuntimeError("demo output queue is full") from error
 
     perception.observation_callback = lambda payload: enqueue_output(
-        {"kind": "demo_observation", "payload": payload}
+        {"kind": "demo_observation", "session_id": session_id, "payload": payload}
     )
 
     agent = Agent(
@@ -699,17 +700,22 @@ async def websocket(websocket: WebSocket) -> None:
                     source_id = event.payload.frame_id
                 else:
                     source_id = None
-                if source_id is not None:
-                    enqueue_output(
-                        {
-                            "kind": "demo_status",
-                            "payload": {"media_received": event.kind, "source_id": source_id},
-                        }
-                    )
                 try:
                     incoming.put_nowait(event)
                 except asyncio.QueueFull as error:
                     raise RuntimeError("agent input queue is full") from error
+                if source_id is not None:
+                    # This receipt enters the output queue before the agent can run
+                    # perception, so an early failure can still name its accepted input.
+                    enqueue_output(
+                        {
+                            "kind": "demo_status",
+                            "session_id": session_id,
+                            "accepted_event_id": event.event_id,
+                            "accepted_revision": getattr(event.payload, "revision", 0),
+                            "payload": {"media_received": event.kind, "source_id": source_id},
+                        }
+                    )
 
         receiver = asyncio.create_task(receive_inputs())
         try:
