@@ -1429,3 +1429,11 @@ and expected kit files were unavailable; no official raw-media or live-vision
 run. Streaming/interruption and C24-1/2/3 integration remain open, with shared
 controller/runtime work owned by Mridul. No Mridul-owned source/contracts/
 configuration changed; no commit or push.
+
+## [2026-09-25 12:13] - AI-assisted integration review
+**Task:** Merge Mridul first, then Atishay; verify the combined code for completion readiness.
+**Changes:** Both histories merged into main; preserved shared handoff conflict. Added dated merged review, separate B completion handoff/prompt, read-only probes and evidence; updated A status/handoff. No implementation repair or B source edits.
+**Status:** Integration/review completed; overall code completion remains in progress.
+**Notes:** 1368 pass/4 skip/1 xfail; installed ASR 2 pass separately; Ruff/4 Node checks/offline 4/4 pass. New error-filter regression and stop integration gaps reproduced. Existing frame xfail is a timeout/semantic mismatch, not evidence of an unsafe effect. Runtime adoption, live voice, real vision completion, platform and full official evaluation remain. Publication requested by user; no final release/tag.
+
+---

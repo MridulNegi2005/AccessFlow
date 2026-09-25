@@ -1483,3 +1483,14 @@ speech was recorded. Existing Python 3.12.10 venv was used because the pinned
 Python 3.11 uv link is unavailable. No live vision or official kit evaluation;
 C24-1/2/3 integration remains jointly open with Mridul. No teammate-owned
 source or shared contract/configuration changed.
+
+## 25 September 2026 - AI-assisted merge and completion review
+
+User request: merge Mridul then Atishay into main, verify changes and prioritize
+submission-complete code before accuracy tuning. Assistance: Git integration,
+source review, Python/Node verification, read-only reproductions and the dated
+completion reports. No production implementation change or human microphone
+recording. The two initial stop-probe attempts omitted required fixture fields
+(Start.payload, then Transcript.revision); corrected the probe, not application
+code, before recording final results. Human acceptance of proposed shared semantics
+is still pending; no release/submission is implied.

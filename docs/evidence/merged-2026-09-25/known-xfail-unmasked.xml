@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="3.957" timestamp="2026-09-25T12:08:11.121687+05:30" hostname="JARVIS"><testcase classname="tests.demo.test_app" name="test_conflicting_frames_require_resolution_before_write" time="1.099"><failure message="TimeoutError">fut = &lt;Task cancelled name='Task-20' coro=&lt;Event.wait() done, defined at C:\Users\negim\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\locks.py:200&gt;&gt;
+timeout = 1
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout &lt;= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+&gt;                   return fut.result()
+                           ^^^^^^^^^^^^
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\tasks.py:500: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;asyncio.locks.Event object at 0x000001C99158BAD0 [unset]&gt;
+
+    async def wait(self):
+        """Block until the internal flag is true.
+    
+        If the internal flag is true on entry, return True
+        immediately.  Otherwise, block until another coroutine calls
+        set() to set the flag to true, then return True.
+        """
+        if self._value:
+            return True
+    
+        fut = self._get_loop().create_future()
+        self._waiters.append(fut)
+        try:
+&gt;           await fut
+E           asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\locks.py:213: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('D:/Temp/pytest-of-JARVIS/pytest-645/test_conflicting_frames_requir0')
+
+    @pytest.mark.asyncio
+    @pytest.mark.xfail(
+        strict=True,
+        reason="The current controller does not represent conflicting frame evidence before a write.",
+    )
+    async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path):
+        first_png = _png_bytes(width=2, height=3)
+        second_png = _png_bytes(width=3, height=2)
+    
+        class ConflictingVision:
+            backend_name = "local/injected-vision"
+    
+            def __call__(self, path: Path) -&gt; str:
+                return "Tuesday" if path.read_bytes() == first_png else "Wednesday"
+    
+        class ConflictReasoner:
+            def __init__(self):
+                self.conflict_seen = asyncio.Event()
+                self.frame_one_seen = asyncio.Event()
+    
+            async def plan(self, view, manifests):
+                frames = {
+                    item.source_id: item.text
+                    for item in view.observations
+                    if item.modality == "image"
+                }
+                frame_ids = set(frames)
+                if "frame-1" in frame_ids:
+                    self.frame_one_seen.set()
+                if {"frame-1", "frame-2"} &lt;= frame_ids:
+                    assert frames["frame-1"] == "Tuesday"
+                    assert frames["frame-2"] == "Wednesday"
+                    self.conflict_seen.set()
+                    return PlanProposal(
+                        intent="service",
+                        slot_updates={"day": "Wednesday"},
+                        request_complete=True,
+                        write_requested=True,
+                        calls=[
+                            ProposedCall(
+                                tool="calendar",
+                                arguments={"day": "Wednesday"},
+                                dependencies=["day"],
+                            )
+                        ],
+                    )
+                return PlanProposal()
+    
+        manifest = ToolManifest(
+            name="calendar",
+            description="Test calendar service",
+            effect="write",
+            timeout_s=1,
+            parameters={
+                "type": "object",
+                "properties": {"day": {"type": "string"}},
+                "required": ["day"],
+                "additionalProperties": False,
+            },
+        )
+        session_id = "conflicting-frame-session"
+        transcript = event_from_message(
+            session_id,
+            {
+                "kind": "transcript",
+                "payload": {
+                    "utterance_id": "utterance-1",
+                    "text": "Book the appointment using the date shown on screen",
+                    "final": True,
+                },
+            },
+        )
+        frame_one = event_from_message(
+            session_id,
+            {
+                "kind": "frame",
+                "payload": {
+                    "data_base64": base64.b64encode(first_png).decode("ascii"),
+                    "frame_id": "frame-1",
+                },
+            },
+            media_root=tmp_path,
+        )
+        frame_two = event_from_message(
+            session_id,
+            {
+                "kind": "frame",
+                "payload": {
+                    "data_base64": base64.b64encode(second_png).decode("ascii"),
+                    "frame_id": "frame-2",
+                },
+            },
+            media_root=tmp_path,
+        )
+        incoming = asyncio.Queue()
+        outgoing = asyncio.Queue()
+        reasoner = ConflictReasoner()
+        executor = FakeTools()
+        agent = Agent(
+            DemoPerception(vision_backend=ConflictingVision()),
+            FinalFlagPolicy(),
+            reasoner,
+            executor,
+            MockOnlyAuthorization(),
+            scenario_timeout=2,
+            inference_timeout=1,
+        )
+        task = asyncio.create_task(agent.run(incoming, outgoing))
+        try:
+            await incoming.put(StartEvent(session_id=session_id, payload=Start(tools=[manifest])))
+            await incoming.put(transcript)
+            await incoming.put(frame_one)
+            await asyncio.wait_for(reasoner.frame_one_seen.wait(), timeout=1)
+            await incoming.put(frame_two)
+&gt;           await asyncio.wait_for(reasoner.conflict_seen.wait(), timeout=1)
+
+tests\demo\test_app.py:3894: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+fut = &lt;Task cancelled name='Task-20' coro=&lt;Event.wait() done, defined at C:\Users\negim\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\locks.py:200&gt;&gt;
+timeout = 1
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout &lt;= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+                    return fut.result()
+                except exceptions.CancelledError as exc:
+&gt;                   raise exceptions.TimeoutError() from exc
+E                   TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\tasks.py:502: TimeoutError</failure></testcase></testsuite></testsuites>

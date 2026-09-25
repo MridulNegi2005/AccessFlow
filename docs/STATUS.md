@@ -1,5 +1,32 @@
 # Implementation status
 
+## Merged completion review - 25 September 2026
+
+User-requested ordered integration is complete: Mridul 81699c9 merged
+first (00e1975), then Atishay 469e590 (dcd9756). Only the shared handoff document
+conflicted; both histories were kept. This current checkpoint supersedes old
+branch-state instructions below. Implementation source is unchanged by the review.
+
+Merged Python 3.11.15 suite: 1368 passed, 4 skipped, 1 xfailed in 82.13 seconds.
+The two opt-in installed-ASR tests passed separately in 9.99 seconds; two native
+symlink skips remain. Ruff, four Node browser checks and offline development 4/4
+passed. Unmasking the old conflicting-frame test still times out; that does not
+prove an unsafe write occurred. No fresh Docker/live-vision/official score claim.
+
+Read docs/reviews/MERGED_READINESS_2026-09-25.md and the separate
+ATISHAY_COMPLETION_2026-09-25.md handoff/prompt. Reproductions confirm hidden
+pre-observation browser errors and incomplete recognized-speech/output stop
+behavior. B owns correlation, playback, live capture and demo runtime adoption;
+A owns shared semantics, packaging and official/runtime verification. Both must
+coordinate stop scopes, timing/finality, callback seams and frame semantics.
+
+Priority remains submission-complete CODE before accuracy tuning. A next:
+rebuild/validate the merged package on its declared platform, resolve agreed
+controller/interface gaps, run the official protocol/media tests at normal timing.
+B's default mock/optional separate Ollama browser path is not the shared submission
+runtime. Do not label ASR diagnostics or a mock echo as a completed live voice task.
+No release tag, workflow, form, PPT/video or B implementation edits were made.
+
 ## Package hosting checkpoint - 24 September 2026
 
 Generated packages now include a real-evaluator Docker recipe and a checked portable

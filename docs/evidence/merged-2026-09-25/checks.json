@@ -1,0 +1,131 @@
+{
+  "browser-probe": {
+    "command": [
+      "node",
+      "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\docs\\evidence\\merged-2026-09-25\\probe_browser.cjs"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"mode\": \"real_show_function_with_synthetic_events_not_live_browser\",\n  \"pre_observation_failure\": {\n    \"run_still_pending\": true,\n    \"error_displayed\": false,\n    \"known_event_ids\": 0\n  },\n  \"controller_output_stop\": {\n    \"playback_cancellations\": 0\n  }\n}\n",
+    "stderr": ""
+  },
+  "stop-probe": {
+    "command": [
+      "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\docs\\evidence\\merged-2026-09-25\\probe_stop.py"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"mode\": \"real_controller_policy_fake_perception_scripted_reasoning\",\n  \"cases\": [\n    {\n      \"text\": \"Stop\",\n      \"planner_calls\": 1,\n      \"state\": \"listening\",\n      \"outputs\": [\n        {\n          \"kind\": \"acknowledge\",\n          \"stop_output\": false\n        },\n        {\n          \"kind\": \"final\",\n          \"stop_output\": false\n        }\n      ]\n    },\n    {\n      \"text\": \"Cancel\",\n      \"planner_calls\": 1,\n      \"state\": \"listening\",\n      \"outputs\": [\n        {\n          \"kind\": \"acknowledge\",\n          \"stop_output\": false\n        },\n        {\n          \"kind\": \"final\",\n          \"stop_output\": false\n        }\n      ]\n    },\n    {\n      \"text\": \"Stop speaking\",\n      \"planner_calls\": 1,\n      \"state\": \"listening\",\n      \"outputs\": []\n    },\n    {\n      \"text\": \"Cancel this task\",\n      \"planner_calls\": 0,\n      \"state\": \"stopped\",\n      \"outputs\": [\n        {\n          \"kind\": \"acknowledge\",\n          \"stop_output\": true\n        }\n      ]\n    }\n  ]\n}\n",
+    "stderr": ""
+  },
+  "error-transport-probe": {
+    "command": [
+      "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\docs\\evidence\\merged-2026-09-25\\probe_error_transport.py"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"mode\": \"actual_websocket_route_injected_asr_failure\",\n  \"events\": [\n    {\n      \"kind\": \"demo_status\",\n      \"payload\": {\n        \"perception_backend\": \"local/injected-asr audio + demo/mock text/image\",\n        \"reasoner_backend\": \"demo/mock-reasoner\"\n      }\n    },\n    {\n      \"kind\": \"demo_status\",\n      \"payload\": {\n        \"media_received\": \"audio\",\n        \"source_id\": \"submitted-audio\"\n      }\n    },\n    {\n      \"contract_version\": \"0.1\",\n      \"session_id\": \"cf295a19-23d2-4dd5-9b8c-2d84de1cfb59\",\n      \"event_id\": \"2e49efd6-74ef-4d8b-835f-26322d4bf46d\",\n      \"timestamp\": 1342.977887,\n      \"sequence\": 1,\n      \"kind\": \"error\",\n      \"payload\": {\n        \"code\": \"backend_failure\",\n        \"detail\": \"RuntimeError\",\n        \"caused_by_event_id\": \"30cbd01c-cb34-4b3a-b65c-69428f14f99f\"\n      },\n      \"state\": {\n        \"intent\": null,\n        \"revision\": 0,\n        \"slots\": {},\n        \"pending_call_ids\": [],\n        \"status\": \"listening\",\n        \"correction_pending\": true\n      }\n    }\n  ]\n}\n",
+    "stderr": "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\n"
+  },
+  "ruff": {
+    "command": [
+      "C:\\Users\\negim\\Desktop\\Hackathon\\Samsung GenAI\\AccessFlow\\.venv\\Scripts\\ruff.exe",
+      "check",
+      "."
+    ],
+    "exit_code": 0,
+    "stdout": "All checks passed!\n",
+    "stderr": ""
+  },
+  "answer_correlation": {
+    "command": [
+      "node",
+      "tests/demo/answer_correlation_check.cjs"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "speech_lifecycle": {
+    "command": [
+      "node",
+      "tests/demo/speech_lifecycle_check.cjs"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "microphone_pending": {
+    "command": [
+      "node",
+      "tests/demo/microphone_pending_check.cjs"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "microphone_disconnect": {
+    "command": [
+      "node",
+      "tests/demo/microphone_disconnect_check.cjs"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "tested_commit": "dcd9756823895fedafc3900e9478864de6e1283d",
+  "python": "Python 3.11.15",
+  "runtime_sha256": {
+    "src/accessflow/__init__.py": "17f76553fb111793e891626f38c4e174ff95f2b0885f06c7eb9e39bfed997e48",
+    "src/accessflow/adapters/__init__.py": "99fe1717d8098cc3d80e75bd833dbcf105415a2b9fa15bb4d675459d0adac311",
+    "src/accessflow/adapters/configured_agent.py": "0b392dbd98e47a08a038ddbcda5daf23c8f266b82fd9a31659767de2bb66174c",
+    "src/accessflow/adapters/internal.py": "b85534e265683f5e562171f6e1f64830db9550e1d22d36e3d151525cfa8adf3c",
+    "src/accessflow/adapters/models.py": "dced944d4cbfe9818390c2bfb0c4e85cb0a25968b4e38435d09c791ae9dd148b",
+    "src/accessflow/adapters/mp3_decode.py": "a3618f2534cf885166587e982f10b045c635a921352e7f95bd31d74db0ab8953",
+    "src/accessflow/adapters/mp3_decode_worker.py": "80a6c03d485c1c7ec90a3ff2dc77ef571033e4b303c8494148b87b49052f6982",
+    "src/accessflow/adapters/perception_worker.py": "055389edddd1458e04fb96fc60a1fe6d403c3e9c09f5bdd7ac9e6e63a8a390ed",
+    "src/accessflow/adapters/process_perception.py": "db968ef23d8de936106ee4ca4b879d6b02fb838f3b4894e505ed1ba3eee6d7fc",
+    "src/accessflow/adapters/prompt_profile.py": "ad087b72e14d80951ad80bfeb13225e4b6f86a14b4515ed5fe36c7ada80439de",
+    "src/accessflow/adapters/samsung.py": "ee20f65ddde754c979112d0dcc9d1b22b354618721262a9e8d9589531c66bd4c",
+    "src/accessflow/adapters/samsung_audio.py": "863a2e2ebb0609ef073fe90d075e1501702f33b23d6317e83b60754348f61480",
+    "src/accessflow/adapters/samsung_protocol.py": "f8c2ab658b564ddfe1370d508445ffb9b01a5f4f3a334fe496a877e93c407b2b",
+    "src/accessflow/adapters/tool_metadata.py": "b7a4f0f1596be80d3e1f99870883734a699fdf5867280297b292120f38a5f0a4",
+    "src/accessflow/adapters/vision.py": "086dc69713ed2502f68b0e38d6fe98bc91045b8ec44984d81a225385275ed561",
+    "src/accessflow/cli.py": "a9f52063afe2959333b1c2a73718d575d07efcb51275be4e8272c55b33ad54f9",
+    "src/accessflow/clock.py": "a12322afc458fe3c0270bf68b8279b0d1f16ad8a92515778354fb9d3464e71d3",
+    "src/accessflow/confirmation_text.py": "b9d8509dc3339174379e440b0d63fb0e132ac4179e9b1e20b35d9f54717a282a",
+    "src/accessflow/contracts.py": "d53f3548a769b6427d871252ec587e727ddcadb0e49ae1512090838eecbfbca5",
+    "src/accessflow/corpus.py": "db44eac99b05108f7391fabe35a1559897459457ac1d4b828ce2cb18244c0aef",
+    "src/accessflow/engine.py": "62dc020ec11603d669e29e042a9b7e78d2f4e6af029e04f04f79f6c5ff5f8ac4",
+    "src/accessflow/evaluation/__init__.py": "8a6674dad26672e36ba933b6947c73b8ebb90f7e2d76630698fcdd9e926ba3ed",
+    "src/accessflow/evaluation/mock_environment.py": "1ef13800a6a48fbc73e3a665793203b6918afe4cd904afed6556cc8f1ae9c361",
+    "src/accessflow/evaluation/oracle.py": "ad59f9fc2a22176d0758c01b6c011821b000f9782d1c2bd23e63e11045fe4189",
+    "src/accessflow/evaluation/replay.py": "e739297e3e828a189ef0c502c67f46291b399f8dbac324bab3a1333baf66fe05",
+    "src/accessflow/evaluation/responsiveness.py": "5045e30d79ac9764f653a16224836265ba8d59c07ec4c01481e907e41760109b",
+    "src/accessflow/evaluation/scenarios.py": "9c832481015355490d70082b7d8504dadc53ce55b3ee86352e88525b2416141f",
+    "src/accessflow/evaluation/suite.py": "a038928925debe1255efb6e785183426a14117556b05a7a5b9aaa85ef901741d",
+    "src/accessflow/evaluation/trace_metrics.py": "7cc663867d3888efa7d80a59fc6de386ed7d93fc42e1347816bed1ba2ad1082f",
+    "src/accessflow/fakes.py": "14af6a8ec9ba277b02acb7c79c7fdefdc7523bd91e0783d9052df89fc31e49cf",
+    "src/accessflow/interfaces.py": "5de05afadc89ddf7b04528ea1b5c835fb9534c3a0d3a39836ed66a52bee51df9",
+    "src/accessflow/perception/__init__.py": "c5a50c5b7576d0643ea8dd71695c5f4174ae08e3281044ca01e83a5453d617c9",
+    "src/accessflow/perception/asr_evidence.py": "5adcc8da3d67d1f3b2ce7796c859e9260f61fa3e9d6d184d4cf40556d8d14b52",
+    "src/accessflow/perception/audio.py": "5c73473a9e1a666766a1f4d0762ff78b07877bb005de3b58652b1d8f6c5bc224",
+    "src/accessflow/perception/local.py": "bb0a3794c4cafb029e54f970df0ccd0897b858bab7f5f529aa8c12d9f4b0ba49",
+    "src/accessflow/perception/metrics.py": "b11c87edecd647d8eaed7f659b9304eef3dad8a8147790c785459a7308a5ff3e",
+    "src/accessflow/perception/timing.py": "ff5668fe82fe6b42b8e3203801478b29e23c7948497e3dab28b77dade6df6a73",
+    "src/accessflow/perception/vad.py": "95430a64aa3df85f7e0269aff6b970cc0d351e30ed1fea161266e2314db2f3c7",
+    "src/accessflow/perception/vision.py": "35e98bb7b0f1c1f800538a23cc9619547dcf23cbe350cf8768b4858f13a77953",
+    "src/accessflow/perception/vision_benchmark.py": "010de227c3c440b234a2f72abec269e739836948f02c74fbd3ac0ddbfa2be35a",
+    "src/accessflow/read_answer.py": "a9c5859bfe4be37d1b9ae35fdf0e452a96f0ab3a1c375212f13fc5d602a2f8ce",
+    "src/accessflow/result_binding.py": "c3d0cd952f40c16a5ada719af5d58b55ef8a896d2333e5dda49a875f4e4a1160",
+    "src/accessflow/turn_policy/__init__.py": "a1127981c92a26cd30d63e4f7bf6f271a22cc9805a22f5fc91ebd8fd37f764af",
+    "src/accessflow/turn_policy/heuristic.py": "ae167fbef62a9f867c9a17e71f8df63a8d8d52ad3a52182ef49e0ca8d7f96cf8",
+    "src/accessflow/turn_policy/timing_replay.py": "7a6d7637147922290b223ab49452e909100acda28c74d966f449ef8b786f8ba0",
+    "src/accessflow/validation_diagnostics.py": "a29dded5c762e4d427c46e04cf09685f033114ba325d356b5baef3433679e6a1",
+    "src/accessflow/write_binding.py": "2bf2e893b4345520599d82c6732489844297d1b356fa2910b9a43acc13c0fe60",
+    "demo/__init__.py": "1cfca02e9ef7e5c15fbbed9b580fc86e3cf68411b408ccdbf89ca38bb5ceb382",
+    "demo/app.py": "35aad11190a0a3d14d5d13fe195d928c146e16ba57f3de6971ec363cab1ea862",
+    "demo/index.html": "f27fadec59ee5ab0798c78a44a139a4fdd9dd1970682456a950c1b2573c49d77",
+    "demo/reasoner.py": "0fe62102501c0d17476e0bb94302924a6d9d8c045de3968059b29b1f90b64c97",
+    "demo/recorder-worklet.js": "8fb0d24252167fc70cd7a64c23cddd0e5160ded16e5951d0bb97e0ba122b07ff"
+  }
+}
