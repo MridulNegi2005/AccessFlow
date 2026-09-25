@@ -18,6 +18,7 @@ for (const selector of [
   "#answer-context",
   "#voice-state",
   "#voice-help",
+  "#voice-toggle",
 ]) {
   nodes.set(selector, {
     textContent: selector === "#request-summary" ? "Current request" : "",
@@ -58,8 +59,12 @@ vm.runInContext(
    let responseBackend = "demo/mock";
    let agentMode = "mock";
    let previewMode = false;
+   let sessionEnded = false;
+   let liveVoice = null;
+   let livePreviewAvailable = false;
    let playbackCancellations = 0;
    function cancelSpeech() { playbackCancellations += 1; }
+   function setVoiceCaption() {}
    function announce(event) { return event.kind; }
     function renderResponse(event) { rendered.push(event); }
     function finishRun() { runInProgress = false; }

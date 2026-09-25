@@ -1055,3 +1055,22 @@ correction (`test_websocket_configured_correction_commits_only_wednesday_mock_ef
 A separate controller/turn-policy test confirms spoken "Cancel this task"
 invalidates a gated pending mock write while the session stays open. These
 close deterministic V01/S04 only; neither tests a real planner or microphone.
+
+## 2026-09-25 — PARTIAL live-voice checkpoint
+
+Added an opt-in browser AudioWorklet live session in Atishay-owned demo code.
+Configured process ASR can return provisional transcript previews while capture
+continues; the browser uses a bounded quiet period to send a final WAV without
+a Finish button. End session discards unfinished capture and stops local media
+resources. The server routes previews to perception only, never to the Agent
+as final observations. Deterministic JavaScript and fake-ASR WebSocket tests
+cover revision order, resumed speech, final delivery, and cleanup.
+
+The first full run had one stale HTML assertion for the old manual-send path;
+that assertion was updated to check the new final-audio send path. The rerun
+passed: 1376 Python tests, 5 skipped, 3 xfailed, 2 dependency warnings; Ruff,
+five Node checks, and inline-page JavaScript syntax passed. No physical-mic
+timing, real semantic endpointing, committed-effect closure, live model-quality
+or image-history result is claimed. D2/D3 controller guarantees and D4 shared
+registry/source semantics still require agreement with Mridul. This is a
+checkpoint, not completion of the 26-case acceptance gate.
