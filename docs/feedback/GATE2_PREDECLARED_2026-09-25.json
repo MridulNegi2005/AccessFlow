@@ -1,0 +1,83 @@
+{
+  "purpose": "Fixed development inputs for the twelve real-inference attempts in Gate 2; this file is not a result ledger.",
+  "status": "NOT_RUN",
+  "split": "development",
+  "sessions": "fresh session and the same configured agent/backend for each of three attempts per case",
+  "mode": "ACCESSFLOW_DEMO_AGENT_MODE=configured; installed ASR, selected reasoning, and declared vision for image cases; in-memory mock_calendar_create only",
+  "cases": [
+    {
+      "id": "G2-01",
+      "path": "spoken correction to mock calendar effect",
+      "inputs": [
+        {
+          "type": "wav",
+          "path": "tests/perception/fixtures/gate2/correction.wav",
+          "sha256": "4E6BEC39E0401B62285B981ED04ECEBC396B4B8E82FE27DB88418E3F6BCDD593"
+        }
+      ],
+      "reference": "Generated speech repeats Tuesday 2026-09-29 15:00, pauses 1.4 seconds, then corrects to Wednesday 2026-09-30 17:00 India Standard Time for a repair appointment in the mock calendar. The correction, not the repetition, controls the request.",
+      "success": "One mock_calendar_create effect for 2026-09-30 17:00 Asia/Kolkata; no Tuesday, duplicate, or obsolete effect. A clarification or failed inference is retained as a non-completion.",
+      "attempts": ["G2-01-A", "G2-01-B", "G2-01-C"]
+    },
+    {
+      "id": "G2-02",
+      "path": "informational audio",
+      "inputs": [
+        {
+          "type": "wav",
+          "path": "tests/perception/fixtures/gate2/information.wav",
+          "sha256": "17FE742F69EB062F51F62F5A6055D5C29870B09F1496E92383EFD2030CE72856"
+        }
+      ],
+      "reference": "Generated speech asks what seventeen times nineteen is and forbids a calendar event.",
+      "success": "Substantive answer 323, independently checkable by multiplication; zero mock writes.",
+      "attempts": ["G2-02-A", "G2-02-B", "G2-02-C"]
+    },
+    {
+      "id": "G2-03",
+      "path": "single-image grounded answer",
+      "inputs": [
+        {
+          "type": "png",
+          "path": "tests/fixtures/images/device_panel.png",
+          "sha256": "6194D4B76978D111CB7CC4BFB3876563C2469CE0FEFC0E9B495A9BBF19D103D8"
+        },
+        {
+          "type": "text",
+          "value": "Read the exact error code shown on this panel. Do not create a calendar event."
+        }
+      ],
+      "reference": "The actual PNG pixels show a panel marked PANEL-B and error ERR-42. Do not use the filename or this reference as model input.",
+      "success": "Answer identifies ERR-42 from the PNG and links the evidence to the received image; zero mock writes.",
+      "attempts": ["G2-03-A", "G2-03-B", "G2-03-C"]
+    },
+    {
+      "id": "G2-04",
+      "path": "two-image field selection",
+      "inputs": [
+        {
+          "type": "png",
+          "case_id": "image-01",
+          "path": "docs/feedback/SCENARIO_MATRIX.json",
+          "field": "asset.payload_base64",
+          "sha256": "234427960545A5F087E0179E3A04893E940FFA2ADB838639B530BC42E72F27E7"
+        },
+        {
+          "type": "png",
+          "case_id": "image-04",
+          "path": "docs/feedback/SCENARIO_MATRIX.json",
+          "field": "asset.payload_base64",
+          "sha256": "A2739DD06B21AF58F90E47506C877A7912DE60BEE52A49F2CE832530CB3D9ECF"
+        },
+        {
+          "type": "text",
+          "value": "From Image 1, report the appointment day and time. From Image 2, report the device label. Name the source image for each field. Do not create a booking."
+        }
+      ],
+      "reference": "Admit image-01 first as Image 1 (WED 5), then image-04 as Image 2 (DEVICE B); their labels are independently visible in the two PNGs. Do not pass these labels to inference.",
+      "success": "Answer states Wednesday at five from Image 1 and DEVICE B from Image 2 with source identity preserved; zero mock writes.",
+      "dependency": "Shared D4 controller registry/source selection is not yet implemented; this case stays NOT_RUN until the same agent can address both admitted images.",
+      "attempts": ["G2-04-A", "G2-04-B", "G2-04-C"]
+    }
+  ]
+}

@@ -1611,3 +1611,14 @@ suite passed 1387/6 skipped/3 xfailed with two warnings; seven Node checks
 and Ruff passed before a follow-up quiet-reset guard; its focused regression
 passed and the standard suite was rerun afterward. The user explicitly directed that memory-limited model tests
 not be retried; no shared controller, model backend or device result is claimed.
+
+## 25 September 2026 - AI-assisted Gate 2 fixture predeclaration
+
+Assistance generated two development-only synthetic WAVs in the owned perception
+test area and recorded their exact hashes alongside existing PNG inputs in a
+fixed four-case/twelve-attempt manifest. It visually checked the image labels,
+added a no-model asset-integrity regression, and updated the partial delivery
+report and handoff. The standard Python 3.11 suite passed 1388/6 skipped/3
+xfails with two warnings; seven Node checks and Ruff passed. All real-inference
+attempts remain NOT RUN. The user directed that the low-memory ASR path not be
+retried; no shared source, human recording or official evaluation was changed.

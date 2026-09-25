@@ -1504,3 +1504,9 @@ configuration changed; no commit or push.
 **Changes:** Added a failing continued-speech test past three previews, then configurable validated quiet/preview/turn limits in owned live capture; long or exhausted turns fail explicitly without final WAV. A post-check regression found continuous speech could start a suffix-only turn after a cap; added a fresh-quiet reset guard. Added tests for a patient quiet interval and invalid timing. Updated feedback and handoff.
 **Status:** PARTIAL. Post-guard standard full suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings in 69.82 s; seven Node checks, Ruff and syntax passed. Memory-limited ASR opt-in not run per user direction.
 **Notes:** No Mridul-owned source changed. No physical mic, real reasoner/vision or official kit run. Controller authority/finality and D4 remain shared dependencies.
+
+## [2026-09-25] — Atishay fixed Gate 2 inputs
+**Task:** Lock the four real-inference development cases without loading the memory-limited model.
+**Changes:** Added a generated correction/repetition WAV, a generated arithmetic WAV, exact SHA-256 fixture manifest, twelve attempt IDs and an owned fixture-integrity test. Existing single- and two-image PNGs retain their original bytes and visually verified labels.
+**Status:** PARTIAL. Fixture check and current standard suite passed (1388 passed, 6 skipped, 3 xfailed, 2 warnings); seven Node checks and Ruff passed. All twelve real-inference attempts remain NOT RUN.
+**Notes:** No installed-ASR retry, actual reasoner/vision answer, human microphone or official kit run. Mridul owns the memory resource issue and D4 shared source selection; Atishay owns later result recording once those dependencies are available. No Mridul-owned code changed.

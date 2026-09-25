@@ -1506,3 +1506,18 @@ real vision and official kit/media remain open. Details in Atishay handoff.
   calendar effect after a final correction and none for partial Tuesday; a
   separate spoken task-cancel test prevents a gated pending mock write. These
   are scripted-planner/controller checks, not actual model/device results.
+
+## 2026-09-25 — Atishay PARTIAL Gate 2 input checkpoint
+
+- `docs/feedback/GATE2_PREDECLARED_2026-09-25.json` now locks four development
+  paths, their WAV/PNG hashes and twelve attempt IDs. The two new WAVs are
+  generated speech under Atishay-owned `tests/perception/`, not human audio.
+  An owned test checks the fixed inputs; it does not run ASR/reasoning/vision.
+- All twelve attempts remain NOT RUN. Configured reasoning/vision are not
+  available in this shell; the user assigned the installed-ASR memory issue
+  to Mridul, so no native-model retry was made. D4 multi-image source
+  selection remains Mridul-owned and blocks the combined-image case.
+- Current standard suite: Python 3.11, 1388 passed/6 skipped/3 xfailed/2
+  warnings; seven Node checks and Ruff passed. No shared source or config was
+  edited. Gate 1, Gate 2 and Gate 3 are still incomplete; this push is a
+  partial checkpoint, not a completion claim.

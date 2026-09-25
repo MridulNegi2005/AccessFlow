@@ -3,7 +3,7 @@
 Status: **PARTIAL**. This is a development checkpoint, not voice/perception or
 submission acceptance. Branch: `atishay/perception`; based on merged main
 `5dd2a56ce7f063335fb2fcb0fbfe4f127640e9a6`. The latest owned changes
-are in `demo/`, `tests/demo/`, and `tests/perception/`; no Mridul-owned
+are in `demo/`, `tests/demo/`, `tests/perception/` and `docs/feedback/`; no Mridul-owned
 implementation or configuration was edited.
 
 ## Slices and gates
@@ -15,9 +15,35 @@ implementation or configuration was edited.
 | C — configured agent | PASS for adapter seam; NOT RUN end-to-end real inference | `test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools`, `test_websocket_configured_factory_requires_explicit_backend`, opt-in browser ASR test | Explicit `ACCESSFLOW_DEMO_AGENT_MODE=configured` uses `build_configured_agent`, its reasoner/policy/perception, declared in-memory calendar mock manifest/executor, source-preserving observation projection, backend labels and worker cleanup. Setup fails visibly with no fake fallback. | No configured reasoning backend was available in this environment. Actual common-agent answer and mock calendar outcome require a configured installed provider, Atishay; shared action semantics remain Mridul's. |
 | D — hands-free voice/images | PARTIAL | Deterministic live-voice harness, installed-ASR preview/final and reconnect tests, per-image perception regressions, `image_staging_check.cjs` and `attachment_history_check.cjs` | The browser has opt-in provisional ASR and automatic final capture, with a conservative hold for an explicit unfinished correction. A fourth preview can capture later speech after the former three-preview cap; bounded, configurable quiet/preview/turn limits yield explicit no-final failure when exceeded. Separately receipted PNGs retain source-bound thumbnails and processing/failure status; later text-only answers cannot reuse a staged image. The browser refuses a ninth image explicitly. | Physical-mic timing, general semantic endpoint quality, committed-effect closure, authoritative Image 1/2/3 ordinals, shared multi-image registry/field selection and actual vision remain open. The browser list is not agent reasoning evidence. D2/D3 controller hooks and D4 registry/source guards require Mridul. |
 | Gate 1 — 26 cases | FAIL | Checklist below | Error, selected stop/playback/capture, deterministic corrected and repeated-quantity mock actions pass. | D1/D2/D3/D4 and actual live action cases remain. |
-| Gate 2 — 12 actual-inference attempts | NOT RUN | Fresh bounded environment check: no `ACCESSFLOW_SAMSUNG_BACKEND`/vision model configuration in this shell, and loopback 11434 did not confirm a listening service; no run ledger created. | Installed ASR can decode a generated fixture through the browser adapter. | Predeclare four development cases and run 3 attempts each with actual ASR/reasoning/vision where applicable, Atishay. A valid configured provider and applicable vision service are needed; never count fake reasoner or fixture response. |
+| Gate 2 — 12 actual-inference attempts | NOT RUN | `GATE2_PREDECLARED_2026-09-25.json` fixes four cases and 12 attempt IDs; `test_gate2_predeclaration.py` verifies the WAV/PNG bytes and SHA-256 hashes without loading a model. No `ACCESSFLOW_SAMSUNG_BACKEND`/vision model configuration was available in the last bounded check; loopback 11434 did not confirm a listener. | Generated correction/repetition and arithmetic WAVs plus three actual PNGs are locked as development inputs. The two-image labels were visually inspected in their pixels. | No actual reasoning/vision attempt or result is claimed. Atishay needs a configured provider and vision service; Mridul must land D4 source-bound multi-image selection before G2-04. The installed-ASR memory failure remains assigned to Mridul per user direction. |
 | Gate 3 — four human microphone cases | NOT RUN | No new human audio captured | None claimed. | Run M01–M04 only after hands-free implementation and the user's capture agreement, Atishay. |
-| Gate 4 — regression | PASS on final standard-suite rerun; opt-in ASR currently FAILS under low memory; acceptance still partial | Python 3.11.15: `python -m pytest -q` **1387 passed, 6 skipped, 3 xfailed, 2 dependency warnings** (69.82 s final run); `ruff check .`, seven Node checks, attachment/live-voice script and inline browser-script syntax passed. The separately enabled installed-ASR tests failed on the earlier low-memory rerun and were not retried, per user direction. | Owned perception preserves separate image IDs/failures and rejects queue overflow; configured browser/controller checks cover repeated-quantity mock effects and disconnect during a gated mock write; browser receipt-bound image history and bounded long-turn preview/quiet-reset behavior pass; previous installed Faster Whisper runs decoded generated WAV preview/final and reconnect cases. | An earlier full run failed one Mridul-owned offline CLI scenario with `missing_dependency`/timeout; isolated and later full runs passed, root cause unproven. The opt-in ASR failure was `mkl_malloc: failed to allocate memory`; Mridul will handle that resource issue. Two D1 xfails and the D4 conflicting-frame xfail remain deliverable failures; physical-mic timing and configured reasoning remain unverified. |
+| Gate 4 — regression | PASS on current standard-suite rerun; opt-in ASR currently FAILS under low memory; acceptance still partial | Python 3.11.15: `.venv\Scripts\python.exe -m pytest -q` **1388 passed, 6 skipped, 3 xfailed, 2 dependency warnings** (76.63 s); `.venv\Scripts\ruff.exe check .` and seven Node checks passed. After moving the fixed WAV bytes into `tests/perception/`, the focused fixture test passed again; no model was loaded. The separately enabled installed-ASR tests failed on the earlier low-memory rerun and were not retried, per user direction. | Owned perception preserves separate image IDs/failures and rejects queue overflow; configured browser/controller checks cover repeated-quantity mock effects and disconnect during a gated mock write; browser receipt-bound image history and bounded long-turn preview/quiet-reset behavior pass; previous installed Faster Whisper runs decoded generated WAV preview/final and reconnect cases. | An earlier full run failed one Mridul-owned offline CLI scenario with `missing_dependency`/timeout; isolated and later full runs passed, root cause unproven. The opt-in ASR failure was `mkl_malloc: failed to allocate memory`; Mridul will handle that resource issue. Two D1 xfails and the D4 conflicting-frame xfail remain deliverable failures; physical-mic timing and configured reasoning remain unverified. |
+
+### Gate 2 predeclaration, not inference evidence
+
+The immutable input list is [GATE2_PREDECLARED_2026-09-25.json](GATE2_PREDECLARED_2026-09-25.json).
+`tests/perception/generate_gate2_fixtures.ps1` uses Windows System.Speech and
+Microsoft Zira Desktop to generate the two WAVs. G2-01 includes a spoken
+Tuesday repetition, a 1.4-second break, and the explicit Wednesday correction;
+G2-02 asks 17 × 19 (= 323). These are synthetic recordings, not human speech.
+G2-03 uses actual `device_panel.png` pixels (`ERR-42`). G2-04 uses two actual
+PNG payloads already in `SCENARIO_MATRIX.json`: Image 1 visibly says `WED 5`
+and Image 2 visibly says `DEVICE B`. Those reference labels are grading data,
+not content to inject into the agent. Each attempt must use a fresh session,
+the same declared configuration, and its fixed input bytes.
+
+All of `G2-01-A/B/C`, `G2-02-A/B/C`, `G2-03-A/B/C` and `G2-04-A/B/C` are
+**NOT RUN**. The preflight command
+`.venv\Scripts\python.exe -m pytest tests/perception/test_gate2_predeclaration.py -q`
+checks fixture identity only; it cannot pass Gate 2. When inference is
+available, append an attempt record for *each* ID with the exact commit,
+backend/configuration names, input SHA-256, session/source/event/revision IDs,
+model output, mock effects, elapsed time, outcome and failure reason. Retain
+failures and do not replace these fixtures after seeing results. In particular,
+G2-04 must wait for Mridul's D4 registry; a newest-image-only answer cannot
+count as completing it. The low-memory installed-ASR path is not retried here.
+
+### Regression notes
 
 The two warnings are Starlette TestClient/httpx deprecations. The six skips
 were: `test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner`,
