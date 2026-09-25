@@ -33,6 +33,8 @@
       this.preRoll = [];
       this.preRollSamples = 0;
       this.activeMs = 0;
+      this.awaitingQuietReset = false;
+      this.quietResetMs = 0;
       this.timer = null;
       this.capture = null;
     }
@@ -99,6 +101,16 @@
       const voice = Math.sqrt(sum / samples.length) >= 0.018;
       const now = this.options.now();
       if (!this.turn) {
+        if (this.awaitingQuietReset) {
+          this.quietResetMs = voice ? 0 : this.quietResetMs + durationMs;
+          if (this.quietResetMs < 500) return;
+          this.awaitingQuietReset = false;
+          this.quietResetMs = 0;
+          this.preRoll = [];
+          this.preRollSamples = 0;
+          this.activeMs = 0;
+          return;
+        }
         this.preRoll.push(samples);
         this.preRollSamples += samples.length;
         while (this.preRollSamples > rate * 0.25 && this.preRoll.length > 1)
@@ -120,7 +132,7 @@
         if (this.turn.previewText !== null) this.turn.previewText = null;
       }
       if (this.turn.samples > (8 * 1024 * 1024 - 44) / 2)
-        this.failTurn("This voice turn exceeded the 8 MiB limit. Please try a shorter request.");
+        this.failTurn("This voice turn exceeded the 8 MiB limit. Please try a shorter request.", true);
     }
 
     beginTurn(now) {
@@ -150,7 +162,7 @@
       const quietMs = now - turn.lastVoiceAt;
       const rate = this.capture.context.sampleRate;
       if (now - turn.startedAt >= this.timing.maxTurnMs) {
-        this.failTurn("This voice turn took too long. Please try a shorter request.");
+        this.failTurn("This voice turn took too long. Please try a shorter request.", true);
         return;
       }
       if (!turn.previewInFlight && turn.previewCount < this.timing.maxPreviewsPerTurn &&
@@ -164,7 +176,7 @@
         const wav = this.options.encodeWav(turn.chunks, rate);
         if (!this.options.sendPreview(turn.id, revision, wav)) {
           turn.previewInFlight = false;
-          this.failTurn("The speech preview could not be sent. Please reconnect and try again.");
+          this.failTurn("The speech preview could not be sent. Please reconnect and try again.", true);
           return;
         }
         this.options.onState("previewing");
@@ -203,10 +215,17 @@
       return sent;
     }
 
-    failTurn(message) {
+    failTurn(message, requireQuietReset = false) {
       const turn = this.turn;
       if (!this.active || !turn) return;
       this.turn = null;
+      if (requireQuietReset) {
+        this.awaitingQuietReset = true;
+        this.quietResetMs = 0;
+        this.preRoll = [];
+        this.preRollSamples = 0;
+        this.activeMs = 0;
+      }
       this.options.sendStatus(turn.id, turn.previewRevision + 1, "failed");
       this.options.onError(message);
       this.options.onState("listening");
@@ -220,6 +239,8 @@
       this.turn = null; // Never encode, flush or send unfinished audio.
       this.preRoll = [];
       this.preRollSamples = 0;
+      this.awaitingQuietReset = false;
+      this.quietResetMs = 0;
       if (this.timer !== null) this.options.clearInterval(this.timer);
       this.timer = null;
       const capture = this.capture;
