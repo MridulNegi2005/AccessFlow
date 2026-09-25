@@ -1571,3 +1571,19 @@ dependencies and was rightly rejected; the test setup was fixed. The first
 new Node test compared cross-realm objects by prototype and was corrected to
 assert fields. No shared engine/contract/adapter edit, physical mic, actual
 reasoner/vision attempt, real external effect or official kit score is claimed.
+
+## 25 September 2026 - AI-assisted incomplete-correction guard
+
+Assistance reproduced a premature browser final after a provisional transcript
+ended with "actually" and the quiet timer elapsed. It added a bounded,
+lexical hold in owned live capture and deterministic cases for continued
+correction and abandonment without final audio, wired into the Python suite.
+The first full run exposed a 3/4 offline-fake CLI scenario failure in
+Mridul-owned engine/evaluation code; its trace showed missing dependencies
+and timeout. The test passed alone and the full suite passed without parallel
+checks, but root cause was not established. No shared implementation was
+altered. The separately enabled installed-ASR rerun failed: a browser error
+preview traced to the worker, and direct local perception reported
+`mkl_malloc: failed to allocate memory` on the low-memory host. A temporary
+test-only diagnostic hook was removed. This does not prove physical-mic,
+reliable real-ASR, real-reasoner, live vision or official evaluation behavior.

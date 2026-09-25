@@ -1,5 +1,10 @@
 /* Opt-in browser capture. Previews are never controller-final speech. */
 (function (root) {
+  function awaitsMoreSpeech(text) {
+    const words = text.toLowerCase().trim().replace(/[.,!?]+$/, "").trim();
+    return /\b(?:actually|instead|but|and|or)$/.test(words);
+  }
+
   class AccessFlowLiveVoice {
     constructor(options) {
       this.options = options;
@@ -143,10 +148,13 @@
         }
         this.options.onState("previewing");
       }
-      if (quietMs >= 2200 && turn.previewText) {
+      if (quietMs >= 2200 && turn.previewText &&
+          !awaitsMoreSpeech(turn.previewText)) {
         this.completeTurn();
       } else if (quietMs >= 5500) {
-        this.failTurn("Speech was not recognized. Please try again or type the request.");
+        this.failTurn(turn.previewText && awaitsMoreSpeech(turn.previewText)
+          ? "That request sounded unfinished. Please continue or try again."
+          : "Speech was not recognized. Please try again or type the request.");
       }
     }
 

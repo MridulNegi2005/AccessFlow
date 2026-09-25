@@ -1394,6 +1394,12 @@ own branch. Windows cleanup stopped test11436;existing11435 service stayed runni
 **Notes:** Screenshot only; raw audio, recording length, hardware/browser and timing were not retained. Uvicorn connection logs do not show audio contents. Streaming/barge-in, common runtime, C24-1/2/3 coordination, live vision and official media evaluation remain open. No Mridul-owned code/contracts changed.
 **Follow-on:** Added a pending C24-1/2 discussion draft in `docs/CONTRACT_PROPOSALS.md`; no shared semantics were implemented. Current local vision preflight found no Ollama service/API and no participant kit at its expected path.
 
+## [2026-09-25] — Atishay incomplete-correction endpoint guard
+**Task:** Prevent an explicitly unfinished provisional ASR phrase from becoming a final request solely on quiet time.
+**Changes:** Added a failing controlled pause/correction test, then a conservative trailing-cue hold in owned `demo/live-voice.js`; a later correction completes automatically, and abandonment yields a failed status without final WAV. Added the Node regression to the Python suite.
+**Status:** PARTIAL. Final no-parallel standard suite 1385 passed, 6 skipped, 3 xfailed, 2 warnings; Ruff, six Node checks and syntax passed. The first full run failed one Mridul-owned offline CLI corpus scenario (3/4 cases, `missing_dependency`/timeout); isolated test and full rerun passed, root cause unproven. Separately enabled installed-ASR tests failed under low memory (`mkl_malloc: failed to allocate memory` from direct local perception); previous generated-WAV runs passed but current opt-in run is not green.
+**Notes:** No physical microphone, real reasoner/vision, official kit run or shared-source change. The lexical guard does not solve long pauses before any correction cue or D2/D3 authority/finality integration.
+
 ## [2026-09-25] — Atishay repetition, End-session and PNG staging follow-up
 **Task:** Advance owned V03/L05 acceptance and repair the drop/picker image mismatch found in a read-only UI sidecar.
 **Changes:** Added configured browser/controller scripted-repetition and gated mock-tool disconnect regressions; exercised the actual browser End-session handler against a late final; staged the exact PNG `File` used for both thumbnail and upload, with picker/drop Node coverage. Updated the D4 receipt projection request without editing shared implementation.

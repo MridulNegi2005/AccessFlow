@@ -1,5 +1,20 @@
 # Active Handoff
 
+## Atishay incomplete-correction endpoint guard - 25 September 2026
+
+The owned live-voice browser path no longer finalizes a provisional transcript
+ending with an explicit continuation cue solely because the quiet timer fires.
+A deterministic regression reproduced the old premature final, then passed
+with a later spoken correction and a no-final timeout for abandonment. Full
+Python rerun: 1385 passed, 6 skipped, 3 xfailed, 2 warnings; Ruff and six Node
+checks passed. The first full run had a 3/4 offline-fake CLI scenario failure
+in Mridul-owned engine/evaluation code (`missing_dependency` then timeout);
+the isolated test and no-parallel full rerun passed. See Atishay's delivery
+report; root cause unproven. Separately enabled installed-ASR tests currently
+fail under low memory (`mkl_malloc` allocation failure); earlier generated-WAV
+runs passed, but this rerun is not green. This remains PARTIAL: no physical mic, actual
+reasoner/vision run, general endpointing, or shared D1/D4 completion.
+
 ## Atishay partial voice and PNG staging checkpoint - 25 September 2026
 
 Configured browser/controller V03 repetition produced one quantity-2 mock

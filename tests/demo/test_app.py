@@ -609,6 +609,18 @@ def test_browser_disconnect_discards_microphone_without_upload():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_browser_live_voice_holds_incomplete_correction_until_more_speech():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("live_voice_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 def test_browser_uploads_the_staged_png_from_picker_or_drop():
     node = shutil.which("node")
     if node is None:

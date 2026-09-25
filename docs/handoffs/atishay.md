@@ -1210,3 +1210,31 @@ elsewhere. Gate 1 still fails; Gates 2/3 remain not run. Next independent
 Atishay work is receipt-bound attachment history once the authoritative D4
 projection is agreed, plus physical-mic and real-inference runs when their
 inputs/providers are available; Mridul owns shared D1/D2/D3/D4 behavior.
+
+## 2026-09-25 — PARTIAL incomplete-correction endpoint guard
+
+The owned live-voice capture now treats an ASR preview ending in a clear
+continuation cue (for example, "Book Tuesday, actually") as unfinished. A
+deterministic test first reproduced the old premature final after the normal
+quiet threshold. The repaired path waits for resumed speech and a newer
+preview; a completed correction still submits automatically. If the speaker
+never continues, the turn emits a recoverable failed status after the bounded
+wait and **no final WAV**. The Python suite now runs this Node regression.
+This is a lexical safety guard, not general semantic endpointing or a
+physical-microphone measurement. A long pause before any correction cue can
+still end a fluent-sounding request; shared timing/finality and controller
+authority remain D2/D3 work with Mridul.
+
+The first full Python run on this change failed one unrelated-looking
+Mridul-owned offline CLI corpus scenario: 3/4 fake cases, with the
+device-correction case timing out after `missing_dependency` errors and zero
+effects. The specific test passed alone and the no-parallel full rerun passed:
+**1385 passed, 6 skipped, 3 xfailed, 2 dependency warnings** in 127.63 s.
+The failure trace is summarized in the delivery report; its cause is not
+established and no shared source/test was changed. Ruff, six Node checks and
+live-voice script syntax passed. The separate installed-ASR opt-in rerun is
+currently **failed**, despite earlier successful generated-WAV runs: a browser
+preview became an error preview, and direct local perception exposed
+`mkl_malloc: failed to allocate memory` with roughly 1 GB physical RAM free.
+The diagnostic test hook was removed. Rerun when memory is available; this is
+not human speech or an actual reasoning-model result.
