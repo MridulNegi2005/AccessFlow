@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { AccessFlowAttachmentHistory } = require("../../demo/attachment-history.js");
 
 const html = fs.readFileSync(path.join(__dirname, "../../demo/index.html"), "utf8");
 const modeStart = html.indexOf("function modeLabel() {");
@@ -36,6 +37,10 @@ nodes.set("#answer-error", {
 });
 nodes.set("#processing", { lastElementChild: { textContent: "" } });
 const rendered = [];
+const attachmentHistory = new AccessFlowAttachmentHistory({
+  createObjectURL: (file) => `blob:${file.name}`,
+  revokeObjectURL() {},
+});
 const context = {
   document: {
     querySelector(selector) {
@@ -44,6 +49,7 @@ const context = {
     },
   },
   rendered,
+  attachmentHistory,
 };
 vm.createContext(context);
 vm.runInContext(
@@ -352,6 +358,50 @@ show({
 assert.equal(rendered.length, duplicateBaseline + 1);
 assert.equal(rendered.at(-1).payload.text, "Recovered request");
 
+show({ kind: "demo_status", session_id: "image-session", payload: {
+  perception_backend: "configured/process", agent_mode: "configured",
+} });
+vm.runInContext(
+  `runInProgress = true;
+   requestSourceIds = new Set(["frame-a", "frame-b"]);
+   requestEventIds = new Map();
+   requestRevisions = new Map();
+   requestResolvedSources = new Set();
+   inputsDispatched = true;`,
+  context,
+);
+attachmentHistory.prepare("frame-a", { name: "first.png" });
+attachmentHistory.prepare("frame-b", { name: "second.png" });
+show({ kind: "demo_status", session_id: "old-session",
+  accepted_event_id: "old-a", accepted_revision: 0,
+  payload: { media_received: "frame", source_id: "frame-a" } });
+assert.equal(attachmentHistory.items().length, 0);
+show({ kind: "demo_status", session_id: "image-session",
+  accepted_event_id: "image-a", accepted_revision: 0,
+  payload: { media_received: "frame", source_id: "frame-a" } });
+show({ kind: "demo_status", session_id: "image-session",
+  accepted_event_id: "image-b", accepted_revision: 0,
+  payload: { media_received: "frame", source_id: "frame-b" } });
+show({ kind: "demo_status", session_id: "image-session",
+  accepted_event_id: "image-a", accepted_revision: 0,
+  payload: { media_received: "frame", source_id: "frame-a" } });
+assert.deepEqual(attachmentHistory.items().map((item) => item.sourceId),
+  ["frame-a", "frame-b"], "duplicate receipts must not create extra attachments");
+show({ kind: "demo_observation", session_id: "image-session", payload: {
+  modality: "image", source_id: "frame-a", event_id: "image-a",
+  revision: 0, final: true, backend: "vision/actual", text: "First image",
+} });
+show({ kind: "error", session_id: "image-session", payload: {
+  caused_by_event_id: "image-b", code: "backend_failure",
+} });
+assert.deepEqual(attachmentHistory.items().map((item) => item.status),
+  ["observed", "failed"], "a failed image must keep its identity");
+show({ kind: "demo_observation", session_id: "old-session", payload: {
+  modality: "image", source_id: "frame-b", event_id: "image-b",
+  revision: 0, final: true, text: "stale result",
+} });
+assert.equal(attachmentHistory.items()[1].status, "failed");
+
 const finishStart = html.indexOf("function finishRun() {");
 const finishEnd = html.indexOf("function cancelSpeech()", finishStart);
 const controlsStart = html.indexOf("function setMediaControlsLocked(locked) {");
@@ -368,6 +418,7 @@ const controls = new Map([
   ["#drop-zone", { setAttribute() {}, tabIndex: 0, inert: false }],
 ]);
 const availabilityContext = {
+  attachmentHistory: { discardPending() {} },
   document: { querySelector(selector) {
     assert.ok(controls.has(selector), `Unexpected selector: ${selector}`);
     return controls.get(selector);
