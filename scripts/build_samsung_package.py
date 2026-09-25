@@ -9,6 +9,7 @@ import subprocess
 
 from accessflow.adapters.prompt_profile import PROMPT_PROFILES
 from accessflow.read_answer import READ_ANSWER_MODES
+from scripts.package_container import container_files
 
 KIT_ROOT_FILES = ("eval_submission.py", "run_local.py", "README.md", "WALKTHROUGH.md")
 KIT_AREAS = {"harness": {".py"}, "docs": {".md"}, "scenarios": {".json"},
@@ -27,6 +28,43 @@ def pinned_requirements(export):
     return sorted(lines, key=str.lower)
 
 
+def pinned_audio_requirements(export):
+    """Union exact lock pins for declared Python3.11 Windows/Linux x64 targets.
+
+    The kit's minimal YAML reader damages quoted PEP508 markers. Resolve them
+    here without using the host environment; reject conflicting target versions.
+    A harmless Windows-only dependency can be installed on Linux too.
+    """
+    from packaging.requirements import InvalidRequirement, Requirement
+    versions = {}
+    for line in export.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            requirement = Requirement(line)
+        except InvalidRequirement as error:
+            raise ValueError("Invalid native lock export") from error
+        pin = requirement.name + str(requirement.specifier)
+        if requirement.url or requirement.extras or not PIN.fullmatch(pin):
+            raise ValueError("Native lock export requires exact public-PyPI pins")
+        applies = False
+        for system, machine, platform_system, os_name in [("win32", "AMD64", "Windows", "nt"),
+                                                         ("linux", "x86_64", "Linux", "posix")]:
+            environment = {"python_version": "3.11", "python_full_version": "3.11.15",
+                "implementation_version": "3.11.15", "implementation_name": "cpython",
+                "platform_python_implementation": "CPython", "sys_platform": system,
+                "platform_machine": machine, "platform_system": platform_system, "os_name": os_name,
+                "platform_release": "", "platform_version": "", "extra": ""}
+            applies |= requirement.marker is None or requirement.marker.evaluate(environment)
+        if applies:
+            name = requirement.name.lower().replace("_", "-")
+            if name in versions and versions[name] != pin:
+                raise ValueError("Native lock export has conflicting versions across supported targets")
+            versions[name] = pin
+    return pinned_requirements("\n".join(versions.values()))
+
+
 def profile_for(model, *, prompt_profile="full", read_answer_mode="prose"):
     if not isinstance(model, str) or not model.strip() or any(ord(c) < 32 for c in model):
         raise ValueError("Supply a nonempty model identifier without control characters")
@@ -40,6 +78,7 @@ def profile_for(model, *, prompt_profile="full", read_answer_mode="prose"):
         "ACCESSFLOW_SAMSUNG_PARTIAL_DEBOUNCE_S": "1.0",
         "ACCESSFLOW_SAMSUNG_FAST_READ_RETRY": "1", "ACCESSFLOW_SAMSUNG_PROMPT_PROFILE": prompt_profile,
         "ACCESSFLOW_SAMSUNG_READ_ANSWER_MODE": read_answer_mode,
+        "ACCESSFLOW_SAMSUNG_PERCEPTION": "text",
     }
 
 
@@ -50,7 +89,8 @@ def checked_bytes(root, path):
     return path.read_bytes()
 
 
-def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="full", read_answer_mode="prose"):
+def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="full", read_answer_mode="prose",
+             native=None):
     repo, kit, output = repo.resolve(), kit.resolve(), output.resolve()
     artifact_root = (repo / "artifacts").resolve()
     if (not artifact_root.is_relative_to(repo) or not output.is_relative_to(artifact_root) or output == artifact_root
@@ -61,9 +101,17 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
         raise ValueError("Use a team label of up to100 letters, digits, spaces, dots, underscores or hyphens")
     profile = profile_for(model, prompt_profile=prompt_profile, read_answer_mode=read_answer_mode)
     requirements = pinned_requirements("\n".join(requirements))
+    media_files = {}
+    if native is not None:
+        from scripts.package_media import native_inputs
+        names = {line.split("==")[0].lower().replace("_", "-") for line in requirements}
+        if not {"faster-whisper", "ctranslate2", "av"} <= names:
+            raise ValueError("Native packaging requires the locked audio dependency export")
+        settings, media_files = native_inputs(**native)
+        profile.update(settings)
     tracked = subprocess.check_output(
         ["git", "ls-files", "-z", "--", "src/accessflow"], cwd=repo).decode("utf-8").split("\0")
-    files = {}
+    files = dict(media_files)
     for name in tracked:
         if name and Path(name).suffix == ".py":
             files[Path(name).relative_to("src").as_posix()] = checked_bytes(repo, repo / name)
@@ -83,6 +131,10 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
             raise ValueError(f"Supplied kit is missing {required}")
     files["agent/__init__.py"] = b""
     files["agent/agent.py"] = checked_bytes(repo, repo / "scripts/submission_entry.py")
+    files["hosting/start_vision_server.py"] = checked_bytes(repo, repo / "scripts/start_vision_server.py")
+    files["HOSTING.md"] = checked_bytes(repo, repo / "docs/PACKAGE_HOSTING_2026-09-24.md")
+    files.setdefault("assets/.gitkeep", b"")
+    files.update(container_files())
     for name in ("pyproject.toml", "uv.lock"):
         files[f"build_inputs/{name}"] = checked_bytes(repo, repo / name)
     yaml = [f'team: "{team}"', 'entry_point: "agent.agent:ParticipantAgent"', 'python: "3.11"',
@@ -94,12 +146,18 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
         "# Local development package\n\n"
         "Install requirements.txt in a fresh Python3.11 environment. Supply SECRET_GROQ_API_KEY.\n"
         "Run from this directory: python eval_submission.py . --reps 3\n"
+        "Or build this package directory with its Dockerfile; the repository-root Dockerfile is offline-only.\n"
+        "Read HOSTING.md for setup, result retrieval, service identity and unverified platform gates.\n"
+        "Pass SECRET_GROQ_API_KEY at runtime, not as a Docker build argument.\n"
         "This runs hosted inference and consumes the configured provider quota.\n"
         "The default profile is declared in runtime_profile.json; conflicting environment values fail.\n"
-        "No credential, model weights, private recording, or release tag is included.\n"
+        "No credential or release tag is included. Any ASR assets/fixture provenance are in assets/installation.json.\n"
         "Organizer source/public scenarios/media are copied for local reproducibility.\n"
         "Do not publish the generated directory as repository source.\n"
-        "MP3 assembly/vision wiring remain incomplete. Packaging does not certify multimodal quality.\n"
+        "Native packages require the declared vision service separately when enabled; no vision weights are bundled.\n"
+        "hosting/start_vision_server.py validates installed service/model identities; it never downloads them.\n"
+        "Native dependency pins target CPython3.11.15 on Windows/Linux x64; only measured platforms are verified.\n"
+        "Native audio uses bounded MP3 assembly at explicit end_of_turn. Packaging does not certify multimodal quality.\n"
         "No official repeated-run score, clean install, or Docker result is implied by assembly.\n"
     ).encode()
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
@@ -125,15 +183,36 @@ def main():
     parser.add_argument("--model", required=True, help="Explicit Groq model; no fallback")
     parser.add_argument("--prompt-profile", choices=sorted(PROMPT_PROFILES), default="full")
     parser.add_argument("--read-answer-mode", choices=sorted(READ_ANSWER_MODES), default="prose")
+    parser.add_argument("--asr-model-dir", type=Path, help="Installed model with installation_source.json")
+    parser.add_argument("--warmup-audio", type=Path)
+    parser.add_argument("--audio-provenance", help="Provenance/permission for the explicit installation WAV")
+    parser.add_argument("--perception-timeout", type=float, default=30)
+    parser.add_argument("--vision-model")
+    parser.add_argument("--vision-url")
+    parser.add_argument("--warmup-image", type=Path)
+    parser.add_argument("--image-provenance")
     args = parser.parse_args()
+    native = None
+    if args.asr_model_dir:
+        if args.warmup_audio is None or args.audio_provenance is None:
+            parser.error("--asr-model-dir requires --warmup-audio and --audio-provenance")
+        native = dict(model_dir=args.asr_model_dir, warmup_audio=args.warmup_audio,
+                      audio_provenance=args.audio_provenance, timeout_s=args.perception_timeout,
+                      vision_model=args.vision_model, vision_url=args.vision_url,
+                      warmup_image=args.warmup_image, image_provenance=args.image_provenance)
+    elif (any(value is not None for value in (args.warmup_audio, args.audio_provenance, args.vision_model,
+                                             args.vision_url, args.warmup_image, args.image_provenance))
+          or args.perception_timeout != 30):
+        parser.error("Media settings require --asr-model-dir")
     repo = Path(__file__).resolve().parents[1]
     export = subprocess.check_output(
         ["uv", "export", "--offline", "--frozen", "--format", "requirements-txt", "--no-dev",
-         "--no-emit-project", "--no-hashes"], cwd=repo, text=True)
+         "--no-emit-project", "--no-hashes", *(["--extra", "audio"] if native else [])], cwd=repo, text=True)
     try:
         manifest = assemble(repo, args.kit, args.output, team=args.team, model=args.model,
-                            requirements=pinned_requirements(export), prompt_profile=args.prompt_profile,
-                            read_answer_mode=args.read_answer_mode)
+                            requirements=(pinned_audio_requirements(export) if native else pinned_requirements(export)),
+                            prompt_profile=args.prompt_profile,
+                            read_answer_mode=args.read_answer_mode, native=native)
     except ValueError as exc:
         parser.error(str(exc))
     print(json.dumps({"package": str(args.output.resolve()), "files": len(manifest["files"]),

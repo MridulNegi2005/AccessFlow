@@ -1,7 +1,7 @@
 # Internal contract v0.1
 
 Canonical types: `src/accessflow/contracts.py`; protocols: `interfaces.py`.
-This document and types define a team contract, not the unreleased official kit.
+This document and types define a team contract; the Samsung adapter translates the supplied official kit.
 
 `Agent.run(input_queue, output_queue, clock)` consumes typed input envelopes and emits
 `OutputEvent` through two asyncio queues. Each agent instance runs one session at a time.
@@ -9,7 +9,7 @@ Envelopes contain contract_version, session_id, event_id, timestamp, sequence, k
 payload. Timestamp units are seconds in a shared monotonic scenario clock, not milliseconds.
 Sequence is producer metadata; event IDs deduplicate and source revisions reject old input.
 
-Input kinds: session_start, transcript, audio, frame, interrupt, tool_result, session_end.
+Input kinds: session_start, transcript, audio, speech_status, frame, interrupt, tool_result, session_end.
 Output kinds: acknowledge, clarify, tool_call, cancel_call, final, error. Each output carries
 a full state snapshot; output payload is currently extensible JSON. Schema hardening must
 remain additive while Atishay starts.
@@ -37,6 +37,21 @@ does not undo committed effects. Unknown outcomes must not trigger automatic wri
 
 Golden examples and `tests/test_contract.py` are the shared compatibility gate. The fake
 perception accepts text or explicitly scripted observations; fake audio is never live ASR.
+
+## Additive transport speech admission, 24 September
+
+`SpeechStatusEvent` is controller-only: payload has `utterance_id`, nonnegative
+`revision`, and `status=pending|failed`. It contains no text, finality claim or acoustic
+timestamps. It supersedes unfinished speech/planning, blocks terminal/write actions and
+preserves the current image. Failure asks for replacement input. It never reaches perception.
+A later ordinary Audio/Transcript event for that utterance must have a higher revision.
+
+Samsung emits pending revision0 for the first MP3, pending revision1 for a multi-clip
+turn's explicit final clip, and Audio revision2 only after bounded conversion succeeds.
+Failure is revision2 with status failed. A fresh turn gets a fresh utterance ID.
+This maps the organizer's supplied end_of_turn, not inferred microphone endpointing.
+Existing Audio/Observation and B worker interfaces are unchanged. Browser/acoustic
+adoption requires coordination with Atishay; no such adoption is claimed here.
 
 ## Additive engine updates, 13 September
 

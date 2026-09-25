@@ -19,3 +19,11 @@ docs/evidence/samsung-compact-v2-2026-09-23/*.xml -text -whitespace
 
 docs/evidence/samsung-read-answer-2026-09-23/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 docs/evidence/samsung-text-screen-2026-09-23/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+
+# Preserve raw audio admission verification artifacts.
+docs/evidence/audio-admission-2026-09-24/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evidence/audio-admission-2026-09-24/*.xml -text -whitespace
+
+# Preserve measured package hosting artifacts.
+docs/evidence/package-hosting-2026-09-24/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/evidence/package-hosting-2026-09-24/*.xml -text -whitespace

@@ -1,3 +1,5 @@
+# Offline regression image only. Build the generated Samsung package directory
+# for the real evaluator; see docs/PACKAGE_HOSTING_2026-09-24.md.
 FROM python:3.11-slim
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:0.11.16 /uv /usr/local/bin/uv

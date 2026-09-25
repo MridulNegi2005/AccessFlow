@@ -17,7 +17,7 @@ from .confirmation_text import confirmation_payload
 from .contracts import (
     AudioEvent, EndEvent, FrameEvent, InterruptEvent, Observation, OutputEvent,
     PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
-    ToolResult, TranscriptEvent,
+    ToolResult, TranscriptEvent, SpeechStatusEvent,
 )
 from .corpus import (
     CORPUS_TOOL_NAME, CorpusAccessError, CorpusStore, best_passage, corpus_manifest, is_safe_query,
@@ -73,6 +73,7 @@ class WorkerMessage:
     # tool result, retry, or reconciliation continuation for the same request.
     fresh_evidence: bool = False
     evidence_mark: int | None = None
+    perception_event_id: str | None = None
 
 
 class Agent:
@@ -139,6 +140,7 @@ class Agent:
         self.inbox = asyncio.Queue()
         self.workers = set()
         self.perception_workers = {}
+        self.pending_frame_token = None
         self.state = Snapshot()
         self.session_id = None
         self.manifests = {}
@@ -350,6 +352,7 @@ class Agent:
                 if isinstance(event, InterruptEvent):
                     self.generation += 1
                     self.perception_epoch += 1
+                    await self._discard_pending_frame()
                     for worker in tuple(self.perception_workers.values()):
                         worker.cancel()
                     if self.planner and not self.planner.done():
@@ -388,7 +391,7 @@ class Agent:
                     await self._emit("acknowledge", text="Stopped." if event.payload.scope == "task"
                                      else "I'm listening.", stop_output=True)
                     continue
-                if isinstance(event, (TranscriptEvent, AudioEvent, FrameEvent)):
+                if isinstance(event, (TranscriptEvent, AudioEvent, SpeechStatusEvent, FrameEvent)):
                     payload = event.payload
                     if isinstance(event, FrameEvent):
                         source = ("image", payload.frame_id)
@@ -410,6 +413,7 @@ class Agent:
                     self.source_events[source] = event.event_id
                     if source[0] == "image":
                         self.active_frame = source[1]
+                        self.pending_frame_token = (source[1], event.event_id, self.perception_epoch)
                     if source[0] == "speech":
                         self.active_speech = source[1]
                         self.speech_ready = False
@@ -444,6 +448,25 @@ class Agent:
                     self.state.status = "listening"
                     # Conservative write guard until semantic/dependency resolution.
                     await self._cancel_writes("new_evidence")
+                    if isinstance(event, SpeechStatusEvent):
+                        # Transport activity supersedes unfinished speech work, but
+                        # does not discard the current frame or fabricate an ASR
+                        # hypothesis. Existing generation/source gates reject late
+                        # plans and speech observations while input is pending.
+                        for key, worker in tuple(self.perception_workers.items()):
+                            if key[0] == "speech":
+                                worker.cancel()
+                        if self.planner and not self.planner.done():
+                            self.planner.cancel()
+                        if event.payload.status == "failed":
+                            self.clarification_outstanding = True
+                            self.state.status = "clarifying"
+                            await self._emit("error", code="audio_input_failed")
+                            await self._emit("clarify", text="I couldn't process that recording. "
+                                             "Please try again or type your request.")
+                        else:
+                            await self._emit("acknowledge", text="I'm listening.", stop_output=True)
+                        continue
                     self._start_perception(event, source)
         finally:
             pending = list(self.workers)
@@ -485,13 +508,37 @@ class Agent:
             await asyncio.gather(work, timer, return_exceptions=True)
 
     async def _perceive(self, event, generation, epoch):
+        is_frame = isinstance(event, FrameEvent)
+        final_frame_observed = False
+
         async def collect():
+            nonlocal final_frame_observed
             async for observation in self.perception.observe(event):
+                if (is_frame and observation.modality == "image" and observation.final
+                        and observation.revision == 0
+                        and observation.event_id == event.event_id
+                        and observation.source_id == event.payload.frame_id):
+                    final_frame_observed = True
                 await self.inbox.put(WorkerMessage("observation", generation, observation.model_copy(deep=True), epoch))
         try:
             await self._bounded(collect(), self.inference_timeout)
+            if is_frame and not final_frame_observed:
+                raise RuntimeError("Frame stream ended without a final matching observation")
         except Exception as exc:
-            await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
+            if is_frame:
+                await self.inbox.put(WorkerMessage("frame_failure", generation, type(exc).__name__, epoch,
+                                                   source=("image", event.payload.frame_id),
+                                                   perception_event_id=event.event_id))
+            else:
+                await self.inbox.put(WorkerMessage("failure", generation, type(exc).__name__))
+
+    async def _discard_pending_frame(self):
+        if self.pending_frame_token is None:
+            return
+        source = ("image", self.pending_frame_token[0])
+        self.pending_frame_token = None
+        await self._rollback_hypothesis(source)
+        self.observations.pop(source, None)
 
     def _view(self):
         self.state.pending_call_ids = [c.call_id for c in self.ledger.values() if c.status == "pending"]
@@ -525,6 +572,30 @@ class Agent:
         if message.kind == "tool":
             await self._result(message.value)
             return
+        if message.kind == "frame_failure":
+            # Speech and read results may advance planning generation while this
+            # frame runs. Only its exact current token can settle the media gate.
+            token = (message.source[1], message.perception_event_id, message.perception_epoch)
+            if token != self.pending_frame_token:
+                return
+            await self._discard_pending_frame()
+            self.generation += 1
+            if self.planner and not self.planner.done():
+                self.planner.cancel()
+            # Losing attached evidence is not permission to finish without it.
+            # Keep the spoken intent, but require new user/media evidence before
+            # a final or write can proceed, including read-result continuations.
+            self.latest_complete = False
+            self.semantic_correction_event = None
+            self.state.correction_pending = True
+            self.clarification_outstanding = True
+            self.state.status = "clarifying"
+            self.current_event_id = message.perception_event_id
+            await self._emit("error", code="backend_failure", detail=message.value)
+            if self.speech_ready:
+                await self._emit("clarify", text="I couldn't read the attached image. "
+                                 "Please resend it or tell me how to continue without it.")
+            return
         if message.kind != "observation" and message.generation != self.generation:
             return
         if message.kind == "failure":
@@ -538,10 +609,20 @@ class Agent:
                 return
             if obs.modality == "image" and obs.source_id != self.active_frame:
                 return
+            if obs.modality == "image" and (
+                    not obs.final or self.pending_frame_token != (
+                        obs.source_id, obs.event_id, message.perception_epoch)):
+                # An incomplete frame must not seed slots that a later speech
+                # plan could promote before vision finishes or after it fails.
+                # A frame settles once; subsequent output from that stream is stale.
+                return
             if obs.modality != "image" and obs.source_id != self.active_speech:
                 return
             self.current_event_id = obs.event_id
             self.observations[key] = obs
+            if obs.modality == "image" and obs.final:
+                if self.pending_frame_token == (obs.source_id, obs.event_id, message.perception_epoch):
+                    self.pending_frame_token = None
             decision = self.turn_policy.update(obs.model_copy(deep=True), self._view())
             if obs.modality != "image" and obs.source_id == self.active_speech:
                 self.speech_ready = decision.kind == "complete" and obs.final
@@ -565,6 +646,7 @@ class Agent:
             if decision.kind == "stop":
                 self.generation += 1
                 self.perception_epoch += 1
+                await self._discard_pending_frame()
                 self.write_intent_retained = False
                 self.clarification_outstanding = False
                 await self._cancel_writes("explicit_stop")
@@ -962,15 +1044,16 @@ class Agent:
                 if isinstance(self.state.slots[name].value, (str, int, float, bool)))
             text = f"Updated {details}." if details else "I've updated the request details."
             await self._emit("acknowledge", text=text, basis="accepted_user_correction")
-        said_something = bool(proposal.clarification)
-        if proposal.clarification and (self.latest_complete or final_correction):
+        said_something = False
+        if proposal.clarification and (self.latest_complete or final_correction) and not self.pending_frame_token:
+            said_something = True
             # Required information is now outstanding for this request. This is tracked
             # separately from write_intent_retained: asking a question never touches
             # whether the user authorized a write, only whether dispatch may proceed yet.
             self.clarification_outstanding = True
             self.state.status = "clarifying"
             await self._emit("clarify", text=proposal.clarification)
-        elif self.latest_complete or final_correction:
+        elif (self.latest_complete or final_correction) and not self.pending_frame_token:
             # A complete turn that does not clarify is the model's own signal that any
             # previously missing information (spoken or supplied by an image) is now
             # resolved for this request.
@@ -988,6 +1071,11 @@ class Agent:
                 blocked_calls += 1
                 continue
             if manifest.effect == "write":
+                if self.pending_frame_token is not None:
+                    # Keep completed speech authority and safe read prefetch, but
+                    # do not act before the current attached image is interpreted.
+                    blocked_calls += 1
+                    continue
                 if not (self.latest_complete and self.speech_ready and self.write_intent_retained
                         and proposal.request_complete and proposal.write_requested
                         and not self.state.correction_pending and not proposal.clarification
@@ -1130,7 +1218,8 @@ class Agent:
                         input_epoch=self.request_input_epoch)
                 except BindingError as exc:
                     await self._emit("error", code="invalid_write_contract", detail=str(exc))
-        pending_now = any(c.status == "pending" for c in self.ledger.values())
+        pending_now = (self.pending_frame_token is not None
+                       or any(c.status == "pending" for c in self.ledger.values()))
         # Resolved writes on older requests must not silence a later question.
         # Unresolved effects remain a session-wide barrier to model-only finals;
         # current-request effects still finish only through confirmed tool evidence.
@@ -1634,6 +1723,7 @@ class Agent:
                                          self.authorization, "effect_environment", "unspecified")))
 
     async def _shutdown(self, reason):
+        await self._discard_pending_frame()
         if self.session_id is None:
             return
         for call in list(self.ledger.values()):
