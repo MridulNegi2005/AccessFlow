@@ -1632,6 +1632,9 @@
       let finalSourceId = null;
       let requestSourceIds = new Set();
       let requestEventIds = new Map();
+      let requestRevisions = new Map();
+      let requestResolvedSources = new Set();
+      let activeSessionId = null;
       let pendingAnswers = [];
       let inputsDispatched = false;
       let runInProgress = false;
@@ -1663,16 +1666,18 @@
             : {};
         if (
           event.kind === "demo_observation" &&
-          (!runInProgress || !requestSourceIds.has(payload.source_id))
+          (!runInProgress || !requestSourceIds.has(payload.source_id) ||
+            (activeSessionId && event.session_id !== activeSessionId))
         ) return;
         if (event.kind === "final" || event.kind === "clarify") {
           const cause = payload.caused_by_event_id;
           if (
             !runInProgress ||
+            (activeSessionId && event.session_id !== activeSessionId) ||
             typeof cause !== "string" ||
             !Array.from(requestEventIds.values()).includes(cause)
           ) return;
-          if (!inputsDispatched) {
+          if (!inputsDispatched || !allRequestSourcesResolved()) {
             if (pendingAnswers.length < 8) pendingAnswers.push(event);
             return;
           }
@@ -1681,9 +1686,26 @@
           const cause = payload.caused_by_event_id;
           if (
             !runInProgress ||
+            (activeSessionId && event.session_id !== activeSessionId) ||
             typeof cause !== "string" ||
             !Array.from(requestEventIds.values()).includes(cause)
           ) return;
+        }
+        if (event.kind === "acknowledge" && payload.stop_output === true) {
+          const cause = payload.caused_by_event_id;
+          if (
+            !runInProgress ||
+            (activeSessionId && event.session_id !== activeSessionId) ||
+            typeof cause !== "string" ||
+            !Array.from(requestEventIds.values()).includes(cause)
+          ) return;
+          cancelSpeech();
+          if (event.state?.status === "stopped") {
+            finishRun();
+            document.querySelector("#voice-state").textContent = "Task stopped";
+            document.querySelector("#voice-help").textContent =
+              "The task was cancelled. You can start another request.";
+          }
         }
         document.querySelector("#announcements").textContent = announce(event);
         if (
@@ -1712,6 +1734,8 @@
           }
         }
         if (event.kind === "demo_status" && payload.perception_backend) {
+          if (typeof event.session_id === "string")
+            activeSessionId = event.session_id;
           const reasoner = payload.reasoner_backend;
           responseBackend = reasoner
             ? payload.perception_backend + " · " + reasoner
@@ -1724,6 +1748,13 @@
           return;
         }
         if (event.kind === "demo_status" && payload.media_received) {
+          if (!runInProgress || !requestSourceIds.has(payload.source_id)) return;
+          if (activeSessionId && event.session_id !== activeSessionId) return;
+          rememberRequestEvent(
+            payload.source_id,
+            event.accepted_event_id,
+            event.accepted_revision,
+          );
           const kind =
             payload.media_received === "frame"
               ? "Screenshot"
@@ -1750,7 +1781,10 @@
               : payload.text || "Voice request received.";
           }
           if (payload.final === true && typeof payload.event_id === "string") {
-            requestEventIds.set(payload.source_id, payload.event_id);
+            if (rememberRequestEvent(payload.source_id, payload.event_id, payload.revision ?? 0)) {
+              requestResolvedSources.add(payload.source_id);
+              if (inputsDispatched) replayPendingAnswer();
+            }
           }
           return;
         }
@@ -1761,9 +1795,11 @@
         }
         if (event.kind === "error" || event.kind === "demo_error") {
           const message =
-            typeof payload.message === "string"
-              ? payload.message
-              : "Something went wrong. You can try again.";
+            event.kind === "error"
+              ? controllerErrorMessage(payload.code)
+              : typeof payload.message === "string"
+                ? payload.message
+                : "Something went wrong. You can try again.";
           document.querySelector("#answer-error").textContent = message;
           document.querySelector("#answer-error").classList.add("visible");
           if (runInProgress) finishRun();
@@ -1771,7 +1807,34 @@
         return;
       }
 
+      function rememberRequestEvent(sourceId, eventId, eventRevision) {
+        if (!requestSourceIds.has(sourceId) || typeof eventId !== "string" ||
+            !eventId || !Number.isSafeInteger(eventRevision) || eventRevision < 0)
+          return false;
+        const currentRevision = requestRevisions.get(sourceId);
+        if (currentRevision !== undefined && eventRevision < currentRevision)
+          return false;
+        if (currentRevision !== eventRevision || requestEventIds.get(sourceId) !== eventId)
+          requestResolvedSources.delete(sourceId);
+        requestRevisions.set(sourceId, eventRevision);
+        requestEventIds.set(sourceId, eventId);
+        return true;
+      }
+
+      function allRequestSourcesResolved() {
+        return [...requestSourceIds].every((sourceId) => requestResolvedSources.has(sourceId));
+      }
+
+      function controllerErrorMessage(code) {
+        if (code === "backend_failure")
+          return "We could not process that request. Please check the recording or image and try again.";
+        if (code === "tool_failed")
+          return "The requested action failed. Please check its status before trying again.";
+        return "The request could not be completed. Please try again.";
+      }
+
       function replayPendingAnswer() {
+        if (!inputsDispatched || !allRequestSourcesResolved()) return false;
         const pendingAnswer = pendingAnswers.findLast(
           (event) =>
             Array.from(requestEventIds.values()).includes(
@@ -1872,6 +1935,8 @@
         finalSourceId = null;
         requestSourceIds = new Set();
         requestEventIds = new Map();
+        requestRevisions = new Map();
+        requestResolvedSources = new Set();
         pendingAnswers = [];
         inputsDispatched = false;
         if (responseTimer) clearTimeout(responseTimer);
@@ -2075,6 +2140,7 @@
       function registerRequestSource(sourceId) {
         if (!runInProgress) return;
         requestSourceIds.add(sourceId);
+        requestResolvedSources.delete(sourceId);
         finalSourceId = sourceId;
       }
 
@@ -2452,6 +2518,7 @@
           }
           try {
             const dataBase64 = await fileToBase64(file);
+            if (!runInProgress) return false;
             document.querySelector("#processing").lastElementChild.textContent =
               "Sending " + mediaLabel + "…";
             const sourceId = nextMediaId(
@@ -2666,6 +2733,8 @@
         finalSourceId = null;
         requestSourceIds = new Set();
         requestEventIds = new Map();
+        requestRevisions = new Map();
+        requestResolvedSources = new Set();
         pendingAnswers = [];
         inputsDispatched = false;
         activeInputKinds = [];
@@ -2699,18 +2768,21 @@
                 utterance_id: sourceId,
               }),
             );
+            if (!runInProgress) return;
             if (!sent)
               throw new Error("The voice recording could not be sent.");
             activeInputKinds.push("audio");
           } else if (audioFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("audio", "#audio");
+            if (!runInProgress) return;
             if (!sent) throw new Error("The WAV could not be sent.");
             activeInputKinds.push("audio");
           }
           if (imageFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("frame", "#image");
+            if (!runInProgress) return;
             if (!sent) throw new Error("The screenshot could not be sent.");
             activeInputKinds.push("frame");
           }

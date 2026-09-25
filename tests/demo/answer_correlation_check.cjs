@@ -14,6 +14,8 @@ for (const selector of [
   "#request-summary",
   "#backend-status",
   "#answer-context",
+  "#voice-state",
+  "#voice-help",
 ]) {
   nodes.set(selector, {
     textContent: selector === "#request-summary" ? "Current request" : "",
@@ -29,6 +31,7 @@ nodes.set("#answer-error", {
     contains(value) { return this.values.has(value); },
   },
 });
+nodes.set("#processing", { lastElementChild: { textContent: "" } });
 const rendered = [];
 const context = {
   document: {
@@ -45,9 +48,14 @@ vm.runInContext(
    let finalSourceId = "current-source";
    let requestSourceIds = new Set(["current-source"]);
    let requestEventIds = new Map();
+   let requestRevisions = new Map();
+   let requestResolvedSources = new Set();
+   let activeSessionId = null;
    let pendingAnswers = [];
    let inputsDispatched = true;
    let responseBackend = "demo/mock";
+   let playbackCancellations = 0;
+   function cancelSpeech() { playbackCancellations += 1; }
    function announce(event) { return event.kind; }
     function modeLabel() {
       return responseBackend.toLowerCase().includes("mock") ? "Mock tools" : "Live backend";
@@ -100,6 +108,7 @@ vm.runInContext(
      ["earlier-source", "earlier-current-event"],
      ["latest-source", "latest-current-event"],
    ]);
+   requestResolvedSources = new Set(["earlier-source", "latest-source"]);
    inputsDispatched = true;`,
   context,
 );
@@ -118,6 +127,7 @@ vm.runInContext(
    finalSourceId = "new-source";
    requestSourceIds = new Set(["earlier-source", "latest-source"]);
    requestEventIds = new Map([["earlier-source", "earlier-event"]]);
+   requestResolvedSources = new Set(["earlier-source"]);
    pendingAnswers = [];
    inputsDispatched = false;`,
   context,
@@ -138,6 +148,7 @@ vm.runInContext(
    finalSourceId = "new-source";
    requestSourceIds = new Set(["new-source"]);
    requestEventIds = new Map([["new-source", "new-event"]]);
+   requestResolvedSources = new Set(["new-source"]);
    pendingAnswers = [];
    inputsDispatched = true;`,
   context,
@@ -154,11 +165,143 @@ show({
   payload: { caused_by_event_id: "new-event", message: "Current failure" },
 });
 assert.equal(vm.runInContext("runInProgress", context), false);
-assert.equal(nodes.get("#answer-error").textContent, "Current failure");
+assert.equal(
+  nodes.get("#answer-error").textContent,
+  "The request could not be completed. Please try again.",
+);
 assert.equal(nodes.get("#answer-error").classList.contains("visible"), true);
+
+vm.runInContext(
+  `runInProgress = true;
+   requestSourceIds = new Set(["submitted-audio"]);
+   requestEventIds = new Map();
+   requestRevisions = new Map();
+   activeSessionId = "current-session";
+   inputsDispatched = true;`,
+  context,
+);
+nodes.get("#answer-error").textContent = "";
+nodes.get("#answer-error").classList.values.clear();
+show({
+  kind: "demo_status",
+  session_id: "current-session",
+  accepted_event_id: "accepted-audio-event",
+  accepted_revision: 2,
+  payload: { media_received: "audio", source_id: "submitted-audio" },
+});
+assert.equal(
+  vm.runInContext('requestEventIds.get("submitted-audio")', context),
+  "accepted-audio-event",
+  "the receipt must establish causality before ASR returns",
+);
+show({
+  kind: "demo_status",
+  session_id: "current-session",
+  accepted_event_id: "older-audio-event",
+  accepted_revision: 1,
+  payload: { media_received: "audio", source_id: "submitted-audio" },
+});
+assert.equal(
+  vm.runInContext('requestEventIds.get("submitted-audio")', context),
+  "accepted-audio-event",
+  "a delayed older revision must not replace the current event",
+);
+show({
+  kind: "error",
+  session_id: "current-session",
+  payload: {
+    caused_by_event_id: "older-audio-event",
+    code: "backend_failure",
+    detail: "Do not display backend internals",
+  },
+});
+assert.equal(vm.runInContext("runInProgress", context), true);
+show({
+  kind: "error",
+  session_id: "old-session",
+  payload: {
+    caused_by_event_id: "accepted-audio-event",
+    code: "backend_failure",
+    detail: "Old session failure",
+  },
+});
+assert.equal(vm.runInContext("runInProgress", context), true);
+show({
+  kind: "error",
+  session_id: "current-session",
+  payload: {
+    caused_by_event_id: "accepted-audio-event",
+    code: "backend_failure",
+    detail: "Do not display backend internals",
+  },
+});
+assert.equal(vm.runInContext("runInProgress", context), false);
+assert.equal(nodes.get("#answer-error").classList.contains("visible"), true);
+assert.match(nodes.get("#answer-error").textContent, /could not process/i);
+
+vm.runInContext(
+  `runInProgress = true;
+   requestSourceIds = new Set(["stop-source"]);
+   requestEventIds = new Map([["stop-source", "stop-event"]]);
+   requestRevisions = new Map([["stop-source", 0]]);
+   requestResolvedSources = new Set(["stop-source"]);
+   inputsDispatched = true;`,
+  context,
+);
+show({
+  kind: "acknowledge", session_id: "old-session",
+  payload: { caused_by_event_id: "stop-event", stop_output: true },
+});
+show({
+  kind: "acknowledge", session_id: "current-session",
+  payload: { caused_by_event_id: "old-event", stop_output: true },
+});
+assert.equal(vm.runInContext("playbackCancellations", context), 0);
+show({
+  kind: "acknowledge", session_id: "current-session",
+  payload: { caused_by_event_id: "stop-event", stop_output: true },
+});
+assert.equal(vm.runInContext("playbackCancellations", context), 1);
+assert.equal(vm.runInContext("runInProgress", context), true);
+show({
+  kind: "acknowledge", session_id: "current-session", state: { status: "stopped" },
+  payload: { caused_by_event_id: "stop-event", stop_output: true },
+});
+assert.equal(vm.runInContext("runInProgress", context), false);
+assert.doesNotMatch(nodes.get("#answer-error").textContent, /backend internals/i);
+
+const renderedBeforeMixedInput = rendered.length;
+vm.runInContext(
+  `runInProgress = true;
+   requestSourceIds = new Set(["good-frame", "failed-audio"]);
+   requestEventIds = new Map([
+     ["good-frame", "good-frame-event"],
+     ["failed-audio", "failed-audio-event"],
+   ]);
+   requestRevisions = new Map([["good-frame", 0], ["failed-audio", 0]]);
+   requestResolvedSources = new Set(["good-frame"]);
+   inputsDispatched = true;`,
+  context,
+);
+show({
+  kind: "final",
+  session_id: "current-session",
+  payload: { caused_by_event_id: "good-frame-event", text: "Incomplete success" },
+});
+assert.equal(rendered.length, renderedBeforeMixedInput);
+assert.equal(vm.runInContext("runInProgress", context), true);
+show({
+  kind: "error",
+  session_id: "current-session",
+  payload: { caused_by_event_id: "failed-audio-event", code: "backend_failure" },
+});
+assert.equal(vm.runInContext("runInProgress", context), false);
+assert.equal(rendered.length, renderedBeforeMixedInput);
+assert.match(nodes.get("#answer-error").textContent, /could not process/i);
 vm.runInContext(
   `runInProgress = true;
    requestEventIds = new Map([["new-source", "new-event"]]);
+   requestResolvedSources = new Set(["new-source"]);
    pendingAnswers = [];
    inputsDispatched = true;`,
   context,
