@@ -633,6 +633,25 @@ def test_browser_uploads_the_staged_png_from_picker_or_drop():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_browser_keeps_receipted_image_identity_and_failure_visible():
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is unavailable for the optional browser-script regression")
+
+    script = Path(__file__).with_name("attachment_history_check.cjs")
+    result = subprocess.run(
+        [node, str(script)], capture_output=True, text=True, check=False, timeout=10
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_attachment_history_script_is_served():
+    with TestClient(demo_app.app) as client:
+        response = client.get("/attachment-history.js")
+    assert response.status_code == 200
+    assert "AccessFlowAttachmentHistory" in response.text
+
+
 def test_demo_page_exposes_input_controls_and_backend_label():
     html = _normalized_demo_source()
 

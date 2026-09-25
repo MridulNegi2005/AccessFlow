@@ -477,6 +477,18 @@
         gap: 7px;
         margin-top: 10px;
       }
+      .session-attachments {
+        margin-top: 12px;
+      }
+      .session-attachments h3 {
+        margin: 0;
+        color: #4f5b52;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .session-attachments .staged-size {
+        overflow-wrap: anywhere;
+      }
       .staged-item {
         min-width: 0;
         display: flex;
@@ -1456,6 +1468,10 @@
           <span class="attachment-limit">PNG or WAV · up to 8 MiB each</span>
         </div>
         <div class="staged-list" id="staged-list" aria-live="polite"></div>
+        <section class="session-attachments" id="session-images" aria-label="Images received this session" hidden>
+          <h3>Images received this session</h3>
+          <div class="staged-list" id="session-image-list" aria-live="polite"></div>
+        </section>
         <p class="dock-error" id="dock-error" role="alert"></p>
         <label class="sr-only" for="task-text">Message being prepared</label>
         <textarea
@@ -1603,6 +1619,7 @@
     </div>
 
     <script src="/live-voice.js"></script>
+    <script src="/attachment-history.js"></script>
     <script>
       const previewVariant = new URLSearchParams(location.search).get("preview");
       const previewMode = ["1", "photo", "meeting"].includes(previewVariant);
@@ -1634,6 +1651,11 @@
       let recordedWavBytes = null;
       let stagedImageFile = null;
       let stagedImageUrl = null;
+      const attachmentHistory = new AccessFlowAttachmentHistory({
+        createObjectURL: (file) => URL.createObjectURL(file),
+        revokeObjectURL: (url) => URL.revokeObjectURL(url),
+        onChange: renderAttachmentHistory,
+      });
       let latestMediaSourceId = null;
       let finalSourceId = null;
       let requestSourceIds = new Set();
@@ -1672,6 +1694,15 @@
           event.payload && typeof event.payload === "object"
             ? event.payload
             : {};
+        if (event.kind === "demo_observation" && payload.modality === "image") {
+          attachmentHistory.observe(
+            event.session_id, payload.source_id, payload.event_id,
+            payload.revision ?? 0, payload.backend,
+          );
+        }
+        if (event.kind === "error") {
+          attachmentHistory.fail(event.session_id, payload.caused_by_event_id);
+        }
         if (
           event.kind === "demo_observation" &&
           (!runInProgress || !requestSourceIds.has(payload.source_id) ||
@@ -1742,8 +1773,10 @@
           }
         }
         if (event.kind === "demo_status" && payload.perception_backend) {
-          if (typeof event.session_id === "string")
+          if (typeof event.session_id === "string") {
+            attachmentHistory.startSession(event.session_id);
             activeSessionId = event.session_id;
+          }
           agentMode = payload.agent_mode === "configured" ? "configured" : "mock";
           livePreviewAvailable = payload.live_preview_available === true;
           document.querySelector("#voice-toggle").disabled = !livePreviewAvailable;
@@ -1776,11 +1809,17 @@
         if (event.kind === "demo_status" && payload.media_received) {
           if (!runInProgress || !requestSourceIds.has(payload.source_id)) return;
           if (activeSessionId && event.session_id !== activeSessionId) return;
-          rememberRequestEvent(
+          const accepted = rememberRequestEvent(
             payload.source_id,
             event.accepted_event_id,
             event.accepted_revision,
           );
+          if (accepted && payload.media_received === "frame") {
+            attachmentHistory.accept(
+              event.session_id, payload.source_id,
+              event.accepted_event_id, event.accepted_revision,
+            );
+          }
           const kind =
             payload.media_received === "frame"
               ? "Screenshot"
@@ -1909,12 +1948,18 @@
         const image = document.querySelector("#answer-image");
         const imageButton = document.querySelector("#answer-image-button");
         const grid = document.querySelector("#answer-grid");
-        if (stagedImageUrl) {
-          image.src = stagedImageUrl;
+        const requestImage = previewMode
+          ? null
+          : attachmentHistory.items().find((item) =>
+              requestSourceIds.has(item.sourceId) && item.status === "observed");
+        if (requestImage || (previewMode && stagedImageUrl)) {
+          image.src = requestImage?.url || stagedImageUrl;
           imageButton.hidden = false;
           document.querySelector("#answer-media").hidden = false;
           const imageCaption = document.querySelector("#answer-image-caption");
-          imageCaption.textContent = "Your uploaded photo";
+          imageCaption.textContent = requestImage
+            ? "Image received for this request"
+            : "Your uploaded photo";
           imageCaption.hidden = false;
           grid.classList.add("with-image");
         } else {
@@ -1957,6 +2002,7 @@
       }
 
       function finishRun() {
+        attachmentHistory.discardPending();
         runInProgress = false;
         finalSourceId = null;
         requestSourceIds = new Set();
@@ -2563,14 +2609,36 @@
             const sourceId = nextMediaId(
               kind === "audio" ? "upload-audio" : "upload-frame",
             );
+            if (kind === "frame" && !attachmentHistory.current(activeSessionId)) {
+              show({
+                kind: "demo_error",
+                payload: {
+                  backend: "browser/media",
+                  message: "The image session is not ready. Reconnect before sending it.",
+                },
+              });
+              return false;
+            }
+            if (kind === "frame" && !attachmentHistory.prepare(sourceId, file)) {
+              show({
+                kind: "demo_error",
+                payload: {
+                  backend: "browser/media",
+                  message: "This session can hold eight images. Start a new session before adding another.",
+                },
+              });
+              return false;
+            }
             latestMediaSourceId = sourceId;
             registerRequestSource(sourceId);
-            return send(kind, () => ({
+            const sent = send(kind, () => ({
               data_base64: dataBase64,
               filename: file.name,
               utterance_id: kind === "audio" ? sourceId : undefined,
               frame_id: kind === "frame" ? sourceId : undefined,
             }));
+            if (!sent && kind === "frame") attachmentHistory.discard(sourceId);
+            return sent;
           } catch (error) {
             show({
               kind: "demo_error",
@@ -2743,6 +2811,39 @@
             updateRunButton();
           };
           row.append(thumb, copy, remove);
+          list.append(row);
+        }
+      }
+
+      function renderAttachmentHistory(items) {
+        const section = document.querySelector("#session-images");
+        const list = document.querySelector("#session-image-list");
+        section.hidden = items.length === 0;
+        list.replaceChildren();
+        for (const item of items) {
+          const row = document.createElement("div");
+          row.className = "staged-item";
+          const thumb = document.createElement("img");
+          thumb.className = "staged-thumb";
+          thumb.src = item.url;
+          thumb.alt = "";
+          const copy = document.createElement("div");
+          copy.className = "staged-copy";
+          const name = document.createElement("span");
+          name.className = "staged-name";
+          name.textContent = item.name || "PNG image";
+          const status = document.createElement("span");
+          status.className = "staged-size";
+          status.textContent = item.status === "failed"
+            ? "Processing failed · not available as evidence"
+            : item.status === "observed"
+              ? "Observed · " + (item.backend || "backend unreported")
+              : "Received · processing pending";
+          const source = document.createElement("span");
+          source.className = "staged-size";
+          source.textContent = "Source ID: " + item.sourceId;
+          copy.append(name, status, source);
+          row.append(thumb, copy);
           list.append(row);
         }
       }
@@ -2961,6 +3062,7 @@
       async function endLiveSession() {
         if (sessionEnded) return;
         sessionEnded = true;
+        attachmentHistory.endSession();
         pendingMessages.length = 0;
         cancelSpeech();
         if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
@@ -3010,6 +3112,7 @@
           if (sessionEnded) return;
           show({ kind: "demo_status", payload: { connected: false } });
           sessionEnded = true;
+          attachmentHistory.endSession();
           document.querySelector("#voice-toggle").disabled = false;
           document.querySelector("#voice-toggle").lastElementChild.textContent =
             "Start new session";
@@ -3271,6 +3374,7 @@
       }
       window.addEventListener("beforeunload", () => {
         sessionEnded = true;
+        attachmentHistory.clear();
         void liveVoice?.end();
         cancelPendingMicrophoneStart();
         clearTimeout(draftTimer);

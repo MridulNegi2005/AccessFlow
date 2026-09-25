@@ -450,3 +450,11 @@ The browser must assign labels only after a matching accepted receipt, retain
 failed-image identity, and reject duplicate/old-session receipts. A local
 drop/picker staging fix now sends the previewed file, but it does not create
 the registry or justify labeling old frames as available reasoning evidence.
+
+Atishay's browser now keeps a bounded session-local list of accepted PNGs keyed
+by source/event/revision, with its own thumbnail and observed/failed status. It
+rejects duplicate or old-session receipts, retains a failed image's identity,
+and refuses a ninth local image before upload. It intentionally displays source
+IDs rather than invented Image 1/2/3 ordinals; those labels, server receipt
+time, registry status and field provenance still require the agreed additive
+Mridul-owned projection. Browser receipt order is not controller authority.

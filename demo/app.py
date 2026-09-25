@@ -385,6 +385,11 @@ async def live_voice_script() -> FileResponse:
     return FileResponse(ROOT / "live-voice.js", media_type="application/javascript")
 
 
+@app.get("/attachment-history.js")
+async def attachment_history_script() -> FileResponse:
+    return FileResponse(ROOT / "attachment-history.js", media_type="application/javascript")
+
+
 class _SessionMediaBudget:
     """Monotonic per-session admission budget for decoded upload bytes."""
 

@@ -1,5 +1,18 @@
 # Active Handoff
 
+## Atishay receipt-bound browser image display - 25 September 2026
+
+Owned browser code now shows multiple PNGs only after matching server receipts,
+preserving source/event/revision, thumbnails and observed/failed status. It
+rejects duplicate/old-session updates, preserves a failed image's identity,
+prevents a later text answer from reusing a staged image, and explicitly refuses
+a ninth local session image. No Image 1/2/3 labels are invented because the
+Mridul-owned registry still lacks an authoritative ordinal/receipt projection.
+Final standard suite: 1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node
+checks and Ruff passed. Installed ASR still has the earlier low-memory failure;
+human mic, actual reasoning/vision and shared D1/D4 gates remain open. See
+Atishay's delivery report and handoff. PARTIAL, not product acceptance.
+
 ## Atishay incomplete-correction endpoint guard - 25 September 2026
 
 The owned live-voice browser path no longer finalizes a provisional transcript

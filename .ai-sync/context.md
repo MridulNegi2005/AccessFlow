@@ -1493,3 +1493,8 @@ configuration changed; no commit or push.
 **Notes:** Full Python 3.11 suite 1381 passed/5 skipped/3 xfailed/2 dependency warnings; Ruff/five Node checks passed; three explicit installed-ASR opt-in tests passed separately. The strict conflicting-frames test still times out with `--runxfail`, not an observed unsafe write. No live vision or official evaluation run and no Mridul-owned code changed.
 
 ---
+## [2026-09-25] — Atishay receipt-bound browser image display
+**Task:** Retain individually accepted PNGs in the browser without inventing D4 controller authority or ordinals.
+**Changes:** Added a bounded session-local attachment ledger, explicit script route and visible list; bound accepted source/event/revision to the server receipt, retained observed/failed status, rejected duplicate/old-session updates and ninth local image, and stopped old staged previews from appearing on later answers. Added deterministic Node/pytest checks and updated the D4 proposal/handoff.
+**Status:** PARTIAL. Final standard suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks, Ruff and syntax passed. Installed-ASR opt-in was not retried with roughly 1 GB free physical RAM after the earlier `mkl_malloc` failure.
+**Notes:** No Mridul-owned source changed. Browser list is not the shared multi-image registry or field-level provenance; no physical microphone, real reasoner/vision or official kit run is claimed.

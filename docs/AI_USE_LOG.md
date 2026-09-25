@@ -1587,3 +1587,15 @@ preview traced to the worker, and direct local perception reported
 `mkl_malloc: failed to allocate memory` on the low-memory host. A temporary
 test-only diagnostic hook was removed. This does not prove physical-mic,
 reliable real-ASR, real-reasoner, live vision or official evaluation behavior.
+
+## 25 September 2026 - AI-assisted browser image identity
+
+Assistance added a session-local browser ledger for PNGs accepted by server
+receipt, distinct source/event/revision display, failed-status retention, local
+eight-image capacity error and URL cleanup. It added regressions for stale and
+duplicate receipts, late observation, fresh session, rendered rows and a stale
+staged preview in a later answer. The explicit JavaScript route initially
+returned 404 in a failing test; it was added and retested. Final standard
+suite passed 1387/6 skipped/3 xfailed with two warnings, alongside seven Node
+checks and Ruff. This is not evidence of Mridul's D4 registry/source selection,
+actual vision, human mic or model reliability; no shared code was altered.

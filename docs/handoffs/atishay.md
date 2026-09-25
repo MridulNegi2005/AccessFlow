@@ -1236,5 +1236,30 @@ live-voice script syntax passed. The separate installed-ASR opt-in rerun is
 currently **failed**, despite earlier successful generated-WAV runs: a browser
 preview became an error preview, and direct local perception exposed
 `mkl_malloc: failed to allocate memory` with roughly 1 GB physical RAM free.
-The diagnostic test hook was removed. Rerun when memory is available; this is
-not human speech or an actual reasoning-model result.
+The diagnostic test hook was removed. The user assigned the memory bottleneck
+follow-up to Mridul; do not rerun it in this workstream. This is not human
+speech or an actual reasoning-model result.
+
+## 2026-09-25 — PARTIAL receipt-bound image display
+
+Owned browser code now retains a session-local list of PNGs only after a matching
+server receipt. Each entry keeps its own source/event/revision, thumbnail and
+observed or failed status; duplicate and old-session receipts are ignored. A
+later text-only answer no longer displays the previously staged image. The
+browser refuses a ninth local image before upload with an explicit error;
+fresh session/unload revokes retained object URLs. End session leaves the
+existing list visible while rejecting late changes. This is browser display,
+not the D4 controller registry or a claim that an old image is selectable as
+agent evidence. No Image 1/2/3 ordinal is invented: Mridul still needs to
+project authoritative admission ordinal/receipt time and source status, then
+we can bind the labels and field provenance.
+
+Focused Node checks cover the ledger, rendered rows, current-request preview,
+browser receipt/observation/error wiring and source-preserving picker/drop.
+`tests/demo/test_app.py` passed **145 passed, 2 skipped, 1 xfailed, 2 warnings**;
+the final standard full suite passed **1387 passed, 6 skipped, 3 xfailed, 2
+warnings** in 65.41 s. Seven Node checks, Ruff, script syntax and diff check
+passed. Installed-ASR was not rerun in this slice at about 1 GB free physical
+memory, per user direction; Mridul will handle the previously recorded native
+allocation failure.
+Gates 1–3 remain incomplete as described in the delivery report.
