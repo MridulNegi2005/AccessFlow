@@ -77,7 +77,10 @@ assert.equal(history.observe("session-a", "frame-b", "event-b", 0, "late/vision"
 history.prepare("never-accepted", { name: "third.png" });
 history.discardPending();
 assert.equal(history.accept("session-a", "never-accepted", "event-c", 0), false);
+history.prepare("end-pending", { name: "end-pending.png" });
 history.endSession();
+assert.equal(history.accept("session-a", "end-pending", "late-after-end", 0), false,
+  "End session must discard pending images and reject late receipts");
 assert.equal(history.fail("session-a", "event-a"), false);
 assert.equal(history.items().length, 2, "End session leaves existing conversation visible");
 history.startSession("session-b");

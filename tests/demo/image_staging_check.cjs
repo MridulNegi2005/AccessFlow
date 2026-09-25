@@ -22,6 +22,7 @@ const nodes = new Map([
 const sent = [];
 const revoked = [];
 const prepared = [];
+const discarded = [];
 const errors = [];
 let acceptMore = true;
 const context = {
@@ -42,7 +43,7 @@ const context = {
       prepared.push([sourceId, file.name]);
       return true;
     },
-    discard() {},
+    discard(sourceId) { discarded.push(sourceId); },
   },
 };
 vm.createContext(context);
@@ -95,4 +96,9 @@ vm.runInContext(
   assert.equal(await vm.runInContext('sendFile("frame", "#image")', context), false);
   assert.equal(sent.length, 2, "local capacity failure must not send another frame");
   assert.match(errors.at(-1).payload.message, /eight images/i);
+  acceptMore = true;
+  vm.runInContext('send = () => { throw new Error("transport serialization failed"); }', context);
+  assert.equal(await vm.runInContext('sendFile("frame", "#image")', context), undefined);
+  assert.equal(discarded.at(-1), "frame-source-1",
+    "an unsent image must release its pending capacity even on a thrown send");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

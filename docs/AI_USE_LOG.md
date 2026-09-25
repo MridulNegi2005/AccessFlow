@@ -1633,3 +1633,14 @@ action-pause window and restricted image-failure status to pre-observation
 backend failure. Seven Node checks, Ruff and the standard Python 3.11 suite
 passed (1388/6 skipped/3 xfailed/2 warnings). No memory-limited model run,
 physical-mic recording, shared controller change or official kit run occurred.
+
+## 25 September 2026 - AI-assisted late-image receipt retention
+
+Assistance reproduced a browser loss of a pending PNG across task timeout and
+a stranded pending slot after a thrown upload. It repaired the owned receipt
+path so matching late same-session PNGs remain visible without reviving an
+old answer or contaminating a new request, and released unsent image slots.
+The standard Python 3.11 suite passed 1388/6 skipped/3 xfailed/2 warnings;
+seven Node checks and Ruff passed. This is browser evidence retention, not
+shared D4 multi-image reasoning, real vision, physical microphone behavior
+or official evaluation. No memory-limited model retry was made.
