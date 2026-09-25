@@ -546,6 +546,13 @@
         font-size: 11px;
         line-height: 1.5;
       }
+      .backend-status {
+        margin: 7px 2px 0;
+        color: #4f5b52;
+        font-size: 11px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
       .run-button {
         position: absolute;
         left: -10000px;
@@ -1466,6 +1473,9 @@
           Voice is recorded in this browser and uploaded to the current demo
           backend after you finish.
         </p>
+        <p class="backend-status" id="backend-status" role="status" aria-live="polite">
+          Checking connected backends…
+        </p>
       </aside>
       <section class="answer-stage" aria-label="Task response">
         <div class="stage-top">
@@ -1610,6 +1620,8 @@
       let mediaSequence = 0;
       let eventSequence = 0;
       let microphone = null;
+      let microphoneStartPending = false;
+      let microphoneStartGeneration = 0;
       let mediaSendChain = Promise.resolve();
       let draftTimer = null;
       let microphoneTimer = null;
@@ -1618,7 +1630,10 @@
       let stagedImageUrl = null;
       let latestMediaSourceId = null;
       let finalSourceId = null;
-      let finalObservationSeen = false;
+      let requestSourceIds = new Set();
+      let requestEventIds = new Map();
+      let pendingAnswers = [];
+      let inputsDispatched = false;
       let runInProgress = false;
       let responseTimer = null;
       let responseBackend = "demo/mock";
@@ -1646,6 +1661,30 @@
           event.payload && typeof event.payload === "object"
             ? event.payload
             : {};
+        if (
+          event.kind === "demo_observation" &&
+          (!runInProgress || !requestSourceIds.has(payload.source_id))
+        ) return;
+        if (event.kind === "final" || event.kind === "clarify") {
+          const cause = payload.caused_by_event_id;
+          if (
+            !runInProgress ||
+            typeof cause !== "string" ||
+            !Array.from(requestEventIds.values()).includes(cause)
+          ) return;
+          if (!inputsDispatched) {
+            if (pendingAnswers.length < 8) pendingAnswers.push(event);
+            return;
+          }
+        }
+        if (event.kind === "error") {
+          const cause = payload.caused_by_event_id;
+          if (
+            !runInProgress ||
+            typeof cause !== "string" ||
+            !Array.from(requestEventIds.values()).includes(cause)
+          ) return;
+        }
         document.querySelector("#announcements").textContent = announce(event);
         if (
           event.kind === "demo_status" &&
@@ -1656,6 +1695,10 @@
           indicator.classList.toggle("disconnected", !payload.connected);
           indicator.disabled = payload.connected;
           indicator.textContent = payload.connected ? "Connected" : "Reconnect";
+          if (!payload.connected) {
+            document.querySelector("#backend-status").textContent =
+              "Backend status unavailable · reconnect before recording.";
+          }
           if (!payload.connected) {
             document.querySelector("#voice-state").textContent =
               "Connection lost";
@@ -1673,6 +1716,9 @@
           responseBackend = reasoner
             ? payload.perception_backend + " · " + reasoner
             : payload.perception_backend;
+          document.querySelector("#backend-status").textContent = reasoner
+            ? "Perception: " + payload.perception_backend + " · Reasoner: " + reasoner
+            : "Perception: " + payload.perception_backend;
           document.querySelector("#answer-context").textContent =
             modeLabel() + " · Conversation";
           return;
@@ -1703,13 +1749,12 @@
               ? "Voice input received · demo/mock mode does not transcribe audio."
               : payload.text || "Voice request received.";
           }
-          if (payload.final === true && payload.source_id === finalSourceId) {
-            finalObservationSeen = true;
+          if (payload.final === true && typeof payload.event_id === "string") {
+            requestEventIds.set(payload.source_id, payload.event_id);
           }
           return;
         }
         if (event.kind === "final" || event.kind === "clarify") {
-          if (runInProgress && !finalObservationSeen) return;
           renderResponse(event);
           finishRun();
           return;
@@ -1724,6 +1769,19 @@
           if (runInProgress) finishRun();
         }
         return;
+      }
+
+      function replayPendingAnswer() {
+        const pendingAnswer = pendingAnswers.findLast(
+          (event) =>
+            Array.from(requestEventIds.values()).includes(
+              event.payload.caused_by_event_id,
+            ),
+        );
+        pendingAnswers = [];
+        if (!pendingAnswer) return false;
+        show(pendingAnswer);
+        return true;
       }
 
       function renderResponse(event) {
@@ -1812,7 +1870,10 @@
       function finishRun() {
         runInProgress = false;
         finalSourceId = null;
-        finalObservationSeen = false;
+        requestSourceIds = new Set();
+        requestEventIds = new Map();
+        pendingAnswers = [];
+        inputsDispatched = false;
         if (responseTimer) clearTimeout(responseTimer);
         responseTimer = null;
         document.querySelector("#processing").classList.remove("visible");
@@ -2011,6 +2072,12 @@
         return prefix + "-" + mediaSequence;
       }
 
+      function registerRequestSource(sourceId) {
+        if (!runInProgress) return;
+        requestSourceIds.add(sourceId);
+        finalSourceId = sourceId;
+      }
+
       function sendInterrupt(scope) {
         return send("interrupt", () => ({
           scope,
@@ -2147,17 +2214,23 @@
           )
             return;
         }
-        if (microphone) {
-          microphone.stream.getTracks().forEach((track) => track.stop());
-          microphone.context.close();
-          microphone = null;
-        }
+        void discardMicrophone();
+        cancelPendingMicrophoneStart();
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
         cancelSpeech();
         window.location.reload();
       }
 
+      function cancelPendingMicrophoneStart() {
+        if (!microphoneStartPending) return;
+        microphoneStartGeneration += 1;
+        microphoneStartPending = false;
+        document.querySelector("#voice-toggle").disabled = runInProgress;
+        micButton.disabled = runInProgress;
+      }
+
       async function startMicrophone() {
+        if (microphone || microphoneStartPending) return;
         if (document.querySelector("#speak-pill").classList.contains("visible"))
           sendInterrupt("speech");
         cancelSpeech();
@@ -2175,10 +2248,25 @@
           });
           return;
         }
+        microphoneStartPending = true;
+        const startGeneration = ++microphoneStartGeneration;
+        const toggle = document.querySelector("#voice-toggle");
+        toggle.disabled = true;
+        micButton.disabled = true;
+        document.querySelector("#voice-state").textContent =
+          "Waiting for microphone permission";
+        document.querySelector("#voice-help").textContent =
+          "Allow microphone access in your browser to begin recording. Text input remains available.";
+        setVoiceCaption(
+          "Waiting for microphone",
+          "Recording has not started yet",
+        );
         let stream;
         let context;
+        let started = false;
         try {
           stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (startGeneration !== microphoneStartGeneration) return;
           context = new AudioContext();
           if (!context.audioWorklet) {
             throw new Error(
@@ -2186,6 +2274,7 @@
             );
           }
           await context.audioWorklet.addModule("/recorder-worklet.js");
+          if (startGeneration !== microphoneStartGeneration) return;
           const source = context.createMediaStreamSource(stream);
           const recorder = new AudioWorkletNode(context, "accessflow-recorder");
           const silentGain = context.createGain();
@@ -2244,6 +2333,7 @@
             chunks,
             sampleRate: context.sampleRate,
           };
+          started = true;
           if (document.querySelector("#audio").files[0]) {
             document.querySelector("#audio").value = "";
             document.querySelector("#dock-error").textContent =
@@ -2257,24 +2347,48 @@
             payload: { backend: "browser/microphone-capture", recording: true },
           });
         } catch (error) {
-          stream?.getTracks().forEach((track) => track.stop());
-          await context?.close();
-          document.querySelector("#voice-state").textContent =
-            "Microphone not started";
-          document.querySelector("#voice-help").textContent =
-            "Check your browser permission, or continue by typing.";
-          setVoiceCaption(
-            "Microphone not started",
-            "Text input remains available",
-          );
-          show({
-            kind: "demo_error",
-            payload: {
-              backend: "browser/microphone-capture",
-              message: error.message,
-            },
-          });
+          if (startGeneration === microphoneStartGeneration) {
+            document.querySelector("#voice-state").textContent =
+              "Microphone not started";
+            document.querySelector("#voice-help").textContent =
+              "Check your browser permission, or continue by typing.";
+            setVoiceCaption(
+              "Microphone not started",
+              "Text input remains available",
+            );
+            show({
+              kind: "demo_error",
+              payload: {
+                backend: "browser/microphone-capture",
+                message: error.message,
+              },
+            });
+          }
+        } finally {
+          if (!started) {
+            stream?.getTracks().forEach((track) => track.stop());
+            await context?.close();
+          }
+          if (startGeneration === microphoneStartGeneration) {
+            microphoneStartPending = false;
+            toggle.disabled = runInProgress;
+            micButton.disabled = Boolean(microphone) || runInProgress;
+          }
         }
+      }
+
+      async function discardMicrophone() {
+        const current = microphone;
+        if (!current) return;
+        microphone = null;
+        recordedWavBytes = null;
+        current.recorder.port.close();
+        current.recorder.disconnect();
+        current.source.disconnect();
+        current.silentGain.disconnect();
+        current.stream.getTracks().forEach((track) => track.stop());
+        setMicrophoneButtons(false);
+        await current.context.close();
       }
 
       async function stopMicrophone(reason = null) {
@@ -2287,6 +2401,11 @@
         current.silentGain.disconnect();
         current.stream.getTracks().forEach((track) => track.stop());
         await current.context.close();
+        if (socket && socket.readyState >= WebSocket.CLOSING) {
+          recordedWavBytes = null;
+          setMicrophoneButtons(false);
+          return;
+        }
         setMicrophoneButtons(false);
         if (reason === "limit") {
           show({
@@ -2339,6 +2458,7 @@
               kind === "audio" ? "upload-audio" : "upload-frame",
             );
             latestMediaSourceId = sourceId;
+            registerRequestSource(sourceId);
             return send(kind, () => ({
               data_base64: dataBase64,
               filename: file.name,
@@ -2532,6 +2652,7 @@
             "Add a text or voice request before running your task.";
           return;
         }
+        cancelPendingMicrophoneStart();
         const wasSpeaking = document
           .querySelector("#speak-pill")
           .classList.contains("visible");
@@ -2542,8 +2663,11 @@
         clearTimeout(draftTimer);
         draftTimer = null;
         runInProgress = true;
-        finalObservationSeen = false;
         finalSourceId = null;
+        requestSourceIds = new Set();
+        requestEventIds = new Map();
+        pendingAnswers = [];
+        inputsDispatched = false;
         activeInputKinds = [];
         document.querySelector("#answer-error").classList.remove("visible");
         document.querySelector("#processing").classList.add("visible");
@@ -2567,6 +2691,7 @@
           if (recordedWavBytes) {
             const sourceId = nextMediaId("mic-audio");
             latestMediaSourceId = sourceId;
+            registerRequestSource(sourceId);
             const sent = await enqueueMediaAction(() =>
               send("audio", {
                 data_base64: bytesToBase64(recordedWavBytes),
@@ -2576,26 +2701,23 @@
             );
             if (!sent)
               throw new Error("The voice recording could not be sent.");
-            finalSourceId = sourceId;
             activeInputKinds.push("audio");
           } else if (audioFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("audio", "#audio");
             if (!sent) throw new Error("The WAV could not be sent.");
-            finalSourceId = latestMediaSourceId;
             activeInputKinds.push("audio");
           }
           if (imageFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("frame", "#image");
             if (!sent) throw new Error("The screenshot could not be sent.");
-            if (!text) finalSourceId = latestMediaSourceId;
             activeInputKinds.push("frame");
           }
           if (text) {
             document.querySelector("#text").value = text;
             const finalTranscript = transcript(true);
-            finalSourceId = finalTranscript.utterance_id;
+            registerRequestSource(finalTranscript.utterance_id);
             const sent = send("transcript", finalTranscript);
             if (!sent) throw new Error("Your request could not be sent.");
             activeInputKinds.push("text");
@@ -2605,6 +2727,8 @@
             throw new Error(
               "No request could be sent. Check your connection and try again.",
             );
+          inputsDispatched = true;
+          if (replayPendingAnswer()) return;
           responseTimer = window.setTimeout(() => {
             if (!runInProgress) return;
             document.querySelector("#answer-error").textContent =
@@ -2651,6 +2775,8 @@
         };
         socket.onclose = () => {
           pendingMessages.length = 0;
+          cancelPendingMicrophoneStart();
+          void discardMicrophone();
           show({ kind: "demo_status", payload: { connected: false } });
         };
         socket.onerror = () =>
@@ -2887,10 +3013,11 @@
         renderDesignPreview(previewVariant);
       }
       window.addEventListener("beforeunload", () => {
+        cancelPendingMicrophoneStart();
         clearTimeout(draftTimer);
         clearInterval(microphoneTimer);
         cancelSpeech();
-        microphone?.stream.getTracks().forEach((track) => track.stop());
+        void discardMicrophone();
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
       });
     </script>

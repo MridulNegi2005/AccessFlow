@@ -1053,7 +1053,7 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
         if len(calls) == 1:
             provider_started.set()
             try:
-                assert release_first.wait(1)
+                assert release_first.wait(3)
             finally:
                 first_finished.set()
             return "stale visual evidence"
@@ -1062,7 +1062,9 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
     async def collect(adapter, event):
         return [observation async for observation in adapter.observe(event)]
 
-    adapter = LocalPerception(vision_provider=provider, timeout_s=0.05)
+    # Leave room for a loaded test loop to enqueue the replacement before the
+    # deliberately blocked native call reaches its execution deadline.
+    adapter = LocalPerception(vision_provider=provider, timeout_s=0.5)
     first_task = asyncio.create_task(
         collect(
             adapter,
@@ -1107,7 +1109,7 @@ async def test_stale_frame_queue_timeout_does_not_admit_native_work(tmp_path: Pa
         if len(calls) == 1:
             provider_started.set()
             try:
-                assert release_first.wait(1)
+                assert release_first.wait(3)
             finally:
                 first_finished.set()
             return "stale visual evidence"
@@ -1116,7 +1118,9 @@ async def test_stale_frame_queue_timeout_does_not_admit_native_work(tmp_path: Pa
     async def collect(adapter, event):
         return [observation async for observation in adapter.observe(event)]
 
-    adapter = LocalPerception(vision_provider=provider, timeout_s=0.05)
+    # Keep enough scheduling margin for the replacement to be accepted before
+    # the intentionally blocked native call reaches its execution deadline.
+    adapter = LocalPerception(vision_provider=provider, timeout_s=0.5)
     first_task = asyncio.create_task(
         collect(
             adapter,
@@ -1138,7 +1142,7 @@ async def test_stale_frame_queue_timeout_does_not_admit_native_work(tmp_path: Pa
     assert await first_task == []
     with pytest.raises(
         RuntimeError,
-        match=r"image perception timed out waiting for native capacity after 0.05s",
+        match=r"image perception timed out waiting for native capacity after 0.5s",
     ):
         await second_task
     assert calls == [paths[0]]
@@ -1442,9 +1446,10 @@ async def test_installed_whisper_uses_local_model_factory_and_cpu_int8(tmp_path:
     factory_calls = []
 
     class FakeModel:
-        def transcribe(self, path: str, beam_size: int):
+        def transcribe(self, path: str, *, beam_size: int, word_timestamps: bool):
             assert Path(path) == wav_path
             assert beam_size == 5
+            assert word_timestamps is True
             return [SimpleNamespace(text=" Book "), SimpleNamespace(text="Wednesday")], None
 
     def factory(path: str, **kwargs):
@@ -1463,6 +1468,150 @@ async def test_installed_whisper_uses_local_model_factory_and_cpu_int8(tmp_path:
     assert factory_calls == [(str(model_dir), {"device": "cpu", "compute_type": "int8"})]
     assert observation.text == "Book Wednesday"
     assert observation.backend == "faster-whisper/cpu-int8"
+
+
+@pytest.mark.asyncio
+async def test_installed_whisper_preserves_raw_decode_evidence_with_event_provenance(tmp_path: Path):
+    from types import SimpleNamespace
+
+    model_dir = tmp_path / "whisper-model"
+    model_dir.mkdir()
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    captured = []
+
+    class FakeModel:
+        def transcribe(self, path: str, *, beam_size: int, word_timestamps: bool):
+            assert Path(path) == wav_path
+            assert beam_size == 5
+            assert word_timestamps is True
+            return (
+                [
+                    SimpleNamespace(
+                        text=" Tuesday.",
+                        start=0.2,
+                        end=0.8,
+                        avg_logprob=-0.42,
+                        no_speech_prob=0.03,
+                        compression_ratio=1.08,
+                        words=[
+                            SimpleNamespace(
+                                word=" Tuesday.", start=0.2, end=0.8, probability=0.71
+                            )
+                        ],
+                    )
+                ],
+                SimpleNamespace(language="en", language_probability=0.94),
+            )
+
+    event = AudioEvent(
+        session_id="s-evidence",
+        event_id="e-evidence",
+        payload=Audio(
+            path=str(wav_path),
+            utterance_id="u-evidence",
+            revision=4,
+        ),
+    )
+    observation = await _one(
+        LocalPerception(
+            model_path=model_dir,
+            whisper_factory=lambda *_args, **_kwargs: FakeModel(),
+            asr_evidence_sink=captured.append,
+        ),
+        event,
+    )
+
+    assert observation.text == "Tuesday."
+    assert len(captured) == 1
+    evidence = captured[0]
+    assert (evidence.event_id, evidence.source_id, evidence.revision) == (
+        "e-evidence",
+        "u-evidence",
+        4,
+    )
+    assert evidence.backend == "faster-whisper/cpu-int8"
+    assert evidence.transcript == "Tuesday."
+    assert evidence.language == "en"
+    assert evidence.language_probability == 0.94
+    assert evidence.segments[0].avg_logprob == -0.42
+    assert evidence.segments[0].no_speech_prob == 0.03
+    assert evidence.segments[0].words[0].decoder_probability == 0.71
+    assert evidence.decoder_estimates_are_calibrated is False
+
+
+@pytest.mark.asyncio
+async def test_installed_whisper_keeps_empty_decode_evidence_before_rejecting_empty_text(
+    tmp_path: Path,
+):
+    from types import SimpleNamespace
+
+    model_dir = tmp_path / "whisper-model"
+    model_dir.mkdir()
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+    captured = []
+
+    class FakeModel:
+        def transcribe(self, path: str, *, beam_size: int, word_timestamps: bool):
+            return [], SimpleNamespace(language="en", language_probability=0.4)
+
+    event = AudioEvent(
+        session_id="s-empty-evidence",
+        event_id="e-empty-evidence",
+        payload=Audio(path=str(wav_path), utterance_id="u-empty-evidence"),
+    )
+    perception = LocalPerception(
+        model_path=model_dir,
+        whisper_factory=lambda *_args, **_kwargs: FakeModel(),
+        asr_evidence_sink=captured.append,
+    )
+    try:
+        with pytest.raises(RuntimeError, match="audio perception returned empty text"):
+            await _one(perception, event)
+    finally:
+        await perception.aclose()
+
+    assert len(captured) == 1
+    assert captured[0].event_id == "e-empty-evidence"
+    assert captured[0].transcript == ""
+    assert captured[0].segments == ()
+    assert captured[0].language_probability == 0.4
+
+
+@pytest.mark.asyncio
+async def test_asr_evidence_sink_failure_does_not_drop_valid_transcript(tmp_path: Path, caplog):
+    from types import SimpleNamespace
+
+    model_dir = tmp_path / "whisper-model"
+    model_dir.mkdir()
+    wav_path = tmp_path / "speech.wav"
+    _write_wav(wav_path)
+
+    class FakeModel:
+        def transcribe(self, path: str, *, beam_size: int, word_timestamps: bool):
+            return [SimpleNamespace(text=" Book Wednesday ")], None
+
+    def fail_sink(evidence):
+        raise OSError("diagnostic storage unavailable")
+
+    event = AudioEvent(
+        session_id="s-failing-sink",
+        event_id="e-failing-sink",
+        payload=Audio(path=str(wav_path), utterance_id="u-failing-sink"),
+    )
+    perception = LocalPerception(
+        model_path=model_dir,
+        whisper_factory=lambda *_args, **_kwargs: FakeModel(),
+        asr_evidence_sink=fail_sink,
+    )
+    try:
+        observation = await _one(perception, event)
+    finally:
+        await perception.aclose()
+
+    assert observation.text == "Book Wednesday"
+    assert "ASR evidence sink failed" in caplog.text
 
 
 @pytest.mark.asyncio

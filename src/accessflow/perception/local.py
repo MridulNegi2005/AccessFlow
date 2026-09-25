@@ -7,6 +7,7 @@ passing it to an optional local transcriber. Model work runs off the event loop.
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import struct
 import threading
@@ -15,10 +16,13 @@ import zlib
 from collections import OrderedDict
 from collections.abc import AsyncIterator, Awaitable, Callable, Hashable
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
 from typing import Any
 
 from ..contracts import AudioEvent, FrameEvent, InputEvent, Observation, TranscriptEvent
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -29,6 +33,57 @@ class WavFormat:
     sample_width: int
     sample_rate: int
     frames: int
+
+
+@dataclass(frozen=True)
+class ASRWordEvidence:
+    """Raw word-level values returned by an ASR decoder, not calibrated scores."""
+
+    text: str
+    start_s: float | None
+    end_s: float | None
+    decoder_probability: float | None
+
+
+@dataclass(frozen=True)
+class ASRSegmentEvidence:
+    """Raw segment-level values; offsets remain relative to the decoded WAV."""
+
+    text: str
+    start_s: float | None
+    end_s: float | None
+    avg_logprob: float | None
+    no_speech_prob: float | None
+    compression_ratio: float | None
+    words: tuple[ASRWordEvidence, ...]
+
+
+@dataclass(frozen=True)
+class ASRDecodeEvidence:
+    """Decoder evidence paired with source identity for diagnostics only.
+
+    Decoder estimates are not calibrated confidence and must not authorize
+    actions or be interpreted as turn-finality. Segment/word offsets are WAV-
+    relative; this record does not map them to a session or wall clock.
+    """
+
+    event_id: str
+    source_id: str
+    revision: int
+    backend: str
+    transcript: str
+    language: str | None
+    language_probability: float | None
+    segments: tuple[ASRSegmentEvidence, ...]
+    decoder_estimates_are_calibrated: bool = False
+
+
+@dataclass(frozen=True)
+class _WhisperDecode:
+    transcript: str
+    language: str | None
+    language_probability: float | None
+    segments: tuple[ASRSegmentEvidence, ...]
 
 
 MAX_WAV_FILE_BYTES = 8 * 1024 * 1024
@@ -236,9 +291,64 @@ def validate_png(path: Path) -> PngFormat:
     return PngFormat(*ihdr)
 
 
-def _transcribe_with_whisper(model: Any, path: Path) -> str:
-    segments, _ = model.transcribe(str(path), beam_size=5)
-    return " ".join(segment.text.strip() for segment in segments).strip()
+def _optional_finite_float(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) else None
+
+
+def _transcribe_with_whisper(model: Any, path: Path) -> _WhisperDecode:
+    segments, info = model.transcribe(str(path), beam_size=5, word_timestamps=True)
+    evidence = []
+    texts = []
+    for segment in segments:
+        text = segment.text
+        if not isinstance(text, str):
+            raise ValueError("ASR segment text must be a string")
+        texts.append(text.strip())
+        words = []
+        for word in getattr(segment, "words", None) or ():
+            word_text = getattr(word, "word", None)
+            if not isinstance(word_text, str):
+                raise ValueError("ASR word text must be a string")
+            words.append(
+                ASRWordEvidence(
+                    text=word_text,
+                    start_s=_optional_finite_float(getattr(word, "start", None)),
+                    end_s=_optional_finite_float(getattr(word, "end", None)),
+                    decoder_probability=_optional_finite_float(
+                        getattr(word, "probability", None)
+                    ),
+                )
+            )
+        evidence.append(
+            ASRSegmentEvidence(
+                text=text,
+                start_s=_optional_finite_float(getattr(segment, "start", None)),
+                end_s=_optional_finite_float(getattr(segment, "end", None)),
+                avg_logprob=_optional_finite_float(getattr(segment, "avg_logprob", None)),
+                no_speech_prob=_optional_finite_float(
+                    getattr(segment, "no_speech_prob", None)
+                ),
+                compression_ratio=_optional_finite_float(
+                    getattr(segment, "compression_ratio", None)
+                ),
+                words=tuple(words),
+            )
+        )
+    transcript = " ".join(text for text in texts if text).strip()
+    language = getattr(info, "language", None)
+    if not isinstance(language, str):
+        language = None
+    return _WhisperDecode(
+        transcript=transcript,
+        language=language,
+        language_probability=_optional_finite_float(
+            getattr(info, "language_probability", None)
+        ),
+        segments=tuple(evidence),
+    )
 
 
 def _normalize_provider_text(value: Any, modality: str) -> str:
@@ -400,7 +510,10 @@ class LocalPerception:
 
     ``transcriber`` is a small injection point for tests or another local ASR
     backend. When omitted, ``model_path`` must point to an already-installed
-    Faster Whisper model; no model is downloaded during ``observe``.
+    Faster Whisper model; no model is downloaded during ``observe``. The optional
+    ASR evidence sink receives immutable raw decoder metadata on the event loop,
+    including empty decodes before their existing empty-text error; keep it fast
+    and diagnostic-only. It is not forwarded to agent observations.
     """
 
     def __init__(
@@ -411,6 +524,7 @@ class LocalPerception:
         vision_provider: Callable[[Path], str] | None = None,
         whisper_factory: Callable[..., Any] | None = None,
         timeout_s: float | None = None,
+        asr_evidence_sink: Callable[[ASRDecodeEvidence], None] | None = None,
     ) -> None:
         if transcriber is not None and model_path is not None:
             raise ValueError("Pass transcriber or model_path, not both")
@@ -429,6 +543,9 @@ class LocalPerception:
         self._vision_provider = vision_provider
         self._whisper_factory = whisper_factory
         self._timeout_s = timeout_s
+        if asr_evidence_sink is not None and not callable(asr_evidence_sink):
+            raise ValueError("asr_evidence_sink must be callable")
+        self._asr_evidence_sink = asr_evidence_sink
         self._whisper_model: Any | None = None
         self._model_lock = threading.Lock()
         self._lifecycle_lock = asyncio.Lock()
@@ -499,7 +616,25 @@ class LocalPerception:
             )
             if result is _SUPERSEDED:
                 return
-            text, backend = result
+            text, backend, decode = result
+            if decode is not None and self._asr_evidence_sink is not None:
+                try:
+                    self._asr_evidence_sink(
+                        ASRDecodeEvidence(
+                            event_id=event.event_id,
+                            source_id=event.payload.utterance_id,
+                            revision=event.payload.revision,
+                            backend=backend,
+                            transcript=text,
+                            language=decode.language,
+                            language_probability=decode.language_probability,
+                            segments=decode.segments,
+                        )
+                    )
+                except Exception:
+                    _LOGGER.exception(
+                        "ASR evidence sink failed; transcript delivery will continue"
+                    )
             text = _normalize_provider_text(text, "audio")
             yield Observation(
                 event_id=event.event_id,
@@ -607,26 +742,25 @@ class LocalPerception:
 
     async def _transcribe(
         self, path: Path, native_slot: asyncio.Semaphore
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str, _WhisperDecode | None]:
         if self._transcriber is not None:
             return (
                 await self._run_native_with_timeout(
                     self._transcriber, path, "audio", native_slot
                 ),
                 "local/injected-asr",
+                None,
             )
         if self._model_path is None:
             raise RuntimeError(
                 "No local transcriber configured; install Faster Whisper and provide model_path"
             )
-        return (
-            await self._run_native_with_timeout(
-                self._transcribe_installed_whisper, path, "audio", native_slot
-            ),
-            "faster-whisper/cpu-int8",
+        decode = await self._run_native_with_timeout(
+            self._transcribe_installed_whisper, path, "audio", native_slot
         )
+        return decode.transcript, "faster-whisper/cpu-int8", decode
 
-    def _transcribe_installed_whisper(self, path: Path) -> str:
+    def _transcribe_installed_whisper(self, path: Path) -> _WhisperDecode:
         if self._model_path is None or not self._model_path.exists():
             raise FileNotFoundError(f"Installed Faster Whisper model not found: {self._model_path}")
         if self._whisper_model is None:

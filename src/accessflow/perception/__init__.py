@@ -3,7 +3,16 @@
 from .timing import ActivitySummary, ActivityWindow, PauseCandidate, pause_candidates, summarize_activity
 from .audio import ActivityFrame, AudioBuffer, energy_activity, load_pcm
 from .vad import webrtc_activity
-from .local import LocalPerception, PngFormat, WavFormat, validate_png, validate_wav
+from .local import (
+    ASRDecodeEvidence,
+    ASRSegmentEvidence,
+    ASRWordEvidence,
+    LocalPerception,
+    PngFormat,
+    WavFormat,
+    validate_png,
+    validate_wav,
+)
 from .vision import OllamaVisionProvider
 from .metrics import (
     EditCounts,
@@ -21,6 +30,9 @@ __all__ = [
     "ActivityWindow",
     "PauseCandidate",
     "ActivityFrame",
+    "ASRDecodeEvidence",
+    "ASRSegmentEvidence",
+    "ASRWordEvidence",
     "AudioBuffer",
     "LocalPerception",
     "OllamaVisionProvider",

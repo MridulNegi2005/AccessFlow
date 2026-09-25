@@ -245,8 +245,12 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
             else:
                 if "screen shows the approval prompt" in payload.get("prompt", ""):
                     ReasonerHandler.image_context_received.set()
+                if "What did I send you?" in payload.get("prompt", ""):
+                    answer = "The spoken question and approval prompt were both received."
+                else:
+                    answer = "Only the image was received."
                 plan = {
-                    "response": "The local reasoner received the spoken request and screen evidence.",
+                    "response": answer,
                     "request_complete": True,
                 }
                 response = json.dumps({"response": json.dumps(plan)}).encode("utf-8")
@@ -293,10 +297,22 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
                     }
                 )
                 outputs = []
-                while not any(item["kind"] in {"final", "error"} for item in outputs):
-                    outputs.append(socket.receive_json())
+                speech_event_id = None
+                matching_final = None
+                while matching_final is None:
+                    message = socket.receive_json()
+                    outputs.append(message)
+                    if message["kind"] == "demo_observation" and message["payload"]["text"] == "What did I send you?":
+                        speech_event_id = message["payload"]["event_id"]
+                    if (
+                        message["kind"] == "final"
+                        and speech_event_id is not None
+                        and message["payload"].get("caused_by_event_id") == speech_event_id
+                    ):
+                        matching_final = message
 
-        final = next(item for item in outputs if item["kind"] == "final")
+        final = matching_final
+        assert speech_event_id is not None
         assert status["kind"] == "demo_status"
         assert status["payload"]["perception_backend"] == (
             "demo/mock audio + local/Ollama gemma3:4b image"
@@ -307,10 +323,10 @@ def test_websocket_environment_reasoner_receives_multimodal_context(monkeypatch)
             "source_id": "reasoner-frame",
         }
         assert final["payload"] == {
-            "text": "The local reasoner received the spoken request and screen evidence.",
+            "text": "The spoken question and approval prompt were both received.",
             "basis": "informational",
             "backend": "reasoner",
-            "caused_by_event_id": final["payload"]["caused_by_event_id"],
+            "caused_by_event_id": speech_event_id,
         }
         assert len(ReasonerHandler.requests) >= 2
         vision_requests = [payload for payload in ReasonerHandler.requests if payload.get("images")]
