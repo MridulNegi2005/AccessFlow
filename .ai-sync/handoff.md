@@ -1,5 +1,20 @@
 # Active Handoff
 
+## Atishay partial live-voice follow-up - 25 September 2026
+
+Atishay's branch adds an opt-in browser preview/final path for configured
+process ASR. A local installed Faster Whisper test decoded a generated WAV as
+a provisional preview before a higher-revision final; the mock planner was not
+called before final. A browser regression after an ordinary mock text response
+was repaired: unavailable live voice now remains disabled with honest help
+text. Full Python 3.11 suite: 1377 passed, 5 skipped, 3 xfailed, 2 dependency
+warnings; Ruff and five Node checks passed. See
+`docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md` and
+`docs/handoffs/atishay.md`. This is PARTIAL: D1 shared stop decisions, D2/D3
+controller closure semantics, D4 image registry, real reasoning/vision runs,
+and four human microphone checks remain. No Mridul-owned implementation,
+shared contract, root dependency or official package was changed.
+
 ## Confirmed product decisions - 25 September 2026
 
 Read `docs/PRODUCT_DECISIONS_2026-09-25.md` first. User-approved D1-D4: vague stop

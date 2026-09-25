@@ -1074,3 +1074,35 @@ timing, real semantic endpointing, committed-effect closure, live model-quality
 or image-history result is claimed. D2/D3 controller guarantees and D4 shared
 registry/source semantics still require agreement with Mridul. This is a
 checkpoint, not completion of the 26-case acceptance gate.
+
+## 2026-09-25 — Installed-ASR preview and browser-state follow-up
+
+Extended the opt-in configured WebSocket test to send pending speech, decode a
+generated WAV as a provisional Faster Whisper preview, and then send a higher-
+revision final WAV. The real local ASR preview preserved utterance/revision,
+decoded the two Tuesday mentions and Wednesday correction, and made zero
+mock-planner calls before final. It passed with the explicit installed model
+path (1 passed, 2 existing dependency warnings); this is not a real reasoner
+or physical-microphone result. A separate deterministic disconnect regression
+holds a provisional preview in flight, then verifies cancellation, perception
+closure and no final/observation output. It does not exercise an in-flight tool.
+
+An in-app-browser mock smoke found that finishing a text request re-enabled
+the unavailable live-voice button and replaced its honest help text. The
+owned page now preserves the disabled state and configured-ASR guidance while
+keeping End session enabled for an active session and fresh-session restart
+enabled after closure. The new Node regression and browser recheck passed.
+Initial local WebSocket upgrade failed because the `.venv` lacked the optional
+runtime; local-only `websockets==17.1` enabled the check without changing the
+project lockfile. The browser showed a mock echo, not a substantive answer;
+no configured voice or physical-device browser state was tested.
+
+Full Python 3.11 suite: 1377 passed, 5 skipped, 3 xfailed, 2 dependency
+warnings in 114.80 s; Ruff and five Node checks passed. The D1 shared-stop
+xfails, D4 shared image-history xfail, twelve actual-reasoner/vision attempts
+and four agreed human-microphone cases remain open. Read-only local checks
+found the installed ASR snapshot but no configured reasoning credential or
+listening Ollama/vision service; the kit was absent from five bounded local
+locations, not from the organizer generally. Mridul still owns shared D1/D2/D3
+decisions and D4 registry/source guards; Atishay owns remaining browser,
+perception and human-device conformance once those seams and providers exist.

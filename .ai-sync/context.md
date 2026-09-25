@@ -1453,3 +1453,11 @@ configuration changed; no commit or push.
 **Notes:** No further product confirmation needed. Vague stop clarifies; End session is not send; keep ordered images for cross-image field selection. Existing newest-only controller is insufficient. A/B ownership preserved. 26/12/4 are future acceptance gates, not fresh results. User-authorized documentation publication only; no source changes.
 
 ---
+
+## [2026-09-25 17:02 IST] - AI-assisted Atishay live-voice follow-up
+**Task:** Continue owned D2/D3 implementation and verify real ASR preview and browser availability after a text response.
+**Changes:** Extended the opt-in real-ASR preview/final regression; kept unavailable live voice disabled and its help text honest after `finishRun`; added a Node state regression and updated B evidence/handoff.
+**Status:** PARTIAL. Installed-ASR generated-WAV preview and final pass; mock browser post-answer state visually checked. No physical-microphone or configured-reasoner/vision completion claim.
+**Notes:** Python 3.11 full suite 1377 passed/5 skipped/3 xfailed/2 dependency warnings; Ruff and five Node checks passed. Local-only WebSocket package was added to `.venv` for smoke testing, not to the shared lockfile. D1/D4 shared failures, actual inference attempts and four human microphone checks remain open. No Mridul-owned source or official package changed.
+
+---

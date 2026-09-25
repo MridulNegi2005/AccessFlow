@@ -17,7 +17,7 @@ implementation or configuration was edited.
 | Gate 1 — 26 cases | FAIL | Checklist below | Error, selected stop/playback/capture, and a deterministic corrected mock action pass. | D1/D2/D3/D4 and actual live action cases remain. |
 | Gate 2 — 12 actual-inference attempts | NOT RUN | No declared reasoning provider or listening Ollama service; no run ledger created | Installed ASR can decode a generated fixture through the browser adapter. | Predeclare four development cases and run 3 attempts each with actual ASR/reasoning/vision where applicable, Atishay. Never count fake reasoner or fixture response. |
 | Gate 3 — four human microphone cases | NOT RUN | No new human audio captured | None claimed. | Run M01–M04 only after hands-free implementation and the user's capture agreement, Atishay. |
-| Gate 4 — regression | PASS for current code; acceptance still partial | Python 3.11.15: `python -m pytest -q` **1376 passed, 5 skipped, 3 xfailed, 2 dependency warnings** (97.86 s); `ruff check .` and five Node checks passed. Earlier explicit installed-model opt-in: **3 passed**, 136 deselected (20.30 s). | Current checked code is regression-clean; real ASR worker and browser adapter tests pass on generated WAV. | Two D1 xfails and the conflicting-frame xfail are open deliverable failures, not successes. New live capture still lacks physical-mic and browser visual QA. |
+| Gate 4 — regression | PASS for current code; acceptance still partial | Python 3.11.15: `python -m pytest -q` **1377 passed, 5 skipped, 3 xfailed, 2 dependency warnings** (114.80 s); `ruff check .` and five Node checks passed. Explicit installed-ASR browser preview/final test: **1 passed** (9.92 s), plus the earlier opt-in suite. | Current checked code is regression-clean; installed Faster Whisper decoded a generated WAV for both preview and final, and the preview did not reach the mock planner. | Two D1 xfails and the conflicting-frame xfail are open deliverable failures, not successes. Physical-mic timing and configured reasoning remain unverified. |
 
 The two warnings are Starlette TestClient/httpx deprecations. The five skips
 were: `test_websocket_configured_adapter_with_installed_asr_and_mock_reasoner`
@@ -33,6 +33,18 @@ set to the installed `Systran/faster-whisper-base.en` snapshot. That run used
 actual Faster Whisper CPU INT8 on a **generated** WAV, but a **mock reasoner**;
 it proved event/source identity and bounded native child teardown, not a real
 answer, booking, human microphone result or Samsung score.
+
+Browser QA status: **IN PROGRESS**. The local mock page was opened in the Codex
+in-app browser at 1280 CSS-pixel width. I inspected pixels in the initial and
+post-answer states, confirmed the unavailable live-voice control stays disabled
+after a text request, checked `document.body.scrollWidth` (1265 versus 1280
+viewport width) and saw no browser error logs. The mock text request returned a
+mock echo, not a substantive agent answer. The first local server run could not
+upgrade `/ws` because the local `.venv` lacked WebSocket support; installing
+`websockets==17.1` into that local environment allowed the smoke check without
+changing the root dependency files. The temporary server was stopped. No
+configured live-voice state, physical microphone, or responsive viewport was
+visually verified, so this is not a full visual or device pass.
 
 ### Gate 1 stable case checklist
 
@@ -54,15 +66,15 @@ gate or the real-inference/human-device gates.
 | S05 | PASS | `test_stop_words_have_distinct_scopes`: booking cancellation and washing-machine stop remain ordinary complete requests. This is classification, not a real cancellation effect. |
 | S06 | FAIL | `test_vague_stop_holds_and_clarifies_without_a_final` strict xfail; partial cancel classifier is covered separately but shared hold is absent. |
 | V01 | PASS, deterministic only | `test_websocket_configured_correction_commits_only_wednesday_mock_effect`: browser → actual controller, scripted planner double, partial Tuesday produces no effect; final correction creates one 2026-09-30 17:00 Asia/Kolkata mock effect and no Tuesday write. Real configured reasoning/mic remains Gate 2/3. |
-| V02 | NOT RUN | Offline pause replay exists; live automatic endpointing is absent. |
+| V02 | PARTIAL | `live_voice_check.cjs` covers a simulated internal pause and resumed speech without finalizing; acoustic timing and semantic endpoint quality on a physical microphone remain unverified. |
 | V03 | NOT RUN | No integrated repetition/effect check. |
 | V04 | NOT RUN | Source/revision tests exist, but no hands-free delayed-ASR correction conformance. |
 | L01 | PASS | `microphone_pending_check.cjs`: pending/denied/late-grant capture cleanup. Not physical permission evidence. |
 | L02 | PASS | `microphone_disconnect_check.cjs` and opt-in browser ASR disconnect test cover owned track/context and worker release in separate deterministic seams. |
 | L03 | NOT RUN | No fresh-session reconnect regression through a configured process worker. |
 | L04 | BLOCKED | Shared single-active-frame controller lacks the D4 image registry and source-bound selection, Mridul; Atishay still needs UI/per-image test. |
-| V05 | NOT RUN | No processing-during-speech or automatic hands-free completion path. |
-| L05 | NOT RUN | No End session control closing active voice/inference/tool wait without a final upload. |
+| V05 | PARTIAL | `live_voice_check.cjs` sends a bounded provisional preview before an automatic final; the explicit installed-ASR WebSocket test returns a Faster Whisper preview before final admission and sees zero mock planner calls until final. No physical-mic or real-reasoner action proof. |
+| L05 | PARTIAL | `live_voice_check.cjs` discards an unfinished turn and closes owned capture resources on End session; `test_websocket_disconnect_cancels_inflight_preview_without_final` proves a pending preview is cancelled and perception closed without a final. Cancellation during real tool wait and committed-effect reporting remain unverified. |
 | I01 | BLOCKED | D4 admission-ordinal registry absent in shared controller, Mridul; UI/test owned by Atishay. |
 | I02 | BLOCKED | D4 per-field source selection/provenance and write guard absent, Mridul; browser display/test owned by Atishay. |
 | I03 | BLOCKED | D4 ambiguous-reference/field clarification needs shared selected-source view, Mridul. |

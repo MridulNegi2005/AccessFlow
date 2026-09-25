@@ -1513,3 +1513,13 @@ to retain timestamped/ordered multi-image references. Assistance converted those
 instructions into D1-D4, owner-separated implementation guidance and expanded
 acceptance gates. These are requirements, not code changes or verified model
 capabilities. No recording, new inference run or source repair occurred.
+
+## 25 September 2026 - AI-assisted Atishay live-voice verification
+
+Assistance extended an opt-in generated-WAV test through the installed Faster
+Whisper preview and final WebSocket route, repaired a browser control-state
+regression after a mock text response, and updated evidence/handoff notes.
+The local browser smoke inspected the rendered mock page without microphone
+permission. One read-only sidecar checked bounded local model/service/kit
+availability without reading credential values. No real reasoning/vision,
+physical microphone, booking, official scoring or publication is claimed.

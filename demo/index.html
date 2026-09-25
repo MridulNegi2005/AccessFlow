@@ -1972,6 +1972,10 @@
           document.querySelector("#voice-state").textContent = "Listening · live session";
           document.querySelector("#voice-help").textContent =
             "Speak naturally or choose End session. No Finish button is needed.";
+        } else if (!livePreviewAvailable && !sessionEnded) {
+          document.querySelector("#voice-state").textContent = "Ready when you are";
+          document.querySelector("#voice-help").textContent =
+            "Hands-free voice needs the configured agent with installed ASR. Upload WAV or type meanwhile.";
         } else if (
           !microphone &&
           !document.querySelector("#speak-pill").classList.contains("visible")
@@ -2622,7 +2626,9 @@
 
       function setMediaControlsLocked(locked) {
         document.querySelector("#choose-audio").disabled = locked;
-        document.querySelector("#voice-toggle").disabled = locked && !liveVoice?.active;
+        document.querySelector("#voice-toggle").disabled =
+          !sessionEnded && !liveVoice?.active && !liveVoice?.startPending &&
+          (locked || !livePreviewAvailable);
         const dropZone = document.querySelector("#drop-zone");
         dropZone.setAttribute("aria-disabled", String(locked));
         dropZone.tabIndex = locked ? -1 : 0;
