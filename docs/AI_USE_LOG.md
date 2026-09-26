@@ -1664,3 +1664,6 @@ No attribution of shared-controller blockers to the teammate's completed UI work
 
 ## 2026-09-26 12:39 - Controller playback stop
 AI-assisted design, implementation and tests of explicit output-only interrupt. Scope: A-owned contracts/controller/tests. Full1392 passed/6 skipped/3 xfailed. Spoken controls remain incomplete; user requested pause. No live-model claims.
+
+## 2026-09-26 18:53 - Stop, closure and image-registry groundwork
+AI-assisted controller implementation and adversarial review; isolated regression and registry assistance. Original findings were checked against code/tests, including the cancellation-worker shutdown bug. Human requirements D1-D4 retained. Only A-owned files changed. Broad1419 passed/6skipped/2deselected/1xfail, final controls20passed, Ruff clean. Image registry is not yet integrated. No real inference/microphone result.

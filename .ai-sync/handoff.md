@@ -1,5 +1,21 @@
 # Active Handoff
 
+## Resumed controller checkpoint - 26 September 2026
+
+User resumed work and narrowed the goal to finish A work or reach necessary B
+integration. Read docs/reviews/CONTROLLER_PROGRESS_2026-09-26.md.
+Implemented controller stop/hold/resolution, guarded audio readiness restoration,
+and bounded shutdown cancellation with silent closure. Added standalone D4 registry;
+NOT yet connected to engine/planner, so multi-image support remains incomplete.
+Broad regression: 1419 passed, 6 skipped, 2 deselected, 1 xfailed (131.88s).
+The two deselections are B strict-xfail tests that now pass unmasked. Subsequent
+final action-resolution edit and focused controls: 20 passed including all three
+B stop tests with --runxfail. Changed-file Ruff clean. No live inference claim.
+Next independent A work: integrate registry with source bindings and snapshots,
+then verify configured runtime, package and official evaluation. B removes obsolete
+strict markers and later connects D4/runs actual reasoning/vision/mic acceptance.
+Goal remains active; not complete and not waiting for B yet.
+
 ## Paused checkpoint - 26 September 2026
 
 User requested a safe pause. Added explicit `Interrupt.scope="output"` playback

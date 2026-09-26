@@ -476,3 +476,17 @@ coordinate that integration; B-owned files were not edited.
 
 Tests: `tests/engine/test_output_interrupt.py` covers pending reads/writes,
 authority preservation, continued image processing and the legacy default.
+
+
+## 2026-09-26: controller stop resolution and silent closure
+
+Final text/audio now resolve the conservative D1 control phrases in the shared
+controller. Explicit task cancellation works independently of B policy; ambiguous
+stop holds planner dispatch/proposal application/read retries. Read
+`docs/reviews/CONTROLLER_PROGRESS_2026-09-26.md` for audio cancellation limits.
+EndEvent now emits acknowledgement fields `session_ended=true`, `stop_output=true`,
+and reason, without spoken text. B should treat that as a local session-status
+control. No new B dependency or source change is required for the existing tests.
+Two B strict stop-xfail markers now need removal after pulling A code; run them
+with --runxfail meanwhile. D4 registry API is standalone only, not a finished
+snapshot contract or a request for B to work around missing A integration.

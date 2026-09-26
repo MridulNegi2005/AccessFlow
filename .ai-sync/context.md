@@ -1544,3 +1544,11 @@ configuration changed; no commit or push.
 **Notes:** Full1392/6skip/3xfail; focused10 pass; Ruff clean. Spoken-stop/hold remain incomplete; no B edits.
 
 ---
+
+## [2026-09-26 18:53] - AI-assisted controller work
+**Task:** Resume A-owned completion.
+**Changes:** Stop/hold resolution, conservative audio-context restoration, bounded external cancellation during shutdown, deterministic race tests; standalone image registry awaiting integration.
+**Status:** In progress.
+**Notes:** Broad1419 pass/6skip/2deselected/1xfail; final controls20pass including unmasked B cases. Strict B xfail marker maintenance required; no B source edits. D4 engine wiring and runtime/package/evaluator gates remain A work.
+
+---
