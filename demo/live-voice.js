@@ -42,6 +42,7 @@
       this.activeMs = 0;
       this.awaitingQuietReset = false;
       this.quietResetMs = 0;
+      this.voiceDetected = false;
       this.timer = null;
       this.capture = null;
     }
@@ -113,10 +114,17 @@
           if (this.quietResetMs < 500) return;
           this.awaitingQuietReset = false;
           this.quietResetMs = 0;
+          this.voiceDetected = false;
           this.preRoll = [];
           this.preRollSamples = 0;
           this.activeMs = 0;
           return;
+        }
+        if (voice && !this.voiceDetected) {
+          this.voiceDetected = true;
+          this.options.onVoiceActivity?.();
+        } else if (!voice) {
+          this.voiceDetected = false;
         }
         this.preRoll.push(samples);
         this.preRollSamples += samples.length;
@@ -219,6 +227,7 @@
       const turn = this.turn;
       if (!this.active || !turn) return false;
       this.turn = null;
+      this.voiceDetected = false;
       const wav = this.options.encodeWav(turn.chunks, this.capture.context.sampleRate);
       const sent = this.options.sendFinal(turn.id, turn.previewRevision + 1, wav);
       this.options.onState(sent ? "processing" : "unavailable");
@@ -248,6 +257,7 @@
       this.active = false;
       this.startPending = false;
       this.turn = null; // Never encode, flush or send unfinished audio.
+      this.voiceDetected = false;
       this.preRoll = [];
       this.preRollSamples = 0;
       this.awaitingQuietReset = false;

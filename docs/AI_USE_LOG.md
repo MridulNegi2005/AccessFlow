@@ -1695,3 +1695,15 @@ the second setup passed. A-owned regression passed 1,029 with 2 skips; the
 whole suite retained seven known B-owned failures. No Atishay-owned file was
 edited, no model was trained, and no official scenario or human microphone
 result is claimed by these component calls.
+
+## 2026-09-26 - Ownership-safe branch integration
+
+AI assistance compared both branches, preserved Mridul-owned controller,
+contract and engine tests from `353fe98`, and integrated Atishay-owned demo,
+turn-policy and perception changes from `e04f943`. A small controller/contract
+compatibility seam and one regression were added under Mridul's ownership.
+The integrated tree was checked with 1,451 passing Python tests, 6 skips,
+5 known B-owned demo failures, 55 focused stop/policy passes and seven passing
+browser checks. The merge review names each retained path and limitation.
+No teammate source was edited to hide a failure; no official media acceptance,
+release tag or submission is claimed.

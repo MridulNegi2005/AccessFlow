@@ -4,6 +4,7 @@ import asyncio
 import pytest
 
 from accessflow.stop_control import stop_control
+from accessflow.turn_policy import HeuristicTurnPolicy
 from accessflow.contracts import Audio, AudioEvent, PlanProposal, SpeechStatus, SpeechStatusEvent
 from tests.engine.test_pending_frame import setup
 from tests.engine.test_output_interrupt import task_context
@@ -40,6 +41,19 @@ async def test_spoken_output_stop_preserves_pending_authorized_write():
         assert not agent.executor.cancelled
     finally:
         agent.executor.gate.set()
+        await end(incoming, task)
+
+
+async def test_policy_recognized_long_output_stop_never_reaches_planner():
+    agent, incoming, outgoing, task = await setup("write")
+    agent.turn_policy = HeuristicTurnPolicy()
+    try:
+        await incoming.put(transcript("Stop speaking while I think"))
+        await wait_for(outgoing, lambda e: e.payload.get("output_only"))
+        assert not agent.reasoner.views
+        assert not agent.ledger
+        assert not any("Stop speaking" in item.text for item in agent.observations.values())
+    finally:
         await end(incoming, task)
 
 

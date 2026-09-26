@@ -739,12 +739,22 @@ class Agent:
                     restored = self._restore_control_context(key)
                     await self._control(control or "hold", restored=restored)
                     return
-                self.speech_control_checkpoint = None
             self.observations[key] = obs
             if obs.modality == "image" and obs.final:
                 if self.pending_frame_token == (obs.source_id, obs.event_id, message.perception_epoch):
                     self.pending_frame_token = None
             decision = self.turn_policy.update(obs.model_copy(deep=True), self._view())
+            if obs.modality != "image" and obs.final and decision.kind in {"output_stop", "hold"}:
+                # The B-owned policy can recognize a longer spoken control that
+                # the conservative direct-text fast path does not match. It is a
+                # control utterance, not evidence to send to the planner.
+                self.observations.pop(key, None)
+                restored = self._restore_control_context(key)
+                await self._control("output" if decision.kind == "output_stop" else "hold",
+                                    restored=restored)
+                return
+            if obs.modality != "image" and obs.final:
+                self.speech_control_checkpoint = None
             if obs.modality != "image" and obs.source_id == self.active_speech:
                 self.speech_ready = decision.kind == "complete" and obs.final
                 self.semantic_correction_event = obs.event_id if (
@@ -830,12 +840,14 @@ class Agent:
         if control == "output":
             was_held = self.stop_hold
             self.stop_hold = False
+            self.clarification_outstanding = False
             await self._emit("acknowledge", stop_output=True, output_only=True)
             if was_held or restored:
                 self._start_plan()
             return
         if control == "resume":
             self.stop_hold = False
+            self.clarification_outstanding = False
             # Reinterpret existing evidence, never grant fresh write authority
             # merely because the user resolved a playback/task ambiguity.
             self._start_plan()
@@ -873,6 +885,7 @@ class Agent:
             self._spawn(finish_stop())
             return
         self.stop_hold = True
+        self.clarification_outstanding = True
         # Cancel effects where possible, without pretending cancellation is a
         # rollback or discarding eventual committed/unknown outcomes.
         await self._cancel_writes("ambiguous_stop")
