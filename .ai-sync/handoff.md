@@ -1,5 +1,19 @@
 # Active Handoff
 
+## Cloud media feasibility reviewed - 26 September 2026
+
+Last updated by: Codex. Current Task: answer whether hosted audio and image
+inference can replace local Faster Whisper and Ollama/Gemma after Atishay's
+memory failure. In Progress: no provider switch or source change. Next Steps:
+if the team chooses a cloud media profile, Mridul updates the A-owned Samsung
+configuration/package boundary and Atishay updates B-owned perception/demo;
+then rerun real audio, visual, and microphone gates at official time scale.
+Key Files Modified: `.ai-sync/context.md` and this handoff. The kit permits
+hosted models. Groq currently offers Whisper Large v3 Turbo for transcription
+and the existing `qwen/qwen3.8-27b` model for image input, but the repository
+still requires local Faster Whisper and loopback Ollama for configured media.
+The free-tier rate limits and an observed Qwen HTTP 429 are material risks.
+
 ## Atishay integration prompt verified - 26 September 2026
 
 Last updated by: Codex. Current Task: provide an accurate B-side handoff.
