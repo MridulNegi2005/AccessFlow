@@ -1644,3 +1644,12 @@ The standard Python 3.11 suite passed 1388/6 skipped/3 xfailed/2 warnings;
 seven Node checks and Ruff passed. This is browser evidence retention, not
 shared D4 multi-image reasoning, real vision, physical microphone behavior
 or official evaluation. No memory-limited model retry was made.
+
+## 26 September 2026 - AI-assisted acceptance blocker audit
+
+Assistance fetched origin, confirmed the clean pushed branch already contains
+main, inspected the remaining shared contract/controller gaps and reran the
+unmasked D1 reproducer (2 failed, 1 passed). It checked runtime availability
+without exposing credentials or loading a model and documented the exact
+unblock sequence. No implementation changed; full acceptance remains blocked,
+not complete. No native-ASR retry or human audio capture occurred.
