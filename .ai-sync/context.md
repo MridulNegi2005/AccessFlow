@@ -1536,3 +1536,11 @@ configuration changed; no commit or push.
 **Notes:** Full1388/6skip/3xfail; installed ASR4pass separately; Ruff/7Node/offline4of4 pass. Unmasked D1 two failures remain A/shared work. Browser runtime adoption and live preview code are now present. D4 engine history, D1/closure and actual inference/device gates remain. Push authorized; no release or workflow.
 
 ---
+
+## [2026-09-26 12:39] - AI-assisted implementation checkpoint
+**Task:** D1 output-only controller primitive; user-requested safe pause.
+**Changes:** Additive interrupt scope, preserving pending task authority and work; four regression cases, contract handoff.
+**Status:** Paused at verified partial checkpoint.
+**Notes:** Full1392/6skip/3xfail; focused10 pass; Ruff clean. Spoken-stop/hold remain incomplete; no B edits.
+
+---

@@ -98,7 +98,9 @@ class Frame(Model):
 
 
 class Interrupt(Model):
-    scope: Literal["speech", "task"] = "speech"
+    # Output is an explicit playback control, not new speech or task cancellation.
+    # Keep the historical speech default for existing adapters.
+    scope: Literal["speech", "task", "output"] = "speech"
     utterance_id: str | None = None
 
 

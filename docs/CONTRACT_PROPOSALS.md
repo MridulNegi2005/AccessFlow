@@ -458,3 +458,21 @@ and refuses a ninth local image before upload. It intentionally displays source
 IDs rather than invented Image 1/2/3 ordinals; those labels, server receipt
 time, registry status and field provenance still require the agreed additive
 Mridul-owned projection. Browser receipt order is not controller authority.
+
+
+## 2026-09-26: explicit output-only interrupt (A implemented)
+
+`Interrupt.scope="output"` is additive; the default remains `speech`. It emits
+an acknowledgement with `stop_output=true`, `output_only=true`, and no spoken
+text. It preserves request state, authorization, planner/perception generations
+and running calls. Use only for an explicitly identified playback-only control,
+never bare Stop or generic speech onset. Existing speech/task semantics remain.
+
+This does not yet fix spoken stop classification or restore authority already
+invalidated by pending audio. Do not route uncertain transcripts into this scope
+or claim D1 complete. A must implement pending-speech control resolution and the
+all-tool ambiguous-stop hold before B binds spoken controls. Both teammates must
+coordinate that integration; B-owned files were not edited.
+
+Tests: `tests/engine/test_output_interrupt.py` covers pending reads/writes,
+authority preservation, continued image processing and the legacy default.

@@ -1,5 +1,19 @@
 # Mridul workstream handoff
 
+## Paused checkpoint - 26 September 2026
+
+User requested a safe pause. Added explicit `Interrupt.scope="output"` playback
+control preserving task authority, pending calls and perception. Legacy speech
+interrupt semantics remain unchanged. No B-owned files edited.
+Validation: full suite 1392 passed, 6 skipped, 3 xfailed (94.49s); focused output
+and speech tests 10 passed; changed-file Ruff and diff check passed.
+This is a partial D1 foundation, NOT spoken-stop completion: pending audio still
+invalidates authority before semantic control resolution. Next: implement safe
+speech-control resolution plus all-tool vague-stop hold/clarification, without
+restoring cancelled/unknown writes or replaying stale plans. D2/D3/D4 and real
+inference/device/package gates remain as in the merged review. Do not resume
+implementation until the user resumes the goal.
+
 ## Verified merge - 26 September 2026
 
 Atishay 4c0caa8 merged without conflicts into main 5dd2a56 as ac187ba.
