@@ -2,25 +2,26 @@
 
 ## Current code checkpoint — 26 September 2026
 
-This section is newer than the older audit notes below. AJ's current local
-`atishay/perception` checkout contains a shared stop fix: “Stop speaking” stops
-assistant playback, an unclear “stop” pauses new actions and asks what the user
-means, and a clear cancel cancels the task. Deterministic tests now cover these
-behaviors. The change is local and uncommitted; do not read the earlier 25 Sep
-failure report as the result for this newer working tree.
+Commit `30ea60d` is pushed to `atishay/perception`. D1 stop/clarify/cancel behavior
+has deterministic coverage. The demo now reads browser messages separately from
+slow media handling, sends EndEvent before waiting for unfinished uploads, and
+cancels those uploads after a bounded wait. This closes a tested shutdown race; it
+does not finish real-device acceptance.
 
-Python 3.11.15 full suite: **1,399 passed, 6 skipped, 1 xfailed**; Ruff passed.
-After applying the same working-tree patch, Colab Python 3.13.15 on a Tesla T4:
-**1,401 passed, 4 skipped, 1 xfailed**; Ruff passed. The remaining expected
-failure is the multi-image/source-selection case. The test count difference is
-environment-related, not evidence of extra product features. Python 3.13 is an
-extra compatibility run; declared project support remains Python 3.11.
+Current Python 3.13.14 full suite: **1,395 passed, 11 skipped, 1 xfailed** in
+84.65 seconds; Ruff and seven browser regression scripts passed. The expected
+failure is the known multi-image/source-selection gap. A FastAPI/Starlette test
+client deprecation warning remains. Python 3.13 is extra compatibility evidence;
+the project still declares Python 3.11 support.
 
-Product acceptance is still **PARTIAL**. Real microphone and model-backed cases,
-safe server-side End session behavior, multi-image source selection, official
-package/evaluation checks, and submission materials remain unfinished. The
-12 real reasoning/vision attempts and 4 physical-microphone checks are still
-NOT RUN. The FDB-v3/Grok 100-example paid run remains off.
+Product acceptance is still **PARTIAL**. D2 physical-microphone acceptance, full
+D3 browser/device acceptance, shared D4 image source selection, the 12 real
+reasoning/vision attempts, the four planned physical-microphone checks, the
+runnable Samsung evaluator, and final submission materials remain open. The
+current `participant-kit/student_kit` has sample requests/responses and a schema,
+but not the evaluator runner files required by the package builder. The separate
+FDB-v3/Grok Colab setup is prepared, but its full 100-example Grok run is off and
+has not produced a score. See `docs/PROJECT_RUNDOWN_SIMPLE_2026-09-26.md`.
 
 ## Confirmed product decisions - 25 September 2026
 

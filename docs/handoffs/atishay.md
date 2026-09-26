@@ -1,5 +1,15 @@
 # Atishay workstream handoff
 
+## 2026-09-26 — End-session shutdown and plain-language project map
+
+**Task:** Close the browser-disconnect race, run the current repository on Python 3.13 as requested, and explain the project status in simple terms.
+
+**Changes:** The WebSocket now reads browser messages in a separate task from upload/materialization work, with a one-message bounded buffer. On disconnect, cleanup ends the controller before draining unfinished writes and completes even if the ASGI server cancels the handler. Added a regression where the socket closes while an upload write is stalled. Added docs/PROJECT_RUNDOWN_SIMPLE_2026-09-26.md and refreshed the current status/handoff.
+
+**Status:** Commit 30ea60d is pushed to origin/atishay/perception. Python 3.13.14 full suite: 1,395 passed, 11 skipped, 1 xfailed, 1 existing warning in 84.65 s. Ruff and seven browser scripts passed. The xfail is the known shared multi-image/source-selection gap.
+
+**Next:** Mridul owns the shared ordered image registry/source selector and official evaluator integration. AJ owns the browser/live-voice acceptance and four physical-mic checks. Both still need the 12 real reasoning/vision attempts, the complete Samsung runner, broader scenario coverage, and final package/demo checks. Product acceptance remains PARTIAL; no official score or full Grok run is claimed. The supplied participant-kit/student_kit data was not added to Git.
+
 ## 2026-09-23 — AccessFlow frontend redesign
 
 **Task:** Implement the approved Input Dock + Answer Stage visual direction in the owned browser demo.

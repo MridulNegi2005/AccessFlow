@@ -1,30 +1,26 @@
 # Active Handoff
 
-## Current shared stop and Python 3.13 checkpoint — 26 September 2026
+## Current checkpoint — 26 September 2026
 
-AJ's local `atishay/perception` checkout now includes a shared-engine stop fix:
-“Stop speaking” stops playback only; a vague “stop” pauses new actions and asks
-for clarification; a clear task cancel cancels the task. A newer spoken turn also
-blocks new writes until intent is clear, and a completed fresh request that no
-longer asks for a write retracts the earlier write intent. This was a jointly
-scoped local change to shared contracts/engine plus owned browser and tests; it is
-not committed or pushed.
+Commit `30ea60d` is pushed to `origin/atishay/perception`. D1 stop/clarify/cancel
+has deterministic coverage. The demo now reads browser messages separately from
+media writes, closes the controller before waiting for uploads, and cancels
+unfinished writes after a bounded wait. The disconnect-during-upload regression
+passes.
 
-Fresh Python 3.11.15 full suite: 1,399 passed, 6 skipped, 1 xfailed, 2 warnings
-(62.56 s); Ruff passed. The same working-tree patch was applied to the Colab copy
-of commit `4c0caa8` on Python 3.13.15 / Tesla T4: 1,401 passed, 4 skipped,
-1 xfailed (42.11 s); Ruff passed. The Colab run used a temporary `tests` package
-marker only to avoid a Colab package-name collision. Python 3.13 is extra test
-evidence; the project still declares Python 3.11 support.
+Current Python 3.13.14 full suite: 1,395 passed, 11 skipped, 1 xfailed, one
+existing FastAPI/Starlette warning (84.65 s). Ruff and seven browser checks pass.
+Python 3.13 is extra compatibility evidence; declared project support remains
+Python 3.11.
 
-**Status remains PARTIAL.** D1 has deterministic code/test coverage in this local
-checkout, but it has not been shown with a physical microphone. D4 multi-image
-source selection remains the known expected failure; safe server-side session
-closure, the 12 real reasoning/vision attempts, four physical-microphone checks,
-official package/evaluation proof, and final submission materials remain open.
-Review and integrate the local patch, then continue D3/D4 and live acceptance.
-The full paid FDB-v3/Grok batch remains off. Do not treat this test run as an
-official benchmark score or a Python 3.13 support declaration.
+**Status remains PARTIAL.** D2's four physical-microphone checks, real browser/device
+D3 acceptance, the shared D4 ordered image registry/source selector, 12 real
+reasoning/vision attempts, runnable Samsung evaluator, and final materials remain
+open. `participant-kit/student_kit` has sample data/schema but lacks the runner and
+scorer files required by the package builder. The separate FDB-v3/T4 Colab setup
+is prepared; its paid 100-example Grok run has not been made and it runs FDB's own
+agent rather than AccessFlow's shared engine. See
+`docs/PROJECT_RUNDOWN_SIMPLE_2026-09-26.md` for the plain-language map and owners.
 
 ## Atishay bounded long-turn voice previews - 25 September 2026
 
