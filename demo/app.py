@@ -706,6 +706,18 @@ def _configured_setup_error_message(error: Exception, *, mode: str) -> str:
     return "Configured agent setup failed. Check local model, provider and service settings."
 
 
+def _configure_groq_reasoner_key() -> None:
+    """Map the portal key name for the direct browser demo's Groq reasoner."""
+    if os.getenv("ACCESSFLOW_SAMSUNG_BACKEND") != "groq":
+        return
+    portal_key = os.getenv("SECRET_GROQ_API_KEY")
+    reasoner_key = os.getenv("ACCESSFLOW_GROQ_API_KEY")
+    if portal_key and reasoner_key and portal_key != reasoner_key:
+        raise ValueError("Groq portal and local key settings conflict")
+    if portal_key and not reasoner_key:
+        os.environ["ACCESSFLOW_GROQ_API_KEY"] = portal_key
+
+
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -733,6 +745,7 @@ async def websocket(websocket: WebSocket) -> None:
     try:
         mode = _demo_agent_mode()
         if mode == "configured":
+            _configure_groq_reasoner_key()
             agent = await build_configured_agent(
                 root=Path(os.environ.get("ACCESSFLOW_DEMO_ASSETS_ROOT", ROOT.parent)),
                 authorization=MockOnlyAuthorization(),

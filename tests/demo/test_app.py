@@ -1418,6 +1418,58 @@ def test_websocket_configured_setup_rate_limit_is_reported_safely(monkeypatch, s
     }
 
 
+def test_websocket_configured_demo_maps_portal_key_for_groq_reasoner(monkeypatch):
+    observed = {}
+
+    async def inspect_factory(**_kwargs):
+        observed["reasoner_key"] = os.getenv("ACCESSFLOW_GROQ_API_KEY")
+        raise RuntimeError("stop after checking the local key mapping")
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setenv("ACCESSFLOW_SAMSUNG_BACKEND", "groq")
+    monkeypatch.setenv("SECRET_GROQ_API_KEY", "test-only-sentinel")
+    monkeypatch.delenv("ACCESSFLOW_GROQ_API_KEY", raising=False)
+    monkeypatch.setattr(demo_app, "build_configured_agent", inspect_factory)
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert observed == {"reasoner_key": "test-only-sentinel"}
+    assert failure["kind"] == "demo_error"
+    assert "test-only-sentinel" not in failure["payload"]["message"]
+    assert failure["payload"]["message"] == (
+        "Configured agent setup failed. Check local model, provider and service settings."
+    )
+
+
+def test_websocket_configured_demo_rejects_conflicting_groq_keys_safely(monkeypatch):
+    factory_called = False
+
+    async def factory(**_kwargs):
+        nonlocal factory_called
+        factory_called = True
+        raise RuntimeError("configured factory should not run on a key conflict")
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setenv("ACCESSFLOW_SAMSUNG_BACKEND", "groq")
+    monkeypatch.setenv("SECRET_GROQ_API_KEY", "portal-test-sentinel")
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "local-test-sentinel")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert not factory_called
+    assert failure["kind"] == "demo_error"
+    assert "portal-test-sentinel" not in failure["payload"]["message"]
+    assert "local-test-sentinel" not in failure["payload"]["message"]
+    assert failure["payload"]["message"] == (
+        "Configured agent setup failed. Check local model, provider and service settings."
+    )
+
+
 def test_websocket_configured_factory_requires_explicit_backend(monkeypatch):
     monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
     monkeypatch.setenv("ACCESSFLOW_SAMSUNG_PERCEPTION", "text")
