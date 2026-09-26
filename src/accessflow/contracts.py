@@ -95,6 +95,14 @@ class SpeechStatus(Model):
 class Frame(Model):
     path: str
     frame_id: str
+    capture_timestamp: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    capture_time_provenance: str | None = Field(default=None, min_length=1, max_length=128)
+
+    @model_validator(mode="after")
+    def capture_time_has_provenance(self):
+        if (self.capture_timestamp is None) != (self.capture_time_provenance is None):
+            raise ValueError("Capture timestamp and provenance must be supplied together")
+        return self
 
 
 class Interrupt(Model):
@@ -184,6 +192,9 @@ class Snapshot(Model):
     pending_call_ids: list[str] = Field(default_factory=list)
     status: str = "listening"
     correction_pending: bool = False
+    # Controller-owned provenance for image-derived slot values. Kept separate
+    # from the values themselves so later plans cannot silently change sources.
+    slot_image_sources: dict[str, "ImageSlotBinding"] = Field(default_factory=dict, max_length=16)
 
 
 class OutputEvent(Envelope):
@@ -202,6 +213,40 @@ class Observation(Model):
     speech_start: float = 0
     speech_end: float = 0
     backend: str
+
+
+class ImageRecordView(Model):
+    """Path-free projection of one accepted image in session admission order."""
+
+    ordinal: int = Field(ge=1, strict=True)
+    frame_id: str = Field(min_length=1, max_length=256)
+    event_id: str = Field(min_length=1, max_length=256)
+    received_at: float = Field(ge=0, allow_inf_nan=False)
+    capture_timestamp: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    capture_time_provenance: str | None = Field(default=None, max_length=128)
+    processing_revision: int = Field(default=0, ge=0, strict=True)
+    status: Literal["pending", "observed", "failed"]
+    observation: Observation | None = None
+
+    @model_validator(mode="after")
+    def observation_matches_record(self):
+        if self.capture_time_provenance is not None and not self.capture_time_provenance.strip():
+            raise ValueError("Capture time provenance must not be blank")
+        if self.capture_timestamp is None and self.capture_time_provenance is not None:
+            raise ValueError("Capture time provenance requires a capture timestamp")
+        if self.capture_timestamp is not None and not (self.capture_time_provenance or "").strip():
+            raise ValueError("Capture timestamp requires capture time provenance")
+        if self.status == "observed":
+            if self.observation is None:
+                raise ValueError("Observed image records require an observation")
+            if (self.observation.modality != "image" or not self.observation.final
+                    or self.observation.source_id != self.frame_id
+                    or self.observation.event_id != self.event_id
+                    or self.observation.revision != self.processing_revision):
+                raise ValueError("Image observation must match its accepted record and revision")
+        elif self.observation is not None:
+            raise ValueError("Only observed image records may include an observation")
+        return self
 
 
 class TurnDecision(Model):
@@ -261,6 +306,37 @@ class EvidenceAnswer(Model):
     selections: list[ReadSelection] = Field(min_length=1, max_length=8)
 
 
+class ImageSlotBinding(Model):
+    """Controller-facing provenance for one selected image-derived slot."""
+
+    # ``Image N`` is a stable one-based admission ordinal; any other accepted
+    # value is an exact frame ID. The controller resolves it against its registry.
+    image_reference: str = Field(min_length=1, max_length=256)
+    event_id: str = Field(min_length=1, max_length=256)
+    processing_revision: int = Field(ge=0, strict=True)
+    evidence_quote: str = Field(min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def explicit_reference_and_quote(self):
+        reference = self.image_reference.strip()
+        if not reference or reference != self.image_reference:
+            raise ValueError("Image reference must be explicit and have no surrounding whitespace")
+        if reference.casefold() in {"latest", "current", "new", "old", "older", "this",
+                                    "latest image", "current image", "new image", "old image"}:
+            raise ValueError("Contextual image references must be resolved before binding")
+        if re.fullmatch(r"Image\s+\d+", reference, re.IGNORECASE):
+            ordinal = int(reference.split()[-1])
+            if ordinal < 1:
+                raise ValueError("Image ordinal must be positive")
+        elif any(char in reference for char in "\\/\x00"):
+            raise ValueError("Image reference must be an ordinal or frame ID, not a path")
+        if not self.event_id.strip():
+            raise ValueError("Image event ID must not be blank")
+        if not self.evidence_quote.strip():
+            raise ValueError("Image evidence quote must not be blank")
+        return self
+
+
 class PlanProposal(Model):
     intent: str | None = None
     slot_updates: dict[str, Any] = Field(default_factory=dict)
@@ -270,6 +346,9 @@ class PlanProposal(Model):
     # Optional v0.1 extension. Values are resolved by the controller, never supplied
     # by the model. Existing producers may omit it.
     evidence_answer: EvidenceAnswer | None = None
+    # Optional source selection per slot. The controller validates references and
+    # quotes against its accepted image registry before allowing a write.
+    image_bindings: dict[str, ImageSlotBinding] = Field(default_factory=dict, max_length=16)
     request_complete: bool = False
     # A model assertion alone is not execution authority; controller also requires
     # a completed utterance and an explicit, externally supplied authorization gate.
@@ -280,7 +359,8 @@ class PlanProposal(Model):
     def exclusive_answer(self):
         if self.evidence_answer is not None and (
                 self.response is not None or self.clarification is not None or self.calls
-                or self.write_requested or self.write_contracts or self.slot_updates or self.intent is not None):
+                or self.write_requested or self.write_contracts or self.slot_updates
+                or self.image_bindings or self.intent is not None):
             raise ValueError("An evidence answer cannot be combined with prose, actions or state updates")
         return self
 
@@ -309,6 +389,9 @@ class SessionView(Model):
     # callers, including most tests, that never populate ToolCall.request_id either)
     # and matches only calls that likewise carry the default "".
     active_request_id: str = ""
+    # Accepted-order image projection. Old clients may omit it; paths and failure
+    # details are deliberately absent from this reasoner-facing view.
+    image_history: list[ImageRecordView] = Field(default_factory=list, max_length=8)
 
 
 class ToolCall(Model):
@@ -343,4 +426,5 @@ class Clock(Protocol):
     async def sleep(self, seconds: float) -> None: ...
 
 
+Snapshot.model_rebuild(_types_namespace={"ImageSlotBinding": ImageSlotBinding})
 SessionView.model_rebuild()

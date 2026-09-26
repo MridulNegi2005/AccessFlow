@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from accessflow.contracts import (
-    Audio, AudioEvent, Frame, FrameEvent, Interrupt, InterruptEvent, Observation, PlanProposal,
+    Audio, AudioEvent, Frame, FrameEvent, ImageSlotBinding, Interrupt, InterruptEvent, Observation, PlanProposal,
     Start, StartEvent, TranscriptEvent,
 )
 from accessflow.engine import Agent
@@ -270,14 +270,8 @@ async def test_explicit_stop_clears_retained_intent_so_image_cannot_write(tmp_pa
         assert not agent.executor.calls and not agent.executor.effects
 
 
-async def test_stale_frame_perception_is_discarded_after_rapid_replacement(tmp_path):
-    """A slow, stale frame result must never leak into state after a faster replacement frame.
-
-    Exercises the existing per-source bookkeeping (sources, source_events, perception_epoch,
-    active_frame) alongside the write_intent_retained/clarification_outstanding gate: even
-    when the earlier frame's perception result is still in flight, it is filtered by source
-    identity once superseded, so it cannot corrupt the confirmed slot or duplicate the write.
-    """
+async def test_late_older_frame_keeps_its_identity_without_reopening_finished_write(tmp_path):
+    """Late Image 1 evidence remains available but cannot change a finished action."""
     stale_gate = asyncio.Event()
 
     class RacingPerception:
@@ -297,24 +291,31 @@ async def test_stale_frame_perception_is_discarded_after_rapid_replacement(tmp_p
                 yield Observation(event_id=event.event_id, source_id=event.payload.frame_id,
                                   revision=0, modality="image", text=text, final=True, backend="test/vision")
 
+    older = FrameEvent(session_id="s", payload=Frame(path="stale.png", frame_id="stale-frame"))
+    newer = FrameEvent(session_id="s", payload=Frame(path="fresh.png", frame_id="fresh-frame"))
+    final_plan = proposal()
+    final_plan.image_bindings = {"day": ImageSlotBinding(
+        image_reference="Image 2", event_id=newer.event_id,
+        processing_revision=0, evidence_quote="Wednesday appointment")}
     plans = [PlanProposal(intent="service", write_requested=True,
-                          clarification="Which date is shown?"),
-             proposal()]
+                          clarification="Which date is shown?"), final_plan]
     async with components(plans, RacingPerception()) as (agent, iq, oq, applied):
         await iq.put(transcript("Book the date shown in this image"))
         await asyncio.wait_for(applied.get(), 1)
-        await iq.put(FrameEvent(session_id="s", payload=Frame(path="stale.png", frame_id="stale-frame")))
-        await iq.put(FrameEvent(session_id="s", payload=Frame(path="fresh.png", frame_id="fresh-frame")))
+        await iq.put(older)
+        await iq.put(newer)
         final = await wait_for(oq, lambda event: event.kind == "final")
         assert final.state.slots["day"].value == "Wednesday"
         assert len(agent.executor.effects) == 1
         assert agent.active_frame == "fresh-frame"
-        assert ("image", "stale-frame") not in agent.observations
+        assert agent.image_registry.resolve("stale-frame").status == "pending"
         stale_gate.set()
         for _ in range(20):
             await asyncio.sleep(0)
         assert len(agent.executor.effects) == 1
-        assert ("image", "stale-frame") not in agent.observations
+        assert agent.image_registry.resolve("stale-frame").observation.text == "Monday guess"
+        assert agent.image_registry.resolve("fresh-frame").observation.text == "Wednesday appointment"
+        assert agent.state.slots["day"].value == "Wednesday"
 
 
 async def test_missing_vision_provider_surfaces_explicit_error_not_silence(tmp_path):

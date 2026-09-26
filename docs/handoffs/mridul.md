@@ -1,5 +1,23 @@
 # Mridul workstream handoff
 
+## A-side D4 handoff - 26 September 2026
+
+Controller image history, image-source bindings and write guards are implemented
+on `mridul/engine`. See `docs/reviews/CONTROLLER_D4_HANDOFF_2026-09-26.md`.
+Broad test result: 1,429 passed, 6 skipped, 7 B-owned cases deselected;
+three B stop tests pass separately with `--runxfail`. Ruff clean. A native
+candidate verified 98 hashes, 37 pins and organizer import; real ASR/vision/
+hosted-reasoner setup passed once after two failed attempts. A normal-speed
+public text run exposed the old 14K repository context cap; hosted default is
+now 32K. Its later diagnostic run hit provider HTTP 429 and did not complete a
+mock booking. The source and failures are recorded accurately in the review.
+
+Next dependency: Atishay consumes the additive D4 projection, updates B-owned
+single-image/strict-xfail assertions, then runs twelve real inference cases and
+four physical-mic cases. Jointly run the combined official audio/vision suite.
+Docker/Linux execution cannot be done here because Docker is unavailable.
+No B source, release, submission form or PPT/video was changed.
+
 ## Resumed controller checkpoint - 26 September 2026
 
 User resumed work and narrowed the goal to finish A work or reach necessary B

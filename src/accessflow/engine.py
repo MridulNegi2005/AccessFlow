@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import re
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,7 +17,7 @@ from .clock import RealClock
 from .confirmation_text import confirmation_payload
 from .contracts import (
     AudioEvent, EndEvent, FrameEvent, InterruptEvent, Observation, OutputEvent,
-    PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
+    ImageRecordView, ImageSlotBinding, PlanProposal, ResultEvent, SessionView, Slot, Snapshot, StartEvent, ToolCall,
     ToolResult, TranscriptEvent, SpeechStatusEvent,
 )
 from .corpus import (
@@ -27,6 +28,7 @@ from .read_answer import READ_ANSWER_MODES, ReadAnswerError, has_read_attempt, r
 from .write_binding import capture, validate_binding
 from .validation_diagnostics import validation_summary
 from .stop_control import stop_control
+from .image_registry import ImageRegistry, ImageRegistryError
 
 
 # Bound on any proposal-supplied value interpolated into a spoken/logged `clarify`
@@ -193,6 +195,8 @@ class Agent:
         self.recovery_budget = {}
         self.request_input_epoch = 0
         self.active_frame = None
+        self.image_registry = None
+        self.image_request_ids = {}
         self.active_speech = None
         self.speech_ready = False
         # Retained spoken write authorization for the CURRENT request (self.request_id).
@@ -316,6 +320,7 @@ class Agent:
                         await self._emit("error", code="duplicate_manifest_names")
                         break
                     self.session_id = event.session_id
+                    self.image_registry = ImageRegistry(event.session_id)
                     self.manifests = {tool.name: tool.model_copy(deep=True) for tool in event.payload.tools}
                     if any(tool.status_tool and (tool.status_tool not in self.manifests or
                            self.manifests[tool.status_tool].effect != "read") for tool in self.manifests.values()):
@@ -364,6 +369,7 @@ class Agent:
                     self.generation += 1
                     self.perception_epoch += 1
                     await self._discard_pending_frame()
+                    self._fail_pending_images("interrupted")
                     for worker in tuple(self.perception_workers.values()):
                         worker.cancel()
                     if self.planner and not self.planner.done():
@@ -413,7 +419,21 @@ class Agent:
                         source = ("speech", payload.utterance_id)
                         revision = payload.revision
                     if revision <= self.sources.get(source, -1):
+                        if isinstance(event, FrameEvent):
+                            await self._emit("error", code="duplicate_image_id", frame_id=source[1])
                         continue
+                    if isinstance(event, FrameEvent):
+                        try:
+                            admitted = self.image_registry.admit(
+                                event, received_at=self.clock.now(),
+                                capture_timestamp=payload.capture_timestamp,
+                                capture_time_provenance=payload.capture_time_provenance)
+                        except ImageRegistryError as exc:
+                            await self._emit("error", code="image_admission_rejected", detail=str(exc))
+                            continue
+                        await self._emit("acknowledge", text=f"Image {admitted.ordinal} received.", image_received={
+                            "frame_id": admitted.frame_id, "event_id": admitted.event_id,
+                            "ordinal": admitted.ordinal, "received_at": admitted.received_at})
                     if isinstance(event, TranscriptEvent) and payload.final:
                         control = stop_control(payload.text, held=self.stop_hold)
                         if control == "action":
@@ -435,13 +455,6 @@ class Agent:
                                 "authority": (self.active_speech, self.speech_ready,
                                               self.latest_complete, self.write_intent_retained),
                             }
-                    if source[0] == "image" and self.active_frame is not None:
-                        previous_source = ("image", self.active_frame)
-                        previous_worker = self.perception_workers.get(previous_source)
-                        if previous_worker:
-                            previous_worker.cancel()
-                        await self._rollback_hypothesis(previous_source)
-                        self.observations.pop(previous_source, None)
                     await self._rollback_hypothesis(source)
                     self.sources[source] = revision
                     self.source_events[source] = event.event_id
@@ -476,6 +489,8 @@ class Agent:
                         # (security review HIGH finding 1).
                         self._slot_value_origin = {name: origin for name, origin in self._slot_value_origin.items()
                                                    if origin != "user" and name in self.state.slots}
+                    if source[0] == "image":
+                        self.image_request_ids[source[1]] = self.request_id
                     self.generation += 1
                     self.latest_complete = False
                     self.state.correction_pending = True
@@ -573,14 +588,44 @@ class Agent:
         if self.pending_frame_token is None:
             return
         source = ("image", self.pending_frame_token[0])
+        if self.image_registry is not None:
+            try:
+                record = self.image_registry.resolve(source[1])
+                if record.status == "pending":
+                    self.image_registry.mark_failed(source[1], event_id=record.event_id,
+                                                    revision=record.processing_revision,
+                                                    reason="frame_processing_abandoned")
+            except ImageRegistryError:
+                pass
         self.pending_frame_token = None
         await self._rollback_hypothesis(source)
         self.observations.pop(source, None)
 
+    def _fail_pending_images(self, reason):
+        if self.image_registry is None:
+            return
+        for record in self.image_registry.view():
+            if record.status == "pending":
+                self.image_registry.mark_failed(record.frame_id, event_id=record.event_id,
+                                                revision=record.processing_revision,
+                                                reason=reason)
+
     def _view(self):
         self.state.pending_call_ids = [c.call_id for c in self.ledger.values() if c.status == "pending"]
+        records = self.image_registry.view() if self.image_registry is not None else ()
+        images = [ImageRecordView(
+            ordinal=r.ordinal, frame_id=r.frame_id, event_id=r.event_id,
+            received_at=r.received_at, capture_timestamp=r.capture_timestamp,
+            capture_time_provenance=r.capture_time_provenance,
+            processing_revision=r.processing_revision, status=r.status,
+            observation=r.observation.model_copy(deep=True) if r.observation else None,
+        ) for r in records]
+        speech_observations = [o.model_copy(deep=True) for (kind, _), o in self.observations.items()
+                               if kind == "speech"][-16:]
         return SessionView(session_id=self.session_id, state=self.state.model_copy(deep=True),
-                           observations=[o.model_copy(deep=True) for o in list(self.observations.values())[-24:]],
+                           observations=([r.observation.model_copy(deep=True) for r in images
+                                          if r.observation is not None] + speech_observations),
+                           image_history=images,
                            results=[r.model_copy(deep=True) for r in self.results[-12:]],
                            write_contracts=[b.contract.model_copy(deep=True)
                                for b in self.write_contracts.values()
@@ -613,7 +658,25 @@ class Agent:
             # Speech and read results may advance planning generation while this
             # frame runs. Only its exact current token can settle the media gate.
             token = (message.source[1], message.perception_event_id, message.perception_epoch)
+            older_failed = False
+            try:
+                record = self.image_registry.resolve(message.source[1])
+                if (record.event_id == message.perception_event_id and record.status == "pending"
+                        and message.perception_epoch == self.perception_epoch):
+                    self.image_registry.mark_failed(message.source[1], event_id=record.event_id,
+                                                    revision=record.processing_revision,
+                                                    reason=str(message.value))
+                    older_failed = True
+            except ImageRegistryError:
+                pass
             if token != self.pending_frame_token:
+                if older_failed:
+                    self.current_event_id = message.perception_event_id
+                    await self._emit("error", code="image_perception_failed",
+                                     frame_id=message.source[1], detail=message.value)
+                    if (self.image_request_ids.get(message.source[1]) == self.request_id
+                            and self.speech_ready and not self.last_request_finished):
+                        self._start_plan()
                 return
             await self._discard_pending_frame()
             self.generation += 1
@@ -647,15 +710,23 @@ class Agent:
             key = ("image" if obs.modality == "image" else "speech", obs.source_id)
             if self.sources.get(key) != obs.revision or self.source_events.get(key) != obs.event_id:
                 return
-            if obs.modality == "image" and obs.source_id != self.active_frame:
-                return
-            if obs.modality == "image" and (
-                    not obs.final or self.pending_frame_token != (
-                        obs.source_id, obs.event_id, message.perception_epoch)):
+            if obs.modality == "image" and not obs.final:
                 # An incomplete frame must not seed slots that a later speech
                 # plan could promote before vision finishes or after it fails.
-                # A frame settles once; subsequent output from that stream is stale.
                 return
+            if obs.modality == "image":
+                try:
+                    self.image_registry.record_observation(obs.source_id, obs)
+                except ImageRegistryError:
+                    return
+                if obs.source_id != self.active_frame:
+                    # Retain valid older evidence by its own ID. An older result
+                    # cannot settle the newer frame's gate or take its identity.
+                    self.observations[key] = obs
+                    if (self.image_request_ids.get(obs.source_id) == self.request_id
+                            and not self.last_request_finished):
+                        self._start_plan(source=key)
+                    return
             if obs.modality != "image" and obs.source_id != self.active_speech:
                 return
             self.current_event_id = obs.event_id
@@ -699,6 +770,7 @@ class Agent:
                 self.generation += 1
                 self.perception_epoch += 1
                 await self._discard_pending_frame()
+                self._fail_pending_images("explicit_stop")
                 self.write_intent_retained = False
                 self.clarification_outstanding = False
                 await self._cancel_writes("explicit_stop")
@@ -775,6 +847,7 @@ class Agent:
             self.stop_hold = False
             self.perception_epoch += 1
             await self._discard_pending_frame()
+            self._fail_pending_images("task_stopped")
             for worker in tuple(self.perception_workers.values()):
                 worker.cancel()
             self.latest_complete = False
@@ -922,8 +995,98 @@ class Agent:
                              message="No progress after one bounded automatic retry; this "
                                      "request will not retry again on its own.")
 
+    def _verify_image_bindings(self, proposal, source):
+        """Resolve model-selected image fields against immutable accepted evidence."""
+        verified = {}
+        for name, raw in proposal.image_bindings.items():
+            if name not in proposal.slot_updates:
+                raise ImageRegistryError("Image binding names a slot without an update")
+            binding = ImageSlotBinding.model_validate(raw)
+            record = self.image_registry.resolve(binding.image_reference)
+            if (record.status != "observed" or record.observation is None
+                    or record.event_id != binding.event_id
+                    or record.processing_revision != binding.processing_revision
+                    or binding.evidence_quote not in record.observation.text):
+                raise ImageRegistryError("Image binding has no matching final source evidence")
+            verified[name] = binding.model_copy(update={"image_reference": f"Image {record.ordinal}"})
+
+        records = self.image_registry.view() if self.image_registry is not None else ()
+        if source and source[0] == "image" and proposal.slot_updates:
+            observed = [r for r in records if r.status == "observed"]
+            if len(observed) == 1 and observed[0].frame_id == self.active_frame:
+                # Legacy single-current-image proposals remain compatible even
+                # when a different image is still pending or failed. Once two
+                # images are readable, the source must be explicit per field.
+                record = observed[0]
+                quote = record.observation.text[:512]
+                if not quote:
+                    raise ImageRegistryError("Image supplied no quotable evidence")
+                for name in proposal.slot_updates:
+                    verified.setdefault(name, ImageSlotBinding(
+                        image_reference=f"Image {record.ordinal}", event_id=record.event_id,
+                        processing_revision=record.processing_revision, evidence_quote=quote))
+            elif any(name not in verified for name in proposal.slot_updates):
+                raise ImageRegistryError("Multiple images require a source for each image-derived field")
+
+        speech = self.observations.get(("speech", self.active_speech))
+        spoken_text = speech.text.casefold() if speech and source == ("speech", self.active_speech) else ""
+        explicit_refs = bool(re.search(
+            r"\b(?:image\s+[1-8]|(?:first|second|third|old|older|new|latest)\s+image)\b",
+            spoken_text))
+        if explicit_refs and len(records) > 1 and proposal.slot_updates:
+            if re.search(r"\b(?:old|older) image\b", spoken_text) and len(records) > 2:
+                raise ImageRegistryError("Old image is ambiguous among several earlier images")
+            named_ordinals = {int(number) for number in re.findall(r"\bimage\s+([1-8])\b", spoken_text)}
+            for label, ordinal in (("first image", 1), ("second image", 2),
+                                   ("third image", 3)):
+                if label in spoken_text:
+                    named_ordinals.add(ordinal)
+            if re.search(r"\b(?:old|older) image\b", spoken_text):
+                named_ordinals.add(1)
+            if re.search(r"\b(?:new|latest) image\b", spoken_text):
+                named_ordinals.add(len(records))
+            for name, value in proposal.slot_updates.items():
+                prior = self.state.slots.get(name)
+                if (name not in verified and (prior is None or prior.value != value)
+                        and str(value).casefold() not in spoken_text):
+                    raise ImageRegistryError("Referenced images require a source for each selected field")
+                if name in verified and len(named_ordinals) == 1:
+                    selected = self.image_registry.resolve(verified[name].image_reference)
+                    if selected.ordinal not in named_ordinals:
+                        raise ImageRegistryError("Image field source conflicts with the user's reference")
+        elif (len(records) > 1 and proposal.slot_updates
+              and re.search(r"\b(?:the|this|attached) image\b", spoken_text)):
+            # A bare reference to the image uses the newest accepted attachment.
+            # A model must not silently choose an earlier image just because its
+            # caption happens to contain a usable value.
+            for name, binding in verified.items():
+                prior = self.state.slots.get(name)
+                prior_source = self.state.slot_image_sources.get(name)
+                if prior is not None and prior.value == proposal.slot_updates[name] and prior_source == binding:
+                    continue
+                selected = self.image_registry.resolve(binding.image_reference)
+                if selected.ordinal != len(records):
+                    raise ImageRegistryError("Unqualified image reference must use the newest image")
+        for name, value in proposal.slot_updates.items():
+            old_binding = self.state.slot_image_sources.get(name)
+            if (old_binding and name not in verified and self.state.slots.get(name)
+                    and self.state.slots[name].value != value
+                    and str(value).casefold() not in spoken_text):
+                raise ImageRegistryError("An image-selected field changed without a new source or user value")
+        if len(set(self.state.slot_image_sources) | set(verified)) > 16:
+            raise ImageRegistryError("Too many image-sourced fields in this session")
+        return verified
+
     async def _apply(self, proposal: PlanProposal, source=None):
         if self.stop_hold:
+            return
+        try:
+            verified_image_bindings = self._verify_image_bindings(proposal, source)
+        except (ImageRegistryError, PlanModelViolation, ValueError) as exc:
+            await self._emit("error", code="invalid_image_binding", detail=str(exc))
+            if self.latest_complete:
+                await self._emit("clarify", text="I couldn't verify which image supplied a request field. "
+                                 "Please name the image and field again.")
             return
         if proposal.evidence_answer is not None:
             # Recheck the answer-only variant before any state mutation. Custom
@@ -1043,6 +1206,11 @@ class Agent:
         previous_slot_names = set(self.state.slots)
         for name, value in proposal.slot_updates.items():
             old = self.state.slots.get(name)
+            image_binding = verified_image_bindings.get(name)
+            old_image_binding = self.state.slot_image_sources.get(name)
+            user_confirmed_value = bool(
+                user_origin and self.latest_complete and image_binding is None
+                and (old_image_binding is None or str(value).casefold() in (speech.text.casefold() if speech else "")))
             if not user_origin and name in self._user_fixed_slots and old is not None and old.value != value:
                 # A17-1: write AUTHORITY (write_intent_retained, above) is gated on
                 # fresh evidence; the ARGUMENTS of an already-authorized write must be
@@ -1072,7 +1240,14 @@ class Agent:
                         f"{_clarify_repr(old.value)} to {_clarify_repr(value)} after the "
                         "user already fixed it; the original value is kept."))
                 continue
-            value_changed = old is None or old.value != value
+            if (image_binding is not None and name in self._user_fixed_slots and old is not None
+                    and old.value != value and speech_origin
+                    and not re.search(r"\b(?:image\s+[1-8]|(?:first|second|third|old|new)\s+image)\b",
+                                      speech.text.casefold() if speech else "")):
+                await self._emit("error", code="image_cannot_override_user_slot", slot=name)
+                continue
+            value_changed = (old is None or old.value != value
+                             or (image_binding is not None and image_binding != old_image_binding))
             if user_origin and self.latest_complete:
                 # Gated on latest_complete: a still-partial hypothesis's slot value can
                 # be discarded wholesale by _rollback_hypothesis, but until this gate,
@@ -1081,7 +1256,8 @@ class Agent:
                 # even for the rest of the session (security review MEDIUM finding 1).
                 # Only a proposal the turn policy considers COMPLETE (or a completed
                 # correction) genuinely fixes a slot's provenance.
-                self._user_fixed_slots.add(name)
+                if user_confirmed_value or image_binding is not None:
+                    self._user_fixed_slots.add(name)
                 # A fresh, complete, SPEECH-origin proposal asserting this name is the
                 # user's own confirmation of its value -- record that even when the
                 # value is unchanged (e.g. the user explicitly confirming a value a
@@ -1090,7 +1266,10 @@ class Agent:
                 # it is deliberately NOT symmetric with the "image"/"tool" cases below:
                 # only a fresh, complete, speech-origin assertion can promote a slot to
                 # "user" (security review HIGH finding 2).
-                self._slot_value_origin[name] = "user"
+                if user_confirmed_value:
+                    self._slot_value_origin[name] = "user"
+                elif image_binding is not None:
+                    self._slot_value_origin[name] = "image"
             elif fresh_evidence and not speech_origin and value_changed:
                 # Fresh, non-speech evidence (a frame) changed this slot's value. It is
                 # weaker than a user assertion -- it never fixes the slot name (the
@@ -1116,6 +1295,14 @@ class Agent:
                 # fresh-set slot verbatim after a failed write must not downgrade it to
                 # "tool".
                 self._slot_value_origin[name] = "tool"
+            if image_binding is not None:
+                self.state.slot_image_sources[name] = image_binding
+            elif user_confirmed_value:
+                self.state.slot_image_sources.pop(name, None)
+            elif value_changed:
+                # A value replaced without verified image evidence cannot keep
+                # the former image citation attached to the new value.
+                self.state.slot_image_sources.pop(name, None)
             if not self.latest_complete and name not in self.provisional_slots:
                 self.provisional_slots[name] = (source,
                                                 old.model_copy(deep=True) if old else None)
@@ -1270,6 +1457,34 @@ class Agent:
                             "this before it can be committed."))
                     self.clarification_outstanding = True
                     said_something = True
+                    continue
+                image_binding_error = None
+                for parameter in proposed.arguments:
+                    if parameter == manifest.idempotency_parameter:
+                        continue
+                    slot_name = proposed.argument_slots.get(parameter, parameter)
+                    if self._slot_value_origin.get(slot_name) != "image":
+                        continue
+                    binding = self.state.slot_image_sources.get(slot_name)
+                    if binding is None:
+                        image_binding_error = f"'{_clarify_name(slot_name)}' has no verified image source"
+                        break
+                    try:
+                        record = self.image_registry.resolve(binding.image_reference)
+                    except ImageRegistryError:
+                        image_binding_error = f"'{_clarify_name(slot_name)}' has a missing image source"
+                        break
+                    if (record.status != "observed" or record.event_id != binding.event_id
+                            or record.processing_revision != binding.processing_revision
+                            or record.observation is None
+                            or binding.evidence_quote not in record.observation.text):
+                        image_binding_error = f"'{_clarify_name(slot_name)}' has stale image evidence"
+                        break
+                if image_binding_error is not None:
+                    await self._emit("clarify", text=(image_binding_error + "; please confirm the field and image."))
+                    self.clarification_outstanding = True
+                    said_something = True
+                    blocked_calls += 1
                     continue
                 # Unknown/cancelled writes may have committed: no new write until reconciled.
                 if any(c.effect == "write" and c.status in {"unknown", "cancelled"} for c in self.ledger.values()):
@@ -1861,6 +2076,7 @@ class Agent:
         self.write_intent_retained = False
         self.state.status = "ended"
         await self._discard_pending_frame()
+        self._fail_pending_images(reason)
         if self.session_id is None:
             return
         for call in list(self.ledger.values()):

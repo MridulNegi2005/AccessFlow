@@ -6,7 +6,7 @@ import pytest
 
 from accessflow.clock import ManualClock
 from accessflow.contracts import (
-    Audio, AudioEvent, Frame, FrameEvent, Observation, PlanProposal, ProposedCall,
+    Audio, AudioEvent, Frame, FrameEvent, ImageSlotBinding, Observation, PlanProposal, ProposedCall,
     Start, StartEvent, TranscriptEvent, Interrupt, InterruptEvent,
 )
 from accessflow.engine import Agent, WorkerMessage
@@ -67,8 +67,17 @@ class Planner:
     async def plan(self, view, manifests):
         self.views.append(view)
         if self.kind == "write":
+            observed = [record for record in view.image_history if record.status == "observed"]
+            bindings = {}
+            if len(observed) > 1:
+                current = observed[-1]
+                bindings["day"] = ImageSlotBinding(
+                    image_reference=f"Image {current.ordinal}", event_id=current.event_id,
+                    processing_revision=current.processing_revision,
+                    evidence_quote=current.observation.text)
             return PlanProposal(intent="service", slot_updates={"day": "Wednesday"},
                                 request_complete=True, write_requested=True,
+                                image_bindings=bindings,
                                 calls=[ProposedCall(tool="reserve", arguments={"day": "Wednesday"},
                                                     dependencies=["day"])])
         if self.kind == "read" and not view.calls:
@@ -178,7 +187,7 @@ async def processed(agent, wanted):
 
 
 @pytest.mark.parametrize("late_kind", ["observation", "frame_failure"])
-async def test_replaced_frame_cannot_release_new_frame_gate(late_kind):
+async def test_older_frame_cannot_release_new_frame_gate(late_kind):
     agent, iq, oq, task = await setup("write")
     first, second = frame(), frame("f2")
     try:
@@ -196,7 +205,11 @@ async def test_replaced_frame_cannot_release_new_frame_gate(late_kind):
         await processed(agent, late)
         assert agent.pending_frame_token == token
         assert not agent.executor.effects
-        assert ("image", "f1") not in agent.observations
+        if late_kind == "observation":
+            assert agent.image_registry.resolve("f1").observation.text == "obsolete image"
+            assert ("image", "f1") in agent.observations
+        else:
+            assert agent.image_registry.resolve("f1").status == "failed"
         agent.perception.release["f2"].set()
         await wait_for(oq, lambda e: e.kind == "final")
         assert len(agent.executor.effects) == 1

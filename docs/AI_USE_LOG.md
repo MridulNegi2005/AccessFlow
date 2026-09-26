@@ -1667,3 +1667,19 @@ AI-assisted design, implementation and tests of explicit output-only interrupt. 
 
 ## 2026-09-26 18:53 - Stop, closure and image-registry groundwork
 AI-assisted controller implementation and adversarial review; isolated regression and registry assistance. Original findings were checked against code/tests, including the cancellation-worker shutdown bug. Human requirements D1-D4 retained. Only A-owned files changed. Broad1419 passed/6skipped/2deselected/1xfail, final controls20passed, Ruff clean. Image registry is not yet integrated. No real inference/microphone result.
+
+## 2026-09-26 - A-side multi-image controller integration
+
+AI assistance reviewed and implemented the D4 contract, controller image history,
+source-bound slot provenance and write validation, adapter-compatible receipts,
+hosted context-budget alignment, and deterministic A-owned tests. Separate
+read-only review and test drafting informed the changes; the final controller,
+tests and evidence were inspected and rerun before publication. The user-owned
+D4 product decisions controlled scope. No B-owned source or tests were edited.
+Broad A-side regression: 1,429 passed, 6 skipped, 7 B-owned cases deselected;
+three B stop cases passed with `--runxfail`; Ruff clean. Native package assembly
+and isolated real setup were attempted three times: first startup timeout,
+second setup failure, third success. A public evaluator text run scored 38.5
+under the old 14K repository default; a larger-context diagnostic run scored
+56.9 but hit provider quota before the write. No model training, physical mic,
+Docker/Linux, complete official multimodal score or submission claim.

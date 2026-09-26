@@ -1,5 +1,24 @@
 # Active Handoff
 
+## A-side multi-image controller handoff - 26 September 2026
+
+Last updated by: Codex. Current task: finish Mridul-owned controller and
+packaging seam before Atishay integration. In progress: none in A source;
+combined acceptance needs B integration and external platform checks.
+Image history, source-bound slots/write guards and Samsung-compatible receipts
+are implemented on `mridul/engine`. Hosted repository context now defaults to
+the packaged 32K; local Ollama remains 14K. Read
+docs/reviews/CONTROLLER_D4_HANDOFF_2026-09-26.md. Broad A-side regression:
+1429 passed/6 skipped/7 B-owned deselected; B stop tests 3 pass unmasked.
+Native 98-file/37-pin package hashes/import verified and real warm-up passed
+once after two failures; public text run reached evaluator but did not complete
+the booking. Docker unavailable. Next steps: Atishay consumes additive D4
+contract and updates owned assertions, then performs 12 real-inference and
+4 microphone checks; jointly run combined official cases and target platform.
+Key files modified: contracts.py, engine.py, adapters/models.py,
+adapters/prompt_profile.py, A-owned tests, STATUS, A handoff and this review.
+No B-owned source/test file was changed. No release or submission occurred.
+
 ## Resumed controller checkpoint - 26 September 2026
 
 User resumed work and narrowed the goal to finish A work or reach necessary B

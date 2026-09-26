@@ -1552,3 +1552,11 @@ configuration changed; no commit or push.
 **Notes:** Broad1419 pass/6skip/2deselected/1xfail; final controls20pass including unmasked B cases. Strict B xfail marker maintenance required; no B source edits. D4 engine wiring and runtime/package/evaluator gates remain A work.
 
 ---
+
+## [2026-09-26 19:43] — Codex
+**Task:** Finish the A-owned D4 controller and package-facing seam.
+**Changes:** Added ordered session image projection, verified per-slot image-source bindings, stale-result retention and write guards; fixed Samsung image receipt text and aligned hosted context default with package. Added A-owned conformance tests and a detailed handoff review. No B-owned source/test changes.
+**Status:** A-side implementation complete for B integration; combined product acceptance remains in progress.
+**Notes:** Broad1429 passed/6 skipped/7 B-owned deselected; B stop tests3 pass unmasked; Ruff clean. Native98-file/37-pin candidate verified and real setup passed once after two failed attempts. Official public text run reached evaluator but missed booking; context bound then provider quota were observed. Docker/Linux and B real inference/microphone gates remain. Work stays on mridul/engine; no release/tag/submission.
+
+---

@@ -1,5 +1,22 @@
 # Implementation status
 
+## A-side D4 controller handoff - 26 September 2026
+
+The multi-image registry is now wired into controller admission, late perception,
+planner views, slot provenance and write guards. Its additive contracts and
+deterministic tests are complete on `mridul/engine`; read
+`docs/reviews/CONTROLLER_D4_HANDOFF_2026-09-26.md` for exact behavior, test
+results and remaining gates. The broad A-side suite passed 1,429 tests with
+7 B-owned obsolete/changed-behavior cases deselected; the three stop cases
+pass unmasked. A 98-file native candidate verified hashes, 37 pins, organizer
+import and one complete real setup after two failed attempts. A normal-speed
+public text evaluator run exposed the old 14K repository context default;
+hosted mode now defaults to the packaged 32K. Provider quota prevented a
+confirmed booking on the diagnostic rerun. Docker/Linux and combined live
+audio/vision/physical-mic acceptance remain open. Atishay must consume the
+new D4 contracts and update only his owned demo/perception assertions before
+joint final verification. This is not a submission-ready claim.
+
 ## Resumed controller checkpoint - 26 September 2026
 
 User resumed work and narrowed the goal to finish A work or reach necessary B
