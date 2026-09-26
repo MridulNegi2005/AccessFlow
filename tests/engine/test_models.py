@@ -10,6 +10,12 @@ from accessflow.adapters.models import JsonBackend, ModelReasoner
 from accessflow.contracts import PlanProposal, SessionView, Snapshot, ToolCall, ToolManifest
 
 
+def test_default_context_budget_matches_local_and_packaged_hosted_profiles(monkeypatch):
+    monkeypatch.delenv("ACCESSFLOW_MAX_CONTEXT_CHARS", raising=False)
+    assert JsonBackend("ollama").max_context_chars == 14000
+    assert JsonBackend("groq").max_context_chars == 32768
+
+
 async def test_unknown_effect_guidance_uses_ledger_identity_and_manifest_status_tool():
     observed = []
     class Backend:
@@ -128,7 +134,8 @@ async def test_reasoner_sends_required_decision_schema_without_changing_internal
         schema = payload["format"]
         # The optional binding extension preserves legacy proposals; every original
         # completion/action decision remains mandatory for model generation.
-        assert set(schema["required"]) == set(PlanProposal.model_fields) - {"write_contracts", "evidence_answer"}
+        assert set(schema["required"]) == set(PlanProposal.model_fields) - {
+            "write_contracts", "evidence_answer", "image_bindings"}
         grounded_schema = payload["messages"][-1]["content"].split("\nJSON schema:\n")[1]
         assert json.loads(grounded_schema) == schema
         assert "Slot names" in schema["$defs"]["ProposedCall"]["properties"]["dependencies"]["description"]

@@ -60,7 +60,7 @@ async def test_policy_cannot_change_controller_observation():
         await end(iq, task)
 
 
-async def test_replaced_frame_rolls_back_visual_provisional_slot():
+async def test_distinct_new_frame_preserves_older_provisional_image_read():
     class Perception:
         async def observe(self, event):
             if event.kind == "frame":
@@ -94,9 +94,16 @@ async def test_replaced_frame_rolls_back_visual_provisional_slot():
         await wait_for(oq, lambda e: e.kind == "tool_call")
         assert not agent.state.slots["device"].confirmed
         await iq.put(FrameEvent(session_id="s", payload=Frame(path="scripted-only.png", frame_id="f2")))
-        cancelled = await wait_for(oq, lambda e: e.kind == "cancel_call")
-        assert "device" not in cancelled.state.slots
-        assert cancelled.payload["reason"] == "hypothesis_replaced"
+        await wait_for(oq, lambda e: e.kind == "acknowledge"
+                       and e.payload.get("image_received", {}).get("frame_id") == "f2")
+        # A second attachment does not replace Image 1 or cancel an unrelated
+        # reversible lookup already grounded on it. Its provisional status still
+        # prevents this value from authorizing a state-changing call.
+        assert agent.state.slots["device"].value == "tentative-old-frame"
+        assert not agent.state.slots["device"].confirmed
+        assert agent.state.slot_image_sources["device"].image_reference == "Image 1"
+        assert len(agent.image_registry.view()) == 2
+        assert any(call.status == "pending" for call in agent.ledger.values())
     finally:
         await end(iq, task)
 
