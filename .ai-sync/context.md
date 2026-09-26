@@ -1394,6 +1394,30 @@ own branch. Windows cleanup stopped test11436;existing11435 service stayed runni
 **Notes:** Screenshot only; raw audio, recording length, hardware/browser and timing were not retained. Uvicorn connection logs do not show audio contents. Streaming/barge-in, common runtime, C24-1/2/3 coordination, live vision and official media evaluation remain open. No Mridul-owned code/contracts changed.
 **Follow-on:** Added a pending C24-1/2 discussion draft in `docs/CONTRACT_PROPOSALS.md`; no shared semantics were implemented. Current local vision preflight found no Ollama service/API and no participant kit at its expected path.
 
+## [2026-09-25] — Atishay incomplete-correction endpoint guard
+**Task:** Prevent an explicitly unfinished provisional ASR phrase from becoming a final request solely on quiet time.
+**Changes:** Added a failing controlled pause/correction test, then a conservative trailing-cue hold in owned `demo/live-voice.js`; a later correction completes automatically, and abandonment yields a failed status without final WAV. Added the Node regression to the Python suite.
+**Status:** PARTIAL. Final no-parallel standard suite 1385 passed, 6 skipped, 3 xfailed, 2 warnings; Ruff, six Node checks and syntax passed. The first full run failed one Mridul-owned offline CLI corpus scenario (3/4 cases, `missing_dependency`/timeout); isolated test and full rerun passed, root cause unproven. Separately enabled installed-ASR tests failed under low memory (`mkl_malloc: failed to allocate memory` from direct local perception); previous generated-WAV runs passed but current opt-in run is not green.
+**Notes:** No physical microphone, real reasoner/vision, official kit run or shared-source change. The lexical guard does not solve long pauses before any correction cue or D2/D3 authority/finality integration.
+
+## [2026-09-25] — Atishay repetition, End-session and PNG staging follow-up
+**Task:** Advance owned V03/L05 acceptance and repair the drop/picker image mismatch found in a read-only UI sidecar.
+**Changes:** Added configured browser/controller scripted-repetition and gated mock-tool disconnect regressions; exercised the actual browser End-session handler against a late final; staged the exact PNG `File` used for both thumbnail and upload, with picker/drop Node coverage. Updated the D4 receipt projection request without editing shared implementation.
+**Status:** PARTIAL. Full Python 3.11 suite 1384 passed, 6 skipped, 3 xfailed, 2 warnings; four opt-in installed-ASR tests, Ruff, six Node checks, inline script syntax and diff check passed. Gate 1 remains FAIL; 12 real-inference and four human-microphone cases NOT RUN.
+**Notes:** First L05 test setup lacked required write dependencies; corrected the test, not controller code. The image test first used cross-realm object deep comparison; field assertions corrected it. No physical mic, real reasoning/vision, official kit run, full image history or Mridul-owned source change.
+
+## [2026-09-25] — Atishay delayed-preview revision guard
+**Task:** Keep delayed ASR preview text from overwriting resumed speech in the owned live-voice browser path.
+**Changes:** Invalidate an in-flight preview revision after a pause followed by new voice; added a deterministic held-callback regression that rejects old text, accepts the correction and sends one higher-revision final WAV.
+**Status:** V04 PARTIAL; five Node checks, browser syntax and Ruff passed. Final full Python rerun: 1381 passed, 6 skipped, 3 xfailed, 2 warnings. A preceding full rerun had one image timing failure with `MemoryError`; isolated test and next full rerun passed. No physical-mic or real delayed-model result is claimed.
+**Notes:** No shared controller, contract or process adapter edit; D2/D3 authority/closure coordination with Mridul remains open.
+
+## [2026-09-25] — Atishay configured-process reconnect regression
+**Task:** Close bounded L03 evidence without touching shared controller or adapter ownership.
+**Changes:** Added an opt-in two-WebSocket generated-WAV test with installed Faster Whisper CPU INT8 and a mock reasoner. Session 1 preview/worker close before session 2; session 2's observation, plan view and final retain only its own source and event identity. Kept the TestClient loop alive until both child processes were reaped; no production source change.
+**Status:** Full Python 3.11 suite 1381 passed, 6 skipped, 3 xfailed, 2 warnings; four opt-in installed-ASR tests, Ruff and five Node checks passed. L03 is deterministic/process-ASR PASS, while aggregate Gate 1 remains FAIL and Gates 2/3 are NOT RUN.
+**Notes:** No physical microphone, real reasoning/vision provider, official kit run, or Mridul-owned source change. See `docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md` for limits and D1-D4 coordination.
+
 ## [2026-09-25] — Current-branch model-backed Agent seam recheck
 **Task:** Re-verify the installed local ASR path through the real child worker and Agent without requiring more human speech.
 **Changes:** No production source changes. Re-ran the opt-in generated-WAV test with the installed Faster Whisper base.en CPU INT8 model; confirmed two Tuesday tokens, Wednesday correction, input-event causality, zero effects, and child cleanup. Added a C24-1/2 proposal draft without editing shared contracts.
@@ -1453,3 +1477,54 @@ configuration changed; no commit or push.
 **Notes:** No further product confirmation needed. Vague stop clarifies; End session is not send; keep ordered images for cross-image field selection. Existing newest-only controller is insufficient. A/B ownership preserved. 26/12/4 are future acceptance gates, not fresh results. User-authorized documentation publication only; no source changes.
 
 ---
+
+## [2026-09-25 17:02 IST] - AI-assisted Atishay live-voice follow-up
+**Task:** Continue owned D2/D3 implementation and verify real ASR preview and browser availability after a text response.
+**Changes:** Extended the opt-in real-ASR preview/final regression; kept unavailable live voice disabled and its help text honest after `finishRun`; added a Node state regression and updated B evidence/handoff.
+**Status:** PARTIAL. Installed-ASR generated-WAV preview and final pass; mock browser post-answer state visually checked. No physical-microphone or configured-reasoner/vision completion claim.
+**Notes:** Python 3.11 full suite 1377 passed/5 skipped/3 xfailed/2 dependency warnings; Ruff and five Node checks passed. Local-only WebSocket package was added to `.venv` for smoke testing, not to the shared lockfile. D1/D4 shared failures, actual inference attempts and four human microphone checks remain open. No Mridul-owned source or official package changed.
+
+---
+
+## [2026-09-25 17:24 IST] - AI-assisted Atishay per-image perception
+**Task:** Preserve distinct D4 image evidence and explicit capacity in owned perception without modifying the shared controller.
+**Changes:** Keyed vision coalescing by frame ID; reject additional distinct image work when the bounded pending queue is full; added delayed-result, per-image failure/capacity and demo-wrapper replacement tests. Kept same-ID replacement stale-result tests.
+**Status:** PARTIAL. Owned perception behavior passes; shared D4 view/registry and browser Image 1/2/3 selection remain incomplete.
+**Notes:** Full Python 3.11 suite 1381 passed/5 skipped/3 xfailed/2 dependency warnings; Ruff/five Node checks passed; three explicit installed-ASR opt-in tests passed separately. The strict conflicting-frames test still times out with `--runxfail`, not an observed unsafe write. No live vision or official evaluation run and no Mridul-owned code changed.
+
+---
+## [2026-09-25] — Atishay receipt-bound browser image display
+**Task:** Retain individually accepted PNGs in the browser without inventing D4 controller authority or ordinals.
+**Changes:** Added a bounded session-local attachment ledger, explicit script route and visible list; bound accepted source/event/revision to the server receipt, retained observed/failed status, rejected duplicate/old-session updates and ninth local image, and stopped old staged previews from appearing on later answers. Added deterministic Node/pytest checks and updated the D4 proposal/handoff.
+**Status:** PARTIAL. Final standard suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings; seven Node checks, Ruff and syntax passed. Installed-ASR opt-in was not retried with roughly 1 GB free physical RAM after the earlier `mkl_malloc` failure.
+**Notes:** No Mridul-owned source changed. Browser list is not the shared multi-image registry or field-level provenance; no physical microphone, real reasoner/vision or official kit run is claimed.
+
+## [2026-09-25] — Atishay bounded long-turn voice previews
+**Task:** Keep provisional ASR useful for continued speech without unbounded requests or silent finalization.
+**Changes:** Added a failing continued-speech test past three previews, then configurable validated quiet/preview/turn limits in owned live capture; long or exhausted turns fail explicitly without final WAV. A post-check regression found continuous speech could start a suffix-only turn after a cap; added a fresh-quiet reset guard. Added tests for a patient quiet interval and invalid timing. Updated feedback and handoff.
+**Status:** PARTIAL. Post-guard standard full suite 1387 passed, 6 skipped, 3 xfailed, 2 warnings in 69.82 s; seven Node checks, Ruff and syntax passed. Memory-limited ASR opt-in not run per user direction.
+**Notes:** No Mridul-owned source changed. No physical mic, real reasoner/vision or official kit run. Controller authority/finality and D4 remain shared dependencies.
+
+## [2026-09-25] — Atishay fixed Gate 2 inputs
+**Task:** Lock the four real-inference development cases without loading the memory-limited model.
+**Changes:** Added a generated correction/repetition WAV, a generated arithmetic WAV, exact SHA-256 fixture manifest, twelve attempt IDs and an owned fixture-integrity test. Existing single- and two-image PNGs retain their original bytes and visually verified labels.
+**Status:** PARTIAL. Fixture check and current standard suite passed (1388 passed, 6 skipped, 3 xfailed, 2 warnings); seven Node checks and Ruff passed. All twelve real-inference attempts remain NOT RUN.
+**Notes:** No installed-ASR retry, actual reasoner/vision answer, human microphone or official kit run. Mridul owns the memory resource issue and D4 shared source selection; Atishay owns later result recording once those dependencies are available. No Mridul-owned code changed.
+
+## [2026-09-25 23:27 IST] — Atishay action-pause and image-status repair
+**Task:** Improve owned D2 pause/correction behavior and D4 browser evidence status without touching shared authority.
+**Changes:** Added failing Node reproducers for a 2.5-second pause before a Wednesday correction and for late task/tool errors mislabeling accepted PNGs; added a bounded configurable 4.2-second action quiet window and restricted image-failure display to pre-observation backend failures. Updated partial gate evidence.
+**Status:** PARTIAL. Current Python 3.11 full suite 1388 passed, 6 skipped, 3 xfailed, 2 warnings in 113.51 s; seven Node checks and Ruff passed. No installed-ASR opt-in was run.
+**Notes:** The lexical pause guard is not a physical-mic or model result; longer pauses remain possible. D1/D4 controller contracts, 12 real-inference attempts and four human microphone cases remain open. No Mridul-owned source/configuration changed.
+
+## [2026-09-25 23:37 IST] — Atishay late-image receipt isolation
+**Task:** Preserve accepted PNG identity when its server receipt arrives after an owned browser request times out.
+**Changes:** Added failing Node cases for a late same-session receipt/observation and for a throwing unsent upload. Retained bounded pending image records across task completion, accepted matching late receipts into image history without changing a newer request/answer, rejected wrong-session receipts, and released failed sends.
+**Status:** PARTIAL. Python 3.11 standard suite 1388 passed, 6 skipped, 3 xfailed, 2 warnings in 123.56 s; seven Node checks and Ruff passed. No actual inference or human microphone run.
+**Notes:** The browser history is not Mridul's D4 registry or authority to use multiple images in a write. No installed-ASR memory retry, shared source change, or official kit run.
+
+## [2026-09-26 09:16 IST] — Atishay blocked acceptance audit
+**Task:** Revalidate remaining acceptance dependencies after the pushed owned fixes.
+**Changes:** Documentation-only gate audit and exact unblock sequence. Fetch/merge found main unchanged and already contained; current branch was clean and synchronized at `6eefd68`.
+**Status:** BLOCKED/PARTIAL. Fresh unmasked D1 tests: 2 failed, 1 passed in 2.75 s. Shared controller still has one active frame. Reasoning/vision configuration absent and no loopback vision listener. No real-inference or human-mic gate completion.
+**Notes:** No native-ASR retry, shared implementation edit, provider change or official evaluation. Resume integration when Mridul's shared contracts and the approved runtime are available; the existing passing standard suite is not acceptance proof.

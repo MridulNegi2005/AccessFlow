@@ -413,3 +413,48 @@ New acceptance cases and launch/verification requirements are in
 reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md (26 deterministic cases, 12 actual
 inference attempts, 4 physical-mic cases). These gates have not been run/passed
 by this documentation change. No shared schema or implementation changed here.
+
+## 25 September 2026 - Atishay D4 image-identity seam, shared work still required
+
+Owned perception now keys pending vision work by `(session_id, frame_id)` rather
+than treating every later frame in a session as a replacement. Two distinct IDs
+both return their own source-bound observations; a later same-ID version still
+supersedes old work. A full image queue rejects the new submission explicitly
+instead of silently evicting another ID. Reproducers:
+`tests/perception/test_local.py::test_distinct_image_ids_keep_both_results_after_later_admission`,
+`test_distinct_image_failure_is_not_hidden_by_later_image`,
+`test_distinct_image_capacity_rejects_new_input_without_evicting_old`, and
+`tests/demo/test_app.py::test_demo_perception_distinguishes_replacement_from_another_image`.
+These prove only B-owned perception/adapter behavior, not D4 completion.
+
+The first remaining incorrect boundary is the shared controller view. With
+`frame-1` yielding Tuesday and `frame-2` yielding Wednesday, the strict owned
+`test_conflicting_frames_require_resolution_before_write` still times out
+waiting for a reasoner view containing both source IDs when run with
+`--runxfail`; it does not demonstrate an unsafe write. Mridul needs an additive
+bounded session image registry/view keyed by accepted frame ID, server admission
+ordinal and receipt time, optional untrusted capture timestamp, per-ID
+revision/status/evidence, explicit field-to-source selections and write guards.
+Separate IDs must not invalidate one another; a same-ID replacement must still
+invalidate its previous version. Reject overflow without reindexing. Existing
+single-image clients and the official input wire retain their defaults. Atishay
+can then bind browser Image 1/2/3 display and selection to the accepted registry
+IDs and run I01-I04 against the shared controller without guessing provenance.
+
+The current browser `demo_status` receipt names the accepted frame source ID,
+event ID and revision but not an authoritative ordinal or receipt time. For
+D4's attachment display, Mridul and Atishay must agree an additive projection
+from the controller's accepted-image registry into that receipt: stable ordinal,
+server receipt time/order, per-ID status and version tied to the same source ID.
+The browser must assign labels only after a matching accepted receipt, retain
+failed-image identity, and reject duplicate/old-session receipts. A local
+drop/picker staging fix now sends the previewed file, but it does not create
+the registry or justify labeling old frames as available reasoning evidence.
+
+Atishay's browser now keeps a bounded session-local list of accepted PNGs keyed
+by source/event/revision, with its own thumbnail and observed/failed status. It
+rejects duplicate or old-session receipts, retains a failed image's identity,
+and refuses a ninth local image before upload. It intentionally displays source
+IDs rather than invented Image 1/2/3 ordinals; those labels, server receipt
+time, registry status and field provenance still require the agreed additive
+Mridul-owned projection. Browser receipt order is not controller authority.

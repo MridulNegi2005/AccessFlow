@@ -1021,3 +1021,338 @@ has not been run. The screenshot-backed human-microphone upload/ASR smoke is
 documented separately and has no retained audio/timing evidence. No additional
 speech was requested or recorded. Working changes remain uncommitted and
 unpushed; no Mridul-owned source/contracts/configuration were changed.
+
+## 2026-09-25 — PARTIAL configured-demo and error/stop checkpoint
+
+See [`ATISHAY_DELIVERY_RESULTS_2026-09-25.md`](../feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md)
+for the 26-case checklist and narrow D1/D2/D3/D4 interface proposals. Merged
+main `5dd2a56ce7f063335fb2fcb0fbfe4f127640e9a6` is an ancestor of this
+branch. Browser error correlation and authoritative output-stop projection
+are implemented, while two strict D1 Agent conformance tests still xfail.
+
+The demo now has an explicit `ACCESSFLOW_DEMO_AGENT_MODE=configured` path to
+Mridul's `build_configured_agent`, retaining its reasoner and policy, providing
+a declared in-memory calendar mock manifest/executor, displaying backend
+labels and projecting final observations without changing inference. Missing
+backend settings never fall back to the mock demo. A fake-factory integration
+test proves the adapter seam; a separate opt-in test reached installed Faster
+Whisper through the browser WebSocket and common Agent with a mock reasoner,
+then closed its native child after disconnect. This is not a completed real
+reasoning/calendar/vision task.
+
+Python 3.11.15 full suite: **1374 passed, 5 skipped, 3 xfailed, 2 dependency
+warnings**; repository Ruff and four Node checks passed. Explicit installed
+ASR selection ran three relevant tests successfully. Full Gate 1, twelve
+real-model attempts, live automatic speech/end-session, image history and
+four human-microphone cases remain open. No new human speech was requested or
+recorded. No provider was configured in this shell and Ollama port 11434 was
+closed; kit files were absent in the bounded local locations checked.
+
+Additional deterministic follow-up: a scripted planner double through the
+configured browser adapter and actual controller made no Tuesday effect from
+partial speech and exactly one Wednesday 17:00 mock effect after a final
+correction (`test_websocket_configured_correction_commits_only_wednesday_mock_effect`).
+A separate controller/turn-policy test confirms spoken "Cancel this task"
+invalidates a gated pending mock write while the session stays open. These
+close deterministic V01/S04 only; neither tests a real planner or microphone.
+
+## 2026-09-25 — PARTIAL live-voice checkpoint
+
+Added an opt-in browser AudioWorklet live session in Atishay-owned demo code.
+Configured process ASR can return provisional transcript previews while capture
+continues; the browser uses a bounded quiet period to send a final WAV without
+a Finish button. End session discards unfinished capture and stops local media
+resources. The server routes previews to perception only, never to the Agent
+as final observations. Deterministic JavaScript and fake-ASR WebSocket tests
+cover revision order, resumed speech, final delivery, and cleanup.
+
+The first full run had one stale HTML assertion for the old manual-send path;
+that assertion was updated to check the new final-audio send path. The rerun
+passed: 1376 Python tests, 5 skipped, 3 xfailed, 2 dependency warnings; Ruff,
+five Node checks, and inline-page JavaScript syntax passed. No physical-mic
+timing, real semantic endpointing, committed-effect closure, live model-quality
+or image-history result is claimed. D2/D3 controller guarantees and D4 shared
+registry/source semantics still require agreement with Mridul. This is a
+checkpoint, not completion of the 26-case acceptance gate.
+
+## 2026-09-25 — Installed-ASR preview and browser-state follow-up
+
+Extended the opt-in configured WebSocket test to send pending speech, decode a
+generated WAV as a provisional Faster Whisper preview, and then send a higher-
+revision final WAV. The real local ASR preview preserved utterance/revision,
+decoded the two Tuesday mentions and Wednesday correction, and made zero
+mock-planner calls before final. It passed with the explicit installed model
+path (1 passed, 2 existing dependency warnings); this is not a real reasoner
+or physical-microphone result. A separate deterministic disconnect regression
+holds a provisional preview in flight, then verifies cancellation, perception
+closure and no final/observation output. It does not exercise an in-flight tool.
+
+An in-app-browser mock smoke found that finishing a text request re-enabled
+the unavailable live-voice button and replaced its honest help text. The
+owned page now preserves the disabled state and configured-ASR guidance while
+keeping End session enabled for an active session and fresh-session restart
+enabled after closure. The new Node regression and browser recheck passed.
+Initial local WebSocket upgrade failed because the `.venv` lacked the optional
+runtime; local-only `websockets==17.1` enabled the check without changing the
+project lockfile. The browser showed a mock echo, not a substantive answer;
+no configured voice or physical-device browser state was tested.
+
+Full Python 3.11 suite: 1377 passed, 5 skipped, 3 xfailed, 2 dependency
+warnings in 114.80 s; Ruff and five Node checks passed. The D1 shared-stop
+xfails, D4 shared image-history xfail, twelve actual-reasoner/vision attempts
+and four agreed human-microphone cases remain open. Read-only local checks
+found the installed ASR snapshot but no configured reasoning credential or
+listening Ollama/vision service; the kit was absent from five bounded local
+locations, not from the organizer generally. Mridul still owns shared D1/D2/D3
+decisions and D4 registry/source guards; Atishay owns remaining browser,
+perception and human-device conformance once those seams and providers exist.
+
+## 2026-09-25 — PARTIAL D4 per-image perception correction
+
+The owned `LocalPerception` vision worker now coalesces by frame ID, not every
+frame in a session. Two separately identified images keep their own observations
+even when Image 2 is admitted before Image 1 finishes. A failure from Image 1
+is no longer hidden by Image 2's success. A same-ID replacement still suppresses
+its old result/error. When one image is active and eight distinct images are
+pending, an additional image gets an explicit queue-capacity error; the eight
+accepted pending identities are not silently evicted. The demo perception
+wrapper has a separate replacement-versus-distinct-ID regression.
+
+The new two-image test initially passed because release raced ahead of Image
+2 admission; a deterministic admission barrier exposed the intended failure
+before the code change. The first broader run had five old newest-frame-only
+test failures; those tests were revised to use same-ID replacement, preserving
+their stale-result/timeout assertions, while distinct-ID behavior has new tests.
+One demo-wrapper assertion was also still based on newest-only semantics and
+was made a two-case replacement/distinct-ID check. Focused owned perception:
+64 passed. Full Python 3.11 suite: 1381 passed, 5 skipped, 3 xfailed, 2
+dependency warnings in 86.76 s; Ruff and five Node checks passed. Three
+explicit installed-ASR opt-in tests passed separately in 28.45 s.
+
+`test_conflicting_frames_require_resolution_before_write --runxfail` still
+fails by a timeout waiting for both images in the shared reasoner view. This is
+not proof of an unsafe write. Mridul must implement the bounded D4 registry,
+admission ordinals, per-field source selection and write guards in shared
+contracts/controller; the exact proposal is in `docs/CONTRACT_PROPOSALS.md`.
+Atishay still must bind browser attachment display to accepted image IDs and
+run I01-I04 through the integrated controller. No live vision model, official
+media run or human microphone result was produced in this slice.
+
+## 2026-09-25 — PARTIAL configured-process reconnect checkpoint
+
+Added an opt-in L03 regression across two sequential configured WebSockets.
+The first receives an actual Faster Whisper CPU INT8 preview from a generated
+WAV, disconnects, and releases its native worker. The second receives a fresh
+session ID and worker, decodes only its own final audio, and returns an
+event-correlated mock-reasoner answer. Both workers close while the server
+test loop remains alive. The first draft of the test shut that loop down before
+the second worker's async reap completed; waiting inside `TestClient` corrected
+the harness, without changing the shared process adapter or controller.
+
+Full Python 3.11 suite: 1381 passed, 6 skipped, 3 xfailed, 2 dependency
+warnings in 111.81 s; Ruff and five Node checks passed. Four explicit
+installed-ASR opt-in tests passed in 36.88 s. L03 is PASS for this bounded
+generated-audio/process-ASR route, not for physical microphone timing or an
+actual reasoning/vision provider. D1 stop and D4 image-history xfails remain;
+26-case aggregate Gate 1 fails, 12 actual-inference attempts and four agreed
+human-microphone cases are still not run. Mridul's D1-D4 shared decisions and
+controller work remain separate; no teammate-owned source was changed.
+
+## 2026-09-25 — PARTIAL delayed-preview revision checkpoint
+
+The owned live-voice capture now invalidates an in-flight preview when speech
+resumes after a pause. A delayed old callback cannot put stale recognized
+words back into the current turn; a later preview must use a newer revision,
+and the final audio revision follows it. The deterministic browser harness
+holds the old callback, resumes speech, verifies rejection before and after
+the correction callback, and confirms one final WAV. This is V04 partial
+evidence only: no physical microphone, actual delayed ASR response or shared
+controller-authority race was tested. No Mridul-owned source was edited.
+
+Final full Python rerun after this browser change: 1381 passed, 6 skipped,
+3 xfailed, 2 dependency warnings in 107.04 s; five Node checks, browser
+syntax, Ruff and diff check passed. An earlier full rerun had a `MemoryError`
+and failed a one-second start wait in
+`test_slow_image_provider_does_not_block_event_loop`; it passed alone and the
+next full suite passed. Root cause was not established, so this failed run is
+retained in the delivery report rather than erased.
+
+## 2026-09-25 — PARTIAL repetition, End-session and PNG staging checkpoint
+
+Added a configured browser/controller V03 regression: partial "two tickets"
+followed by the repeated final phrase leaves the raw repetition visible to a
+scripted reasoner and produces exactly one quantity-2 in-memory write, none
+from partial speech. This proves deterministic effect handling, not actual
+model quantity interpretation. Added L05 closure coverage for a gated mock
+write: disconnect cancels the pending path without a late effect/final. The
+browser End-session check now invokes the real handler and verifies pending
+transport input is cleared, the socket/capture/playback close, and a late final
+is ignored. Physical timing, native/remote work and committed-effect reporting
+still need verification. The first gated-write test was rejected because its
+scripted proposal omitted manifest dependencies; the corrected test reaches
+the intended pending tool and passes without shared-code changes.
+
+A read-only UI sidecar identified a real drop/picker mismatch: dropped PNGs
+were previewed but the send route read only the file picker. The owned page
+now stores the staged `File` and uses it for preview and upload. A new Node
+regression covers dropped and picker PNGs. This does not implement D4 image
+history: the page still stages one image and the shared registry/ordinal/source
+projection is absent. The exact remaining receipt seam is proposed in
+`docs/CONTRACT_PROPOSALS.md`; no Mridul-owned implementation was edited.
+
+Full Python 3.11 suite: **1384 passed, 6 skipped, 3 xfailed, 2 dependency
+warnings** in 111.29 s on the final run. Four explicit installed-ASR tests:
+**4 passed** in 67.91 s (generated WAV, mock reasoner). Ruff, six Node checks, inline script
+syntax and diff check passed. No configured reasoning provider was declared in
+this shell; loopback 11434 did not confirm a vision service. Three bounded
+local kit paths lacked `WALKTHROUGH.md`, not proof the kit is unavailable
+elsewhere. Gate 1 still fails; Gates 2/3 remain not run. Next independent
+Atishay work is receipt-bound attachment history once the authoritative D4
+projection is agreed, plus physical-mic and real-inference runs when their
+inputs/providers are available; Mridul owns shared D1/D2/D3/D4 behavior.
+
+## 2026-09-25 — PARTIAL incomplete-correction endpoint guard
+
+The owned live-voice capture now treats an ASR preview ending in a clear
+continuation cue (for example, "Book Tuesday, actually") as unfinished. A
+deterministic test first reproduced the old premature final after the normal
+quiet threshold. The repaired path waits for resumed speech and a newer
+preview; a completed correction still submits automatically. If the speaker
+never continues, the turn emits a recoverable failed status after the bounded
+wait and **no final WAV**. The Python suite now runs this Node regression.
+This is a lexical safety guard, not general semantic endpointing or a
+physical-microphone measurement. A long pause before any correction cue can
+still end a fluent-sounding request; shared timing/finality and controller
+authority remain D2/D3 work with Mridul.
+
+The first full Python run on this change failed one unrelated-looking
+Mridul-owned offline CLI corpus scenario: 3/4 fake cases, with the
+device-correction case timing out after `missing_dependency` errors and zero
+effects. The specific test passed alone and the no-parallel full rerun passed:
+**1385 passed, 6 skipped, 3 xfailed, 2 dependency warnings** in 127.63 s.
+The failure trace is summarized in the delivery report; its cause is not
+established and no shared source/test was changed. Ruff, six Node checks and
+live-voice script syntax passed. The separate installed-ASR opt-in rerun is
+currently **failed**, despite earlier successful generated-WAV runs: a browser
+preview became an error preview, and direct local perception exposed
+`mkl_malloc: failed to allocate memory` with roughly 1 GB physical RAM free.
+The diagnostic test hook was removed. The user assigned the memory bottleneck
+follow-up to Mridul; do not rerun it in this workstream. This is not human
+speech or an actual reasoning-model result.
+
+## 2026-09-25 — PARTIAL receipt-bound image display
+
+Owned browser code now retains a session-local list of PNGs only after a matching
+server receipt. Each entry keeps its own source/event/revision, thumbnail and
+observed or failed status; duplicate and old-session receipts are ignored. A
+later text-only answer no longer displays the previously staged image. The
+browser refuses a ninth local image before upload with an explicit error;
+fresh session/unload revokes retained object URLs. End session leaves the
+existing list visible while rejecting late changes. This is browser display,
+not the D4 controller registry or a claim that an old image is selectable as
+agent evidence. No Image 1/2/3 ordinal is invented: Mridul still needs to
+project authoritative admission ordinal/receipt time and source status, then
+we can bind the labels and field provenance.
+
+Focused Node checks cover the ledger, rendered rows, current-request preview,
+browser receipt/observation/error wiring and source-preserving picker/drop.
+`tests/demo/test_app.py` passed **145 passed, 2 skipped, 1 xfailed, 2 warnings**;
+the final standard full suite passed **1387 passed, 6 skipped, 3 xfailed, 2
+warnings** in 65.41 s. Seven Node checks, Ruff, script syntax and diff check
+passed. Installed-ASR was not rerun in this slice at about 1 GB free physical
+memory, per user direction; Mridul will handle the previously recorded native
+allocation failure.
+Gates 1–3 remain incomplete as described in the delivery report.
+
+## 2026-09-25 — PARTIAL bounded long-turn voice previews
+
+The owned live capture used to stop requesting ASR previews after three. A
+deterministic continued-speech test failed with only three previews; the
+browser now allows later revisions within a bounded default of 12 previews
+and 60 seconds per turn. Quiet completion (2.2 s), failure timeout (5.5 s),
+preview interval (1 s), preview count and turn duration are validated timing
+options. A long or preview-exhausted turn fails with a specific recoverable
+message and **no final WAV**. A long/oversize turn also requires a fresh quiet
+period before continuous speech can start another request, preventing a
+suffix-only action. A configured longer quiet interval is tested.
+This improves independent D2/V05 behavior but does not establish acoustic
+endpoint quality, controller action authority or real microphone timing.
+
+The post-guard standard full suite passed **1387 passed, 6 skipped, 3 xfailed,
+2 warnings** in 69.82 s; seven Node checks, Ruff and live-voice syntax passed. The
+memory-limited installed-ASR opt-in was not run per user direction. Mridul
+owns that resource issue and the shared D1/D2/D3/D4 decisions; human-mic and
+actual reasoning/vision gates remain unverified.
+
+## 2026-09-25 — PARTIAL fixed Gate 2 development inputs
+
+Predeclared four distinct real-inference paths and twelve attempt IDs in
+`docs/feedback/GATE2_PREDECLARED_2026-09-25.json`. The two new WAVs under
+`tests/perception/fixtures/gate2/` are generated by the owned PowerShell
+script, not human recordings. The single-image PNG and two inline PNGs are
+existing development assets; I inspected the visible `ERR-42`, `WED 5` and
+`DEVICE B` labels. The owned preflight test verifies exact input hashes,
+formats, four cases and twelve unique slots without invoking inference.
+All attempts remain **NOT RUN**. Gate 2 still needs configured real reasoning
+and vision, the installed-ASR resource issue is for Mridul per user direction,
+and G2-04 also needs his D4 source-bound image registry. No owned test or
+synthetic label is being counted as a model answer.
+
+The current Python 3.11 standard suite passed **1388 passed, 6 skipped,
+3 xfailed, 2 warnings** in 76.63 s; seven Node checks and Ruff passed.
+The fixture preflight passed again after the WAVs moved into the owned
+test area. See `docs/feedback/ATISHAY_DELIVERY_RESULTS_2026-09-25.md`.
+
+## 2026-09-25 — PARTIAL action-pause and image-status correction
+
+Two owned browser failures were first reproduced with Node assertions. A
+2.5-second quiet gap after a complete-looking Tuesday booking preview sent
+final audio before a later Wednesday correction; a final image observation
+could be relabeled `failed` by a later controller error, and an unrelated
+tool error could mark a pending image unreadable. Live capture now uses a
+configurable, bounded 4.2-second quiet window for action-like previews that
+have not expressed a correction; ordinary informational previews retain the
+2.2-second default. A completed correction can finish after the ordinary
+window. The image ledger only changes a received PNG to failed on a
+pre-observation backend failure; an observed PNG stays observed. All seven
+owned Node checks, Ruff and the Python 3.11 standard suite passed: **1388
+passed, 6 skipped, 3 xfailed, 2 warnings** (113.51 s).
+
+These are deterministic browser checks, not physical speech or actual model
+answers. The lexical action guard can still misclassify speech and cannot
+protect arbitrarily long pauses; D1 controller hold and D4 source registry
+remain Mridul-owned. Gate 2 remains 12/12 NOT RUN and Gate 3 remains 4/4
+NOT RUN. Per user direction, the memory-limited installed-ASR opt-in was not
+retried. No shared implementation or configuration changed.
+
+## 2026-09-25 — PARTIAL late-image receipt isolation
+
+An owned Node reproducer showed a PNG receipt arriving after the request
+timeout was dropped: `finishRun()` cleared its pending file and the browser
+required the old request still be active before accepting the receipt. The
+browser now keeps bounded pending images until their same-session receipt or
+session end. A late receipt can add its image row, and a late observation can
+update that row, but neither enters a new request's event map or revives an
+answer. Wrong-session and duplicate receipts remain rejected. A separate
+failing send test showed a thrown transport send could strand a pending PNG;
+that slot now releases on the throw. Both regressions failed before repair
+and passed afterward.
+
+This is owned UI evidence retention only: Mridul's controller still has a
+single active frame and cannot safely reason with Image 1 plus Image 2 or
+assign authoritative ordinals/receipt times. Python 3.11 standard suite:
+**1388 passed, 6 skipped, 3 xfailed, 2 warnings** (123.56 s); seven Node
+checks and Ruff passed. Real reasoning/vision and physical-mic gates remain
+unrun. No memory-limited ASR retry or shared code edit occurred.
+
+## 2026-09-26 — BLOCKED acceptance audit, not completion
+
+Fetched origin: no shared changes beyond `5dd2a56`; merge reports already up
+to date. On the clean pushed implementation `6eefd68`, fresh unmasked D1
+checks produced **2 failed, 1 passed** (2.75 s). The controller remains
+single-active-frame. No reasoning/vision configuration or loopback vision
+service was available; no native-ASR retry or human capture was attempted.
+See `docs/feedback/ATISHAY_ACCEPTANCE_AUDIT_2026-09-26.md` for the gate matrix
+and exact Mridul/runtime changes needed before Atishay can finish integration,
+the twelve real-inference attempts and four physical-mic checks. The goal is
+blocked by these repeated dependencies, not declared complete.
