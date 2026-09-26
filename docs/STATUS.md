@@ -2,8 +2,9 @@
 
 ## Ownership-safe branch integration - 26 September 2026
 
-Local `main` first fast-forwarded Mridul's `353fe98`, then a separate
-integration branch merged Atishay's `e04f943`. Atishay's A-owned controller,
+`main` first fast-forwarded Mridul's `353fe98`, then a separate
+integration branch merged Atishay's `e04f943`; merge `78644b2` was pushed.
+Atishay's A-owned controller,
 contract and engine-test edits were excluded; his demo, timing-policy and
 B-owned tests were retained. One additive A contract/controller seam supports
 the B stop-policy outcomes. The combined suite has 1,451 passing tests,

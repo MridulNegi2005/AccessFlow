@@ -1612,3 +1612,11 @@ configuration changed; no commit or push.
 **Notes:** Combined suite 1,451 passed, 6 skipped, 5 existing B demo failures caused by old D4 expectations. Focused A/B stop suite 55 passed and seven browser Node checks passed. Atishay owns the remaining demo assertions, cloud preview and real microphone checks. No release tag or submission.
 
 ---
+
+## [2026-09-26 20:47 IST] — Codex
+**Task:** Publish the verified ownership-safe integration.
+**Changes:** Fast-forwarded main to merge 78644b2 and pushed origin/main. Confirmed both branch heads are ancestors, the working tree is clean, and B-owned source/tests exactly match Atishay's branch.
+**Status:** Branch integration completed; five B demo assertions and official media/microphone acceptance remain open.
+**Notes:** Merge parents are Mridul 353fe98 first and Atishay e04f943 second. No release tag or submission.
+
+---

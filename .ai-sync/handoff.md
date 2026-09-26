@@ -4,7 +4,7 @@
 
 Last updated by: Codex. Current Task: merge Mridul first, then Atishay,
 without adopting Atishay's edits to A-owned files. In Progress: integration
-verified and being published to main. Next Steps: Atishay updates
+verified and published to `main` at `78644b2`. Next Steps: Atishay updates
 his five obsolete D4 demo assertions and connects cloud-mode preview before
 his real-inference and microphone gates. Key Files Modified: B-owned demo,
 turn-policy and tests from Atishay; A-owned additive TurnDecision/controller
