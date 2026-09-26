@@ -1,5 +1,17 @@
 # Active Handoff
 
+## Atishay integration prompt verified - 26 September 2026
+
+Last updated by: Codex. Current Task: provide an accurate B-side handoff.
+In Progress: no A code; B integration has not begun here. Next Steps: Atishay
+fetches and merges `origin/mridul/engine` into `atishay/perception`, preserves
+his changes, updates owned D4/stop tests, then runs the declared actual-model
+and physical-microphone cases. Key Files Modified: `.ai-sync/context.md` and
+this handoff only. The chosen inference stack is Groq-hosted
+`qwen/qwen3.8-27b` reasoning, local Faster Whisper CPU INT8 audio, and local
+Ollama `gemma3:4b` image perception. The Samsung kit permits hosted APIs;
+secrets stay outside Git. `mridul/engine` is not yet part of main.
+
 ## A-side multi-image controller handoff - 26 September 2026
 
 Last updated by: Codex. Current task: finish Mridul-owned controller and

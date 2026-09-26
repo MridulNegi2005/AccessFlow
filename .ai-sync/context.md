@@ -1568,3 +1568,11 @@ configuration changed; no commit or push.
 **Notes:** Clean package: 98 hashes, 37 pins, organizer import, installed ASR/vision and hosted reasoner setup passed in 56.39 s. Owned vision service stopped. Docker/Linux unavailable. Public text task remains incomplete; B owns next image/voice integration checks. No main merge, release tag or submission.
 
 ---
+
+## [2026-09-26 20:10] — Codex
+**Task:** Verify current runtime and kit before giving Atishay integration instructions.
+**Changes:** No source edit. Confirmed Groq/Qwen reasoning, local Faster Whisper audio, local Ollama/Gemma vision, Samsung kit rules, and that `mridul/engine` is not yet in main or Atishay's branch.
+**Status:** Prompt prepared; A implementation remains ready for B integration.
+**Notes:** Atishay must fetch and integrate the pushed A branch without discarding B work, then run owned D4, real-inference and physical-microphone gates. Main, release and submission remain unchanged.
+
+---
