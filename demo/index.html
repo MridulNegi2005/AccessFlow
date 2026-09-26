@@ -477,6 +477,18 @@
         gap: 7px;
         margin-top: 10px;
       }
+      .session-attachments {
+        margin-top: 12px;
+      }
+      .session-attachments h3 {
+        margin: 0;
+        color: #4f5b52;
+        font-size: 12px;
+        font-weight: 650;
+      }
+      .session-attachments .staged-size {
+        overflow-wrap: anywhere;
+      }
       .staged-item {
         min-width: 0;
         display: flex;
@@ -1364,7 +1376,7 @@
             ><span style="--h: 27px"></span>
           </div>
           <div class="voice-caption" id="voice-caption">
-            Tap to speak<small>Recording is sent when you finish</small>
+            Start live voice<small>Speak hands-free when configured ASR is ready</small>
           </div>
         </div>
         <p
@@ -1377,15 +1389,15 @@
           Ready when you are
         </p>
         <p class="voice-help" id="voice-help">
-          Start a recording when you’re ready. Your microphone stays off until
-          you choose.
+          Start a live session when configured ASR is ready. Your microphone
+          stays off until you choose.
         </p>
         <div class="session-controls" id="session-controls">
           <button
             class="session-control primary"
             id="voice-toggle"
             type="button"
-            aria-label="Start voice recording"
+            aria-label="Start live voice session"
           >
             <svg
               viewBox="0 0 24 24"
@@ -1409,7 +1421,7 @@
                 stroke-width="1.8"
                 stroke-linecap="round"
               /></svg
-            ><span>Start voice</span>
+            ><span>Start live voice</span>
           </button>
           <button class="session-control" id="choose-audio" type="button">
             Upload WAV
@@ -1456,6 +1468,10 @@
           <span class="attachment-limit">PNG or WAV · up to 8 MiB each</span>
         </div>
         <div class="staged-list" id="staged-list" aria-live="polite"></div>
+        <section class="session-attachments" id="session-images" aria-label="Images received this session" hidden>
+          <h3>Images received this session</h3>
+          <div class="staged-list" id="session-image-list" aria-live="polite"></div>
+        </section>
         <p class="dock-error" id="dock-error" role="alert"></p>
         <label class="sr-only" for="task-text">Message being prepared</label>
         <textarea
@@ -1470,8 +1486,9 @@
           <span>Send attached request</span>
         </button>
         <p class="dock-note" id="dock-note">
-          Voice is recorded in this browser and uploaded to the current demo
-          backend after you finish.
+          In live mode, bounded speech previews go to the configured ASR while
+          you speak; only an automatically completed turn reaches the agent.
+          Upload WAV remains separate.
         </p>
         <p class="backend-status" id="backend-status" role="status" aria-live="polite">
           Checking connected backends…
@@ -1601,6 +1618,8 @@
       <input id="image" type="file" accept="image/png,.png" />
     </div>
 
+    <script src="/live-voice.js"></script>
+    <script src="/attachment-history.js"></script>
     <script>
       const previewVariant = new URLSearchParams(location.search).get("preview");
       const previewMode = ["1", "photo", "meeting"].includes(previewVariant);
@@ -1622,21 +1641,34 @@
       let microphone = null;
       let microphoneStartPending = false;
       let microphoneStartGeneration = 0;
+      let liveVoice = null;
+      let livePreviewAvailable = false;
+      let sessionEnded = false;
       let mediaSendChain = Promise.resolve();
       let draftTimer = null;
       let microphoneTimer = null;
       let microphoneStartedAt = 0;
       let recordedWavBytes = null;
+      let stagedImageFile = null;
       let stagedImageUrl = null;
+      const attachmentHistory = new AccessFlowAttachmentHistory({
+        createObjectURL: (file) => URL.createObjectURL(file),
+        revokeObjectURL: (url) => URL.revokeObjectURL(url),
+        onChange: renderAttachmentHistory,
+      });
       let latestMediaSourceId = null;
       let finalSourceId = null;
       let requestSourceIds = new Set();
       let requestEventIds = new Map();
+      let requestRevisions = new Map();
+      let requestResolvedSources = new Set();
+      let activeSessionId = null;
       let pendingAnswers = [];
       let inputsDispatched = false;
       let runInProgress = false;
       let responseTimer = null;
       let responseBackend = "demo/mock";
+      let agentMode = "mock";
       let ttsUtterance = null;
       let speechGeneration = 0;
       let ttsEnabled = false;
@@ -1651,28 +1683,40 @@
 
       function modeLabel() {
         if (previewMode) return "Design preview";
-        return responseBackend.toLowerCase().includes("mock")
-          ? "Mock tools"
-          : "Live backend";
+        return agentMode === "configured"
+          ? "Configured agent · mock tools"
+          : "Demo · mock tools";
       }
 
       function show(event) {
+        if (sessionEnded) return;
         const payload =
           event.payload && typeof event.payload === "object"
             ? event.payload
             : {};
+        if (event.kind === "demo_observation" && payload.modality === "image") {
+          attachmentHistory.observe(
+            event.session_id, payload.source_id, payload.event_id,
+            payload.revision ?? 0, payload.backend,
+          );
+        }
+        if (event.kind === "error" && payload.code === "backend_failure") {
+          attachmentHistory.fail(event.session_id, payload.caused_by_event_id);
+        }
         if (
           event.kind === "demo_observation" &&
-          (!runInProgress || !requestSourceIds.has(payload.source_id))
+          (!runInProgress || !requestSourceIds.has(payload.source_id) ||
+            (activeSessionId && event.session_id !== activeSessionId))
         ) return;
         if (event.kind === "final" || event.kind === "clarify") {
           const cause = payload.caused_by_event_id;
           if (
             !runInProgress ||
+            (activeSessionId && event.session_id !== activeSessionId) ||
             typeof cause !== "string" ||
             !Array.from(requestEventIds.values()).includes(cause)
           ) return;
-          if (!inputsDispatched) {
+          if (!inputsDispatched || !allRequestSourcesResolved()) {
             if (pendingAnswers.length < 8) pendingAnswers.push(event);
             return;
           }
@@ -1681,9 +1725,26 @@
           const cause = payload.caused_by_event_id;
           if (
             !runInProgress ||
+            (activeSessionId && event.session_id !== activeSessionId) ||
             typeof cause !== "string" ||
             !Array.from(requestEventIds.values()).includes(cause)
           ) return;
+        }
+        if (event.kind === "acknowledge" && payload.stop_output === true) {
+          const cause = payload.caused_by_event_id;
+          if (
+            !runInProgress ||
+            (activeSessionId && event.session_id !== activeSessionId) ||
+            typeof cause !== "string" ||
+            !Array.from(requestEventIds.values()).includes(cause)
+          ) return;
+          cancelSpeech();
+          if (event.state?.status === "stopped") {
+            finishRun();
+            document.querySelector("#voice-state").textContent = "Task stopped";
+            document.querySelector("#voice-help").textContent =
+              "The task was cancelled. You can start another request.";
+          }
         }
         document.querySelector("#announcements").textContent = announce(event);
         if (
@@ -1712,6 +1773,18 @@
           }
         }
         if (event.kind === "demo_status" && payload.perception_backend) {
+          if (typeof event.session_id === "string") {
+            attachmentHistory.startSession(event.session_id);
+            activeSessionId = event.session_id;
+          }
+          agentMode = payload.agent_mode === "configured" ? "configured" : "mock";
+          livePreviewAvailable = payload.live_preview_available === true;
+          document.querySelector("#voice-toggle").disabled = !livePreviewAvailable;
+          if (!livePreviewAvailable) {
+            setVoiceCaption("Live voice unavailable", "Use Upload WAV or configure process ASR");
+            document.querySelector("#voice-help").textContent =
+              "Hands-free voice needs the configured agent with installed ASR. Upload WAV or type meanwhile.";
+          }
           const reasoner = payload.reasoner_backend;
           responseBackend = reasoner
             ? payload.perception_backend + " · " + reasoner
@@ -1723,7 +1796,29 @@
             modeLabel() + " · Conversation";
           return;
         }
+        if (event.kind === "demo_preview") {
+          if (activeSessionId && event.session_id !== activeSessionId) return;
+          if (liveVoice?.previewResult(event.source_id, event.revision, event.text, event.error) &&
+              typeof event.text === "string") {
+            document.querySelector("#caption-label").textContent =
+              "Provisional transcript · no action yet";
+            document.querySelector("#request-summary").textContent = event.text;
+          }
+          return;
+        }
         if (event.kind === "demo_status" && payload.media_received) {
+          if (activeSessionId && event.session_id !== activeSessionId) return;
+          const currentRequest = runInProgress && requestSourceIds.has(payload.source_id);
+          const accepted = currentRequest && rememberRequestEvent(
+            payload.source_id, event.accepted_event_id, event.accepted_revision,
+          );
+          if (payload.media_received === "frame" && (!currentRequest || accepted)) {
+            attachmentHistory.accept(
+              event.session_id, payload.source_id,
+              event.accepted_event_id, event.accepted_revision,
+            );
+          }
+          if (!currentRequest) return;
           const kind =
             payload.media_received === "frame"
               ? "Screenshot"
@@ -1750,7 +1845,10 @@
               : payload.text || "Voice request received.";
           }
           if (payload.final === true && typeof payload.event_id === "string") {
-            requestEventIds.set(payload.source_id, payload.event_id);
+            if (rememberRequestEvent(payload.source_id, payload.event_id, payload.revision ?? 0)) {
+              requestResolvedSources.add(payload.source_id);
+              if (inputsDispatched) replayPendingAnswer();
+            }
           }
           return;
         }
@@ -1761,9 +1859,11 @@
         }
         if (event.kind === "error" || event.kind === "demo_error") {
           const message =
-            typeof payload.message === "string"
-              ? payload.message
-              : "Something went wrong. You can try again.";
+            event.kind === "error"
+              ? controllerErrorMessage(payload.code)
+              : typeof payload.message === "string"
+                ? payload.message
+                : "Something went wrong. You can try again.";
           document.querySelector("#answer-error").textContent = message;
           document.querySelector("#answer-error").classList.add("visible");
           if (runInProgress) finishRun();
@@ -1771,7 +1871,34 @@
         return;
       }
 
+      function rememberRequestEvent(sourceId, eventId, eventRevision) {
+        if (!requestSourceIds.has(sourceId) || typeof eventId !== "string" ||
+            !eventId || !Number.isSafeInteger(eventRevision) || eventRevision < 0)
+          return false;
+        const currentRevision = requestRevisions.get(sourceId);
+        if (currentRevision !== undefined && eventRevision < currentRevision)
+          return false;
+        if (currentRevision !== eventRevision || requestEventIds.get(sourceId) !== eventId)
+          requestResolvedSources.delete(sourceId);
+        requestRevisions.set(sourceId, eventRevision);
+        requestEventIds.set(sourceId, eventId);
+        return true;
+      }
+
+      function allRequestSourcesResolved() {
+        return [...requestSourceIds].every((sourceId) => requestResolvedSources.has(sourceId));
+      }
+
+      function controllerErrorMessage(code) {
+        if (code === "backend_failure")
+          return "We could not process that request. Please check the recording or image and try again.";
+        if (code === "tool_failed")
+          return "The requested action failed. Please check its status before trying again.";
+        return "The request could not be completed. Please try again.";
+      }
+
       function replayPendingAnswer() {
+        if (!inputsDispatched || !allRequestSourcesResolved()) return false;
         const pendingAnswer = pendingAnswers.findLast(
           (event) =>
             Array.from(requestEventIds.values()).includes(
@@ -1820,12 +1947,18 @@
         const image = document.querySelector("#answer-image");
         const imageButton = document.querySelector("#answer-image-button");
         const grid = document.querySelector("#answer-grid");
-        if (stagedImageUrl) {
-          image.src = stagedImageUrl;
+        const requestImage = previewMode
+          ? null
+          : attachmentHistory.items().find((item) =>
+              requestSourceIds.has(item.sourceId) && item.status === "observed");
+        if (requestImage || (previewMode && stagedImageUrl)) {
+          image.src = requestImage?.url || stagedImageUrl;
           imageButton.hidden = false;
           document.querySelector("#answer-media").hidden = false;
           const imageCaption = document.querySelector("#answer-image-caption");
-          imageCaption.textContent = "Your uploaded photo";
+          imageCaption.textContent = requestImage
+            ? "Image received for this request"
+            : "Your uploaded photo";
           imageCaption.hidden = false;
           grid.classList.add("with-image");
         } else {
@@ -1872,13 +2005,23 @@
         finalSourceId = null;
         requestSourceIds = new Set();
         requestEventIds = new Map();
+        requestRevisions = new Map();
+        requestResolvedSources = new Set();
         pendingAnswers = [];
         inputsDispatched = false;
         if (responseTimer) clearTimeout(responseTimer);
         responseTimer = null;
         document.querySelector("#processing").classList.remove("visible");
         hasRunBefore = true;
-        if (
+        if (liveVoice?.active) {
+          document.querySelector("#voice-state").textContent = "Listening · live session";
+          document.querySelector("#voice-help").textContent =
+            "Speak naturally or choose End session. No Finish button is needed.";
+        } else if (!livePreviewAvailable && !sessionEnded) {
+          document.querySelector("#voice-state").textContent = "Ready when you are";
+          document.querySelector("#voice-help").textContent =
+            "Hands-free voice needs the configured agent with installed ASR. Upload WAV or type meanwhile.";
+        } else if (
           !microphone &&
           !document.querySelector("#speak-pill").classList.contains("visible")
         ) {
@@ -1978,6 +2121,7 @@
       }
 
       function send(kind, payloadOrFactory) {
+        if (sessionEnded) return false;
         if (previewMode || !socket) {
           show({
             kind: "demo_error",
@@ -2031,6 +2175,7 @@
       }
 
       function sendSerialized(message) {
+        if (sessionEnded) return false;
         try {
           socket.send(message);
           return true;
@@ -2075,6 +2220,7 @@
       function registerRequestSource(sourceId) {
         if (!runInProgress) return;
         requestSourceIds.add(sourceId);
+        requestResolvedSources.delete(sourceId);
         finalSourceId = sourceId;
       }
 
@@ -2215,6 +2361,7 @@
             return;
         }
         void discardMicrophone();
+        void liveVoice?.end();
         cancelPendingMicrophoneStart();
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
         cancelSpeech();
@@ -2433,7 +2580,9 @@
       }
 
       function sendFile(kind, selector, fallback) {
-        const file = document.querySelector(selector).files[0];
+        const file = kind === "frame"
+          ? stagedImageFile
+          : document.querySelector(selector).files[0];
         const action = async () => {
           if (!file) return false;
           const mediaLabel =
@@ -2450,22 +2599,47 @@
             });
             return;
           }
+          let sourceId = null;
           try {
             const dataBase64 = await fileToBase64(file);
+            if (!runInProgress) return false;
             document.querySelector("#processing").lastElementChild.textContent =
               "Sending " + mediaLabel + "…";
-            const sourceId = nextMediaId(
+            sourceId = nextMediaId(
               kind === "audio" ? "upload-audio" : "upload-frame",
             );
+            if (kind === "frame" && !attachmentHistory.current(activeSessionId)) {
+              show({
+                kind: "demo_error",
+                payload: {
+                  backend: "browser/media",
+                  message: "The image session is not ready. Reconnect before sending it.",
+                },
+              });
+              return false;
+            }
+            if (kind === "frame" && !attachmentHistory.prepare(sourceId, file)) {
+              show({
+                kind: "demo_error",
+                payload: {
+                  backend: "browser/media",
+                  message: "This session can hold eight images. Start a new session before adding another.",
+                },
+              });
+              return false;
+            }
             latestMediaSourceId = sourceId;
             registerRequestSource(sourceId);
-            return send(kind, () => ({
+            const sent = send(kind, () => ({
               data_base64: dataBase64,
               filename: file.name,
               utterance_id: kind === "audio" ? sourceId : undefined,
               frame_id: kind === "frame" ? sourceId : undefined,
             }));
+            if (!sent && kind === "frame") attachmentHistory.discard(sourceId);
+            return sent;
           } catch (error) {
+            if (kind === "frame" && sourceId) attachmentHistory.discard(sourceId);
             show({
               kind: "demo_error",
               payload: { backend: "demo/mock", message: error.message },
@@ -2488,7 +2662,7 @@
         const hasAttachment = Boolean(
           document.querySelector("#audio").files[0] ||
             recordedWavBytes ||
-            document.querySelector("#image").files[0],
+            stagedImageFile,
         );
         const available = hasAttachment && canRun() && !runInProgress;
         button.hidden = !available;
@@ -2501,7 +2675,7 @@
             hasRunBefore && getDraftSignature() !== lastSubmittedSignature
               ? "Send updated request"
               : "Send with attachment";
-        if (document.querySelector("#image").files[0] && !canRun()) {
+        if (stagedImageFile && !canRun()) {
           document.querySelector("#dock-error").textContent =
             "Add a text or voice request to run with this screenshot.";
         }
@@ -2509,7 +2683,7 @@
 
       function getDraftSignature() {
         const audio = document.querySelector("#audio").files[0];
-        const image = document.querySelector("#image").files[0];
+        const image = stagedImageFile;
         return JSON.stringify([
           document.querySelector("#task-text").value,
           audio
@@ -2523,7 +2697,9 @@
 
       function setMediaControlsLocked(locked) {
         document.querySelector("#choose-audio").disabled = locked;
-        document.querySelector("#voice-toggle").disabled = locked;
+        document.querySelector("#voice-toggle").disabled =
+          !sessionEnded && !liveVoice?.active && !liveVoice?.startPending &&
+          (locked || !livePreviewAvailable);
         const dropZone = document.querySelector("#drop-zone");
         dropZone.setAttribute("aria-disabled", String(locked));
         dropZone.tabIndex = locked ? -1 : 0;
@@ -2541,6 +2717,7 @@
               : "Choose a PNG screenshot.";
           document.querySelector("#image").value = "";
           if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+          stagedImageFile = null;
           stagedImageUrl = null;
           document.querySelector("#answer-image").hidden = true;
           document.querySelector("#answer-grid").classList.remove("with-image");
@@ -2549,6 +2726,7 @@
           return;
         }
         if (stagedImageUrl) URL.revokeObjectURL(stagedImageUrl);
+        stagedImageFile = file;
         stagedImageUrl = URL.createObjectURL(file);
         document.querySelector("#answer-image-button").hidden = true;
         document.querySelector("#answer-grid").classList.remove("with-image");
@@ -2597,7 +2775,7 @@
           row.append(icon, copy, remove);
           list.append(row);
         }
-        const imageFile = document.querySelector("#image").files[0];
+        const imageFile = stagedImageFile;
         if (imageFile && stagedImageUrl) {
           const row = document.createElement("div");
           row.className = "staged-item";
@@ -2623,6 +2801,7 @@
           remove.onclick = () => {
             document.querySelector("#image").value = "";
             URL.revokeObjectURL(stagedImageUrl);
+            stagedImageFile = null;
             stagedImageUrl = null;
             document.querySelector("#answer-image-button").hidden = true;
             document
@@ -2632,6 +2811,39 @@
             updateRunButton();
           };
           row.append(thumb, copy, remove);
+          list.append(row);
+        }
+      }
+
+      function renderAttachmentHistory(items) {
+        const section = document.querySelector("#session-images");
+        const list = document.querySelector("#session-image-list");
+        section.hidden = items.length === 0;
+        list.replaceChildren();
+        for (const item of items) {
+          const row = document.createElement("div");
+          row.className = "staged-item";
+          const thumb = document.createElement("img");
+          thumb.className = "staged-thumb";
+          thumb.src = item.url;
+          thumb.alt = "";
+          const copy = document.createElement("div");
+          copy.className = "staged-copy";
+          const name = document.createElement("span");
+          name.className = "staged-name";
+          name.textContent = item.name || "PNG image";
+          const status = document.createElement("span");
+          status.className = "staged-size";
+          status.textContent = item.status === "failed"
+            ? "Processing failed · not available as evidence"
+            : item.status === "observed"
+              ? "Observed · " + (item.backend || "backend unreported")
+              : "Received · processing pending";
+          const source = document.createElement("span");
+          source.className = "staged-size";
+          source.textContent = "Source ID: " + item.sourceId;
+          copy.append(name, status, source);
+          row.append(thumb, copy);
           list.append(row);
         }
       }
@@ -2646,7 +2858,7 @@
         if (runInProgress) return;
         const text = document.querySelector("#task-text").value.trim();
         const audioFile = document.querySelector("#audio").files[0];
-        const imageFile = document.querySelector("#image").files[0];
+        const imageFile = stagedImageFile;
         if (!text && !audioFile && !recordedWavBytes) {
           document.querySelector("#dock-error").textContent =
             "Add a text or voice request before running your task.";
@@ -2666,6 +2878,8 @@
         finalSourceId = null;
         requestSourceIds = new Set();
         requestEventIds = new Map();
+        requestRevisions = new Map();
+        requestResolvedSources = new Set();
         pendingAnswers = [];
         inputsDispatched = false;
         activeInputKinds = [];
@@ -2699,18 +2913,21 @@
                 utterance_id: sourceId,
               }),
             );
+            if (!runInProgress) return;
             if (!sent)
               throw new Error("The voice recording could not be sent.");
             activeInputKinds.push("audio");
           } else if (audioFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("audio", "#audio");
+            if (!runInProgress) return;
             if (!sent) throw new Error("The WAV could not be sent.");
             activeInputKinds.push("audio");
           }
           if (imageFile) {
             latestMediaSourceId = null;
             const sent = await sendFile("frame", "#image");
+            if (!runInProgress) return;
             if (!sent) throw new Error("The screenshot could not be sent.");
             activeInputKinds.push("frame");
           }
@@ -2756,9 +2973,123 @@
         if (typeof dialog.showModal === "function") dialog.showModal();
       }
 
+      function beginLiveRun(sourceId) {
+        cancelSpeech();
+        if (runInProgress) finishRun();
+        runInProgress = true;
+        finalSourceId = sourceId;
+        requestSourceIds = new Set([sourceId]);
+        requestEventIds = new Map();
+        requestRevisions = new Map();
+        requestResolvedSources = new Set();
+        pendingAnswers = [];
+        inputsDispatched = false;
+        activeInputKinds = ["audio"];
+        document.querySelector("#answer-error").classList.remove("visible");
+        document.querySelector("#processing").classList.add("visible");
+        document.querySelector("#processing").lastElementChild.textContent =
+          "Listening and preparing speech preview…";
+        document.querySelector("#request-summary").textContent =
+          "Listening to your request…";
+        document.querySelector("#caption-label").textContent = "Your words";
+        document.querySelector("#empty-state").hidden = true;
+        setMediaControlsLocked(true);
+        document.querySelector("#voice-toggle").disabled = false;
+      }
+
+      liveVoice = new window.AccessFlowLiveVoice({
+        getUserMedia: (options) => navigator.mediaDevices.getUserMedia(options),
+        createAudioContext: () => new AudioContext(),
+        createRecorder: (context) => new AudioWorkletNode(context, "accessflow-recorder"),
+        now: () => performance.now(),
+        setInterval: (callback, delay) => window.setInterval(callback, delay),
+        clearInterval: (timer) => window.clearInterval(timer),
+        encodeWav,
+        onSpeechStart: beginLiveRun,
+        sendStatus: (sourceId, sourceRevision, status) =>
+          send("speech_status", {
+            utterance_id: sourceId, revision: sourceRevision, status,
+          }),
+        sendPreview: (sourceId, sourceRevision, wav) =>
+          send("audio_preview", {
+            utterance_id: sourceId, revision: sourceRevision,
+            data_base64: bytesToBase64(wav),
+          }),
+        sendFinal: (sourceId, sourceRevision, wav) => {
+          if (!runInProgress || sessionEnded) return false;
+          const sent = send("audio", {
+            utterance_id: sourceId, revision: sourceRevision,
+            data_base64: bytesToBase64(wav),
+          });
+          if (!sent) return false;
+          inputsDispatched = true;
+          document.querySelector("#processing").lastElementChild.textContent =
+            "Speech sent · waiting for the configured agent…";
+          if (replayPendingAnswer()) return true;
+          if (responseTimer) clearTimeout(responseTimer);
+          responseTimer = window.setTimeout(() => {
+            if (!runInProgress || sessionEnded) return;
+            document.querySelector("#answer-error").textContent =
+              "This voice request is taking longer than expected. The session remains open.";
+            document.querySelector("#answer-error").classList.add("visible");
+            finishRun();
+          }, 90000);
+          return true;
+        },
+        onPreview: () => {},
+        onState: (state) => {
+          if (sessionEnded) return;
+          const labels = {
+            listening: "Listening · live session",
+            speaking: "Hearing you",
+            previewing: "Recognizing while you speak",
+            processing: "Listening · agent processing",
+            unavailable: "Microphone unavailable",
+          };
+          if (labels[state])
+            document.querySelector("#voice-state").textContent = labels[state];
+          if (state === "listening") {
+            setVoiceCaption("Live voice on", "Speak naturally · End session to stop");
+            document.querySelector("#voice-help").textContent =
+              "Your next turn finishes automatically after a patient pause.";
+          }
+        },
+        onError: (message) => show({
+          kind: "demo_error", payload: { backend: "browser/live-voice", message },
+        }),
+      });
+
+      async function endLiveSession() {
+        if (sessionEnded) return;
+        sessionEnded = true;
+        attachmentHistory.endSession();
+        pendingMessages.length = 0;
+        cancelSpeech();
+        if (socket && socket.readyState < WebSocket.CLOSING) socket.close();
+        const closing = liveVoice.end();
+        finishRun();
+        document.querySelector("#voice-state").textContent = "Session ended";
+        document.querySelector("#voice-help").textContent =
+          "Microphone off. Start a new session for another voice request.";
+        document.querySelector("#voice-toggle").lastElementChild.textContent =
+          "Start new session";
+        document.querySelector("#voice-toggle").setAttribute(
+          "aria-label", "Start a new voice session",
+        );
+        document.querySelector("#voice-toggle").disabled = false;
+        document.querySelector("#choose-audio").disabled = true;
+        await closing;
+      }
+
       if (socket) {
-        socket.onmessage = (message) => show(JSON.parse(message.data));
+        socket.onmessage = (message) => {
+          if (!sessionEnded) show(JSON.parse(message.data));
+        };
         socket.onopen = () => {
+          if (sessionEnded) {
+            socket.close();
+            return;
+          }
           let drained = true;
           while (
             pendingMessages.length &&
@@ -2777,7 +3108,17 @@
           pendingMessages.length = 0;
           cancelPendingMicrophoneStart();
           void discardMicrophone();
+          void liveVoice.end();
+          if (sessionEnded) return;
           show({ kind: "demo_status", payload: { connected: false } });
+          sessionEnded = true;
+          attachmentHistory.endSession();
+          document.querySelector("#voice-toggle").disabled = false;
+          document.querySelector("#voice-toggle").lastElementChild.textContent =
+            "Start new session";
+          document.querySelector("#voice-toggle").setAttribute(
+            "aria-label", "Start a new voice session",
+          );
         };
         socket.onerror = () =>
           show({
@@ -2821,10 +3162,29 @@
           "Read aloud unavailable";
       }
       document.querySelector("#voice-toggle").onclick = async () => {
-        if (microphone) {
-          await stopMicrophone();
-          if (recordedWavBytes) void runTask();
-        } else void startMicrophone();
+        if (sessionEnded) {
+          window.location.reload();
+          return;
+        }
+        if (liveVoice.active || liveVoice.startPending) {
+          await endLiveSession();
+          return;
+        }
+        if (!livePreviewAvailable) {
+          show({ kind: "demo_error", payload: {
+            backend: "browser/live-voice",
+            message: "Live voice needs configured process ASR. Upload a WAV or type instead.",
+          } });
+          return;
+        }
+        const toggle = document.querySelector("#voice-toggle");
+        toggle.lastElementChild.textContent = "End session";
+        toggle.setAttribute("aria-label", "End voice session");
+        const started = await liveVoice.start();
+        if (!started && !sessionEnded) {
+          toggle.lastElementChild.textContent = "Start live voice";
+          toggle.setAttribute("aria-label", "Start live voice session");
+        }
       };
       document.querySelector("#choose-audio").onclick = () =>
         document.querySelector("#audio").click();
@@ -3013,6 +3373,9 @@
         renderDesignPreview(previewVariant);
       }
       window.addEventListener("beforeunload", () => {
+        sessionEnded = true;
+        attachmentHistory.clear();
+        void liveVoice?.end();
         cancelPendingMicrophoneStart();
         clearTimeout(draftTimer);
         clearInterval(microphoneTimer);

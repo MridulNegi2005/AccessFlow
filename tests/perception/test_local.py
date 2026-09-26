@@ -461,7 +461,7 @@ async def test_slow_image_provider_does_not_block_event_loop(tmp_path: Path):
 
 
 @pytest.mark.asyncio
-async def test_pending_frames_are_coalesced_and_stale_results_are_suppressed(tmp_path: Path):
+async def test_replacements_for_one_image_are_coalesced_and_stale_results_suppressed(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 
     paths = [tmp_path / f"frame-{index}.png" for index in range(1, 4)]
@@ -483,8 +483,8 @@ async def test_pending_frames_are_coalesced_and_stale_results_are_suppressed(tmp
 
     adapter = LocalPerception(vision_provider=provider)
     events = [
-        FrameEvent(session_id="s1", payload=Frame(path=str(path), frame_id=f"frame-{index}"))
-        for index, path in enumerate(paths, start=1)
+        FrameEvent(session_id="s1", payload=Frame(path=str(path), frame_id="same-image"))
+        for path in paths
     ]
     first_task = asyncio.create_task(collect(adapter, events[0]))
     assert await asyncio.to_thread(provider_started.wait, 1)
@@ -498,8 +498,149 @@ async def test_pending_frames_are_coalesced_and_stale_results_are_suppressed(tmp
 
     assert first == []
     assert second == []
-    assert [item.source_id for item in third] == ["frame-3"]
+    assert [item.source_id for item in third] == ["same-image"]
     assert calls == [paths[0], paths[2]]
+
+
+@pytest.mark.asyncio
+async def test_distinct_image_ids_keep_both_results_after_later_admission(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / "image-1.png", tmp_path / "image-2.png"]
+    for path in paths:
+        _write_png(path)
+    first_started = threading.Event()
+    release_first = threading.Event()
+
+    def provider(path: Path) -> str:
+        if path == paths[0]:
+            first_started.set()
+            assert release_first.wait(2)
+        return f"evidence from {path.stem}"
+
+    async def collect(adapter, event):
+        return [item async for item in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    first = FrameEvent(
+        session_id="session-a",
+        payload=Frame(path=str(paths[0]), frame_id="image-1"),
+    )
+    second = FrameEvent(
+        session_id="session-a",
+        payload=Frame(path=str(paths[1]), frame_id="image-2"),
+    )
+    first_task = asyncio.create_task(collect(adapter, first))
+    assert await asyncio.to_thread(first_started.wait, 1)
+    worker = adapter._vision_workers["session-a"]
+    second_task = asyncio.create_task(collect(adapter, second))
+    async def second_admitted():
+        while worker._next_token < 2:
+            await asyncio.sleep(0)
+    await asyncio.wait_for(second_admitted(), timeout=1)
+    release_first.set()
+    first_result, second_result = await asyncio.gather(first_task, second_task)
+    await adapter.aclose()
+
+    assert [(item.source_id, item.text) for item in first_result] == [
+        ("image-1", "evidence from image-1")
+    ]
+    assert [(item.source_id, item.text) for item in second_result] == [
+        ("image-2", "evidence from image-2")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_distinct_image_failure_is_not_hidden_by_later_image(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / "image-1.png", tmp_path / "image-2.png"]
+    for path in paths:
+        _write_png(path)
+    first_started = threading.Event()
+    release_first = threading.Event()
+
+    def provider(path: Path) -> str:
+        if path == paths[0]:
+            first_started.set()
+            assert release_first.wait(2)
+            raise RuntimeError("first image failed")
+        return "second image evidence"
+
+    async def collect(adapter, event):
+        return [item async for item in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    first_task = asyncio.create_task(collect(adapter, FrameEvent(
+        session_id="session-a", payload=Frame(path=str(paths[0]), frame_id="image-1"),
+    )))
+    assert await asyncio.to_thread(first_started.wait, 1)
+    worker = adapter._vision_workers["session-a"]
+    second_task = asyncio.create_task(collect(adapter, FrameEvent(
+        session_id="session-a", payload=Frame(path=str(paths[1]), frame_id="image-2"),
+    )))
+    async def second_admitted():
+        while worker._next_token < 2:
+            await asyncio.sleep(0)
+    await asyncio.wait_for(second_admitted(), timeout=1)
+    release_first.set()
+    first_result, second_result = await asyncio.gather(
+        first_task, second_task, return_exceptions=True,
+    )
+    await adapter.aclose()
+
+    assert isinstance(first_result, RuntimeError)
+    assert str(first_result) == "first image failed"
+    assert [(item.source_id, item.text) for item in second_result] == [
+        ("image-2", "second image evidence")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_distinct_image_capacity_rejects_new_input_without_evicting_old(tmp_path: Path):
+    from accessflow.contracts import Frame, FrameEvent
+
+    paths = [tmp_path / f"image-{index}.png" for index in range(10)]
+    for path in paths:
+        _write_png(path)
+    first_started = threading.Event()
+    release_first = threading.Event()
+
+    def provider(path: Path) -> str:
+        if path == paths[0]:
+            first_started.set()
+            assert release_first.wait(3)
+        return path.stem
+
+    async def collect(adapter, index):
+        event = FrameEvent(
+            session_id="session-a",
+            payload=Frame(path=str(paths[index]), frame_id=f"image-{index}"),
+        )
+        return [item async for item in adapter.observe(event)]
+
+    adapter = LocalPerception(vision_provider=provider)
+    accepted = [asyncio.create_task(collect(adapter, 0))]
+    assert await asyncio.to_thread(first_started.wait, 1)
+    worker = adapter._vision_workers["session-a"]
+    accepted.extend(asyncio.create_task(collect(adapter, index)) for index in range(1, 9))
+
+    async def queue_filled():
+        while len(worker._pending) < 8:
+            await asyncio.sleep(0)
+
+    try:
+        await asyncio.wait_for(queue_filled(), timeout=2)
+        with pytest.raises(RuntimeError, match="image perception queue capacity reached"):
+            await asyncio.wait_for(collect(adapter, 9), timeout=0.5)
+    finally:
+        release_first.set()
+        results = await asyncio.gather(*accepted, return_exceptions=True)
+        await adapter.aclose()
+
+    assert [[item.source_id for item in result] for result in results] == [
+        [f"image-{index}"] for index in range(9)
+    ]
 
 
 @pytest.mark.asyncio
@@ -843,19 +984,19 @@ async def test_pending_work_isolated_between_sessions(tmp_path: Path):
     adapter = LocalPerception(vision_provider=provider)
     first_a = FrameEvent(
         session_id="session-a",
-        payload=Frame(path=str(paths[0]), frame_id="first-a"),
+        payload=Frame(path=str(paths[0]), frame_id="image-a"),
     )
     latest_a = FrameEvent(
         session_id="session-a",
-        payload=Frame(path=str(paths[1]), frame_id="latest-a"),
+        payload=Frame(path=str(paths[1]), frame_id="image-a"),
     )
     first_b = FrameEvent(
         session_id="session-b",
-        payload=Frame(path=str(paths[2]), frame_id="first-b"),
+        payload=Frame(path=str(paths[2]), frame_id="image-b"),
     )
     latest_b = FrameEvent(
         session_id="session-b",
-        payload=Frame(path=str(paths[3]), frame_id="latest-b"),
+        payload=Frame(path=str(paths[3]), frame_id="image-b"),
     )
     first_a_task = asyncio.create_task(collect(adapter, first_a))
     first_b_task = asyncio.create_task(collect(adapter, first_b))
@@ -881,8 +1022,8 @@ async def test_pending_work_isolated_between_sessions(tmp_path: Path):
 
     assert first_a_result == []
     assert first_b_result == []
-    assert [item.source_id for item in latest_a_result] == ["latest-a"]
-    assert [item.source_id for item in latest_b_result] == ["latest-b"]
+    assert [item.source_id for item in latest_a_result] == ["image-a"]
+    assert [item.source_id for item in latest_b_result] == ["image-b"]
     assert {path.name for path in calls} == {path.name for path in paths}
 
 
@@ -990,7 +1131,7 @@ async def test_local_perception_does_not_emit_after_close():
 
 
 @pytest.mark.asyncio
-async def test_stale_frame_failure_is_suppressed_when_newer_frame_succeeds(tmp_path: Path):
+async def test_replaced_frame_failure_is_suppressed_when_new_version_succeeds(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 
     paths = [tmp_path / "first.png", tmp_path / "second.png"]
@@ -1022,7 +1163,7 @@ async def test_stale_frame_failure_is_suppressed_when_newer_frame_succeeds(tmp_p
     second_task = asyncio.create_task(
         collect(
             adapter,
-            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-1")),
         )
     )
     await asyncio.sleep(0.05)
@@ -1031,13 +1172,13 @@ async def test_stale_frame_failure_is_suppressed_when_newer_frame_succeeds(tmp_p
     first, second = await asyncio.gather(first_task, second_task)
 
     assert first == []
-    assert [item.source_id for item in second] == ["frame-2"]
+    assert [item.source_id for item in second] == ["frame-1"]
     assert second[0].text == "current visual evidence"
     assert calls == paths
 
 
 @pytest.mark.asyncio
-async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_path: Path):
+async def test_replaced_frame_timeout_is_suppressed_when_new_version_succeeds(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 
     paths = [tmp_path / "first.png", tmp_path / "second.png"]
@@ -1078,7 +1219,7 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
     second_task = asyncio.create_task(
         collect(
             adapter,
-            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-1")),
         )
     )
     await asyncio.wait_for(observed_slot.acquire_started.wait(), timeout=1)
@@ -1086,14 +1227,14 @@ async def test_stale_frame_timeout_is_suppressed_when_newer_frame_succeeds(tmp_p
 
     first, second = await asyncio.gather(first_task, second_task)
     assert first == []
-    assert [item.source_id for item in second] == ["frame-2"]
+    assert [item.source_id for item in second] == ["frame-1"]
     assert second[0].text == "current visual evidence"
     assert calls == paths
     assert await asyncio.to_thread(first_finished.wait, 1)
 
 
 @pytest.mark.asyncio
-async def test_stale_frame_queue_timeout_does_not_admit_native_work(tmp_path: Path):
+async def test_replaced_frame_queue_timeout_does_not_admit_native_work(tmp_path: Path):
     from accessflow.contracts import Frame, FrameEvent
 
     paths = [tmp_path / "first.png", tmp_path / "second.png"]
@@ -1134,7 +1275,7 @@ async def test_stale_frame_queue_timeout_does_not_admit_native_work(tmp_path: Pa
     second_task = asyncio.create_task(
         collect(
             adapter,
-            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-2")),
+            FrameEvent(session_id="s1", payload=Frame(path=str(paths[1]), frame_id="frame-1")),
         )
     )
 

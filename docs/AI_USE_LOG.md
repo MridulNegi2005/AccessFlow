@@ -1513,3 +1513,143 @@ to retain timestamped/ordered multi-image references. Assistance converted those
 instructions into D1-D4, owner-separated implementation guidance and expanded
 acceptance gates. These are requirements, not code changes or verified model
 capabilities. No recording, new inference run or source repair occurred.
+
+## 25 September 2026 - AI-assisted Atishay live-voice verification
+
+Assistance extended an opt-in generated-WAV test through the installed Faster
+Whisper preview and final WebSocket route, repaired a browser control-state
+regression after a mock text response, and updated evidence/handoff notes.
+The local browser smoke inspected the rendered mock page without microphone
+permission. One read-only sidecar checked bounded local model/service/kit
+availability without reading credential values. No real reasoning/vision,
+physical microphone, booking, official scoring or publication is claimed.
+
+## 25 September 2026 - AI-assisted per-image perception repair
+
+Assistance reproduced the old newest-frame-only behavior with a deterministic
+delayed-image test, then changed owned vision coalescing to retain distinct
+frame IDs and reject full-queue admissions explicitly. Same-ID replacement
+tests, failure identity, demo-wrapper behavior and the full repository suite
+were checked. The shared conflicting-frames test still fails under `--runxfail`;
+no controller/contract implementation, live vision inference, human recording,
+official score or completed multi-image feature is claimed.
+
+## 25 September 2026 - AI-assisted configured-process reconnect regression
+
+Assistance added an owned opt-in L03 test that uses the installed Faster Whisper
+CPU INT8 worker on a generated WAV in two sequential browser WebSocket
+sessions. The first preview and native child close on disconnect; the second
+uses a fresh session and source, with mock reasoning and event-correlated final.
+The first test run failed because its TestClient event loop closed before the
+second worker's asynchronous reap; moving the cleanup check inside the active
+client made the test pass without modifying shared adapter/controller code.
+Full suite, four installed-ASR opt-in tests, Ruff and five browser checks passed.
+This is neither human-mic nor actual-reasoner/vision evidence; the aggregate
+acceptance gates remain incomplete.
+
+## 25 September 2026 - AI-assisted delayed-preview revision guard
+
+Assistance found an owned browser capture race: resumed speech could still
+accept an older in-flight ASR preview before the next preview was sent. It
+invalidated that revision on a post-pause continuation and added a held-callback
+Node regression covering stale rejection, later correction and one final WAV.
+The change does not alter controller authority. No physical microphone or
+actual delayed ASR output was used; V04 remains partial pending integration.
+The first full rerun failed one image timing test with `MemoryError`; the
+isolated test and the next full run passed. The failure and uncertain cause
+are recorded in the delivery results.
+
+## 25 September 2026 - AI-assisted repetition, closure and PNG staging
+
+Assistance added owned configured-browser tests for repeated-quantity mock
+effects and disconnect during a gated mock write, plus a browser End-session
+late-final regression. A read-only subagent inspected the D4 image UI and
+identified that drag-and-drop preview and picker-based upload used different
+file sources; assistance repaired that owned path and tested picker/drop
+payload identity. The first tool-wait test proposal omitted required write
+dependencies and was rightly rejected; the test setup was fixed. The first
+new Node test compared cross-realm objects by prototype and was corrected to
+assert fields. No shared engine/contract/adapter edit, physical mic, actual
+reasoner/vision attempt, real external effect or official kit score is claimed.
+
+## 25 September 2026 - AI-assisted incomplete-correction guard
+
+Assistance reproduced a premature browser final after a provisional transcript
+ended with "actually" and the quiet timer elapsed. It added a bounded,
+lexical hold in owned live capture and deterministic cases for continued
+correction and abandonment without final audio, wired into the Python suite.
+The first full run exposed a 3/4 offline-fake CLI scenario failure in
+Mridul-owned engine/evaluation code; its trace showed missing dependencies
+and timeout. The test passed alone and the full suite passed without parallel
+checks, but root cause was not established. No shared implementation was
+altered. The separately enabled installed-ASR rerun failed: a browser error
+preview traced to the worker, and direct local perception reported
+`mkl_malloc: failed to allocate memory` on the low-memory host. A temporary
+test-only diagnostic hook was removed. This does not prove physical-mic,
+reliable real-ASR, real-reasoner, live vision or official evaluation behavior.
+
+## 25 September 2026 - AI-assisted browser image identity
+
+Assistance added a session-local browser ledger for PNGs accepted by server
+receipt, distinct source/event/revision display, failed-status retention, local
+eight-image capacity error and URL cleanup. It added regressions for stale and
+duplicate receipts, late observation, fresh session, rendered rows and a stale
+staged preview in a later answer. The explicit JavaScript route initially
+returned 404 in a failing test; it was added and retested. Final standard
+suite passed 1387/6 skipped/3 xfailed with two warnings, alongside seven Node
+checks and Ruff. This is not evidence of Mridul's D4 registry/source selection,
+actual vision, human mic or model reliability; no shared code was altered.
+
+## 25 September 2026 - AI-assisted bounded live-voice preview continuation
+
+Assistance reproduced the browser's three-preview ceiling during a longer
+spoken turn, added a bounded/configurable later-preview path and deterministic
+tests for continued speech, patient quiet completion, invalid timing and
+explicit no-final failure at turn/preview limits. Default limits were chosen
+as development settings, not measured physical-microphone optimums. Standard
+suite passed 1387/6 skipped/3 xfailed with two warnings; seven Node checks
+and Ruff passed before a follow-up quiet-reset guard; its focused regression
+passed and the standard suite was rerun afterward. The user explicitly directed that memory-limited model tests
+not be retried; no shared controller, model backend or device result is claimed.
+
+## 25 September 2026 - AI-assisted Gate 2 fixture predeclaration
+
+Assistance generated two development-only synthetic WAVs in the owned perception
+test area and recorded their exact hashes alongside existing PNG inputs in a
+fixed four-case/twelve-attempt manifest. It visually checked the image labels,
+added a no-model asset-integrity regression, and updated the partial delivery
+report and handoff. The standard Python 3.11 suite passed 1388/6 skipped/3
+xfails with two warnings; seven Node checks and Ruff passed. All real-inference
+attempts remain NOT RUN. The user directed that the low-memory ASR path not be
+retried; no shared source, human recording or official evaluation was changed.
+
+## 25 September 2026 - AI-assisted action pause and image evidence status
+
+Assistance reproduced two owned browser failures with Node assertions before
+editing: a complete-looking action preview could finalize before a correction
+after 2.5 seconds of silence, and downstream errors could falsely mark an
+observed or pending PNG as unreadable. It added a bounded configurable
+action-pause window and restricted image-failure status to pre-observation
+backend failure. Seven Node checks, Ruff and the standard Python 3.11 suite
+passed (1388/6 skipped/3 xfailed/2 warnings). No memory-limited model run,
+physical-mic recording, shared controller change or official kit run occurred.
+
+## 25 September 2026 - AI-assisted late-image receipt retention
+
+Assistance reproduced a browser loss of a pending PNG across task timeout and
+a stranded pending slot after a thrown upload. It repaired the owned receipt
+path so matching late same-session PNGs remain visible without reviving an
+old answer or contaminating a new request, and released unsent image slots.
+The standard Python 3.11 suite passed 1388/6 skipped/3 xfailed/2 warnings;
+seven Node checks and Ruff passed. This is browser evidence retention, not
+shared D4 multi-image reasoning, real vision, physical microphone behavior
+or official evaluation. No memory-limited model retry was made.
+
+## 26 September 2026 - AI-assisted acceptance blocker audit
+
+Assistance fetched origin, confirmed the clean pushed branch already contains
+main, inspected the remaining shared contract/controller gaps and reran the
+unmasked D1 reproducer (2 failed, 1 passed). It checked runtime availability
+without exposing credentials or loading a model and documented the exact
+unblock sequence. No implementation changed; full acceptance remains blocked,
+not complete. No native-ASR retry or human audio capture occurred.
