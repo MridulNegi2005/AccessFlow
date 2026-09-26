@@ -1661,3 +1661,6 @@ his branch, inspected changed runtime/capture/perception code, ran full regressi
 seven Node checks, installed-ASR opt-ins and unmasked D1 conformance, and recorded
 the limits. No new implementation fix, human capture or hosted-model result.
 No attribution of shared-controller blockers to the teammate's completed UI work.
+
+## 2026-09-26 12:39 - Controller playback stop
+AI-assisted design, implementation and tests of explicit output-only interrupt. Scope: A-owned contracts/controller/tests. Full1392 passed/6 skipped/3 xfailed. Spoken controls remain incomplete; user requested pause. No live-model claims.

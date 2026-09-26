@@ -350,6 +350,13 @@ class Agent:
                 # Sequence is advisory across producers; source revisions gate hypotheses.
                 self.last_sequence = max(self.last_sequence, event.sequence)
                 if isinstance(event, InterruptEvent):
+                    if event.payload.scope == "output":
+                        # An explicit playback stop must not revoke existing task
+                        # authority, invalidate evidence, or cancel in-flight work.
+                        # This is not a substitute for resolving ambiguous speech.
+                        await self._emit("acknowledge", stop_output=True,
+                                         output_only=True)
+                        continue
                     self.generation += 1
                     self.perception_epoch += 1
                     await self._discard_pending_frame()
