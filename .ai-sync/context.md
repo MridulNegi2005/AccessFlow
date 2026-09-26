@@ -1522,3 +1522,9 @@ configuration changed; no commit or push.
 **Changes:** Added failing Node cases for a late same-session receipt/observation and for a throwing unsent upload. Retained bounded pending image records across task completion, accepted matching late receipts into image history without changing a newer request/answer, rejected wrong-session receipts, and released failed sends.
 **Status:** PARTIAL. Python 3.11 standard suite 1388 passed, 6 skipped, 3 xfailed, 2 warnings in 123.56 s; seven Node checks and Ruff passed. No actual inference or human microphone run.
 **Notes:** The browser history is not Mridul's D4 registry or authority to use multiple images in a write. No installed-ASR memory retry, shared source change, or official kit run.
+
+## [2026-09-26 09:16 IST] — Atishay blocked acceptance audit
+**Task:** Revalidate remaining acceptance dependencies after the pushed owned fixes.
+**Changes:** Documentation-only gate audit and exact unblock sequence. Fetch/merge found main unchanged and already contained; current branch was clean and synchronized at `6eefd68`.
+**Status:** BLOCKED/PARTIAL. Fresh unmasked D1 tests: 2 failed, 1 passed in 2.75 s. Shared controller still has one active frame. Reasoning/vision configuration absent and no loopback vision listener. No real-inference or human-mic gate completion.
+**Notes:** No native-ASR retry, shared implementation edit, provider change or official evaluation. Resume integration when Mridul's shared contracts and the approved runtime are available; the existing passing standard suite is not acceptance proof.

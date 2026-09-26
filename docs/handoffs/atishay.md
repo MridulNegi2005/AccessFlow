@@ -1344,3 +1344,15 @@ assign authoritative ordinals/receipt times. Python 3.11 standard suite:
 **1388 passed, 6 skipped, 3 xfailed, 2 warnings** (123.56 s); seven Node
 checks and Ruff passed. Real reasoning/vision and physical-mic gates remain
 unrun. No memory-limited ASR retry or shared code edit occurred.
+
+## 2026-09-26 — BLOCKED acceptance audit, not completion
+
+Fetched origin: no shared changes beyond `5dd2a56`; merge reports already up
+to date. On the clean pushed implementation `6eefd68`, fresh unmasked D1
+checks produced **2 failed, 1 passed** (2.75 s). The controller remains
+single-active-frame. No reasoning/vision configuration or loopback vision
+service was available; no native-ASR retry or human capture was attempted.
+See `docs/feedback/ATISHAY_ACCEPTANCE_AUDIT_2026-09-26.md` for the gate matrix
+and exact Mridul/runtime changes needed before Atishay can finish integration,
+the twelve real-inference attempts and four physical-mic checks. The goal is
+blocked by these repeated dependencies, not declared complete.

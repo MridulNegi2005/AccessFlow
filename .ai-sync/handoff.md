@@ -1554,3 +1554,13 @@ real vision and official kit/media remain open. Details in Atishay handoff.
   guards still require Mridul. Gate 1 remains incomplete; 12 real-inference
   attempts and four physical-mic checks remain NOT RUN. No shared source or
   configuration was edited.
+
+## 2026-09-26 — Atishay blocked acceptance audit
+
+Current implementation `6eefd68` is pushed; origin/main remains `5dd2a56`
+and is contained. Fresh unmasked D1 tests: 2 failed/1 passed, exit 1.
+Shared D1 decisions and D4 registry remain absent; approved reasoning/vision
+runtime is unavailable locally. No memory-limited ASR retry was made.
+The goal is BLOCKED/PARTIAL, not complete. Exact dependencies and Atishay's
+remaining integration/12-inference/4-mic obligations are recorded in
+`docs/feedback/ATISHAY_ACCEPTANCE_AUDIT_2026-09-26.md`.
