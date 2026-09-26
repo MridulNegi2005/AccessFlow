@@ -1,5 +1,21 @@
 # AI-use development log
 
+## 2026-09-26 — WebSocket shutdown, Python 3.13 run, and project rundown
+
+- Separated WebSocket receiving from media materialization so a disconnect can
+  be observed while an upload is still being written. Cleanup closes the agent
+  before waiting on those writes, uses a bounded wait, and finishes if the ASGI
+  server cancels the handler. Added a stalled-upload disconnect regression.
+- Wrote docs/PROJECT_RUNDOWN_SIMPLE_2026-09-26.md and updated the current
+  status and handoffs with feature gates, ownership, scenario gaps, and the
+  limits of the supplied Samsung student kit and separate FDB-v3 Colab run.
+- Current Python 3.13.14 full suite: 1,395 passed, 11 skipped, 1 xfailed, 1
+  existing FastAPI/Starlette warning. Ruff and seven browser checks passed.
+- Commit 30ea60d was pushed to atishay/perception. The supplied
+  participant-kit/student_kit reference data remains untracked and was not
+  included. No official Samsung score, physical-mic acceptance, 12 real model
+  attempts, or full Grok batch is claimed.
+
 ## 2026-09-25 — Browser request/response correlation recovery
 
 - A deterministic regression reproduced two owned demo issues: a valid
