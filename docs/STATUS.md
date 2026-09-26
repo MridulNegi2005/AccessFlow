@@ -1,5 +1,17 @@
 # Implementation status
 
+## Opt-in hosted audio and vision trial - 26 September 2026
+
+Mridul added an A-owned Groq media adapter and cloud package profile. Real
+single-call tests transcribed a generated WAV with Whisper Large v3 Turbo and
+read a PNG with Qwen 3.8 27B. Their observed durations were 0.970 s and
+0.381 s. A subsequent combined configured setup failed at Qwen reasoning
+warm-up with HTTP 429. These component calls do not close official audio,
+visual, physical microphone, or submission gates. Local process/Ollama mode
+remains available. A second configured setup later succeeded in 1.414 s; quota
+reliability is still unproved. See `docs/CLOUD_MEDIA_2026-09-26.md`; Atishay's browser and
+perception files remain untouched.
+
 ## A-side D4 controller handoff - 26 September 2026
 
 The multi-image registry is now wired into controller admission, late perception,

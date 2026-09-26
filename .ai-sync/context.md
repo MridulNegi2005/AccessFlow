@@ -1583,3 +1583,11 @@ configuration changed; no commit or push.
 **Notes:** Samsung kit allows hosted models. Current configured media still requires local Faster Whisper and Ollama/Gemma. Groq documents Whisper Large v3 Turbo transcription and Qwen 3.8 27B image input; the existing Groq reasoner has had a 429. A cloud profile needs A/B integration and actual audio, visual, microphone, quota, and official-time-scale checks. The reported `mkl_malloc` failure occurred with roughly 1 GB free RAM, so its cause is resource pressure, not proof local ASR is inherently invalid.
 
 ---
+
+## [2026-09-26 20:32 IST] — Codex
+**Task:** Try hosted audio and image models, then preserve A work before an urgent ownership-safe merge.
+**Changes:** Added A-owned cloud media adapter, runtime/package profile, tests, report and status. No B source/test edit.
+**Status:** Cloud component calls and configured setup verified; official media scenarios and teammate branch review remain.
+**Notes:** Direct Whisper audio 0.970 s and Qwen image 0.381 s succeeded; first combined setup Qwen 429, second succeeded 1.414 s. Engine suite 1029 passed/2 skipped; full suite 1439 passed/6 skipped/7 prior B-owned failures. User reports Atishay overwrote some A files and requests careful merge preserving A paths; inspect fetched branch before merging.
+
+---

@@ -27,6 +27,7 @@ SETUP_TIMEOUT_S = 290.0  # Leave room for worker cleanup before the kit's 300-se
 
 PERCEPTION_ENV_KEYS = frozenset({
     "ACCESSFLOW_SAMSUNG_PERCEPTION", "ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH",
+    "ACCESSFLOW_SAMSUNG_ASR_MODEL",
     "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S", "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO",
     "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE", "ACCESSFLOW_SAMSUNG_VISION_PROVIDER",
     "ACCESSFLOW_SAMSUNG_VISION_MODEL", "ACCESSFLOW_SAMSUNG_VISION_URL",
@@ -43,6 +44,7 @@ class PerceptionConfig:
     vision_provider: str = "none"
     vision_model: str | None = None
     vision_url: str | None = None
+    asr_model: str | None = None
 
     @classmethod
     def from_environment(cls, root: Path, environment: Mapping[str, str] | None = None):
@@ -55,8 +57,8 @@ class PerceptionConfig:
             return result.strip()
 
         mode = value("PERCEPTION", "text")
-        if mode not in {"text", "process"}:
-            raise ValueError("PERCEPTION must be text or process")
+        if mode not in {"text", "process", "cloud"}:
+            raise ValueError("PERCEPTION must be text, process or cloud")
         native_keys = PERCEPTION_ENV_KEYS - {"ACCESSFLOW_SAMSUNG_PERCEPTION"}
         if mode == "text":
             if any(name in env for name in native_keys):
@@ -79,6 +81,20 @@ class PerceptionConfig:
                 raise ValueError(f"Configured {name} must be {suffix}")
             return path
 
+        if mode == "cloud":
+            if "ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH" in env or "ACCESSFLOW_SAMSUNG_VISION_URL" in env:
+                raise ValueError("Cloud perception cannot use local model paths or vision URLs")
+            audio = installed_path("WARMUP_AUDIO", suffix=".wav")
+            image = installed_path("WARMUP_IMAGE", suffix=".png")
+            provider = value("VISION_PROVIDER")
+            if provider != "groq":
+                raise ValueError("Cloud vision provider must be groq")
+            return cls(mode="cloud", timeout_s=timeout, warmup_audio=audio, warmup_image=image,
+                       vision_provider=provider, vision_model=value("VISION_MODEL"),
+                       asr_model=value("ASR_MODEL"))
+
+        if "ACCESSFLOW_SAMSUNG_ASR_MODEL" in env:
+            raise ValueError("ASR_MODEL requires cloud perception")
         model = installed_path("ASR_MODEL_PATH", directory=True)
         audio = installed_path("WARMUP_AUDIO", suffix=".wav")
         provider = value("VISION_PROVIDER", "none")
@@ -102,6 +118,12 @@ class PerceptionConfig:
     def create(self):
         if self.mode == "text":
             return LocalPerception()
+        if self.mode == "cloud":
+            from .groq_media import GroqMediaPerception
+
+            key = os.getenv("ACCESSFLOW_GROQ_API_KEY") or os.getenv("SECRET_GROQ_API_KEY")
+            return GroqMediaPerception(api_key=key, asr_model=self.asr_model,
+                                       vision_model=self.vision_model, timeout_s=self.timeout_s)
         arguments = []
         if self.vision_provider == "ollama":
             arguments = ["--vision-provider", "ollama", "--vision-model", self.vision_model,
@@ -158,7 +180,7 @@ async def build_configured_agent(*, root, authorization, executor=None,
                       executor=executor, authorization=authorization,
                       partial_debounce_s=partial_debounce_s, fast_read_retry=fast_read_retry,
                       read_answer_mode=read_answer_mode,
-                      **({"inference_timeout": config.timeout_s} if config.mode == "process" else {}))
+                      **({"inference_timeout": config.timeout_s} if config.mode != "text" else {}))
         agent.perception_configuration = config
         agent.perception_warmup_backends = observed
         return agent

@@ -90,7 +90,7 @@ def checked_bytes(root, path):
 
 
 def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="full", read_answer_mode="prose",
-             native=None):
+             native=None, cloud=None):
     repo, kit, output = repo.resolve(), kit.resolve(), output.resolve()
     artifact_root = (repo / "artifacts").resolve()
     if (not artifact_root.is_relative_to(repo) or not output.is_relative_to(artifact_root) or output == artifact_root
@@ -102,12 +102,19 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
     profile = profile_for(model, prompt_profile=prompt_profile, read_answer_mode=read_answer_mode)
     requirements = pinned_requirements("\n".join(requirements))
     media_files = {}
+    if native is not None and cloud is not None:
+        raise ValueError("Choose either native or cloud media")
     if native is not None:
         from scripts.package_media import native_inputs
         names = {line.split("==")[0].lower().replace("_", "-") for line in requirements}
         if not {"faster-whisper", "ctranslate2", "av"} <= names:
             raise ValueError("Native packaging requires the locked audio dependency export")
         settings, media_files = native_inputs(**native)
+        profile.update(settings)
+    if cloud is not None:
+        from scripts.package_media import cloud_inputs
+
+        settings, media_files = cloud_inputs(**cloud)
         profile.update(settings)
     tracked = subprocess.check_output(
         ["git", "ls-files", "-z", "--", "src/accessflow"], cwd=repo).decode("utf-8").split("\0")
@@ -155,6 +162,8 @@ def assemble(repo, kit, output, *, team, model, requirements, prompt_profile="fu
         "Organizer source/public scenarios/media are copied for local reproducibility.\n"
         "Do not publish the generated directory as repository source.\n"
         "Native packages require the declared vision service separately when enabled; no vision weights are bundled.\n"
+        "Cloud media packages use Groq Whisper and Qwen with no local model weights or Ollama service.\n"
+        "Cloud setup sends the packaged installation WAV and PNG to Groq and consumes quota.\n"
         "hosting/start_vision_server.py validates installed service/model identities; it never downloads them.\n"
         "Native dependency pins target CPython3.11.15 on Windows/Linux x64; only measured platforms are verified.\n"
         "Native audio uses bounded MP3 assembly at explicit end_of_turn. Packaging does not certify multimodal quality.\n"
@@ -184,6 +193,9 @@ def main():
     parser.add_argument("--prompt-profile", choices=sorted(PROMPT_PROFILES), default="full")
     parser.add_argument("--read-answer-mode", choices=sorted(READ_ANSWER_MODES), default="prose")
     parser.add_argument("--asr-model-dir", type=Path, help="Installed model with installation_source.json")
+    parser.add_argument("--cloud-media", action="store_true", help="Use Groq speech and vision without local weights")
+    parser.add_argument("--cloud-asr-model", default="whisper-large-v3-turbo")
+    parser.add_argument("--cloud-vision-model", default="qwen/qwen3.8-27b")
     parser.add_argument("--warmup-audio", type=Path)
     parser.add_argument("--audio-provenance", help="Provenance/permission for the explicit installation WAV")
     parser.add_argument("--perception-timeout", type=float, default=30)
@@ -193,6 +205,9 @@ def main():
     parser.add_argument("--image-provenance")
     args = parser.parse_args()
     native = None
+    cloud = None
+    if args.cloud_media and args.asr_model_dir:
+        parser.error("Choose --cloud-media or --asr-model-dir")
     if args.asr_model_dir:
         if args.warmup_audio is None or args.audio_provenance is None:
             parser.error("--asr-model-dir requires --warmup-audio and --audio-provenance")
@@ -200,10 +215,20 @@ def main():
                       audio_provenance=args.audio_provenance, timeout_s=args.perception_timeout,
                       vision_model=args.vision_model, vision_url=args.vision_url,
                       warmup_image=args.warmup_image, image_provenance=args.image_provenance)
+    elif args.cloud_media:
+        if any(value is None for value in (args.warmup_audio, args.warmup_image,
+                                          args.audio_provenance, args.image_provenance)):
+            parser.error("--cloud-media requires both warm-up fixtures and provenance")
+        if args.vision_model is not None or args.vision_url is not None:
+            parser.error("Local vision options cannot be used with --cloud-media")
+        cloud = dict(warmup_audio=args.warmup_audio, warmup_image=args.warmup_image,
+                     audio_provenance=args.audio_provenance, image_provenance=args.image_provenance,
+                     timeout_s=args.perception_timeout, asr_model=args.cloud_asr_model,
+                     vision_model=args.cloud_vision_model)
     elif (any(value is not None for value in (args.warmup_audio, args.audio_provenance, args.vision_model,
                                              args.vision_url, args.warmup_image, args.image_provenance))
           or args.perception_timeout != 30):
-        parser.error("Media settings require --asr-model-dir")
+        parser.error("Media settings require --asr-model-dir or --cloud-media")
     repo = Path(__file__).resolve().parents[1]
     export = subprocess.check_output(
         ["uv", "export", "--offline", "--frozen", "--format", "requirements-txt", "--no-dev",
@@ -212,7 +237,7 @@ def main():
         manifest = assemble(repo, args.kit, args.output, team=args.team, model=args.model,
                             requirements=(pinned_audio_requirements(export) if native else pinned_requirements(export)),
                             prompt_profile=args.prompt_profile,
-                            read_answer_mode=args.read_answer_mode, native=native)
+                            read_answer_mode=args.read_answer_mode, native=native, cloud=cloud)
     except ValueError as exc:
         parser.error(str(exc))
     print(json.dumps({"package": str(args.output.resolve()), "files": len(manifest["files"]),
