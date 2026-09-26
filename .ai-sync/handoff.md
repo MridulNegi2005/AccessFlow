@@ -1,5 +1,18 @@
 # Active Handoff
 
+## Ownership-safe integration verified - 26 September 2026
+
+Last updated by: Codex. Current Task: merge Mridul first, then Atishay,
+without adopting Atishay's edits to A-owned files. In Progress: integration
+verified and being published to main. Next Steps: Atishay updates
+his five obsolete D4 demo assertions and connects cloud-mode preview before
+his real-inference and microphone gates. Key Files Modified: B-owned demo,
+turn-policy and tests from Atishay; A-owned additive TurnDecision/controller
+compatibility and regression; dated merge review and status. A controller,
+image registry and A tests were preserved. Combined 1451 passed/6 skipped/
+5 pre-existing B D4 failures; seven Node checks passed. The runnable kit is
+`../participant-kit/participant-kit`. No release or submission occurred.
+
 ## Hosted media trial and urgent branch review - 26 September 2026
 
 Last updated by: Codex. Current Task: preserve A-owned cloud-media work, then

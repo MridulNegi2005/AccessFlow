@@ -4,7 +4,7 @@ const LiveVoice = require("../../demo/live-voice.js");
 function harness(timing = {}) {
   let now = 0;
   let ticker;
-  const sent = { status: [], previews: [], finals: [], states: [], errors: [] };
+  const sent = { status: [], previews: [], finals: [], states: [], errors: [], voiceActivity: 0 };
   const resources = { tracksStopped: 0, contextsClosed: 0, portsClosed: 0 };
   const stream = {
     getTracks: () => [{ stop() { resources.tracksStopped += 1; } }],
@@ -32,6 +32,7 @@ function harness(timing = {}) {
     sendStatus: (...args) => { sent.status.push(args); return true; },
     sendPreview: (...args) => { sent.previews.push(args); return true; },
     sendFinal: (...args) => { sent.finals.push(args); return true; },
+    onVoiceActivity: () => { sent.voiceActivity += 1; },
     onSpeechStart: () => {},
     onPreview: () => {},
     onState: (value) => sent.states.push(value),
@@ -51,6 +52,22 @@ function harness(timing = {}) {
 }
 
 (async () => {
+  const onset = harness();
+  assert.equal(await onset.voice.start(), true);
+  onset.feed(20, true);
+  assert.equal(onset.sent.voiceActivity, 1,
+    "the first detected voice frame triggers barge-in immediately");
+  assert.equal(onset.sent.status.length, 0,
+    "voice onset can stop playback before the sustained-turn threshold");
+  onset.feed(100, true);
+  assert.equal(onset.sent.voiceActivity, 1,
+    "continuous speech triggers only one onset notification");
+  onset.feed(20, false);
+  onset.feed(20, true);
+  assert.equal(onset.sent.voiceActivity, 2,
+    "a new speech burst after silence gets its own onset notification");
+  await onset.voice.end();
+
   const live = harness();
   assert.equal(await live.voice.start(), true);
   live.feed(1500, true);
@@ -70,6 +87,8 @@ function harness(timing = {}) {
   assert.equal(live.sent.finals.length, 1);
   assert.equal(live.sent.finals[0][0], id);
   assert.equal(live.sent.finals[0][1], 3);
+  assert.equal(live.voice.voiceDetected, false,
+    "completed quiet turn releases the speech-onset output hold");
   assert.equal(live.voice.active, true, "automatic turn completion keeps the session open");
 
   const delayed = harness();

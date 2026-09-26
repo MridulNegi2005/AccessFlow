@@ -1591,3 +1591,24 @@ configuration changed; no commit or push.
 **Notes:** Direct Whisper audio 0.970 s and Qwen image 0.381 s succeeded; first combined setup Qwen 429, second succeeded 1.414 s. Engine suite 1029 passed/2 skipped; full suite 1439 passed/6 skipped/7 prior B-owned failures. User reports Atishay overwrote some A files and requests careful merge preserving A paths; inspect fetched branch before merging.
 
 ---
+## [2026-09-26] — Shared stop fix and Python 3.13 verification
+**Task:** Apply AJ's follow-up request to run the full current AccessFlow suite at Python 3.13 and update the plain-language project status.
+**Changes:** In the local `atishay/perception` working tree, separated output-only “Stop speaking”, ambiguous stop/hold/clarify, and explicit task cancel; guarded new state-changing dispatch while newer speech is unresolved; retracted stale write intent after a fresh completed non-write request; and kept browser speech from speaking over active microphone capture. Updated deterministic regression tests and the project rundown.
+**Status:** PARTIAL. Python 3.11.15 full suite: 1,399 passed, 6 skipped, 1 xfailed, 2 warnings in 62.56 s; Ruff passed. Applied the exact local working-tree patch to the Colab copy of commit `4c0caa8` on Python 3.13.15/T4: 1,401 passed, 4 skipped, 1 xfailed in 42.11 s; Ruff passed. Only the multi-image/source-selection case remains as the known expected failure.
+**Notes:** The code change is local and uncommitted/unpushed. Python 3.13 is compatibility evidence only; declared support stays Python 3.11. No physical microphone, 12 real reasoning/vision attempts, official package/evaluation, or paid FDB-v3 Grok batch was run. End-session server closure and D4 image history/source selection remain unfinished.
+
+## [2026-09-26] — Push, D3 disconnect cleanup, and simple project rundown
+**Task:** Push the current tracked project changes first, verify the full Python 3.13 run, and write a clear map of what remains.
+**Changes:** Pushed commit 30ea60d to origin/atishay/perception. Split browser WebSocket receiving from upload materialization using a one-message bounded queue. Cleanup ends the agent before bounded upload drain/cancellation and survives handler cancellation. Added the stalled-upload disconnect regression. Added docs/PROJECT_RUNDOWN_SIMPLE_2026-09-26.md; refreshed status and both handoffs.
+**Status:** Current Python 3.13.14 full suite: 1,395 passed, 11 skipped, 1 xfailed, 1 warning in 84.65 seconds. Ruff and seven browser scripts passed. D3 deterministic disconnect regression passes. Product acceptance remains PARTIAL.
+**Notes:** participant-kit/student_kit contains 20 example requests/responses, schema/sample output and 578 deeplinks; the 20 responses validate against the schema. The runnable evaluator and scorer expected by the package builder are absent, so no official score is available. The data folder remains untracked and was not pushed. The separate FDB-v3/T4 setup made no Grok requests; it does not use AccessFlow's shared controller. D4 shared source selection, 12 real reasoning/vision attempts, four physical-mic checks, complete evaluator, broader scenarios, and final package/demo work remain.
+
+---
+
+## [2026-09-26 20:44 IST] — Codex
+**Task:** Integrate Mridul's branch first, then Atishay's, while preserving file ownership.
+**Changes:** Fast-forwarded local main to Mridul's 353fe98; merged B-owned demo, policy, browser and perception tests from Atishay's e04f943 on an integration branch. Excluded Atishay's edits to A-owned contract, controller and engine tests. Added minimal A-owned policy compatibility and regression, an ownership review, status and handoff updates. Omitted a stale B rundown from main while retaining it on Atishay's branch.
+**Status:** Integrated tree verified locally; publication to main is the remaining operation.
+**Notes:** Combined suite 1,451 passed, 6 skipped, 5 existing B demo failures caused by old D4 expectations. Focused A/B stop suite 55 passed and seven browser Node checks passed. Atishay owns the remaining demo assertions, cloud preview and real microphone checks. No release tag or submission.
+
+---

@@ -797,6 +797,9 @@ async def websocket(websocket: WebSocket) -> None:
         media_root = Path(media_dir)
         media_budget = _SessionMediaBudget()
         materialization_tasks: set[asyncio.Task[Any]] = set()
+        browser_messages: asyncio.Queue[dict[str, Any]] = asyncio.Queue(
+            maxsize=1
+        )
         preview_tasks: dict[str, asyncio.Task[None]] = {}
         preview_revisions: dict[str, int] = {}
         preview_available = mode == "configured" and agent.perception_configuration.mode == "process"
@@ -847,6 +850,13 @@ async def websocket(websocket: WebSocket) -> None:
                         }
                     )
                     continue
+                # Keep socket reads independent from media writes so a closed
+                # browser can be noticed while an upload is still materializing.
+                await browser_messages.put(message)
+
+        async def process_inputs():
+            while True:
+                message = await browser_messages.get()
                 if isinstance(message, dict) and message.get("kind") == "audio_preview":
                     if not preview_available:
                         enqueue_output({
@@ -933,9 +943,62 @@ async def websocket(websocket: WebSocket) -> None:
                     )
 
         receiver = asyncio.create_task(receive_inputs())
+        processor = asyncio.create_task(process_inputs())
+
+        async def cleanup_session() -> None:
+            for task in (receiver, processor):
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(receiver, processor, return_exceptions=True)
+            for task in preview_tasks.values():
+                task.cancel()
+            if preview_tasks:
+                await asyncio.gather(*tuple(preview_tasks.values()), return_exceptions=True)
+                preview_tasks.clear()
+
+            # Close the controller before waiting for any upload file writes.
+            # Those writes are bounded in size, but can still take time; leaving
+            # the agent live while they drain would let pending work continue
+            # after the browser has ended the session.
+            agent_cancelled = False
+            if agent.running and not agent_task.done():
+                try:
+                    incoming.put_nowait(EndEvent(session_id=session_id))
+                except asyncio.QueueFull:
+                    agent_task.cancel()
+                    agent_cancelled = True
+            if not agent_cancelled and not agent_task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
+                except (asyncio.TimeoutError, RuntimeError):
+                    agent_task.cancel()
+            await asyncio.gather(agent_task, return_exceptions=True)
+            if not sender.done():
+                try:
+                    outgoing.put_nowait(None)
+                except asyncio.QueueFull:
+                    pass
+                try:
+                    await asyncio.wait_for(asyncio.shield(sender), timeout=1)
+                except (asyncio.TimeoutError, RuntimeError):
+                    sender.cancel()
+            await asyncio.gather(sender, return_exceptions=True)
+
+            if materialization_tasks:
+                materializers = tuple(materialization_tasks)
+                _, pending_materializers = await asyncio.wait(
+                    materializers,
+                    timeout=1,
+                )
+                for task in pending_materializers:
+                    task.cancel()
+                await asyncio.gather(*materializers, return_exceptions=True)
+                materialization_tasks.clear()
+            await perception.aclose()
+
         try:
             done, _ = await asyncio.wait(
-                {sender, receiver, agent_task},
+                {sender, receiver, processor, agent_task},
                 return_when=asyncio.FIRST_COMPLETED,
             )
             for task in done:
@@ -943,47 +1006,21 @@ async def websocket(websocket: WebSocket) -> None:
                     raise task.exception()
         except (WebSocketDisconnect, RuntimeError, ValueError):
             pass
+        except asyncio.CancelledError:
+            # WebSocket servers can cancel the handler immediately after a peer
+            # closes. Treat that as session end and finish bounded cleanup below.
+            pass
         finally:
-            try:
-                if not receiver.done():
-                    receiver.cancel()
-                await asyncio.gather(receiver, return_exceptions=True)
-                if materialization_tasks:
-                    await asyncio.gather(*materialization_tasks, return_exceptions=True)
-                    materialization_tasks.clear()
-                for task in preview_tasks.values():
-                    task.cancel()
-                if preview_tasks:
-                    await asyncio.gather(*tuple(preview_tasks.values()), return_exceptions=True)
-                    preview_tasks.clear()
-
-                agent_cancelled = False
-                if agent.running and not agent_task.done():
-                    try:
-                        incoming.put_nowait(EndEvent(session_id=session_id))
-                    except asyncio.QueueFull:
-                        agent_task.cancel()
-                        agent_cancelled = True
-                if not agent_cancelled and not agent_task.done():
-                    try:
-                        await asyncio.wait_for(asyncio.shield(agent_task), timeout=1)
-                    except (asyncio.TimeoutError, RuntimeError):
-                        agent_task.cancel()
-                await asyncio.gather(agent_task, return_exceptions=True)
-                if not sender.done():
-                    try:
-                        outgoing.put_nowait(None)
-                    except asyncio.QueueFull:
-                        pass
-                    try:
-                        await asyncio.wait_for(asyncio.shield(sender), timeout=1)
-                    except (asyncio.TimeoutError, RuntimeError):
-                        sender.cancel()
-                await asyncio.gather(sender, return_exceptions=True)
-            finally:
-                # Starlette may cancel this handler while cleanup is awaiting a
-                # receiver or controller. The native child still belongs to us.
-                await perception.aclose()
+            cleanup_task = asyncio.create_task(cleanup_session())
+            current_task = asyncio.current_task()
+            while not cleanup_task.done():
+                try:
+                    await asyncio.shield(cleanup_task)
+                except asyncio.CancelledError:
+                    # A repeated ASGI cancellation must not abandon native workers.
+                    if current_task is not None:
+                        current_task.uncancel()
+            await cleanup_task
 
 
 if __name__ == "__main__":

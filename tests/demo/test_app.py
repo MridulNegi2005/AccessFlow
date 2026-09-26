@@ -2607,6 +2607,96 @@ def test_websocket_cleans_valid_session_media_after_disconnect(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_websocket_ends_agent_before_draining_inflight_upload(monkeypatch):
+    agent_started = asyncio.Event()
+    agent_ended = asyncio.Event()
+    materialization_started = asyncio.Event()
+    finish_materialization = asyncio.Event()
+    materialization_cancelled = asyncio.Event()
+
+    class TrackingPerception:
+        backend_label = "test/perception"
+
+        def __init__(self):
+            self.closed = False
+
+        def validate_media_source(self, _event):
+            return None
+
+        async def aclose(self):
+            self.closed = True
+
+    class TrackingAgent:
+        def __init__(self, *args):
+            self.running = True
+
+        async def run(self, incoming, _outgoing):
+            await incoming.get()  # session start
+            agent_started.set()
+            event = await incoming.get()
+            assert isinstance(event, EndEvent)
+            self.running = False
+            agent_ended.set()
+
+    class DisconnectDuringUpload:
+        def __init__(self):
+            self.receive_count = 0
+
+        async def accept(self):
+            return None
+
+        async def send_json(self, _event):
+            return None
+
+        async def receive_json(self):
+            await agent_started.wait()
+            self.receive_count += 1
+            if self.receive_count == 1:
+                return {"kind": "frame", "payload": {"frame_id": "pending-frame"}}
+            await materialization_started.wait()
+            raise demo_app.WebSocketDisconnect(code=1001)
+
+        async def close(self, code=None):
+            return None
+
+    async def blocked_materialization(_session_id, _message, _media_root, active_tasks, _budget):
+        async def pending_file_write():
+            try:
+                await finish_materialization.wait()
+            except asyncio.CancelledError:
+                materialization_cancelled.set()
+                raise
+
+        task = asyncio.create_task(pending_file_write())
+        active_tasks.add(task)
+        materialization_started.set()
+        await asyncio.shield(task)
+
+    perception = TrackingPerception()
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        staticmethod(lambda: perception),
+    )
+    monkeypatch.setattr(demo_app, "Agent", TrackingAgent)
+    monkeypatch.setattr(demo_app, "_materialize_event", blocked_materialization)
+
+    websocket_task = asyncio.create_task(demo_app.websocket(DisconnectDuringUpload()))
+    try:
+        await asyncio.wait_for(materialization_started.wait(), timeout=1)
+        await asyncio.wait_for(agent_ended.wait(), timeout=0.5)
+        await asyncio.wait_for(websocket_task, timeout=3)
+    finally:
+        finish_materialization.set()
+        if not websocket_task.done():
+            websocket_task.cancel()
+        await asyncio.gather(websocket_task, return_exceptions=True)
+
+    assert perception.closed is True
+    assert materialization_cancelled.is_set()
+
+
+@pytest.mark.asyncio
 async def test_websocket_disconnect_does_not_block_on_full_agent_queue(monkeypatch):
     class TrackingPerception:
         backend_label = "test/perception"
@@ -2752,7 +2842,9 @@ async def test_websocket_stalled_agent_queue_fails_closed(monkeypatch):
     peer = Peer()
     await asyncio.wait_for(demo_app.websocket(peer), timeout=1)
 
-    assert peer.inputs_seen == demo_app.MAX_PENDING_INPUTS + 1
+    # The one-message receive buffer and the message currently being processed
+    # can be ahead of the agent queue when it becomes full.
+    assert peer.inputs_seen == demo_app.MAX_PENDING_INPUTS + 2
     assert agent_holder["agent"].cancelled.is_set()
     assert perception.closed is True
 
@@ -2900,7 +2992,9 @@ async def test_websocket_output_queue_saturation_fails_closed(monkeypatch):
     peer = SaturatingPeer()
     await asyncio.wait_for(demo_app.websocket(peer), timeout=2)
 
-    assert peer.inputs_seen == demo_app.MAX_PENDING_OUTPUTS + 1
+    # The one-message receive buffer and the message currently being processed
+    # can be ahead of the agent queue when it becomes full.
+    assert peer.inputs_seen == demo_app.MAX_PENDING_OUTPUTS + 2
     assert peer.send_cancelled is True
     assert agent_holder["agent"].cancelled.is_set()
     assert perception.closed is True
