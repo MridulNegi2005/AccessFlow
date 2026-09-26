@@ -1707,3 +1707,20 @@ The integrated tree was checked with 1,451 passing Python tests, 6 skips,
 browser checks. The merge review names each retained path and limitation.
 No teammate source was edited to hide a failure; no official media acceptance,
 release tag or submission is claimed.
+
+## 2026-09-27 - Atishay D4 demo and cloud-preview integration
+
+AI assistance fast-forwarded Atishay's branch to the ownership-safe merged
+base, reproduced the five B-owned demo failures, and updated only B-owned demo
+and demo-test files. The browser now displays controller-issued image ordinals
+and binds image failures to their own source; configured cloud WAV previews are
+enabled and HTTP 429 is reported as rate limiting. Software checks passed:
+149 demo tests, 424 perception/demo tests, 1,459 full-suite tests, Ruff and
+seven Node browser checks. All five declared Gate 2 asset hashes match.
+
+No real Groq request or physical-microphone capture was made because the
+credential/model configuration and human speech input were unavailable. The
+official kit path was absent; packaging/evaluator files were not edited. Gate 2
+remains 0/12 and Gate 3 remains 0/4, as recorded in the 27 September acceptance
+audit. No setup call, fake adapter, or generated label is counted as a completed
+scenario.

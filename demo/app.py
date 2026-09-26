@@ -765,7 +765,8 @@ async def websocket(websocket: WebSocket) -> None:
                 "agent_mode": mode,
                 "tool_environment": "mock",
                 "live_preview_available": (
-                    mode == "configured" and agent.perception_configuration.mode == "process"
+                    mode == "configured"
+                    and agent.perception_configuration.mode in {"process", "cloud"}
                 ),
                 "perception_backend": perception_label,
                 "reasoner_backend": reasoner_label,
@@ -802,7 +803,10 @@ async def websocket(websocket: WebSocket) -> None:
         )
         preview_tasks: dict[str, asyncio.Task[None]] = {}
         preview_revisions: dict[str, int] = {}
-        preview_available = mode == "configured" and agent.perception_configuration.mode == "process"
+        preview_available = (
+            mode == "configured"
+            and agent.perception_configuration.mode in {"process", "cloud"}
+        )
 
         async def process_preview(event: AudioEvent) -> None:
             source_id = event.payload.utterance_id
@@ -824,12 +828,20 @@ async def websocket(websocket: WebSocket) -> None:
                 })
             except asyncio.CancelledError:
                 raise
-            except Exception:
+            except Exception as error:
                 if preview_revisions.get(source_id) == revision:
+                    rate_limited = "HTTP 429" in str(error)
+                    message = (
+                        "The configured speech provider rate-limited this preview (HTTP 429). "
+                        "Keep speaking or try again."
+                        if rate_limited
+                        else "The configured speech transcription failed for this preview. "
+                        "Keep speaking or try again."
+                    )
                     enqueue_output({
                         "kind": "demo_preview", "session_id": session_id,
                         "source_id": source_id, "revision": revision,
-                        "error": "A speech preview could not be decoded; keep speaking or try again.",
+                        "error": message,
                     })
             finally:
                 if preview_tasks.get(source_id) is asyncio.current_task():
@@ -863,7 +875,7 @@ async def websocket(websocket: WebSocket) -> None:
                             "kind": "demo_error",
                             "payload": {
                                 "backend": "demo/input",
-                                "message": "Live speech preview needs configured process ASR.",
+                                "message": "Live speech preview needs configured process or cloud ASR.",
                             },
                         })
                         continue

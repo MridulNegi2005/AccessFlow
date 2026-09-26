@@ -387,12 +387,20 @@ show({ kind: "demo_status", session_id: "image-session",
   payload: { media_received: "frame", source_id: "frame-a" } });
 assert.deepEqual(attachmentHistory.items().map((item) => item.sourceId),
   ["frame-a", "frame-b"], "duplicate receipts must not create extra attachments");
+show({ kind: "acknowledge", session_id: "image-session", payload: {
+  image_received: { frame_id: "frame-a", event_id: "image-a", ordinal: 1 },
+} });
+show({ kind: "acknowledge", session_id: "image-session", payload: {
+  image_received: { frame_id: "frame-b", event_id: "image-b", ordinal: 2 },
+} });
+assert.deepEqual(attachmentHistory.items().map((item) => item.ordinal), [1, 2],
+  "the session UI uses controller-issued image ordinals");
 show({ kind: "demo_observation", session_id: "image-session", payload: {
   modality: "image", source_id: "frame-a", event_id: "image-a",
   revision: 0, final: true, backend: "vision/actual", text: "First image",
 } });
 show({ kind: "error", session_id: "image-session", payload: {
-  caused_by_event_id: "image-b", code: "backend_failure",
+  caused_by_event_id: "image-b", code: "image_perception_failed", frame_id: "frame-b",
 } });
 assert.deepEqual(attachmentHistory.items().map((item) => item.status),
   ["observed", "failed"], "a failed image must keep its identity");
@@ -493,7 +501,7 @@ assert.equal(controls.get("#voice-toggle").disabled, true,
   "a mock-mode answer must not enable unavailable live voice");
 assert.equal(pendingHistory.accept("pending-session", "pending-image", "late-event", 0), true,
   "finishing a request must keep its pending PNG until a server receipt or session end");
-assert.match(controls.get("#voice-help").textContent, /needs the configured agent/i);
+assert.match(controls.get("#voice-help").textContent, /configured process or cloud ASR/i);
 vm.runInContext("liveVoice = { active: true }; setMediaControlsLocked(true);", availabilityContext);
 assert.equal(controls.get("#voice-toggle").disabled, false,
   "an active session must retain its End session control");

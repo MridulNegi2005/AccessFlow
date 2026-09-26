@@ -29,24 +29,33 @@
       return true;
     }
 
-    accept(sessionId, sourceId, eventId, revision) {
+    accept(sessionId, sourceId, eventId, revision, ordinal = null) {
       if (!this.current(sessionId) || typeof sourceId !== "string" ||
           typeof eventId !== "string" || !eventId ||
-          !Number.isSafeInteger(revision) || revision < 0) return false;
+          !Number.isSafeInteger(revision) || revision < 0 ||
+          (ordinal !== null && (!Number.isSafeInteger(ordinal) ||
+            ordinal < 1 || ordinal > this.maxItems))) return false;
       const file = this.pending.get(sourceId);
-      if (!file) return false;
       const existing = this.accepted.find((item) => item.sourceId === sourceId);
-      if (existing && revision <= existing.revision) return false;
+      if (existing && revision <= existing.revision) {
+        if (existing.eventId !== eventId || existing.revision !== revision ||
+            ordinal === null || existing.ordinal !== null) return false;
+        existing.ordinal = ordinal;
+        this.notify();
+        return true;
+      }
+      if (!file) return false;
       const url = this.options.createObjectURL(file);
       if (existing) {
         this.options.revokeObjectURL(existing.url);
         Object.assign(existing, {
           name: file.name, url, eventId, revision, status: "received", backend: null,
+          ordinal,
         });
       } else {
         this.accepted.push({
           sourceId, name: file.name, url, eventId, revision,
-          status: "received", backend: null,
+          status: "received", backend: null, ordinal,
         });
       }
       this.pending.delete(sourceId);
@@ -78,7 +87,12 @@
 
     discard(sourceId) { this.pending.delete(sourceId); }
     discardPending() { this.pending.clear(); }
-    items() { return this.accepted.map((item) => ({ ...item })); }
+    items() {
+      return this.accepted
+        .slice()
+        .sort((left, right) => (left.ordinal ?? Infinity) - (right.ordinal ?? Infinity))
+        .map((item) => ({ ...item }));
+    }
     current(sessionId) {
       return !this.closed && Boolean(sessionId) && sessionId === this.sessionId;
     }

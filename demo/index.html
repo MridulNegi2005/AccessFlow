@@ -1694,13 +1694,22 @@
           event.payload && typeof event.payload === "object"
             ? event.payload
             : {};
+        if (event.kind === "acknowledge" && payload.image_received) {
+          const receipt = payload.image_received;
+          attachmentHistory.accept(
+            event.session_id, receipt.frame_id, receipt.event_id, 0, receipt.ordinal,
+          );
+        }
         if (event.kind === "demo_observation" && payload.modality === "image") {
           attachmentHistory.observe(
             event.session_id, payload.source_id, payload.event_id,
             payload.revision ?? 0, payload.backend,
           );
         }
-        if (event.kind === "error" && payload.code === "backend_failure") {
+        if (
+          event.kind === "error" &&
+          ["backend_failure", "image_perception_failed"].includes(payload.code)
+        ) {
           attachmentHistory.fail(event.session_id, payload.caused_by_event_id);
         }
         if (
@@ -1781,9 +1790,9 @@
           livePreviewAvailable = payload.live_preview_available === true;
           document.querySelector("#voice-toggle").disabled = !livePreviewAvailable;
           if (!livePreviewAvailable) {
-            setVoiceCaption("Live voice unavailable", "Use Upload WAV or configure process ASR");
+            setVoiceCaption("Live voice unavailable", "Configure process or cloud ASR, or upload WAV");
             document.querySelector("#voice-help").textContent =
-              "Hands-free voice needs the configured agent with installed ASR. Upload WAV or type meanwhile.";
+              "Hands-free voice needs configured process or cloud ASR. Upload WAV or type meanwhile.";
           }
           const reasoner = payload.reasoner_backend;
           responseBackend = reasoner
@@ -2020,7 +2029,7 @@
         } else if (!livePreviewAvailable && !sessionEnded) {
           document.querySelector("#voice-state").textContent = "Ready when you are";
           document.querySelector("#voice-help").textContent =
-            "Hands-free voice needs the configured agent with installed ASR. Upload WAV or type meanwhile.";
+            "Hands-free voice needs configured process or cloud ASR. Upload WAV or type meanwhile.";
         } else if (
           !microphone &&
           !document.querySelector("#speak-pill").classList.contains("visible")
@@ -2847,7 +2856,9 @@
           copy.className = "staged-copy";
           const name = document.createElement("span");
           name.className = "staged-name";
-          name.textContent = item.name || "PNG image";
+          name.textContent = item.ordinal
+            ? "Image " + item.ordinal + " · " + (item.name || "PNG image")
+            : item.name || "PNG image";
           const status = document.createElement("span");
           status.className = "staged-size";
           status.textContent = item.status === "failed"
@@ -3190,7 +3201,7 @@
         if (!livePreviewAvailable) {
           show({ kind: "demo_error", payload: {
             backend: "browser/live-voice",
-            message: "Live voice needs configured process ASR. Upload a WAV or type instead.",
+            message: "Live voice needs configured process or cloud ASR. Upload a WAV or type instead.",
           } });
           return;
         }

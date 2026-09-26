@@ -61,7 +61,14 @@ assert.equal(list.children.length, 2);
 assert.equal(list.children[0].children[1].children[0].textContent, "first.png");
 assert.equal(list.children[1].children[1].children[2].textContent, "Source ID: frame-b");
 assert.doesNotMatch(list.children[0].children[1].children[0].textContent, /Image 1/,
-  "the browser cannot invent an authoritative server ordinal");
+  "the browser does not invent an ordinal before the controller receipt");
+assert.equal(history.accept("session-a", "frame-a", "event-a", 0, 1), true,
+  "the controller receipt supplies the first accepted image ordinal");
+assert.equal(history.accept("session-a", "frame-b", "event-b", 0, 2), true,
+  "the controller receipt supplies the second accepted image ordinal");
+assert.deepEqual(history.items().map((item) => item.ordinal), [1, 2]);
+render(history.items());
+assert.equal(list.children[0].children[1].children[0].textContent, "Image 1 · first.png");
 assert.equal(history.observe("session-a", "frame-a", "event-a", 0, "vision/real"), true);
 assert.equal(history.fail("session-old", "event-b"), false);
 assert.equal(history.fail("session-a", "event-b"), true);
