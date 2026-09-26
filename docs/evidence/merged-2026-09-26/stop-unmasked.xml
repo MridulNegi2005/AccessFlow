@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="3" time="3.102" timestamp="2026-09-26T12:25:30.714890+05:30" hostname="JARVIS"><testcase classname="tests.perception.test_confirmed_stop_semantics" name="test_vague_stop_holds_and_clarifies_without_a_final" time="0.007"><failure message="assert False&#10; +  where False = any(&lt;generator object test_vague_stop_holds_and_clarifies_without_a_final.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001FDE7754740&gt;)">@pytest.mark.asyncio
+    @pytest.mark.xfail(
+        strict=True,
+        reason="D1 hold/clarify needs Mridul's additive TurnDecision and controller handling",
+    )
+    async def test_vague_stop_holds_and_clarifies_without_a_final():
+        class Reasoner:
+            async def plan(self, view, manifests):
+                return PlanProposal(response="Planner would finish this task", request_complete=True)
+    
+        incoming, outgoing = asyncio.Queue(), asyncio.Queue()
+        agent = Agent(
+            FakePerception(), HeuristicTurnPolicy(), Reasoner(),
+            FakeTools(), MockOnlyAuthorization(), partial_debounce_s=0,
+        )
+        runner = asyncio.create_task(agent.run(incoming, outgoing))
+        try:
+            await incoming.put(StartEvent(session_id="vague-stop", payload=Start()))
+            await incoming.put(
+                TranscriptEvent(
+                    session_id="vague-stop",
+                    event_id="stop-speech",
+                    payload=Transcript(utterance_id="stop-turn", revision=0, text="Stop", final=True),
+                )
+            )
+            seen = []
+            while not any(event.kind in {"final", "clarify"} for event in seen):
+                seen.append(await asyncio.wait_for(outgoing.get(), timeout=2))
+&gt;           assert any(event.payload.get("stop_output") is True for event in seen)
+E           assert False
+E            +  where False = any(&lt;generator object test_vague_stop_holds_and_clarifies_without_a_final.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001FDE7754740&gt;)
+
+tests\perception\test_confirmed_stop_semantics.py:44: AssertionError</failure></testcase><testcase classname="tests.perception.test_confirmed_stop_semantics" name="test_stop_speaking_emits_output_stop_without_stopping_task" time="2.005"><failure message="TimeoutError">fut = &lt;Task cancelled name='Task-16' coro=&lt;Queue.get() done, defined at C:\Users\negim\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:149&gt;&gt;
+timeout = 2
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout &lt;= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+&gt;                   return fut.result()
+                           ^^^^^^^^^^^^
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\tasks.py:500: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Queue at 0x1fde7731bd0 maxsize=0 _queue=[OutputEvent(contract_version='0.1', session_id='output-stop', event_id='74b9...te=Snapshot(intent=None, revision=0, slots={}, pending_call_ids=[], status='ended', correction_pending=True))] tasks=1&gt;
+
+    async def get(self):
+        """Remove and return an item from the queue.
+    
+        If queue is empty, wait until an item is available.
+        """
+        while self.empty():
+            getter = self._get_loop().create_future()
+            self._getters.append(getter)
+            try:
+&gt;               await getter
+E               asyncio.exceptions.CancelledError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:158: CancelledError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.mark.asyncio
+    @pytest.mark.xfail(
+        strict=True,
+        reason="D1 output-only stop needs Mridul's additive TurnDecision and controller handling",
+    )
+    async def test_stop_speaking_emits_output_stop_without_stopping_task():
+        class Reasoner:
+            async def plan(self, view, manifests):
+                return PlanProposal(response="This should not be spoken", request_complete=True)
+    
+        incoming, outgoing = asyncio.Queue(), asyncio.Queue()
+        agent = Agent(
+            FakePerception(), HeuristicTurnPolicy(), Reasoner(),
+            FakeTools(), MockOnlyAuthorization(), partial_debounce_s=0,
+        )
+        runner = asyncio.create_task(agent.run(incoming, outgoing))
+        try:
+            await incoming.put(StartEvent(session_id="output-stop", payload=Start()))
+            await incoming.put(
+                TranscriptEvent(
+                    session_id="output-stop",
+                    event_id="stop-output-speech",
+                    payload=Transcript(utterance_id="stop-output-turn", revision=0, text="Stop speaking", final=True),
+                )
+            )
+&gt;           output = await asyncio.wait_for(outgoing.get(), timeout=2)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\perception\test_confirmed_stop_semantics.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+fut = &lt;Task cancelled name='Task-16' coro=&lt;Queue.get() done, defined at C:\Users\negim\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\queues.py:149&gt;&gt;
+timeout = 2
+
+    async def wait_for(fut, timeout):
+        """Wait for the single Future or coroutine to complete, with timeout.
+    
+        Coroutine will be wrapped in Task.
+    
+        Returns result of the Future or coroutine.  When a timeout occurs,
+        it cancels the task and raises TimeoutError.  To avoid the task
+        cancellation, wrap it in shield().
+    
+        If the wait is cancelled, the task is also cancelled.
+    
+        This function is a coroutine.
+        """
+        loop = events.get_running_loop()
+    
+        if timeout is None:
+            return await fut
+    
+        if timeout &lt;= 0:
+            fut = ensure_future(fut, loop=loop)
+    
+            if fut.done():
+                return fut.result()
+    
+            await _cancel_and_wait(fut, loop=loop)
+            try:
+                return fut.result()
+            except exceptions.CancelledError as exc:
+                raise exceptions.TimeoutError() from exc
+    
+        waiter = loop.create_future()
+        timeout_handle = loop.call_later(timeout, _release_waiter, waiter)
+        cb = functools.partial(_release_waiter, waiter)
+    
+        fut = ensure_future(fut, loop=loop)
+        fut.add_done_callback(cb)
+    
+        try:
+            # wait until the future completes or the timeout
+            try:
+                await waiter
+            except exceptions.CancelledError:
+                if fut.done():
+                    return fut.result()
+                else:
+                    fut.remove_done_callback(cb)
+                    # We must ensure that the task is not running
+                    # after wait_for() returns.
+                    # See https://bugs.python.org/issue32751
+                    await _cancel_and_wait(fut, loop=loop)
+                    raise
+    
+            if fut.done():
+                return fut.result()
+            else:
+                fut.remove_done_callback(cb)
+                # We must ensure that the task is not running
+                # after wait_for() returns.
+                # See https://bugs.python.org/issue32751
+                await _cancel_and_wait(fut, loop=loop)
+                # In case task cancellation failed with some
+                # exception, we should re-raise it
+                # See https://bugs.python.org/issue40607
+                try:
+                    return fut.result()
+                except exceptions.CancelledError as exc:
+&gt;                   raise exceptions.TimeoutError() from exc
+E                   TimeoutError
+
+..\..\..\..\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\tasks.py:502: TimeoutError</failure></testcase><testcase classname="tests.perception.test_confirmed_stop_semantics" name="test_explicit_task_cancel_prevents_pending_mock_effect" time="0.016" /></testsuite></testsuites>

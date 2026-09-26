@@ -1,0 +1,68 @@
+{
+  "implementation_commit": "ac187ba0f6f776b77e042d2e3211554835f026cd",
+  "node_checks": [
+    {
+      "command": [
+        "node",
+        "tests/demo/answer_correlation_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/demo/attachment_history_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/demo/image_staging_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/demo/live_voice_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/demo/microphone_disconnect_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/demo/microphone_pending_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "tests/demo/speech_lifecycle_check.cjs"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

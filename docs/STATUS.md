@@ -1,5 +1,21 @@
 # Implementation status
 
+## Verified merge - 26 September 2026
+
+Atishay 4c0caa8 merged without conflicts into main 5dd2a56 as ac187ba.
+Read docs/reviews/MERGED_REVIEW_2026-09-26.md. Combined suite1388 pass/6 skip/
+3 xfail77.87s; four installed-ASR checks passed separately28.20s, including
+configured WebSocket/reconnect with generated audio and mock reasoning. Ruff,
+seven Node checks and offline4/4 passed. Native memory failure did not reproduce
+here; no claim that Atishay's machine is fixed. D1 unmasked:2 fail/1 pass.
+
+B now wires the shared configured agent, accepted-input error receipts, playback
+stop, bounded live previews/automatic final capture and receipted image history.
+A still needs scoped stop/hold/clarify, closure verification and authoritative
+multi-image source state. B real reasoning/vision12 attempts and physical-mic4
+checks remain NOT RUN. First next A task: D1 conformance; completion before tuning.
+Review changed docs/evidence only; no B implementation edits, release or submission.
+
 ## Confirmed product decisions - 25 September 2026
 
 Read `docs/PRODUCT_DECISIONS_2026-09-25.md` first. User-approved D1-D4: vague stop

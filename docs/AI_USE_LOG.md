@@ -1653,3 +1653,11 @@ unmasked D1 reproducer (2 failed, 1 passed). It checked runtime availability
 without exposing credentials or loading a model and documented the exact
 unblock sequence. No implementation changed; full acceptance remains blocked,
 not complete. No native-ASR retry or human audio capture occurred.
+
+## 26 September 2026 - AI-assisted merge review
+
+User requested merging and checking Atishay's changes. Assistance fetched/merged
+his branch, inspected changed runtime/capture/perception code, ran full regression,
+seven Node checks, installed-ASR opt-ins and unmasked D1 conformance, and recorded
+the limits. No new implementation fix, human capture or hosted-model result.
+No attribution of shared-controller blockers to the teammate's completed UI work.

@@ -1,0 +1,1299 @@
+{
+  "report_version": "development-suite.v1",
+  "backend": "offline-fake",
+  "scenario_count": 4,
+  "counts": {
+    "passed": 4,
+    "failed": 0,
+    "unscored": 0,
+    "error": 0
+  },
+  "oracle_pass_rate_all_cases": 1.0,
+  "cases": [
+    {
+      "scenario_file": "device_correction_during_write.json",
+      "backend": "offline-fake",
+      "disabled_components": [],
+      "trace": "artifacts\\merge-26-offline\\scenario-001.jsonl",
+      "events": 15,
+      "mock_effects": 1,
+      "completion_status": "completed",
+      "task_oracle": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "run_completed",
+            "passed": true,
+            "expected": "completed",
+            "actual": "completed"
+          },
+          {
+            "name": "final_response",
+            "passed": true,
+            "expected": true,
+            "actual": true
+          },
+          {
+            "name": "final_basis",
+            "passed": true,
+            "expected": "confirmed_tool_effect",
+            "actual": "confirmed_tool_effect"
+          },
+          {
+            "name": "slot:device",
+            "passed": true,
+            "expected": "Panel-B",
+            "actual": {
+              "value": "Panel-B",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "slot:day",
+            "passed": true,
+            "expected": "Wednesday",
+            "actual": {
+              "value": "Wednesday",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "slot:hour",
+            "passed": true,
+            "expected": "17:00",
+            "actual": {
+              "value": "17:00",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "committed_effects",
+            "passed": true,
+            "expected": [
+              {
+                "tool": "reserve_repair_window",
+                "arguments": {
+                  "device": "Panel-B",
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                }
+              }
+            ],
+            "actual": [
+              {
+                "tool": "reserve_repair_window",
+                "arguments": {
+                  "device": "Panel-B",
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                }
+              }
+            ]
+          },
+          {
+            "name": "unexpected_errors",
+            "passed": true,
+            "expected": [],
+            "actual": []
+          }
+        ],
+        "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "offline-fake",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "inference_timeout_s": 25,
+          "corpus_root_configured": false,
+          "corpus_root_basename": null,
+          "component_config": {
+            "profile": "fake",
+            "corpus_root_configured": false,
+            "corpus_root_basename": null
+          }
+        },
+        "run_metadata": {
+          "scenario": "device-correction-during-pending-write",
+          "backend": "offline-fake",
+          "run_id": "3b2bd5dd-17bd-4fef-894b-e251b903cf49",
+          "run_started_at": "2026-09-26T06:57:05.112807+00:00",
+          "run_ended_at": "2026-09-26T06:57:05.414065+00:00",
+          "provenance": "Codex-authored illustrative correction sequence with a delayed mock commit. Development fixture, not real speech evidence.",
+          "disabled_components": [],
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "commit": "ac187ba0f6f776b77e042d2e3211554835f026cd",
+          "perception_backends_observed": [
+            "fake/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 0.4234193000002051,
+          "expected_slots": {
+            "device": "Panel-B",
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "completed",
+          "perception_cleanup": "not_required",
+          "failure_type": null,
+          "mock_executor_effect_count": 1,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "final-flag-baseline",
+            "tools": "manifest-mock",
+            "perception": "text-pass-through",
+            "inference_timeout_s": 25,
+            "corpus_root_configured": false,
+            "corpus_root_basename": null,
+            "component_config": {
+              "profile": "fake",
+              "corpus_root_configured": false,
+              "corpus_root_basename": null
+            }
+          },
+          "source_sha256": "8b5fdcb0198a39ce41feb7cf286e59d99cb253a34081104062724d336a2eccd2",
+          "scenario_sha256": "5f25f773436a4c6cb2ce59539abe89e3a6681b3d526343597254d14abab8df90",
+          "worktree_dirty": false,
+          "reasoner_evidence": null,
+          "task_oracle": {
+            "passed": true,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": true,
+                "expected": "completed",
+                "actual": "completed"
+              },
+              {
+                "name": "final_response",
+                "passed": true,
+                "expected": true,
+                "actual": true
+              },
+              {
+                "name": "final_basis",
+                "passed": true,
+                "expected": "confirmed_tool_effect",
+                "actual": "confirmed_tool_effect"
+              },
+              {
+                "name": "slot:device",
+                "passed": true,
+                "expected": "Panel-B",
+                "actual": {
+                  "value": "Panel-B",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:day",
+                "passed": true,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": "Wednesday",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:hour",
+                "passed": true,
+                "expected": "17:00",
+                "actual": {
+                  "value": "17:00",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": true,
+                "expected": [
+                  {
+                    "tool": "reserve_repair_window",
+                    "arguments": {
+                      "device": "Panel-B",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ],
+                "actual": [
+                  {
+                    "tool": "reserve_repair_window",
+                    "arguments": {
+                      "device": "Panel-B",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": true,
+                "expected": [],
+                "actual": []
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "tool_result": 3,
+            "transcript": 2
+          },
+          "output": {
+            "acknowledge": 4,
+            "cancel_call": 1,
+            "final": 1,
+            "tool_call": 2
+          },
+          "total": 15
+        },
+        "operation_ids": {
+          "observed_call_events": 2,
+          "unique": 2,
+          "distinct_call_ids": 2,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": {
+          "sample_count": 2,
+          "counts": {
+            "committed": 1,
+            "not_committed": 1,
+            "unknown": 0
+          }
+        },
+        "attempt_outcomes": {
+          "sample_count": 2,
+          "counts": {
+            "committed": 1,
+            "not_committed": 1,
+            "unknown": 0
+          }
+        },
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": 1.0,
+        "slot_accuracy_detail": {
+          "correct": 3,
+          "labeled": 3,
+          "sample_count": 1
+        },
+        "wrong_action_rate": {
+          "scored": true,
+          "rate": 0.0,
+          "wrong_actions": 0,
+          "committed_effects": 1,
+          "sample_count": 1,
+          "expected_effects": 1,
+          "missed_expected": 0,
+          "unexpected": 0,
+          "wrong_arguments": 0,
+          "duplicate_expected": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 2,
+            "min_s": 0.0012824,
+            "p50_s": 0.0018679,
+            "p95_s": 0.00239485,
+            "p99_s": 0.00244169,
+            "max_s": 0.0024534
+          },
+          "substantive_response_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.2208254,
+            "p50_s": 0.2208254,
+            "p95_s": 0.2208254,
+            "p99_s": 0.2208254,
+            "max_s": 0.2208254
+          },
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 15,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 15,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "status": "passed"
+    },
+    {
+      "scenario_file": "lost_response_reconcile.json",
+      "backend": "offline-fake",
+      "disabled_components": [],
+      "trace": "artifacts\\merge-26-offline\\scenario-002.jsonl",
+      "events": 12,
+      "mock_effects": 1,
+      "completion_status": "completed",
+      "task_oracle": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "run_completed",
+            "passed": true,
+            "expected": "completed",
+            "actual": "completed"
+          },
+          {
+            "name": "final_response",
+            "passed": true,
+            "expected": true,
+            "actual": true
+          },
+          {
+            "name": "final_basis",
+            "passed": true,
+            "expected": "reconciled_tool_effect",
+            "actual": "reconciled_tool_effect"
+          },
+          {
+            "name": "slot:device",
+            "passed": true,
+            "expected": "Panel-A",
+            "actual": {
+              "value": "Panel-A",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "slot:visit_day",
+            "passed": true,
+            "expected": "Wednesday",
+            "actual": {
+              "value": "Wednesday",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "committed_effects",
+            "passed": true,
+            "expected": [
+              {
+                "tool": "submit_ticket_v3",
+                "arguments": {
+                  "device": "Panel-A",
+                  "visit_day": "Wednesday"
+                }
+              }
+            ],
+            "actual": [
+              {
+                "tool": "submit_ticket_v3",
+                "arguments": {
+                  "device": "Panel-A",
+                  "visit_day": "Wednesday"
+                }
+              }
+            ]
+          },
+          {
+            "name": "error:write_outcome_unknown",
+            "passed": true,
+            "expected": "present",
+            "actual": "present"
+          },
+          {
+            "name": "unexpected_errors",
+            "passed": true,
+            "expected": [],
+            "actual": []
+          }
+        ],
+        "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "offline-fake",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "inference_timeout_s": 25,
+          "corpus_root_configured": false,
+          "corpus_root_basename": null,
+          "component_config": {
+            "profile": "fake",
+            "corpus_root_configured": false,
+            "corpus_root_basename": null
+          }
+        },
+        "run_metadata": {
+          "scenario": "lost-response-status-reconciliation",
+          "backend": "offline-fake",
+          "run_id": "b552af9f-ec48-4aa5-867f-400578bd6d10",
+          "run_started_at": "2026-09-26T06:57:05.650775+00:00",
+          "run_ended_at": "2026-09-26T06:57:05.667798+00:00",
+          "provenance": "Codex-authored synthetic write-response fault. Development-only controlled protocol scenario.",
+          "disabled_components": [],
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "commit": "ac187ba0f6f776b77e042d2e3211554835f026cd",
+          "perception_backends_observed": [
+            "fake/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 0.06852749999984553,
+          "expected_slots": {
+            "device": "Panel-A",
+            "visit_day": "Wednesday"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "completed",
+          "perception_cleanup": "not_required",
+          "failure_type": null,
+          "mock_executor_effect_count": 1,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "final-flag-baseline",
+            "tools": "manifest-mock",
+            "perception": "text-pass-through",
+            "inference_timeout_s": 25,
+            "corpus_root_configured": false,
+            "corpus_root_basename": null,
+            "component_config": {
+              "profile": "fake",
+              "corpus_root_configured": false,
+              "corpus_root_basename": null
+            }
+          },
+          "source_sha256": "8b5fdcb0198a39ce41feb7cf286e59d99cb253a34081104062724d336a2eccd2",
+          "scenario_sha256": "4cf97d19cdd6bab09387ce1e10994ed676bc3a4d4934b07b5730c0ecad5d7c60",
+          "worktree_dirty": false,
+          "reasoner_evidence": null,
+          "task_oracle": {
+            "passed": true,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": true,
+                "expected": "completed",
+                "actual": "completed"
+              },
+              {
+                "name": "final_response",
+                "passed": true,
+                "expected": true,
+                "actual": true
+              },
+              {
+                "name": "final_basis",
+                "passed": true,
+                "expected": "reconciled_tool_effect",
+                "actual": "reconciled_tool_effect"
+              },
+              {
+                "name": "slot:device",
+                "passed": true,
+                "expected": "Panel-A",
+                "actual": {
+                  "value": "Panel-A",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:visit_day",
+                "passed": true,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": "Wednesday",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": true,
+                "expected": [
+                  {
+                    "tool": "submit_ticket_v3",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "visit_day": "Wednesday"
+                    }
+                  }
+                ],
+                "actual": [
+                  {
+                    "tool": "submit_ticket_v3",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "visit_day": "Wednesday"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "error:write_outcome_unknown",
+                "passed": true,
+                "expected": "present",
+                "actual": "present"
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": true,
+                "expected": [],
+                "actual": []
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "tool_result": 2,
+            "transcript": 1
+          },
+          "output": {
+            "acknowledge": 3,
+            "error": 1,
+            "final": 1,
+            "tool_call": 2
+          },
+          "total": 12
+        },
+        "operation_ids": {
+          "observed_call_events": 2,
+          "unique": 2,
+          "distinct_call_ids": 2,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "attempt_outcomes": {
+          "sample_count": 2,
+          "counts": {
+            "committed": 2,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": 1.0,
+        "slot_accuracy_detail": {
+          "correct": 2,
+          "labeled": 2,
+          "sample_count": 1
+        },
+        "wrong_action_rate": {
+          "scored": true,
+          "rate": 0.0,
+          "wrong_actions": 0,
+          "committed_effects": 1,
+          "sample_count": 1,
+          "expected_effects": 1,
+          "missed_expected": 0,
+          "unexpected": 0,
+          "wrong_arguments": 0,
+          "duplicate_expected": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0009183,
+            "p50_s": 0.0009183,
+            "p95_s": 0.0009183,
+            "p99_s": 0.0009183,
+            "max_s": 0.0009183
+          },
+          "substantive_response_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0152632,
+            "p50_s": 0.0152632,
+            "p95_s": 0.0152632,
+            "p99_s": 0.0152632,
+            "max_s": 0.0152632
+          },
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 12,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 12,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "status": "passed"
+    },
+    {
+      "scenario_file": "support_then_service.json",
+      "backend": "offline-fake",
+      "disabled_components": [],
+      "trace": "artifacts\\merge-26-offline\\scenario-003.jsonl",
+      "events": 11,
+      "mock_effects": 1,
+      "completion_status": "completed",
+      "task_oracle": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "run_completed",
+            "passed": true,
+            "expected": "completed",
+            "actual": "completed"
+          },
+          {
+            "name": "final_response",
+            "passed": true,
+            "expected": true,
+            "actual": true
+          },
+          {
+            "name": "final_basis",
+            "passed": true,
+            "expected": "confirmed_tool_effect",
+            "actual": "confirmed_tool_effect"
+          },
+          {
+            "name": "slot:device",
+            "passed": true,
+            "expected": "Panel-A",
+            "actual": {
+              "value": "Panel-A",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "slot:day",
+            "passed": true,
+            "expected": "Wednesday",
+            "actual": {
+              "value": "Wednesday",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "slot:hour",
+            "passed": true,
+            "expected": "17:00",
+            "actual": {
+              "value": "17:00",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "committed_effects",
+            "passed": true,
+            "expected": [
+              {
+                "tool": "file_visit_request",
+                "arguments": {
+                  "device": "Panel-A",
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                }
+              }
+            ],
+            "actual": [
+              {
+                "tool": "file_visit_request",
+                "arguments": {
+                  "device": "Panel-A",
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                }
+              }
+            ]
+          },
+          {
+            "name": "unexpected_errors",
+            "passed": true,
+            "expected": [],
+            "actual": []
+          }
+        ],
+        "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "offline-fake",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "inference_timeout_s": 25,
+          "corpus_root_configured": false,
+          "corpus_root_basename": null,
+          "component_config": {
+            "profile": "fake",
+            "corpus_root_configured": false,
+            "corpus_root_basename": null
+          }
+        },
+        "run_metadata": {
+          "scenario": "support-read-then-service",
+          "backend": "offline-fake",
+          "run_id": "e30c9038-c9b3-47de-a7b0-1bf581e8c7a1",
+          "run_started_at": "2026-09-26T06:57:05.834283+00:00",
+          "run_ended_at": "2026-09-26T06:57:05.858012+00:00",
+          "provenance": "Codex-authored fictional Panel-A support workflow. Development fixture, not held out or real Samsung documentation.",
+          "disabled_components": [],
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "commit": "ac187ba0f6f776b77e042d2e3211554835f026cd",
+          "perception_backends_observed": [
+            "fake/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 0.10589520000007724,
+          "expected_slots": {
+            "device": "Panel-A",
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "completed",
+          "perception_cleanup": "not_required",
+          "failure_type": null,
+          "mock_executor_effect_count": 1,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "final-flag-baseline",
+            "tools": "manifest-mock",
+            "perception": "text-pass-through",
+            "inference_timeout_s": 25,
+            "corpus_root_configured": false,
+            "corpus_root_basename": null,
+            "component_config": {
+              "profile": "fake",
+              "corpus_root_configured": false,
+              "corpus_root_basename": null
+            }
+          },
+          "source_sha256": "8b5fdcb0198a39ce41feb7cf286e59d99cb253a34081104062724d336a2eccd2",
+          "scenario_sha256": "1d8b05dd717d807ed629c766c5089bdeed090c6ec0a223e40bfccd7f6f3ae255",
+          "worktree_dirty": false,
+          "reasoner_evidence": null,
+          "task_oracle": {
+            "passed": true,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": true,
+                "expected": "completed",
+                "actual": "completed"
+              },
+              {
+                "name": "final_response",
+                "passed": true,
+                "expected": true,
+                "actual": true
+              },
+              {
+                "name": "final_basis",
+                "passed": true,
+                "expected": "confirmed_tool_effect",
+                "actual": "confirmed_tool_effect"
+              },
+              {
+                "name": "slot:device",
+                "passed": true,
+                "expected": "Panel-A",
+                "actual": {
+                  "value": "Panel-A",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:day",
+                "passed": true,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": "Wednesday",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:hour",
+                "passed": true,
+                "expected": "17:00",
+                "actual": {
+                  "value": "17:00",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": true,
+                "expected": [
+                  {
+                    "tool": "file_visit_request",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ],
+                "actual": [
+                  {
+                    "tool": "file_visit_request",
+                    "arguments": {
+                      "device": "Panel-A",
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": true,
+                "expected": [],
+                "actual": []
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "tool_result": 2,
+            "transcript": 1
+          },
+          "output": {
+            "acknowledge": 3,
+            "final": 1,
+            "tool_call": 2
+          },
+          "total": 11
+        },
+        "operation_ids": {
+          "observed_call_events": 2,
+          "unique": 2,
+          "distinct_call_ids": 2,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "attempt_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": 1.0,
+        "slot_accuracy_detail": {
+          "correct": 3,
+          "labeled": 3,
+          "sample_count": 1
+        },
+        "wrong_action_rate": {
+          "scored": true,
+          "rate": 0.0,
+          "wrong_actions": 0,
+          "committed_effects": 1,
+          "sample_count": 1,
+          "expected_effects": 1,
+          "missed_expected": 0,
+          "unexpected": 0,
+          "wrong_arguments": 0,
+          "duplicate_expected": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0009475,
+            "p50_s": 0.0009475,
+            "p95_s": 0.0009475,
+            "p99_s": 0.0009475,
+            "max_s": 0.0009475
+          },
+          "substantive_response_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0224778,
+            "p50_s": 0.0224778,
+            "p95_s": 0.0224778,
+            "p99_s": 0.0224778,
+            "max_s": 0.0224778
+          },
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 11,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 11,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "status": "passed"
+    },
+    {
+      "scenario_file": "text_correction.json",
+      "backend": "offline-fake",
+      "disabled_components": [],
+      "trace": "artifacts\\merge-26-offline\\scenario-004.jsonl",
+      "events": 9,
+      "mock_effects": 1,
+      "completion_status": "completed",
+      "task_oracle": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "run_completed",
+            "passed": true,
+            "expected": "completed",
+            "actual": "completed"
+          },
+          {
+            "name": "final_response",
+            "passed": true,
+            "expected": true,
+            "actual": true
+          },
+          {
+            "name": "final_basis",
+            "passed": true,
+            "expected": "confirmed_tool_effect",
+            "actual": "confirmed_tool_effect"
+          },
+          {
+            "name": "slot:day",
+            "passed": true,
+            "expected": "Wednesday",
+            "actual": {
+              "value": "Wednesday",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "slot:hour",
+            "passed": true,
+            "expected": "17:00",
+            "actual": {
+              "value": "17:00",
+              "confirmed": true,
+              "present": true
+            }
+          },
+          {
+            "name": "committed_effects",
+            "passed": true,
+            "expected": [
+              {
+                "tool": "reserve_service_slot",
+                "arguments": {
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                }
+              }
+            ],
+            "actual": [
+              {
+                "tool": "reserve_service_slot",
+                "arguments": {
+                  "day": "Wednesday",
+                  "hour": "17:00"
+                }
+              }
+            ]
+          },
+          {
+            "name": "unexpected_errors",
+            "passed": true,
+            "expected": [],
+            "actual": []
+          }
+        ],
+        "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+      },
+      "metrics": {
+        "schema_version": "trace-metrics.v1",
+        "backend": "offline-fake",
+        "config": {
+          "partial_debounce_s": 0.08,
+          "turn_policy": "final-flag-baseline",
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "inference_timeout_s": 25,
+          "corpus_root_configured": false,
+          "corpus_root_basename": null,
+          "component_config": {
+            "profile": "fake",
+            "corpus_root_configured": false,
+            "corpus_root_basename": null
+          }
+        },
+        "run_metadata": {
+          "scenario": "development-text-correction-01",
+          "backend": "offline-fake",
+          "run_id": "0ee0899b-c040-4d6b-8f7e-731632969260",
+          "run_started_at": "2026-09-26T06:57:06.097494+00:00",
+          "run_ended_at": "2026-09-26T06:57:06.227301+00:00",
+          "provenance": "Codex-authored synthetic orchestration example, 2026-09-13; not held out or clinical data",
+          "disabled_components": [],
+          "tools": "manifest-mock",
+          "perception": "text-pass-through",
+          "commit": "ac187ba0f6f776b77e042d2e3211554835f026cd",
+          "perception_backends_observed": [
+            "fake/text-pass-through"
+          ],
+          "python": "3.11.15",
+          "platform": "Windows-10-10.0.26220-SP0",
+          "runtime_s": 0.19322399999987283,
+          "expected_slots": {
+            "day": "Wednesday",
+            "hour": "17:00"
+          },
+          "measurement_clock": "perf_counter",
+          "clock_resolution_s": 1e-07,
+          "completion_status": "completed",
+          "perception_cleanup": "not_required",
+          "failure_type": null,
+          "mock_executor_effect_count": 1,
+          "config": {
+            "partial_debounce_s": 0.08,
+            "turn_policy": "final-flag-baseline",
+            "tools": "manifest-mock",
+            "perception": "text-pass-through",
+            "inference_timeout_s": 25,
+            "corpus_root_configured": false,
+            "corpus_root_basename": null,
+            "component_config": {
+              "profile": "fake",
+              "corpus_root_configured": false,
+              "corpus_root_basename": null
+            }
+          },
+          "source_sha256": "8b5fdcb0198a39ce41feb7cf286e59d99cb253a34081104062724d336a2eccd2",
+          "scenario_sha256": "ff985ef5e93787cfa34d0e07779ccb2a2d2625e0d76c620244cc1d189393aa34",
+          "worktree_dirty": false,
+          "reasoner_evidence": null,
+          "task_oracle": {
+            "passed": true,
+            "checks": [
+              {
+                "name": "run_completed",
+                "passed": true,
+                "expected": "completed",
+                "actual": "completed"
+              },
+              {
+                "name": "final_response",
+                "passed": true,
+                "expected": true,
+                "actual": true
+              },
+              {
+                "name": "final_basis",
+                "passed": true,
+                "expected": "confirmed_tool_effect",
+                "actual": "confirmed_tool_effect"
+              },
+              {
+                "name": "slot:day",
+                "passed": true,
+                "expected": "Wednesday",
+                "actual": {
+                  "value": "Wednesday",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "slot:hour",
+                "passed": true,
+                "expected": "17:00",
+                "actual": {
+                  "value": "17:00",
+                  "confirmed": true,
+                  "present": true
+                }
+              },
+              {
+                "name": "committed_effects",
+                "passed": true,
+                "expected": [
+                  {
+                    "tool": "reserve_service_slot",
+                    "arguments": {
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ],
+                "actual": [
+                  {
+                    "tool": "reserve_service_slot",
+                    "arguments": {
+                      "day": "Wednesday",
+                      "hour": "17:00"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "unexpected_errors",
+                "passed": true,
+                "expected": [],
+                "actual": []
+              }
+            ],
+            "reason": "Developer-authored mock task oracle; no model receives these expected answers"
+          }
+        },
+        "event_counts": {
+          "input": {
+            "session_end": 1,
+            "session_start": 1,
+            "tool_result": 1,
+            "transcript": 2
+          },
+          "output": {
+            "acknowledge": 2,
+            "final": 1,
+            "tool_call": 1
+          },
+          "total": 9
+        },
+        "operation_ids": {
+          "observed_call_events": 1,
+          "unique": 1,
+          "distinct_call_ids": 1,
+          "repeated_operation_values": 0,
+          "repeated_operation_attempts": 0,
+          "duplicate_delivery_events": 0,
+          "repeated": {}
+        },
+        "committed_effect_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "attempt_outcomes": {
+          "sample_count": 1,
+          "counts": {
+            "committed": 1,
+            "not_committed": 0,
+            "unknown": 0
+          }
+        },
+        "conflicting_terminal_evidence": null,
+        "slot_accuracy": 1.0,
+        "slot_accuracy_detail": {
+          "correct": 2,
+          "labeled": 2,
+          "sample_count": 1
+        },
+        "wrong_action_rate": {
+          "scored": true,
+          "rate": 0.0,
+          "wrong_actions": 0,
+          "committed_effects": 1,
+          "sample_count": 1,
+          "expected_effects": 1,
+          "missed_expected": 0,
+          "unexpected": 0,
+          "wrong_arguments": 0,
+          "duplicate_expected": 0
+        },
+        "latency": {
+          "correction_to_cancellation_s": null,
+          "acknowledgment_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0016682,
+            "p50_s": 0.0016682,
+            "p95_s": 0.0016682,
+            "p99_s": 0.0016682,
+            "max_s": 0.0016682
+          },
+          "substantive_response_from_input_receipt_s": {
+            "sample_count": 1,
+            "min_s": 0.0125492,
+            "p50_s": 0.0125492,
+            "p95_s": 0.0125492,
+            "p99_s": 0.0125492,
+            "max_s": 0.0125492
+          },
+          "acknowledgment_from_speech_end_s": null,
+          "substantive_response_from_speech_end_s": null
+        },
+        "trace_quality": {
+          "typed_rows": 9,
+          "ignored_rows": 0,
+          "outcomes_with_unknown_effect": 0,
+          "rows_with_observed_at": 9,
+          "rows_with_speech_ended_at": 0
+        },
+        "limitation": "Orchestration evidence only; no clinical, user-benefit, or official-score claim."
+      },
+      "status": "passed"
+    }
+  ],
+  "limitation": "Developer-authored scenario criteria and mock effects; not official-kit or held-out results."
+}
