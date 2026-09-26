@@ -1683,3 +1683,15 @@ second setup failure, third success. A public evaluator text run scored 38.5
 under the old 14K repository default; a larger-context diagnostic run scored
 56.9 but hit provider quota before the write. No model training, physical mic,
 Docker/Linux, complete official multimodal score or submission claim.
+
+## 2026-09-26 - Opt-in Groq media trial
+
+AI assistance added Mridul-owned Groq audio/image perception, cloud runtime and
+package configuration, and focused tests. The user requested trying both hosted
+media providers after a low-memory native ASR failure. A generated WAV was
+transcribed by Groq Whisper Large v3 Turbo and a checked-in panel PNG was read
+by Groq Qwen 3.8 27B. The first combined setup hit HTTP 429 at reasoning;
+the second setup passed. A-owned regression passed 1,029 with 2 skips; the
+whole suite retained seven known B-owned failures. No Atishay-owned file was
+edited, no model was trained, and no official scenario or human microphone
+result is claimed by these component calls.

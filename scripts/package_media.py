@@ -6,12 +6,52 @@ from pathlib import Path
 import re
 
 from accessflow.adapters.configured_agent import PerceptionConfig
+from accessflow.adapters.groq_media import DEFAULT_ASR_MODEL, DEFAULT_VISION_MODEL
 from accessflow.perception.local import validate_png, validate_wav
 
 
 MODEL_REQUIRED = {"config.json", "model.bin", "tokenizer.json"}
 MODEL_OPTIONAL = {"vocabulary.json", "vocabulary.txt", "preprocessor_config.json", "README.md", "LICENSE", "LICENSE.txt"}
 MODEL_LIMIT_BYTES = 512 * 1024 * 1024
+
+
+def cloud_inputs(*, warmup_audio, warmup_image, audio_provenance, image_provenance,
+                 timeout_s=30, asr_model=DEFAULT_ASR_MODEL, vision_model=DEFAULT_VISION_MODEL):
+    """Package only bounded installation fixtures; cloud models need no local weights."""
+    files = {}
+    records = {}
+    for kind, source, provenance, validator, target in (
+        ("audio", warmup_audio, audio_provenance, validate_wav, "assets/warmup.wav"),
+        ("image", warmup_image, image_provenance, validate_png, "assets/warmup.png"),
+    ):
+        path = Path(source)
+        if (not isinstance(provenance, str) or not provenance.strip() or len(provenance) > 2000
+                or path.is_symlink() or not path.is_file()):
+            raise ValueError(f"Cloud {kind} warm-up requires a regular file and bounded provenance")
+        validator(path)
+        files[target] = path.read_bytes()
+        records[kind] = {"path": target, "provenance": provenance,
+                         "sha256": hashlib.sha256(files[target]).hexdigest()}
+    settings = {
+        "ACCESSFLOW_SAMSUNG_PERCEPTION": "cloud",
+        "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S": str(timeout_s),
+        "ACCESSFLOW_SAMSUNG_ASR_MODEL": asr_model,
+        "ACCESSFLOW_SAMSUNG_VISION_PROVIDER": "groq",
+        "ACCESSFLOW_SAMSUNG_VISION_MODEL": vision_model,
+        "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO": "assets/warmup.wav",
+        "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE": "assets/warmup.png",
+    }
+    # Validate against the source fixtures before freezing portable package paths.
+    source_settings = {**settings,
+                       "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO": str(Path(warmup_audio).resolve()),
+                       "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE": str(Path(warmup_image).resolve())}
+    PerceptionConfig.from_environment(Path.cwd(), source_settings)
+    files["assets/installation.json"] = (json.dumps({
+        "mode": "cloud", "audio_warmup": records["audio"], "image_warmup": records["image"],
+        "asr_model": asr_model, "vision_model": vision_model,
+        "local_weights_included": False, "live_inference_verified": False,
+    }, indent=2) + "\n").encode()
+    return settings, files
 
 
 def native_inputs(*, model_dir, warmup_audio, audio_provenance, timeout_s=30,

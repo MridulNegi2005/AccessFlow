@@ -27,12 +27,17 @@ def configure_profile(profile, environment, *, root=None):
         raise ValueError("Package runtime profile has an invalid shape")
     expected = set(PROFILE_KEYS)
     native = profile.get("ACCESSFLOW_SAMSUNG_PERCEPTION") == "process"
+    cloud = profile.get("ACCESSFLOW_SAMSUNG_PERCEPTION") == "cloud"
     if native:
         expected.update({"ACCESSFLOW_SAMSUNG_ASR_MODEL_PATH", "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO",
                          "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S", "ACCESSFLOW_SAMSUNG_VISION_PROVIDER"})
         if profile.get("ACCESSFLOW_SAMSUNG_VISION_PROVIDER") == "ollama":
             expected.update({"ACCESSFLOW_SAMSUNG_VISION_MODEL", "ACCESSFLOW_SAMSUNG_VISION_URL",
                              "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE"})
+    if cloud:
+        expected.update({"ACCESSFLOW_SAMSUNG_ASR_MODEL", "ACCESSFLOW_SAMSUNG_WARMUP_AUDIO",
+                         "ACCESSFLOW_SAMSUNG_PERCEPTION_TIMEOUT_S", "ACCESSFLOW_SAMSUNG_VISION_PROVIDER",
+                         "ACCESSFLOW_SAMSUNG_VISION_MODEL", "ACCESSFLOW_SAMSUNG_WARMUP_IMAGE"})
     if (set(profile) != expected
             or any(not isinstance(value, str) or not value.strip() for value in profile.values())):
         raise ValueError("Package runtime profile has an invalid shape")
@@ -52,6 +57,11 @@ def configure_profile(profile, environment, *, root=None):
         base = (PACKAGE_ROOT if root is None else Path(root)).resolve()
         if any(not (base / path).resolve().is_relative_to(base) for path in fixed_paths.values()):
             raise ValueError("Packaged installation assets escape their boundary")
+    if cloud:
+        if (profile["ACCESSFLOW_SAMSUNG_WARMUP_AUDIO"] != "assets/warmup.wav"
+                or profile["ACCESSFLOW_SAMSUNG_WARMUP_IMAGE"] != "assets/warmup.png"
+                or profile["ACCESSFLOW_SAMSUNG_VISION_PROVIDER"] != "groq"):
+            raise ValueError("Cloud profile must use packaged warm-up assets and Groq vision")
     PerceptionConfig.from_environment(PACKAGE_ROOT if root is None else Path(root), profile)
     undeclared = sorted((PERCEPTION_ENV_KEYS - expected) & environment.keys())
     if undeclared:
