@@ -140,11 +140,14 @@ def test_explicit_task_cancel_returns_stop(text: str):
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("Stop speaking while I think", "continue"),
+        ("Stop speaking while I think", "output_stop"),
         ("Stop the washing machine", "complete"),
         ("Cancel this booking", "complete"),
         ("Cancel the booking", "complete"),
         ("Cancel this task", "stop"),
+        ("Stop", "hold"),
+        ("wait", "hold"),
+        ("Stop right there", "hold"),
     ],
 )
 def test_stop_words_have_distinct_scopes(text: str, expected: str):
@@ -155,6 +158,13 @@ def test_stop_words_have_distinct_scopes(text: str, expected: str):
 
 @pytest.mark.parametrize("text", ["Cancel this booking", "Stop the whole task now"])
 def test_partial_cancel_hypothesis_cannot_stop_task(text: str):
+    decision = HeuristicTurnPolicy().update(observation(text, final=False), view())
+
+    assert decision.kind == "continue"
+
+
+@pytest.mark.parametrize("text", ["Stop", "wait", "Stop right there"])
+def test_partial_vague_stop_cannot_hold_or_cancel_task(text: str):
     decision = HeuristicTurnPolicy().update(observation(text, final=False), view())
 
     assert decision.kind == "continue"

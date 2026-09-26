@@ -1,5 +1,27 @@
 # Implementation status
 
+## Current code checkpoint — 26 September 2026
+
+This section is newer than the older audit notes below. AJ's current local
+`atishay/perception` checkout contains a shared stop fix: “Stop speaking” stops
+assistant playback, an unclear “stop” pauses new actions and asks what the user
+means, and a clear cancel cancels the task. Deterministic tests now cover these
+behaviors. The change is local and uncommitted; do not read the earlier 25 Sep
+failure report as the result for this newer working tree.
+
+Python 3.11.15 full suite: **1,399 passed, 6 skipped, 1 xfailed**; Ruff passed.
+After applying the same working-tree patch, Colab Python 3.13.15 on a Tesla T4:
+**1,401 passed, 4 skipped, 1 xfailed**; Ruff passed. The remaining expected
+failure is the multi-image/source-selection case. The test count difference is
+environment-related, not evidence of extra product features. Python 3.13 is an
+extra compatibility run; declared project support remains Python 3.11.
+
+Product acceptance is still **PARTIAL**. Real microphone and model-backed cases,
+safe server-side End session behavior, multi-image source selection, official
+package/evaluation checks, and submission materials remain unfinished. The
+12 real reasoning/vision attempts and 4 physical-microphone checks are still
+NOT RUN. The FDB-v3/Grok 100-example paid run remains off.
+
 ## Confirmed product decisions - 25 September 2026
 
 Read `docs/PRODUCT_DECISIONS_2026-09-25.md` first. User-approved D1-D4: vague stop
@@ -9,15 +31,18 @@ hands-free; End session discards unfinished audio and prevents further output/wo
 images remain numbered/timestamped and can contribute separately selected fields.
 
 Newest-image-only context and required Finish/Send are superseded. Product choices
-are settled, not implemented. Mridul owns additive state/contracts/authority and
+are settled. D1 now has local shared-engine implementation and deterministic test
+coverage; D2-D4 still need the implementation and acceptance described above.
+Mridul owns additive state/contracts/authority and
 closure; Atishay owns capture/policy/perception/playback/UI. Both coordinate exact
 interfaces and conformance; neither edits the other's work. B can continue error
 recovery and other independent fixes immediately. Current single-active-frame
 controller needs A-owned work for image history. Update compatibility tests safely.
 
 Current B instructions: docs/reviews/ATISHAY_EXECUTION_BRIEF_2026-09-25.md, now with
-26 behavioural cases, 12 real-inference attempts and 4 physical-mic checks. This
-checkpoint is documentation only; no new implementation or test success claimed.
+26 behavioural cases, 12 real-inference attempts and 4 physical-mic checks. That
+older checkpoint was documentation only; the newer local code checkpoint above
+records the current implementation and test results.
 
 ## Merged completion review - 25 September 2026
 

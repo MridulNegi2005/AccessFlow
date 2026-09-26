@@ -1356,3 +1356,27 @@ See `docs/feedback/ATISHAY_ACCEPTANCE_AUDIT_2026-09-26.md` for the gate matrix
 and exact Mridul/runtime changes needed before Atishay can finish integration,
 the twelve real-inference attempts and four physical-mic checks. The goal is
 blocked by these repeated dependencies, not declared complete.
+
+## 2026-09-26 — Local shared-stop implementation and Python 3.13 run
+
+The earlier blocked audit describes the pushed `6eefd68` snapshot. A later,
+explicitly scoped local change in the current `atishay/perception` checkout now
+adds shared-engine stop behavior: “Stop speaking” stops playback without ending
+the task; a vague stop holds new actions and asks for clarification; an explicit
+task cancel cancels the task. A newer spoken turn blocks new writes until its
+intent is clear, and a fresh completed non-write request retracts older write
+intent. Browser speech also waits while microphone capture is active.
+
+Python 3.11.15 full suite: **1,399 passed, 6 skipped, 1 xfailed, 2 warnings**
+(62.56 s); Ruff passed. The exact local patch was applied to the Colab checkout
+and tested on Python 3.13.15 / Tesla T4: **1,401 passed, 4 skipped, 1 xfailed**
+(42.11 s); Ruff passed. The single expected failure is the D4 conflicting-image
+selection case. A temporary Colab-only `tests` marker resolves its installed
+package-name collision and is not part of the project.
+
+**Status: PARTIAL.** This is deterministic software evidence, not a physical
+microphone or real model result. The code remains uncommitted and unpushed.
+Safe server-side End session closure, ordered multi-image source selection,
+12 real reasoning/vision attempts, 4 physical-microphone checks, official
+package/evaluation proof, and final slides/video remain open. Python 3.13 is not
+added to the declared support range; the paid 100-example Grok run stayed off.

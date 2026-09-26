@@ -173,14 +173,16 @@ async def test_explicit_cancellation_of_the_second_request_prevents_its_write():
         await wait_for(oq, lambda e: e.kind == "tool_call")
         await iq.put(transcript("Actually cancel that", utterance="request-b", revision=1))
         cancel = await wait_for(oq, lambda e: e.kind == "cancel_call")
-        assert cancel.payload["reason"] == "new_evidence"
-        # The engine confirms cancellation itself (a synthetic "cancelled" result
-        # for a not-yet-committed write) without waiting for the still-gated
-        # executor call, which is exactly what must not be allowed to commit.
+        assert cancel.payload["reason"] == "write_intent_retracted"
+        # The resolved plan, rather than speech arrival alone, retracts the
+        # authorization and cancels the still-pending effect.
         async with asyncio.timeout(2):
             while agent.ledger[cancel.payload["call_id"]].status == "cancelled":
                 await asyncio.sleep(0)
         assert agent.ledger[cancel.payload["call_id"]].status == "failed"
+        async with asyncio.timeout(2):
+            while cancel.payload["call_id"] not in executor.cancelled:
+                await asyncio.sleep(0)
         assert len(agent.executor.effects) == 1  # Only request A's Wednesday booking.
     finally:
         gate.set()

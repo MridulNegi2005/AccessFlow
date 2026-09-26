@@ -2041,8 +2041,24 @@
         document.querySelector("#speak-pill").classList.remove("visible");
       }
 
+      function interruptLiveOutputForVoice() {
+        const outputActive = ttsUtterance !== null ||
+          document.querySelector("#speak-pill").classList.contains("visible");
+        if (!outputActive) return false;
+        // Voice onset alone is not enough to change task authority. The shared
+        // speech-interrupt event also cancels pending writes, so wait for words.
+        cancelSpeech();
+        document.querySelector("#voice-state").textContent = "Listening to you…";
+        document.querySelector("#voice-help").textContent =
+          "I stopped speaking because you started. Go ahead.";
+        return true;
+      }
+
       function speak(text) {
         if (!("speechSynthesis" in window)) return;
+        // A backend final can arrive while the microphone is still capturing a
+        // newer turn. Keep it visible, but do not speak over the user.
+        if (liveVoice?.active && (liveVoice?.turn || liveVoice?.voiceDetected)) return;
         cancelSpeech();
         const generation = speechGeneration;
         const utterance = new SpeechSynthesisUtterance(text);
@@ -3005,6 +3021,7 @@
         setInterval: (callback, delay) => window.setInterval(callback, delay),
         clearInterval: (timer) => window.clearInterval(timer),
         encodeWav,
+        onVoiceActivity: interruptLiveOutputForVoice,
         onSpeechStart: beginLiveRun,
         sendStatus: (sourceId, sourceRevision, status) =>
           send("speech_status", {
