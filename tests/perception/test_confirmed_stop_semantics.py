@@ -14,13 +14,13 @@ from accessflow.turn_policy import HeuristicTurnPolicy
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="D1 hold/clarify needs Mridul's additive TurnDecision and controller handling",
-)
-async def test_vague_stop_holds_and_clarifies_without_a_final():
+@pytest.mark.parametrize("text", ["Stop", "wait", "Stop right there"])
+async def test_vague_stop_holds_and_clarifies_without_a_final(text):
     class Reasoner:
+        calls = 0
+
         async def plan(self, view, manifests):
+            self.calls += 1
             return PlanProposal(response="Planner would finish this task", request_complete=True)
 
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -35,7 +35,7 @@ async def test_vague_stop_holds_and_clarifies_without_a_final():
             TranscriptEvent(
                 session_id="vague-stop",
                 event_id="stop-speech",
-                payload=Transcript(utterance_id="stop-turn", revision=0, text="Stop", final=True),
+                payload=Transcript(utterance_id="stop-turn", revision=0, text=text, final=True),
             )
         )
         seen = []
@@ -45,19 +45,21 @@ async def test_vague_stop_holds_and_clarifies_without_a_final():
         assert seen[-1].kind == "clarify"
         assert not any(event.kind == "tool_call" for event in seen)
         assert agent.state.status != "stopped"
+        assert agent.clarification_outstanding is True
+        assert agent.stop_hold is True
+        assert Reasoner.calls == 0
     finally:
         await incoming.put(EndEvent(session_id="vague-stop"))
         await asyncio.wait_for(runner, timeout=2)
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="D1 output-only stop needs Mridul's additive TurnDecision and controller handling",
-)
 async def test_stop_speaking_emits_output_stop_without_stopping_task():
     class Reasoner:
+        calls = 0
+
         async def plan(self, view, manifests):
+            self.calls += 1
             return PlanProposal(response="This should not be spoken", request_complete=True)
 
     incoming, outgoing = asyncio.Queue(), asyncio.Queue()
@@ -80,8 +82,80 @@ async def test_stop_speaking_emits_output_stop_without_stopping_task():
         assert output.payload.get("stop_output") is True
         assert output.payload.get("caused_by_event_id") == "stop-output-speech"
         assert agent.state.status != "stopped"
+        assert agent.write_intent_retained is False
+        assert Reasoner.calls == 0
     finally:
         await incoming.put(EndEvent(session_id="output-stop"))
+        await asyncio.wait_for(runner, timeout=2)
+
+
+@pytest.mark.asyncio
+async def test_stop_speaking_preserves_pending_booking_authority():
+    gate = asyncio.Event()
+    executor = FakeTools(gate=gate)
+
+    class Reasoner:
+        async def plan(self, view, manifests):
+            return PlanProposal(
+                intent="schedule_meeting", slot_updates={"date": "2026-09-30"},
+                calls=[ProposedCall(
+                    tool="mock_calendar_create", arguments={"date": "2026-09-30"},
+                    dependencies=["date"],
+                )],
+                request_complete=True, write_requested=True,
+            )
+
+    tool = ToolManifest(
+        name="mock_calendar_create", description="In-memory calendar test effect",
+        effect="write", parameters={
+            "type": "object", "properties": {"date": {"type": "string"}},
+            "required": ["date"], "additionalProperties": False,
+        },
+    )
+    incoming, outgoing = asyncio.Queue(), asyncio.Queue()
+    agent = Agent(
+        FakePerception(), HeuristicTurnPolicy(), Reasoner(), executor,
+        MockOnlyAuthorization(), partial_debounce_s=0,
+    )
+    runner = asyncio.create_task(agent.run(incoming, outgoing))
+    try:
+        await incoming.put(StartEvent(session_id="output-stop-pending", payload=Start(tools=[tool])))
+        await incoming.put(TranscriptEvent(
+            session_id="output-stop-pending", event_id="book-event",
+            payload=Transcript(
+                utterance_id="book-turn", revision=0,
+                text="Book the meeting Wednesday, September 30", final=True,
+            ),
+        ))
+        async with asyncio.timeout(2):
+            while True:
+                event = await outgoing.get()
+                if event.kind == "tool_call":
+                    break
+            while not executor.calls:
+                await asyncio.sleep(0)
+        assert agent.write_intent_retained is True
+        assert not executor.effects
+
+        await incoming.put(TranscriptEvent(
+            session_id="output-stop-pending", event_id="stop-output-event",
+            payload=Transcript(
+                utterance_id="stop-output-turn", revision=0, text="Stop speaking", final=True,
+            ),
+        ))
+        seen = []
+        async with asyncio.timeout(2):
+            while not any(event.kind == "acknowledge" and event.payload.get("stop_output") for event in seen):
+                seen.append(await outgoing.get())
+        assert seen[-1].payload["caused_by_event_id"] == "stop-output-event"
+        assert agent.state.status != "stopped"
+        assert agent.write_intent_retained is True
+        assert agent.stop_hold is False
+        assert len(executor.calls) == 1
+        assert not executor.effects
+    finally:
+        gate.set()
+        await incoming.put(EndEvent(session_id="output-stop-pending"))
         await asyncio.wait_for(runner, timeout=2)
 
 
@@ -145,6 +219,9 @@ async def test_explicit_task_cancel_prevents_pending_mock_effect():
         assert agent.state.status == "stopped"
         assert agent.running
         assert any(event.kind == "cancel_call" for event in seen)
+        async with asyncio.timeout(2):
+            while executor.calls[0].call_id not in executor.cancelled:
+                await asyncio.sleep(0)
         gate.set()
         for _ in range(20):
             await asyncio.sleep(0)

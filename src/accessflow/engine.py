@@ -254,6 +254,9 @@ class Agent:
         # or still-open information gap is never conflated with the user's underlying
         # authorization to write.
         self.clarification_outstanding = False
+        # A vague stop holds all new planning/dispatch until the user clarifies its
+        # scope. It is not the same as abandoning the task or revoking its authority.
+        self.stop_hold = False
         self.semantic_correction_event = None
         self.last_sequence = -1
         self.invalidated = set()
@@ -361,6 +364,7 @@ class Agent:
                     self.speech_ready = False
                     self.write_intent_retained = False
                     self.clarification_outstanding = False
+                    self.stop_hold = False
                     # Request-scoped authority, same lifetime as the two flags above (see
                     # the identical reset on request rotation below) -- an interrupt must
                     # not leave a slot/intent the user fixed before the interrupt able to
@@ -417,13 +421,13 @@ class Agent:
                     if source[0] == "speech":
                         self.active_speech = source[1]
                         self.speech_ready = False
-                        self.write_intent_retained = False
                         self.semantic_correction_event = None
                     if self.last_request_finished:
                         self.request_id = str(uuid4())
                         self.last_request_finished = False
                         self.write_intent_retained = False
                         self.clarification_outstanding = False
+                        self.stop_hold = False
                         # A new request must not inherit authority over slots/intent the
                         # user fixed on a now-finished prior request -- otherwise a
                         # legitimate delegated value on THIS request (the user names no
@@ -446,8 +450,12 @@ class Agent:
                     self.latest_complete = False
                     self.state.correction_pending = True
                     self.state.status = "listening"
-                    # Conservative write guard until semantic/dependency resolution.
-                    await self._cancel_writes("new_evidence")
+                    # Speech admission blocks new writes below, but is not itself a
+                    # semantic cancellation. Preserve an existing write request until
+                    # the final words show that its target was superseded or cancelled.
+                    # New image evidence retains the previous eager stale-write guard.
+                    if source[0] == "image":
+                        await self._cancel_writes("new_evidence")
                     if isinstance(event, SpeechStatusEvent):
                         # Transport activity supersedes unfinished speech work, but
                         # does not discard the current frame or fabricate an ASR
@@ -624,6 +632,45 @@ class Agent:
                 if self.pending_frame_token == (obs.source_id, obs.event_id, message.perception_epoch):
                     self.pending_frame_token = None
             decision = self.turn_policy.update(obs.model_copy(deep=True), self._view())
+            if obs.modality != "image" and decision.kind == "output_stop":
+                # This control utterance stops assistant playback only. It does not
+                # replace the active request, revoke its write authority, or start a
+                # new plan from the words "Stop speaking".
+                if self.planner and not self.planner.done():
+                    self.planner.cancel()
+                self.stop_hold = False
+                self.clarification_outstanding = False
+                self.speech_ready = False
+                self.latest_complete = False
+                self.state.correction_pending = True
+                self.state.status = "listening"
+                await self._emit("acknowledge", text="Okay, I'll stop speaking.", stop_output=True)
+                return
+            if obs.modality != "image" and decision.kind == "hold":
+                # A bare stop/cancel is too vague to abandon a task. Stop new work,
+                # cancel pending writes where possible, and ask what should stop.
+                if self.planner and not self.planner.done():
+                    self.planner.cancel()
+                self.stop_hold = True
+                self.clarification_outstanding = True
+                self.speech_ready = False
+                self.latest_complete = False
+                self.state.correction_pending = True
+                self.state.status = "clarifying"
+                await self._cancel_writes("ambiguous_stop")
+                await self._emit("acknowledge", text="I'll pause and listen.", stop_output=True)
+                await self._emit(
+                    "clarify",
+                    text="Do you want me to stop speaking, pause this task, or cancel it?",
+                )
+                return
+            if obs.modality != "image" and self.stop_hold:
+                if obs.final and decision.kind in {"complete", "possible_correction", "stop"}:
+                    # A new, finished utterance resolves the held ambiguity. The
+                    # ordinary plan still has to confirm what to do before dispatch.
+                    self.stop_hold = False
+                else:
+                    return
             if obs.modality != "image" and obs.source_id == self.active_speech:
                 self.speech_ready = decision.kind == "complete" and obs.final
                 self.semantic_correction_event = obs.event_id if (
@@ -649,6 +696,7 @@ class Agent:
                 await self._discard_pending_frame()
                 self.write_intent_retained = False
                 self.clarification_outstanding = False
+                self.stop_hold = False
                 await self._cancel_writes("explicit_stop")
                 self.state.status = "stopped"
                 await self._emit("acknowledge", text="Stopped.", stop_output=True)
@@ -685,6 +733,8 @@ class Agent:
             await self._offer_recovery(self.schema_rejection_recoveries, retry_fresh=retry_fresh)
 
     def _start_plan(self, source=None, *, retry_fresh=False):
+        if self.stop_hold:
+            return
         self.generation += 1
         # A source given here comes from _worker's observation handling and means new
         # user evidence (fresh/partial speech, or an image) just arrived. Every other
@@ -809,6 +859,7 @@ class Agent:
                     await self._emit("clarify", text="I couldn't validate that lookup answer. Please try again.")
                 return
         fresh_evidence = self._fresh_evidence
+        prior_write_intent_retained = self.write_intent_retained
         # Snapshot before this proposal can mutate write_intent_retained below. Mirrors
         # ModelReasoner.write_outstanding: true when the CURRENT request's spoken write
         # request names a real write tool that has not been dispatched or confirmed by
@@ -881,7 +932,14 @@ class Agent:
             # being non-fresh (H2). The flag is popped (consumed) so a single
             # cancelled fresh plan cannot authorize more than one later replan.
             if fresh_evidence:
-                self.write_intent_retained = bool(self.speech_ready and proposal.write_requested)
+                next_write_intent = bool(self.speech_ready and proposal.write_requested)
+                if prior_write_intent_retained and not next_write_intent:
+                    # A resolved, fresh speech plan that no longer asks to write
+                    # withdraws the earlier permission. Cancel its pending effect
+                    # only now, after the words have been understood; mere speech
+                    # admission or a provisional "cancel..." hypothesis is not enough.
+                    await self._cancel_writes("write_intent_retracted")
+                self.write_intent_retained = next_write_intent
                 self._write_authority_evidence_mark = self._results_admitted
             elif (proposal.write_requested and self.speech_ready and not proposal.clarification
                     and self._results_admitted == self._write_authority_evidence_mark

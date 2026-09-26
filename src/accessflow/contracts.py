@@ -203,7 +203,10 @@ class Observation(Model):
 
 
 class TurnDecision(Model):
-    kind: Literal["continue", "complete", "possible_correction", "backchannel", "stop"]
+    kind: Literal[
+        "continue", "complete", "possible_correction", "backchannel",
+        "output_stop", "hold", "stop",
+    ]
     uncertainty: float = Field(default=0, ge=0, le=1)
 
 

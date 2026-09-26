@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from accessflow.adapters.models import ModelReasoner
-from accessflow.contracts import PlanProposal, SessionView, Snapshot
+from accessflow.contracts import PlanProposal, ProposedCall, SessionView, Snapshot
 from test_safety import end, start, transcript, wait_for
 from test_write_binding import CatalogTools, contract, manifests, read_plan, write_plan
 
@@ -49,7 +49,7 @@ async def test_json_model_boundary_preserves_bound_chain_and_environment_permiss
         await end(iq, task)
 
 
-async def test_fresh_selection_correction_can_explicitly_reuse_accepted_read_end_to_end():
+async def test_fresh_selection_correction_refreshes_read_before_write():
     class CorrectedBackend:
         def __init__(self):
             self.step = 0
@@ -64,15 +64,14 @@ async def test_fresh_selection_correction_can_explicitly_reuse_accepted_read_end
                     request_complete=True, write_requested=True,
                 ).model_dump()
             if self.step == 3:
-                replacement = contract()
-                replacement.delegated_arguments["item_id"].source_call_index = None
-                replacement.delegated_arguments["item_id"].source_call_id = (
-                    data["session"]["results"][0]["call_id"]
-                )
                 return PlanProposal(
                     intent="reservation", slot_updates={"requested_time": "09:00"},
                     request_complete=True, write_requested=True,
-                    write_contracts=[replacement],
+                    calls=[ProposedCall(
+                        tool="catalog_z", arguments={"region": "North", "requested_time": "09:00"},
+                        dependencies=["region", "requested_time"],
+                    )],
+                    write_contracts=[contract()],
                 ).model_dump()
             source = data["session"]["write_contracts"][0]["delegated_arguments"]["item_id"]
             plan = write_plan(source["source_call_id"])
@@ -81,8 +80,10 @@ async def test_fresh_selection_correction_can_explicitly_reuse_accepted_read_end
             return plan.model_dump()
 
     tools = CatalogTools()
+    configured_manifests = manifests()
+    configured_manifests[0].parameters["properties"]["requested_time"] = {"type": "string"}
     agent, iq, oq, task = await start(
-        [], tools=tools, manifests=manifests(), reasoner=ModelReasoner(CorrectedBackend()),
+        [], tools=tools, manifests=configured_manifests, reasoner=ModelReasoner(CorrectedBackend()),
     )
     try:
         await iq.put(transcript("Reserve the 08:00 item in North for Wednesday"))
@@ -90,10 +91,10 @@ async def test_fresh_selection_correction_can_explicitly_reuse_accepted_read_end
         source = tools.calls[0].call_id
         await iq.put(transcript("Use 09:00 instead", utterance="correction"))
         await wait_for(oq, lambda e: e.kind == "final")
-        assert [c.effect for c in tools.calls] == ["read", "write"]
+        assert [c.effect for c in tools.calls] == ["read", "read", "write"]
         assert agent.ledger[source].status == "success"
-        assert tools.calls[1].arguments == {"item_id": "opaque-99", "booking_date": "Wednesday"}
-        assert tools.calls[1].dependencies["requested_time"] == agent.state.slots["requested_time"].revision
+        assert tools.calls[2].arguments == {"item_id": "opaque-99", "booking_date": "Wednesday"}
+        assert tools.calls[2].dependencies["requested_time"] == agent.state.slots["requested_time"].revision
     finally:
         await end(iq, task)
 

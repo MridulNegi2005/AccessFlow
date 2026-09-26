@@ -1653,3 +1653,15 @@ unmasked D1 reproducer (2 failed, 1 passed). It checked runtime availability
 without exposing credentials or loading a model and documented the exact
 unblock sequence. No implementation changed; full acceptance remains blocked,
 not complete. No native-ASR retry or human audio capture occurred.
+
+## 26 September 2026 - AI-assisted shared-stop follow-up and Python 3.13 run
+
+At AJ's request, assistance made the locally scoped shared stop/hold behavior
+and its tests concrete, then transferred that exact working-tree patch to the
+saved Colab checkout for a full Python 3.13.15/T4 suite run. Python 3.11.15:
+1,399 passed, 6 skipped, 1 xfailed, 2 warnings; Python 3.13.15: 1,401 passed,
+4 skipped, 1 xfailed; Ruff passed in both environments. The remaining expected
+failure is multi-image source selection. This change is uncommitted/unpushed;
+Python 3.13 remains extra evidence outside the declared support range. No real
+mic, actual reasoning/vision attempts, official score, or paid Grok batch was
+run; product acceptance remains partial.

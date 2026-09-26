@@ -59,18 +59,9 @@ async def test_pending_transport_keeps_frame_without_final_write_or_clarificatio
         await end(iq, task)
 
 
-async def test_pending_activity_cancels_write_and_late_speech_cannot_restore_authority():
+async def test_pending_activity_holds_new_writes_and_late_speech_cannot_reopen_turn():
     agent, iq, oq, task = await setup("write")
     agent.executor.gate = asyncio.Event()
-    cancellation_seen = asyncio.Event()
-    original_cancel = agent.executor.cancel
-
-    async def cancel(call_id):
-        result = await original_cancel(call_id)
-        cancellation_seen.set()
-        return result
-
-    agent.executor.cancel = cancel
     try:
         await iq.put(AudioEvent(session_id="s", payload=Audio(path="fixture.wav", utterance_id="old")))
         call = await wait_for(oq, lambda item: item.kind == "tool_call")
@@ -78,9 +69,9 @@ async def test_pending_activity_cancels_write_and_late_speech_cannot_restore_aut
         activity = status()
         await iq.put(activity)
         await accepted(oq, activity)
-        await asyncio.wait_for(cancellation_seen.wait(), 2)
-        assert call.payload["call_id"] in agent.executor.cancelled
-        assert not agent.speech_ready and not agent.write_intent_retained
+        assert call.payload["call_id"] not in agent.executor.cancelled
+        assert not agent.speech_ready and agent.write_intent_retained
+        assert agent.state.correction_pending
         # Deliberately inject an old observation with the current worker generation.
         # Source identity, rather than cooperative task cancellation, must reject it.
         stale = WorkerMessage("observation", agent.generation, old, agent.perception_epoch)
@@ -91,8 +82,8 @@ async def test_pending_activity_cancels_write_and_late_speech_cannot_restore_aut
         assert not agent.speech_ready and not agent.latest_complete
         assert agent.active_speech == activity.payload.utterance_id
     finally:
-        agent.executor.gate.set()
         await end(iq, task)
+        agent.executor.gate.set()
 
 
 async def test_failed_audio_preserves_image_and_requires_fresh_input_to_finish():
