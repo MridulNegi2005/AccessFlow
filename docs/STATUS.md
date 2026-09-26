@@ -8,8 +8,9 @@ deterministic tests are complete on `mridul/engine`; read
 `docs/reviews/CONTROLLER_D4_HANDOFF_2026-09-26.md` for exact behavior, test
 results and remaining gates. The broad A-side suite passed 1,429 tests with
 7 B-owned obsolete/changed-behavior cases deselected; the three stop cases
-pass unmasked. A 98-file native candidate verified hashes, 37 pins, organizer
-import and one complete real setup after two failed attempts. A normal-speed
+pass unmasked. The exact clean-commit 98-file native package verified hashes,
+37 pins, organizer import and full real setup; two earlier candidate attempts
+failed before later successful attempts. A normal-speed
 public text evaluator run exposed the old 14K repository context default;
 hosted mode now defaults to the packaged 32K. Provider quota prevented a
 confirmed booking on the diagnostic rerun. Docker/Linux and combined live

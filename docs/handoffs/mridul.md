@@ -5,9 +5,10 @@
 Controller image history, image-source bindings and write guards are implemented
 on `mridul/engine`. See `docs/reviews/CONTROLLER_D4_HANDOFF_2026-09-26.md`.
 Broad test result: 1,429 passed, 6 skipped, 7 B-owned cases deselected;
-three B stop tests pass separately with `--runxfail`. Ruff clean. A native
-candidate verified 98 hashes, 37 pins and organizer import; real ASR/vision/
-hosted-reasoner setup passed once after two failed attempts. A normal-speed
+three B stop tests pass separately with `--runxfail`. Ruff clean. The clean
+`7cf33d9` native package verified 98 hashes, 37 pins and organizer import;
+real ASR/vision/hosted-reasoner setup passed in 56.39 s. Two earlier candidate
+attempts failed before a third passed. A normal-speed
 public text run exposed the old 14K repository context cap; hosted default is
 now 32K. Its later diagnostic run hit provider HTTP 429 and did not complete a
 mock booking. The source and failures are recorded accurately in the review.

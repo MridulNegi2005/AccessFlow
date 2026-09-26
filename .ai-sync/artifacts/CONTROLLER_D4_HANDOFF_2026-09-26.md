@@ -34,17 +34,19 @@ making its second provider request. No model training or B-owned source changed.
 - Broad Python 3.11 regression: 1,429 passed, 6 skipped, 7 B-owned cases
   deselected, 2 dependency warnings in 106.74 seconds. The B stop tests pass
   separately with `--runxfail`: 3 passed. Ruff and `git diff --check` pass.
-- A full native development package assembled from the current working source:
+- A native development package assembled from clean commit `7cf33d9` contains
   98 files. Its hashes, 37 pinned dependencies and organizer import validated
   in the existing isolated Windows Python 3.11 environment. An installed local
   Ollama 0.34.0 / Gemma 3 4B service, CPU INT8 Faster Whisper and hosted Qwen
-  warmed successfully on a third setup attempt; service startup took 11.36 s,
-  setup took 65.28 s, and the owned service was stopped afterward.
+  warmed successfully from that exact package: service startup took 9.22 s,
+  setup took 56.39 s, and the owned service was stopped afterward.
 - The first package verification attempt timed out before service readiness;
   the second reached service readiness but setup raised `RuntimeError` after
   6.11 s. These are retained as failed attempts, not discarded. The third
-  attempt passed. This is variable setup behaviour on this Windows host, not
-  proof of reliable target-platform startup.
+  candidate and final clean-commit package attempts passed. This is variable
+  setup behaviour on this Windows host, not proof of reliable target-platform
+  startup. Sanitized reports are in
+  `docs/evidence/d4-controller-2026-09-26/`.
 - A normal-speed public `pub_03_text_chained_booking` run used the organizer
   harness with actual hosted reasoning. With the old repository 14K default,
   it scored 38.5: no task calls, and later requests failed before network I/O

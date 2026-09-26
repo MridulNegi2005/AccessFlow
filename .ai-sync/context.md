@@ -1560,3 +1560,11 @@ configuration changed; no commit or push.
 **Notes:** Broad1429 passed/6 skipped/7 B-owned deselected; B stop tests3 pass unmasked; Ruff clean. Native98-file/37-pin candidate verified and real setup passed once after two failed attempts. Official public text run reached evaluator but missed booking; context bound then provider quota were observed. Docker/Linux and B real inference/microphone gates remain. Work stays on mridul/engine; no release/tag/submission.
 
 ---
+
+## [2026-09-26 19:48] — Codex
+**Task:** Verify and publish the exact A-side checkpoint.
+**Changes:** Committed `7cf33d9` and pushed `mridul/engine`; built a source-clean package from that commit. Added sanitized package/evaluator evidence and clarified the handoff limits.
+**Status:** A-side code is ready for B integration; combined submission remains unverified.
+**Notes:** Clean package: 98 hashes, 37 pins, organizer import, installed ASR/vision and hosted reasoner setup passed in 56.39 s. Owned vision service stopped. Docker/Linux unavailable. Public text task remains incomplete; B owns next image/voice integration checks. No main merge, release tag or submission.
+
+---
