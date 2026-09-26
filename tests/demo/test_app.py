@@ -1394,6 +1394,30 @@ def test_websocket_configured_setup_failure_has_no_fake_fallback(monkeypatch):
     }
 
 
+@pytest.mark.parametrize("source", ["media_adapter", "http_response"])
+def test_websocket_configured_setup_rate_limit_is_reported_safely(monkeypatch, source):
+    async def rate_limited_factory(**_kwargs):
+        if source == "media_adapter":
+            raise RuntimeError("Groq audio HTTP 429")
+        error = RuntimeError("private provider response must not reach the browser")
+        error.response = SimpleNamespace(status_code=429)
+        raise error
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", rate_limited_factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert failure == {
+        "kind": "demo_error",
+        "payload": {
+            "backend": "demo/config",
+            "message": "Configured model provider was rate limited during setup (HTTP 429). Retry later.",
+        },
+    }
+
+
 def test_websocket_configured_factory_requires_explicit_backend(monkeypatch):
     monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
     monkeypatch.setenv("ACCESSFLOW_SAMSUNG_PERCEPTION", "text")

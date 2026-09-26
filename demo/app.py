@@ -693,6 +693,19 @@ async def _receive_browser_message(websocket: WebSocket) -> dict[str, Any]:
     return parsed
 
 
+def _configured_setup_error_message(error: Exception, *, mode: str) -> str:
+    if isinstance(error, ValueError) and mode == "mock":
+        return str(error)
+    response = getattr(error, "response", None)
+    status_code = getattr(response, "status_code", None)
+    if status_code == 429 or str(error) in {
+        "Groq audio HTTP 429",
+        "Groq image HTTP 429",
+    }:
+        return "Configured model provider was rate limited during setup (HTTP 429). Retry later."
+    return "Configured agent setup failed. Check local model, provider and service settings."
+
+
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -744,10 +757,7 @@ async def websocket(websocket: WebSocket) -> None:
             reasoner_label = getattr(reasoner, "backend_name", "demo/unknown-reasoner")
             manifests = []
     except Exception as error:
-        message = (
-            str(error) if isinstance(error, ValueError) and mode == "mock"
-            else "Configured agent setup failed. Check local model, provider and service settings."
-        )
+        message = _configured_setup_error_message(error, mode=mode)
         await outgoing.put(
             {"kind": "demo_error", "payload": {"backend": "demo/config", "message": message}}
         )
