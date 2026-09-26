@@ -26,6 +26,7 @@ from .result_binding import BindingError
 from .read_answer import READ_ANSWER_MODES, ReadAnswerError, has_read_attempt, render_answer
 from .write_binding import capture, validate_binding
 from .validation_diagnostics import validation_summary
+from .stop_control import stop_control
 
 
 # Bound on any proposal-supplied value interpolated into a spoken/logged `clarify`
@@ -139,9 +140,12 @@ class Agent:
         self.out = output_queue
         self.inbox = asyncio.Queue()
         self.workers = set()
+        self.cancellation_workers = set()
         self.perception_workers = {}
         self.pending_frame_token = None
         self.state = Snapshot()
+        self.stop_hold = False
+        self.speech_control_checkpoint = None
         self.session_id = None
         self.manifests = {}
         self.observations = {}
@@ -391,6 +395,8 @@ class Agent:
                     self.state.correction_pending = True
                     await self._cancel_writes("interrupted")
                     if event.payload.scope == "task":
+                        self.stop_hold = False
+                        self.speech_control_checkpoint = None
                         for call in list(self.ledger.values()):
                             if call.status == "pending":
                                 await self._cancel(call, "task_stopped")
@@ -408,6 +414,27 @@ class Agent:
                         revision = payload.revision
                     if revision <= self.sources.get(source, -1):
                         continue
+                    if isinstance(event, TranscriptEvent) and payload.final:
+                        control = stop_control(payload.text, held=self.stop_hold)
+                        if control == "action":
+                            self.stop_hold = False
+                            control = None
+                        if control is not None or self.stop_hold:
+                            self.sources[source] = revision
+                            self.source_events[source] = event.event_id
+                            restored = self._restore_control_context(source)
+                            await self._control(control or "hold", restored=restored)
+                            continue
+                    if source[0] == "speech":
+                        checkpoint = self.speech_control_checkpoint
+                        if checkpoint is None or checkpoint["source"] != source:
+                            self.speech_control_checkpoint = {
+                                "source": source, "request": self.request_id,
+                                "slots": deepcopy(self.state.slots), "intent": self.state.intent,
+                                "frame": self.active_frame, "finished": self.last_request_finished,
+                                "authority": (self.active_speech, self.speech_ready,
+                                              self.latest_complete, self.write_intent_retained),
+                            }
                     if source[0] == "image" and self.active_frame is not None:
                         previous_source = ("image", self.active_frame)
                         previous_worker = self.perception_workers.get(previous_source)
@@ -480,6 +507,9 @@ class Agent:
             for task in pending:
                 task.cancel()
             await asyncio.gather(*pending, return_exceptions=True)
+            # Closed-session results are discarded, not retained for a later run.
+            while not self.inbox.empty():
+                self.inbox.get_nowait()
             self.running = False
 
     def _spawn(self, coroutine):
@@ -607,6 +637,9 @@ class Agent:
             return
         if message.kind == "failure":
             await self._emit("error", code="backend_failure", detail=message.value)
+        elif message.kind == "task_stop_ack":
+            self.current_event_id = message.value
+            await self._emit("acknowledge", text="Stopped.", stop_output=True)
         elif message.kind == "observation":
             if message.perception_epoch != self.perception_epoch:
                 return
@@ -626,6 +659,16 @@ class Agent:
             if obs.modality != "image" and obs.source_id != self.active_speech:
                 return
             self.current_event_id = obs.event_id
+            if obs.modality != "image" and obs.final:
+                control = stop_control(obs.text, held=self.stop_hold)
+                if control == "action":
+                    self.stop_hold = False
+                    control = None
+                if control is not None or self.stop_hold:
+                    restored = self._restore_control_context(key)
+                    await self._control(control or "hold", restored=restored)
+                    return
+                self.speech_control_checkpoint = None
             self.observations[key] = obs
             if obs.modality == "image" and obs.final:
                 if self.pending_frame_token == (obs.source_id, obs.event_id, message.perception_epoch):
@@ -651,6 +694,8 @@ class Agent:
                 self.latest_complete = (self.speech_ready or self.active_speech is None) and obs.final
             self.state.correction_pending = not self.latest_complete
             if decision.kind == "stop":
+                self.stop_hold = False
+                self.speech_control_checkpoint = None
                 self.generation += 1
                 self.perception_epoch += 1
                 await self._discard_pending_frame()
@@ -691,7 +736,80 @@ class Agent:
                            and message.evidence_mark == self._results_admitted)
             await self._offer_recovery(self.schema_rejection_recoveries, retry_fresh=retry_fresh)
 
+    def _restore_control_context(self, source):
+        checkpoint = self.speech_control_checkpoint
+        self.speech_control_checkpoint = None
+        if checkpoint is None or checkpoint["source"] != source:
+            return
+        # Restore only semantic readiness for the unchanged current request.
+        # Never rewind the ledger, dependency revisions, provenance, results or
+        # cancellation state. In particular an uncertain effect stays uncertain.
+        if (checkpoint["request"] != self.request_id or checkpoint["finished"]
+                or self.last_request_finished or checkpoint["slots"] != self.state.slots
+                or checkpoint["intent"] != self.state.intent
+                or checkpoint["frame"] != self.active_frame):
+            return
+        (self.active_speech, self.speech_ready,
+         self.latest_complete, self.write_intent_retained) = checkpoint["authority"]
+        self.state.correction_pending = not self.latest_complete
+        return self.latest_complete
+
+    async def _control(self, control, *, restored=False):
+        if control == "output":
+            was_held = self.stop_hold
+            self.stop_hold = False
+            await self._emit("acknowledge", stop_output=True, output_only=True)
+            if was_held or restored:
+                self._start_plan()
+            return
+        if control == "resume":
+            self.stop_hold = False
+            # Reinterpret existing evidence, never grant fresh write authority
+            # merely because the user resolved a playback/task ambiguity.
+            self._start_plan()
+            return
+        self.generation += 1
+        if self.planner and not self.planner.done():
+            self.planner.cancel()
+        if control == "task":
+            self.stop_hold = False
+            self.perception_epoch += 1
+            await self._discard_pending_frame()
+            for worker in tuple(self.perception_workers.values()):
+                worker.cancel()
+            self.latest_complete = False
+            self.speech_ready = False
+            self.write_intent_retained = False
+            self.clarification_outstanding = False
+            self._user_fixed_slots.clear()
+            self._intent_user_fixed = False
+            for call in list(self.ledger.values()):
+                if call.status == "pending":
+                    await self._cancel(call, "task_stopped")
+            self.state.status = "stopped"
+            generation, event_id = self.generation, self.current_event_id
+            cancellations = tuple(self.cancellation_workers)
+
+            async def finish_stop():
+                # Keep the dispatcher free while cancellation is delivered. The
+                # short bound is not a promise of rollback or a confirmed effect.
+                if cancellations:
+                    await asyncio.wait(cancellations, timeout=0.25)
+                await self.inbox.put(WorkerMessage("task_stop_ack", generation, event_id))
+
+            self._spawn(finish_stop())
+            return
+        self.stop_hold = True
+        # Cancel effects where possible, without pretending cancellation is a
+        # rollback or discarding eventual committed/unknown outcomes.
+        await self._cancel_writes("ambiguous_stop")
+        self.state.status = "clarifying"
+        await self._emit("acknowledge", stop_output=True)
+        await self._emit("clarify", text="Do you mean stop me speaking, or cancel the current task?")
+
     def _start_plan(self, source=None, *, retry_fresh=False):
+        if self.stop_hold:
+            return
         self.generation += 1
         # A source given here comes from _worker's observation handling and means new
         # user evidence (fresh/partial speech, or an image) just arrived. Every other
@@ -805,6 +923,8 @@ class Agent:
                                      "request will not retry again on its own.")
 
     async def _apply(self, proposal: PlanProposal, source=None):
+        if self.stop_hold:
+            return
         if proposal.evidence_answer is not None:
             # Recheck the answer-only variant before any state mutation. Custom
             # reasoners can return model_copy/model_construct without validation.
@@ -1535,7 +1655,9 @@ class Agent:
                             ToolResult(call_id=call.call_id, status="cancelled")))
                 except Exception:
                     pass  # Cancellation is best effort; outcome remains unresolved.
-            self._spawn(cancel())
+            task = self._spawn(cancel())
+            self.cancellation_workers.add(task)
+            task.add_done_callback(self.cancellation_workers.discard)
 
     async def _cancel_writes(self, reason):
         for call in list(self.ledger.values()):
@@ -1646,7 +1768,7 @@ class Agent:
         retries. The controller transfers any current binding's source identity
         only across this exact same-arguments, same-operation retry.
         """
-        if (not self.fast_read_retry or call.effect != "read" or call.status != "failed"
+        if (self.stop_hold or not self.fast_read_retry or call.effect != "read" or call.status != "failed"
                 or result.status != "failed" or result.committed
                 or result.error not in {"timeout", "TimeoutError", "temporary_unavailable"}
                 or call.request_id != self.request_id
@@ -1730,11 +1852,23 @@ class Agent:
                                          self.authorization, "effect_environment", "unspecified")))
 
     async def _shutdown(self, reason):
+        self.stop_hold = True
+        self.speech_control_checkpoint = None
+        self.generation += 1
+        self.perception_epoch += 1
+        self.latest_complete = False
+        self.speech_ready = False
+        self.write_intent_retained = False
+        self.state.status = "ended"
         await self._discard_pending_frame()
         if self.session_id is None:
             return
         for call in list(self.ledger.values()):
             if call.status == "pending":
                 await self._cancel(call, reason)
-        self.state.status = "ended"
-        await self._emit("acknowledge", text="Session ended.", reason=reason)
+        # Give external cancellation requests a bounded chance to reach their
+        # adapter before finally cancels workers. No inbox results are processed
+        # during closure, so this cannot restart planning or emit a late answer.
+        if self.cancellation_workers:
+            await asyncio.wait(tuple(self.cancellation_workers), timeout=0.25)
+        await self._emit("acknowledge", session_ended=True, stop_output=True, reason=reason)
