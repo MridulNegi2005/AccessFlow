@@ -7,6 +7,7 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 
 - Atishay and his AI: [ATISHAY_START_HERE.md](ATISHAY_START_HERE.md)
 - Current verified status: [docs/STATUS.md](docs/STATUS.md)
+- Evaluation explained: [docs/EVALUATION_QUICK_GUIDE.md](docs/EVALUATION_QUICK_GUIDE.md)
 - Current FDB-v3 setup and reproduction: [docs/FDB_REPRODUCTION.md](docs/FDB_REPRODUCTION.md)
 - Private GPU evaluation setup: [docs/KAGGLE_FDB.md](docs/KAGGLE_FDB.md)
 - Install/configure/evaluate entry point: `python scripts/bootstrap_fdb.py --help`;
@@ -29,8 +30,13 @@ Ruff and seven browser checks. A fresh public clone installed all 85 locked
 worker packages and passed actual worker/registry, navigation and VAD imports
 offline. Runtime settings, actual planner access and Kaggle GPU warm-up now pass.
 An initial 100-recording batch failed; the corrected batch is running with actual
-audio reaching the agent. Official aggregate scoring and physical microphone
-acceptance remain unverified. The separate OpenAI judge has no API credit.
+audio reaching the agent. Official aggregate scoring remains unverified.
+Atishay now reports M1–M4 physical microphone passes; the pushed notes qualify
+them as human-observed, with browser connection/session-isolation corroboration
+and no retained per-command timing traces. His extension media still needs handover.
+The unchanged public scorer's separate OpenAI judge has no API credit; Samsung's
+guide does not explicitly require teams to buy credit. Its organizer rerun uses
+one pinned judge. Agent inference and local judging are separate configurations.
 Read [the current GPU runtime report](docs/reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md)
 and the current status/reproduction guide for exact evidence and limitations.
 

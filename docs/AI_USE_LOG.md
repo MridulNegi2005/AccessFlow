@@ -1990,3 +1990,11 @@ installed its 18 packages in a separate fresh Windows/Python 3.11 environment.
 Actual official scoring CLI imports, dependency check and 100-input preflight
 pass without GPU/NeMo. OpenAI billing still shows zero credit. This is setup
 evidence only: no judge request, score, B source edit, payment or training.
+
+AI assistance rechecked the updated organizer guide, unchanged benchmark sources
+and live run status, corrected the judge-purchase claim, and delegated separate
+reproduction and submission documentation updates in parallel. Reviewed Atishay's
+documentation-only microphone report without converting human-observed passes
+into measured timing or benchmark scores. Seven packaging guards pass; no model
+call, B code edit, payment or submission. An unpublished Colab draft was removed
+when the user canceled that direction; the active Kaggle run was left intact.

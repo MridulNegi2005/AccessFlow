@@ -1,14 +1,48 @@
-## Current runtime checkpoint — 30 September 2026
+## Current runtime checkpoint — 30 September 2026, 23:26 IST
 
-Both owners' reviewed code is merged; current local suite is 1,601 passed,
-8 skipped. Private runtime credentials and actual planner access are verified.
+Both owners' reviewed code is merged; latest local suite is 1,614 passed,
+8 skipped, with two existing warnings. Private runtime credentials and actual planner access are verified.
 The corrected Kaggle scorer passes official client import and GPU ASR warm-up;
 real evaluation audio reaches agent rooms. Full output is still pending.
 Version 4 failed all 100 clients before the missing livekit-api fix, so no score
-or end-to-end pass is claimed. OpenAI judge funding and physical microphone
-acceptance remain open. Use [Kaggle setup](KAGGLE_FDB.md) and
+or end-to-end pass is claimed. Version 5, run 354197763, uses agent commit
+`1030321a0dcbafcf97db5fbbad86423b57ba35b5`; it started at 16:42:57 UTC and
+remained RUNNING at the latest check. The 17:56 UTC paginated LiveKit snapshot
+shows 72 current-run evaluation rooms and 144 participants, with 70 rooms closed
+and two active; latest room start was 17:55:38 UTC.
+This establishes ongoing activity, not successful tasks or a final score.
+Reference judging and final output inspection remain open. Latest Atishay
+documentation reports Atishay-observed M1–M4 microphone passes; the complete
+per-command timing and post-close action evidence has not been independently
+retained here. Treat that as reported acceptance rather than a fully reproduced
+measurement. Use [Kaggle setup](KAGGLE_FDB.md) and
 [current runtime evidence](reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md).
 All earlier missing-worker/key/dependency statements below are dated history.
+
+### Samsung's policy versus the public scorer dependency
+
+The supplied `participant-kit/Theme05_Participant_Guide_UPDATED_FBD.docx` says
+Samsung re-runs the submission with semantic judging enabled and a single
+pinned judge. Only that organizer re-run counts toward the benchmark score.
+The guide does **not explicitly require participants to buy OpenAI credit**,
+and it does not identify that pinned judge as `gpt-4o` in the policy text.
+
+Separately, the unchanged public reference at
+`3e799c45a045256f47d5f1c9cda90157e2d2ec9e` calls `gpt-4o` through the
+OpenAI SDK in `evaluate_tool_calls.py`, `evaluate_pass_rate.py` and
+`analyze_tool_latency.py`. That makes working OpenAI API access a dependency
+of an unchanged local full semantic/latency run. It is not proof of a Samsung
+purchase obligation. The current account has zero API credit; no purchase was
+made. An OpenAI ChatGPT subscription is not the configuration used by these
+scripts.
+
+The running **agent** uses Groq Whisper Large v3 for speech input, LiveKit
+Inference `openai/gpt-5.6-luna` for planning and `deepgram/aura-2` for speech
+output. Its LiveKit planner does not use our separate direct OpenAI judge key.
+Provider choices and accounts for the agent and judge must stay distinct.
+A Groq judge can supply a separately labelled development diagnostic; it
+cannot be presented as an equivalent reference score or Samsung's official
+score. No successful Groq judge run is claimed in this checkpoint.
 
 ## Historical combined integration — 30 September 2026
 
@@ -31,7 +65,7 @@ handoffs/ATISHAY_FINAL_VOICE_HANDOFF_2026-09-30.md. Presentation deferred by use
 
 # FDB-v3 reproduction — 30 September 2026
 
-## Latest actual-corpus checkpoint
+## Historical actual-corpus checkpoint
 
 The released data is now present privately in the local pinned clone. All 100
 originals pass hashes/headers and actual normalization by the official reader;
@@ -48,7 +82,7 @@ Mridul owns the dependency lock, supervisor and packaging. Atishay owns the
 LiveKit worker, bridge, speech and tool adapter. Both must verify the integrated
 worker and scorer on the same evaluation host.
 
-## Verified and still open
+## Historical packaging verification and blockers
 
 The optional `fdb` dependency set is now in `pyproject.toml` and `uv.lock`.
 `uv sync --frozen --extra dev --extra audio --extra fdb` installed successfully
@@ -119,14 +153,15 @@ Copy `.env.fdb.example` to the official clone's `v3/.env.local` and fill it ther
 Keep this file outside the AccessFlow repository. Existing environment variables
 take precedence. Review candidate models and account access before the full run.
 
-The candidate profile matches B's reported working setup: Groq Whisper Large v3
-input, LiveKit planning, LiveKit Deepgram Aura-2 output. Optional Groq planning
+The current verified configuration selects Groq Whisper Large v3 input,
+LiveKit `openai/gpt-5.6-luna` planning and LiveKit `deepgram/aura-2` output.
+Optional Groq planning
 uses `FDB_PLANNER_PROVIDER=groq` and `FDB_GROQ_MODEL`, not the navigation worker's
 selector. Do not silently fall back to another provider or combine different
 profiles into one score. LiveKit provider usage is billed/configured through
 its project. Groq's documented input-token-per-minute limit can affect planning.
 
-`OPENAI_API_KEY` is for the official semantic judge and latency analyzer,
+`OPENAI_API_KEY` is for the unchanged public reference's semantic judge and latency analyzer,
 independently of the agent's planner. An exact-match tool diagnostic is labeled
 as such; the pinned latency analyzer still requires this key.
 
@@ -146,7 +181,9 @@ CUDA and NeMo. Do not install these heavyweight packages into the agent's lock.
 
 The upstream scorer does not supply an exact dependency lock. Save its resolved
 `pip freeze` and hardware/configuration in run evidence. That absence is a
-remaining reproducibility limitation, not a claimed tested clean scorer setup.
+remaining reproducibility limitation. The Kaggle candidate profile has now
+passed actual installation, dependency checks, official client import and GPU
+model warm-up; full evaluation outcomes are still pending.
 Its Parakeet ASR model downloads/loads during inference. Verify the model and
 hardware before reserving time for a 100-recording run.
 
@@ -172,10 +209,12 @@ outside it. Existing evidence and non-environment directories are protected.
 If the scorer is already prepared, replace `--scorer-lock ...` with the explicit
 `--reuse-scorer`. This mode does **not** install or validate a frozen scorer
 installation. A validated scorer lock/host is still a final reproducibility gate;
-one has not been invented from the unpinned upstream README. Change `--mode` to
+one has not been invented from the unpinned upstream README. The actual Kaggle
+resolved installation is recorded separately from a hash-locked installation.
+Change `--mode` to
 `doctor` for preflight without any evaluation/API call.
 
-Actual fresh-agent check on this machine: 85 frozen packages installed into a
+Historical fresh-agent check on this machine: 85 frozen packages installed into a
 previously absent environment; core import and Silero VAD load passed. The doctor
 then failed for the absent unmerged B worker. It used the existing development
 interpreter only as a placeholder scorer and did not prove Python 3.10/NeMo
@@ -209,10 +248,10 @@ the unchanged tool, strict-pass and latency evaluators. Tool/pass evaluation
 includes `--use-llm` by default. It checks both reports cover all 100 recordings.
 
 The pinned argument judges silently fall back to exact matching after an API
-failure. The supervisor records that `--use-llm` was requested, not proof every
-judge request succeeded. Review judge outcomes/provider evidence before calling
-these reports the official semantic score. No official source is patched to
-hide failures.
+failure. Our supervisor now observes the actual judge requests and rejects
+failed or malformed replies, as described below. Merely requesting
+`--use-llm` or obtaining an upstream zero exit code does not establish a verified
+semantic score. No official source is patched to hide failures.
 
 Modes: `doctor` checks prerequisites without a provider request; `run` performs
 real inference without a score; `score` scores previously recorded results;
@@ -223,7 +262,58 @@ Existing result JSON **or output audio** causes inference to fail early rather
 than silently reuse cached recordings. Use `--overwrite-results` deliberately
 to let the official runner replace them, or supply a fresh data copy.
 `--exact-match` labels tool scoring diagnostic rather than official semantic
-scoring. No parameter pretends to replace actual audio with transcripts.
+scoring; its latency analyzer still calls the LLM judge. No parameter pretends
+to replace actual audio with transcripts.
+
+## Why a full run is slow, and how to test a repair
+
+The 100 released recordings contain approximately **78.6 minutes of input
+audio**. The unchanged released-layout runner processes them sequentially.
+The LiveKit client publishes 20 ms chunks with a corresponding 20 ms sleep,
+then sends 1.5 seconds of silence; it also waits for room setup. Input and output
+NeMo ASR, file conversion and provider requests add overhead. A faster GPU can
+reduce local ASR time, but cannot eliminate the real-time input duration while
+preserving pauses, corrections and interruption timing. An hour-plus run is
+therefore expected; elapsed time alone is not evidence of a hang.
+
+The notebook wrapper redirects the supervisor's stdout and stderr to
+`accessflow-fdb/evidence/reproduce.log` and prints only stage start/end events.
+Seeing `reproduce.log: running` hides per-recording progress from the notebook
+console. LiveKit rooms demonstrate activity, while the retained results and
+manifest determine actual outcomes. Do not restart the active version 5 merely
+to improve logging.
+
+After a defect is identified, first run its owned deterministic regression
+tests, then a small **separate development audio subset** before committing to
+another full run. The unchanged released-layout CLI supports `--root_dir`
+(not `--example` or `--pid`). A dedicated private directory containing only the
+selected original `{example_id}_{speaker_id}` folders can be used with:
+
+```powershell
+C:\FDB-scorer\Scripts\python.exe C:\FDB-reference\v3\run_tool_benchmark_all_released.py --provider accessflow --root_dir C:\FDB-development-subset
+```
+
+This low-level command does **not** start or supervise the worker, load our
+private configuration or apply our full-run evidence guards. First configure
+the declared environment and run exactly one matching worker on the same host,
+using the correct shared telemetry path. Use a separate project/session and
+evidence location if the full evaluation is active; do not dispatch a second
+worker into its rooms. Record selected inputs, hashes, agent commit, profile
+and outcomes; inspect the result JSON because the upstream batch can catch
+errors. This is a development procedure verified from the pinned CLI/source,
+not a newly executed subset run or a full benchmark claim.
+
+The AccessFlow supervisor intentionally requires all 100 originals and rejects
+existing outputs for fresh inference unless `--overwrite-results` is explicitly
+requested. It has no subset switch. The separate `run_tool_benchmark.py` exposes
+`--example`/`--pid` and supports both legacy and flat input discovery, but its
+metadata loading differs: the released-layout runner additionally merges
+per-folder `metadata.json`. Those filter flags are not accepted by
+`run_tool_benchmark_all_released.py`; use its verified `--root_dir` route above
+for an isolated released-data subset. Keep the complete unchanged
+100-input run for final reproduction. Changing agent code requires new inference
+for claims about that new version; rescoring retained outputs tests the judge,
+not an agent repair.
 
 ## Evidence and failure reporting
 
@@ -335,9 +425,14 @@ an offline regression image, not an FDB reproduction claim.
 
 ## Owner handoff
 
-Atishay: merge main into B, fix the stale assertion, verify real room registration,
-one/two/three-tool audio and four microphone cases, and record the extension.
-Mridul: review/publish combined integration, run package/scorer validation with
-the configured host, assemble sanitized evidence and finalize presentation.
+Atishay: the reviewed implementation and stale assertion are already integrated.
+The latest documentation reports Atishay-observed M1–M4 passes; hand over
+accessible extension media and existing non-sensitive microphone/tool records.
+Stronger quantitative timing or post-close claims require supporting traces;
+participant voice recordings are not required. Fix only owned voice/bridge/extension defects
+exposed by the run.
+Mridul: inspect the current full-run outputs, validate packaging/reference
+judging when available and assemble sanitized reproducible evidence. Presentation
+remains deferred by the user's request.
 Both: lock the run profile, reconcile failures and verify the official denominator.
 No release tag or submission follows automatically from this script.

@@ -2,15 +2,41 @@
 
 This is Mridul's scorer/packaging work. It does not replace Atishay's physical
 microphone checks. The selected agent still uses Groq Whisper STT, LiveKit
-Inference planning and TTS; the official scorer uses local GPU Parakeet ASR and
-an independent OpenAI `gpt-4o` judge.
+Inference `openai/gpt-5.6-luna` planning and `deepgram/aura-2` TTS. The unchanged
+public reference uses local GPU Parakeet ASR and an independent OpenAI `gpt-4o`
+judge. Samsung's guide requires a single pinned judge for its organizer rerun,
+but does not explicitly require participants to purchase OpenAI credit or name
+that judge in its policy text. Our direct OpenAI key is for reference grading,
+not the running agent's LiveKit planner. Groq grading, if used for development,
+must be labelled a different diagnostic judge rather than the reference score.
+
+## Current running job — 30 September 2026, 23:26 IST
+
+Version **5**, run **354197763**, started **16:42:57 UTC** and remained RUNNING
+at the latest check. The actual agent source pin is
+`1030321a0dcbafcf97db5fbbad86423b57ba35b5`. Client import and GPU ASR warm-up
+passed. At **17:56 UTC**, the paginated LiveKit snapshot showed 72 current-run
+evaluation rooms with 144 participants (70 closed, two active), with the latest
+room starting at 17:55:38 UTC. Those room counts are not saved-result or pass
+counts. Final outputs, task passes and scores remain
+unverified. Do not restart or cancel this job to change logging.
+
+The 100 originals contain **78.6 minutes of real-time audio**, processed
+sequentially. Each LiveKit client publishes paced 20 ms chunks; room setup,
+post-input silence and NeMo input/output ASR add time. A full run taking longer
+than an hour is expected. More GPU memory does not speed up the real-time input
+clock. The wrapper's `command()` writes all child stdout/stderr into private
+`reproduce.log` and prints only stage start/end. The displayed final running
+stage therefore lacks a per-recording counter; it does not establish a freeze.
+Retain terminal results and inspect the supervised manifest before any claim.
 
 ## Fast path
 
 1. Open the private GPU preparation job:
    https://www.kaggle.com/code/mridulnegi2005/accessflow-fdb-gpu-preflight
-2. Keep the notebook private, enable Internet, select a GPU. The initial job is
-   **prepare mode**: install separate Python environments, load the actual
+2. Keep the notebook private, enable Internet, select a GPU. The canonical runner
+   defaults to **prepare mode**; the current UI-launched version 5 explicitly
+   selects **run mode**. Preparation installs separate Python environments, loads the actual
    unchanged official NeMo model onto CUDA, transcribe synthetic silence, verify
    the released archive checksum and extract the 100 original recordings.
 3. Inspect `accessflow-fdb/evidence/kaggle-status.json` and the install/health logs.
@@ -19,7 +45,10 @@ an independent OpenAI `gpt-4o` judge.
    scorer freeze is a resolved environment snapshot, not a hashed install lock.
 4. In Kaggle **Add-ons → Secrets**, create/attach these names:
    `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
-   `ACCESSFLOW_GROQ_API_KEY`, `OPENAI_API_KEY`.
+   `ACCESSFLOW_GROQ_API_KEY`, and `OPENAI_API_KEY` for full reference judging.
+   `run` requires the first four runtime names; it can proceed without the
+   judge key. The active version has all five attached, but no paid judge call
+   is being made in its run-only mode.
    The API access token used to upload the notebook is not one of these secrets.
    Do not paste any credential into notebook code or outputs.
 5. Import `notebooks/AccessFlow_FDB_Kaggle.ipynb` for an interactive run. Use `run`
@@ -37,7 +66,10 @@ an independent OpenAI `gpt-4o` judge.
 
 ## Reproducibility and scope
 
-- Agent source: `53260dfe58210f4ef2059c2713355721a4072ed5` (Linux venv fix).
+- Current runner/active version 5 agent source:
+  `1030321a0dcbafcf97db5fbbad86423b57ba35b5` (Linux venv fix, transport observation
+  and all-failure rejection). Later repository/documentation commits are not
+  evidence that this active run uses later agent code.
 - Official FDB source: `3e799c45a045256f47d5f1c9cda90157e2d2ec9e`.
 - Runner: `scripts/kaggle_fdb.py`; notebook embeds the same runner.
 - GPU candidate: Python 3.10, Torch/Torchaudio 2.6.0 CUDA 12.4, NeMo 2.4.0;
@@ -46,10 +78,11 @@ an independent OpenAI `gpt-4o` judge.
 - Kaggle GPU preparation is development verification; Samsung's rerun determines
   official scoring. Preparation does not establish a 300-second warm-up or
   scenario runtime acceptance, live microphone behavior or extension quality.
-- The initial private job only requests installation/model/corpus preparation.
+- The historical initial private job requested only installation/model/corpus preparation.
   Missing runtime/judge credentials are reported by name, never value.
 - Scorer failure: inspect its private log and fix the declared compatibility
-  profile; do not substitute transcripts, another judge or fabricated scores.
+  profile. Separately labelled alternative-judge diagnostics are permitted for
+  development; never silently substitute them for unchanged reference scoring.
 
 ## Actual 30 September checkpoint
 
@@ -58,7 +91,8 @@ Initial private Kaggle run (version 1, run 354181534): GPU T4 x2, 201.1 seconds,
 transcription, frozen agent install and corpus preparation passed. It had no
 runtime secrets attached and made no agent/judge requests. The initial job saved
 environments in its output; the revised runner keeps installations under `/tmp`
-and exports only evidence to reduce output size. This revision needs its own run.
+and exports only evidence to reduce output size. Versions 4 and 5 use the revised
+output location; version 5's final outcome remains pending.
 
 The actual local worker registered successfully against the new LiveKit project
 using the privately saved configuration, then was stopped. This verifies worker
@@ -91,6 +125,17 @@ See `reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md` for reproduction and evidence.
 After downloading a completed private run, use
 `python -m scripts.restore_fdb_evidence --evidence <official-run-directory> --fdb-root <fresh-v3-directory>`
 to validate and restore generated outputs. Then run the supervisor in `score`
-mode with funded judge credentials. This avoids repeating real-time inference.
+mode when working reference judge credentials are available. This avoids
+repeating real-time inference and does not require GPU/NeMo for saved-result
+judging. It is a local reference dependency, not a verified Samsung purchase
+requirement. An alternative judge requires its own explicitly diagnostic path.
 The full commands and original-inference provenance requirements are in
 `FDB_REPRODUCTION.md`. Current failed version 4 is correctly refused.
+
+For later repairs, use owned regression tests and a small isolated audio subset
+before repeating all 100. The unchanged released-layout runner supports
+`--root_dir` for a selected-input directory; our supervised final-run command
+still requires the complete 100 and refuses reused outputs. See
+[targeted development and retained-output scoring](FDB_REPRODUCTION.md) for
+the verified CLI boundaries, worker/telemetry prerequisites and provenance
+rules. A subset pass does not replace the final complete reproduction.
