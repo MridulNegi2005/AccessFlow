@@ -92,8 +92,11 @@ def commands(fdb: Path, scorer: str, evidence: Path, *, semantic: bool = True) -
 
 
 def audited_commands(plan: list[list[str]], evidence: Path, *, semantic: bool = True) -> list[list[str]]:
-    """Observe scoring only; the runner and official arguments remain unchanged."""
-    result = [plan[0]]
+    """Observe client failures and judge calls; preserve official arguments."""
+    run = plan[0]
+    result = [[run[0], str(ROOT / "scripts/fdb_transport_audit.py"),
+               "--script", run[1], "--output", str(evidence / "transport_audit.jsonl"),
+               "--", *run[2:]]]
     for index, command in enumerate(plan[1:], start=1):
         if semantic or index == 3:  # Upstream latency always uses its LLM judge.
             script = Path(command[1])
@@ -274,6 +277,10 @@ def preflight(fdb: Path, scorer: str, env: dict[str, str], *, need_runtime: bool
         # Import discovery does not load NeMo model weights or send API requests.
         modules = ["openai", "dotenv"] + (["nemo", "numpy", "pydub", "livekit"] if need_inference else [])
         probe = f"import importlib.util; assert all(importlib.util.find_spec(x) for x in {modules!r}), 'Missing scorer dependencies'"
+        if need_inference:
+            # The livekit namespace alone does not provide livekit.api. Import
+            # the unchanged real client before spending a 100-scenario batch.
+            probe += "; import livekit_inference"
         subprocess.run([scorer, "-c", probe], check=True, cwd=fdb, env=env)
         if need_inference:
             subprocess.run([sys.executable, "-m", "accessflow.perception.fdb_v3.agent", "check"],
@@ -325,6 +332,8 @@ def run_pipeline(args, env: dict[str, str]) -> dict:
         manifest["retained_outputs"] = preserve_outputs(inputs, evidence, telemetry)
         if results["missing"] or results["status_counts"].get("malformed"):
             raise ValueError("Incomplete/malformed results: a complete aggregate cannot be claimed")
+        if not results["status_counts"].get("completed", 0):
+            raise ValueError("No recording completed inference; retained failures are not a working agent run")
         if args.mode in {"score", "reproduce"}:
             for command in plan[1:]:
                 subprocess.run(command, check=True, cwd=fdb, env=env)

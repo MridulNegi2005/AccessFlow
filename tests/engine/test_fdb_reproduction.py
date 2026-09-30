@@ -96,10 +96,13 @@ def test_config_does_not_serialize_secrets_or_arbitrary_environment():
     assert "secret" not in json.dumps(config)
 
 
-def test_auditor_wraps_only_scoring_and_preserves_official_cli_arguments(tmp_path):
+def test_auditors_preserve_official_cli_arguments(tmp_path):
     original = fdb.commands(tmp_path, "scorer-python", tmp_path)
     audited = fdb.audited_commands(original, tmp_path)
-    assert audited[0] == original[0]
+    assert audited[0][0] == original[0][0]
+    assert audited[0][1].endswith("fdb_transport_audit.py")
+    assert audited[0][audited[0].index("--script") + 1] == original[0][1]
+    assert audited[0][audited[0].index("--") + 1:] == original[0][2:]
     for raw, wrapped in zip(original[1:], audited[1:], strict=True):
         assert wrapped[0] == raw[0]
         assert wrapped[1].endswith("fdb_judge_audit.py")
@@ -243,6 +246,25 @@ def test_preflight_is_not_reported_as_evaluation(tmp_path, monkeypatch):
     result = fdb.run_pipeline(args, {})
     assert result["status"] == "preflight_passed_not_evaluated"
     assert "results" not in result
+
+
+def test_all_transport_failures_cannot_pass_or_spend_judge_calls(tmp_path, monkeypatch):
+    audio = audio_tree(tmp_path)
+    (audio.parent / "result_accessflow.json").write_text('{"status":"inference_failed"}')
+    args = SimpleNamespace(fdb_root=tmp_path, scorer_python="scorer", output=tmp_path / "run",
+                           mode="score", exact_match=False)
+    monkeypatch.setattr(fdb, "git_output", lambda *args: "a-commit")
+    monkeypatch.setattr(fdb, "preflight", lambda *args, **kwargs: {"input_count": 1})
+    monkeypatch.setattr(fdb, "recordings", lambda *args: [audio])
+    calls = []
+    monkeypatch.setattr(fdb.subprocess, "run", lambda *args, **kw: calls.append(args))
+    with pytest.raises(ValueError, match="No recording completed"):
+        fdb.run_pipeline(args, {})
+    assert not calls
+    manifest = json.loads((args.output / "manifest.json").read_text())
+    assert manifest["status"] == "failed"
+    assert manifest["results"]["status_counts"] == {"inference_failed": 1}
+    assert (args.output / "results" / audio.parent.name / "result_accessflow.json").is_file()
 
 
 def test_scoring_only_needs_no_voice_worker_credentials_or_nemo(tmp_path, monkeypatch):
