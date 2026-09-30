@@ -1,142 +1,64 @@
 # FDB-v3 LiveKit adapter
 
-This optional adapter runs the existing AccessFlow controller inside one LiveKit
-voice session per room. Groq transcribes, LiveKit Inference plans and speaks,
-and AccessFlow executes
-the 12 official mock tools. The adapter writes the official room-scoped tool-call
-log, starts each room with fresh state, and never uses scenario answers.
+The adapter runs the AccessFlow controller in one voice session per LiveKit room. Groq transcribes input, LiveKit Inference provides planning and speech output, and AccessFlow executes the 12 reference mock tools. Each room starts with fresh conversational state. Benchmark expected answers never enter the agent. Tool telemetry is room-scoped.
 
-## Local setup
+## Setup
 
-1. Use Python 3.11 and install the project plus
-   [`requirements.txt`](requirements.txt) in an agent virtual environment.
-   The root lockfile is intentionally untouched because it belongs to the
-   shared-code owner. The official scorer adds NeMo and its README uses a
-   different Python setup. Give the scorer a second environment on the same
-   machine so its heavyweight dependencies cannot change the tested agent
-   environment. Its `livekit-agents~=1.3` range includes the agent's 1.8.3
-   pin; the separation is for reproducibility, not a proven version conflict.
-2. Clone `https://github.com/DanielLin94144/Full-Duplex-Bench` at commit
-   `3e799c45a045256f47d5f1c9cda90157e2d2ec9e`. Set `FDB_V3_ROOT` to
-   its `v3` directory. The agent validates all 12 official tool signatures
-   before starting a room.
-3. Download the separate `fdb_v3_data_released.zip` linked from the official
-   v3 README. Verify it is a ZIP, extract its `fdb_v3_data_released/` directory
-   under `FDB_V3_ROOT`, and confirm that it contains 100 `input.wav` files.
-   Keep recordings and result files outside this repository.
-4. In [LiveKit Cloud](https://cloud.livekit.io), create a **project** inside
-   the account, then open that project's API keys page. Set `LIVEKIT_URL`,
-   `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` in `FDB_V3_ROOT/.env.local`.
-   The official clone ignores that file, and both this agent and the official
-   runner read it. Set `ACCESSFLOW_GROQ_API_KEY` (or `GROQ_API_KEY`) there too
-   if it is not already in the private user environment. Do not paste API
-   secrets into this repository, chat, or screenshots. A Cloud account alone
-   does not supply project keys.
-   The worker uses LiveKit Inference `openai/gpt-5.6-luna` and AccessFlow's
-   `compact-v2` planner profile by default. Set `FDB_LIVEKIT_MODEL` or
-   `FDB_PROMPT_PROFILE` to change them. `FDB_PLANNER_PROVIDER=groq` selects the
-   earlier Qwen planner; `FDB_GROQ_MODEL` then controls its model. That path
-   reached this account's 7,000 input-token-per-minute limit during multi-step
-   cases. The LiveKit planner completed released two- and three-tool recordings
-   in bounded local checks, but these are not an official aggregate score.
-   Groq `whisper-large-v3` now transcribes by default with a general domain
-   vocabulary hint; `FDB_GROQ_STT_MODEL` can select another supported model.
-   By default, speech uses LiveKit Inference's `deepgram/aura-2` voice, billed
-   through the LiveKit project. Set `FDB_TTS_PROVIDER=groq` to use Orpheus;
-   the Groq account owner must then accept the
-   [Orpheus model terms](https://console.groq.com/playground?model=canopylabs%2Forpheus-v1-english).
-   This account returned `model_terms_required` in that optional mode.
+Use Python 3.11 and install the frozen optional dependencies from the repository root:
 
-From the repository root, with the **agent environment** active, run:
+```powershell
+uv sync --frozen --extra fdb
+```
+
+Clone the reference at `3e799c45a045256f47d5f1c9cda90157e2d2ec9e`, set `FDB_V3_ROOT` to its `v3` directory, and extract the released corpus there. The worker validates the 12 tool signatures. The full supervised evaluation expects all 100 released original WAVs.
+
+Supply private `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `ACCESSFLOW_GROQ_API_KEY` settings through the process environment or reference `v3/.env.local`. Never commit populated configuration or expose it in screenshots.
+
+Defaults are Groq `whisper-large-v3`, LiveKit `openai/gpt-5.6-luna` planning, the `compact-v2` prompt profile and LiveKit `deepgram/aura-2` speech output. Configure these with `FDB_GROQ_STT_MODEL`, `FDB_LIVEKIT_MODEL`, `FDB_PROMPT_PROFILE` and `FDB_TTS_PROVIDER`. Optional Groq planning uses `FDB_PLANNER_PROVIDER=groq` and `FDB_GROQ_MODEL`; optional Groq speech output may require provider model-terms acceptance. Record the actual backend and limits rather than silently switching providers.
+
+## Worker commands
+
+From the repository root:
 
 ```powershell
 $env:FDB_V3_ROOT = 'C:\path\to\Full-Duplex-Bench\v3'
-python -m accessflow.perception.fdb_v3.agent check
-python -m accessflow.perception.fdb_v3.agent dev
+uv run --frozen --extra fdb python -m accessflow.perception.fdb_v3.agent check
+uv run --frozen --extra fdb python -m accessflow.perception.fdb_v3.agent dev
 ```
 
-`dev` is for local evaluation. Use `start` for a production-style worker. The
-agent writes `agent_tool_calls.log` where the official runner reads it. On
-Windows, that is the `tmp` directory on the benchmark clone's drive; the
-worker's `FDB_TOOL_LOG` override can set that exact location if needed.
+`check` validates configuration/imports; it is not an audio acceptance test. `dev` starts a local worker; `start` is the production-style entry point. Use exactly one matching unnamed worker in the evaluation project.
 
-Run the official scorer in a **second terminal on the same machine** with its
-own environment (the official README uses Python 3.10), documented
-Python/NeMo/ffmpeg dependencies, the same LiveKit project, and the extracted
-recordings. The official runner reads `/tmp/agent_tool_calls.log` directly;
-the worker writes that path on Linux. On Windows, `Path('/tmp/...')` resolves
-to the `tmp` directory on the scorer's current drive. Run both processes from
-the benchmark clone's drive, or set `FDB_TOOL_LOG` for the worker to that
-drive's `tmp/agent_tool_calls.log`. The official runner does not read
-`FDB_TOOL_LOG`. A GPU run on another machine therefore needs both environments,
-the agent code, and the private `.env.local` configured there; moving only the
-scorer would lose the tool-call evidence.
+The reference scorer needs a separate compatible Python/NeMo/ffmpeg environment on the same host. Both processes must share the tool log: `/tmp/agent_tool_calls.log` on Linux, or the reference drive's `tmp/agent_tool_calls.log` on Windows. `FDB_TOOL_LOG` configures the worker; the unchanged official runner reads its fixed path.
 
-Start with one released example:
+Prefer the [supervised reproduction command](../../../../docs/FDB_REPRODUCTION.md) for full inference, grading, coverage checks and sanitized judge audits. A targeted released-data subset can use the unchanged `run_tool_benchmark_all_released.py --provider accessflow --root_dir <private-subset>` after separately starting/configuring its worker. It is development evidence, not a full benchmark result.
 
-```powershell
-cd $env:FDB_V3_ROOT
-python run_tool_benchmark.py --provider accessflow --example 'EXAMPLE_ID_FROM_A_RELEASED_FOLDER'
-```
+Reference semantic/latency grading uses its independent OpenAI judge key. This is separate from LiveKit planning. An exact-match tool diagnostic or alternate judge cannot be labelled the organizer's official score. Retain actual audio/results/configuration; keep bulk recordings and private logs outside Git.
 
-Then use `run_tool_benchmark_all_released.py --provider accessflow` for the
-full set. Run `evaluate_tool_calls.py`, `evaluate_pass_rate.py`, and
-`analyze_tool_latency.py` on those results. The official `--use-llm` judge
-requires its separately configured OpenAI key; an exact-match run without
-that judge is diagnostic, not the organizer's score. Keep the generated
-recordings, logs, and reports out of the AccessFlow repository. See the
-[official v3 README](https://github.com/DanielLin94144/Full-Duplex-Bench/blob/main/v3/README.md)
-for the runner's current commands and audio download link.
+## Session hooks
 
-## LiveKit hooks
+- `user_state_changed` marks speech pending immediately and holds possible writes while transcription resolves.
+- `on_user_turn_completed` receives the final transcript.
+- `llm_node` sends the transcript through the AccessFlow controller, waits for dispatched calls to finish logging, and summarizes confirmed results. AccessFlow makes the reasoning request while LiveKit schedules the node.
 
-- `user_state_changed` marks speech as pending immediately. This holds a
-  possible write while the transcription is still being decided.
-- `on_user_turn_completed` receives the final transcript from LiveKit.
-- `llm_node` passes that transcript to the AccessFlow controller. It waits for
-  every dispatched mock call to finish logging and summarizes confirmed
-  results when concurrent calls would otherwise leave the spoken reply partial.
-  The configured LiveKit LLM object also lets the SDK schedule this custom
-  node; AccessFlow makes the actual reasoning request.
+Tests, provider connectivity and bounded audio examples each establish different evidence. Only a validated complete run and its grading reports establish an aggregate reference result; Samsung's organizer rerun establishes the official score.
 
-Released flight and finance recordings completed through LiveKit with audible
-replies and room-scoped telemetry. A separate transcription of the final
-finance output heard all three confirmed results. One scripted active-speech
-interruption also produced the later corrected cart action. Other recordings,
-interruption reliability, official scoring, and a physical microphone remain
-separate checks. Passing unit tests or these bounded runs does not establish a
-benchmark score.
+## In-car destination extension
 
-## Separate in-car destination extension
+`accessflow.perception.navigation_agent` reuses the controller and LiveKit speech/interruption path with a separate two-tool catalog. `set_navigation_destination` changes a simulated route per room and projects it to a local SQLite dashboard. Supported destinations are Central Station, City Hospital and Airport Terminal 1; unknown places leave the route unchanged. It does not control a vehicle, calculate road routes or load benchmark tools/data.
 
-`accessflow.perception.navigation_agent` uses the same AccessFlow controller,
-LiveKit speech path, and interruption handling with a separate two-tool
-catalog. Its `set_navigation_destination` action changes a simulated route
-for that room and projects it into a local SQLite-backed dashboard. It
-supports Central Station, City Hospital, and Airport Terminal 1; an unknown
-place leaves the route unchanged. It does not control a car, calculate a road
-route, or use FDB benchmark tools or data.
-
-Stop the benchmark worker before starting this worker; both use LiveKit's
-default unnamed dispatch. Set `NAV_ENV_FILE` to a private file with the same
-LiveKit and Groq keys (or set those variables in the environment), then run:
+Stop the benchmark worker before starting the extension because both use default unnamed LiveKit dispatch. Keep the database and provider settings outside Git:
 
 ```powershell
 $env:NAV_ENV_FILE = 'C:\path\to\private\.env.local'
 $env:NAV_STATE_DB = 'C:\path\to\local\navigation.sqlite3'
-python -m accessflow.perception.navigation_agent dev
+uv run --frozen --extra fdb python -m accessflow.perception.navigation_agent dev
 ```
 
-In another terminal, start the local display with the **same** `NAV_STATE_DB`:
+In a second terminal use the same database path:
 
 ```powershell
 $env:NAV_STATE_DB = 'C:\path\to\local\navigation.sqlite3'
-python -m uvicorn demo.navigation_app:app --host 127.0.0.1 --port 8011
+uv run --frozen --extra fdb python -m uvicorn demo.navigation_app:app --host 127.0.0.1 --port 8011
 ```
 
-Open `http://127.0.0.1:8011/?room=YOUR_LIVEKIT_ROOM`. Use a separate LiveKit
-room for each simulated trip. A successful destination change is acknowledged
-aloud, shown on the display, and logged with the final revision. The route
-starts at Central Station for every room; the dashboard retains the latest
-local state after a room closes for demonstration. The database stays outside
-the repository and carries no benchmark state.
+Open `http://127.0.0.1:8011/?room=YOUR_LIVEKIT_ROOM` and connect a microphone-capable LiveKit client to that exact room. Use a fresh room per simulated trip. A confirmed change is spoken, displayed and recorded with its revision. Each room starts at Central Station; the dashboard can retain its final local projection after closure for demonstration. See [running instructions](../../../../docs/RUNNING.md) and [evaluation scope](../../../../docs/EVALUATION_QUICK_GUIDE.md).

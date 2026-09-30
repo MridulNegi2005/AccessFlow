@@ -1,13 +1,10 @@
-# Recording and feedback provenance
+# Development audio fixture provenance
 
-No recordings or participant feedback collected by this bootstrap.
-For every future fixture record author, date, consent/license, intended split, modality,
-backend-independent expected outcome and whether speech is illustrative or naturally recorded.
-Do not commit private recordings or infer clinical representativeness from team examples.
+These fixtures are synthetic and are not participant or clinical recordings.
 
 ## synthetic_tone.wav
 
-- Author: Codex for AccessFlow development
+- Creation: Locally generated development fixture
 - Date: 2026-09-13
 - Consent/license: Generated locally; no participant or third-party recording
 - Modality: 0.5 second mono PCM WAV, 16-bit, 16 kHz, deterministic 440 Hz tone
@@ -17,7 +14,7 @@ Do not commit private recordings or infer clinical representativeness from team 
 - Backend: Backend-independent fixture; it must not be used as live ASR quality evidence
 ## synthetic_speech.wav
 
-- Author: Codex for AccessFlow development
+- Creation: Locally generated development fixture
 - Date: 2026-09-13
 - Consent/license: Generated locally with the installed Windows speech synthesizer; no participant or third-party recording
 - Modality: 5.304 second mono PCM WAV, 16-bit, 22.05 kHz
@@ -28,7 +25,7 @@ Do not commit private recordings or infer clinical representativeness from team 
 
 ## synthetic_pause_correction.wav
 
-- Author: Codex for AccessFlow development
+- Creation: Locally generated development fixture
 - Date: 2026-09-13
 - Consent/license: Generated locally with the installed Windows speech synthesizer; no participant or third-party recording
 - Modality: 6.024 second mono PCM WAV, 16-bit, 22.05 kHz
@@ -45,7 +42,7 @@ not representative speech and supplies no clinical or population evidence.
 
 ### heldout_fluent.wav
 
-- Author: Codex for AccessFlow development
+- Creation: Locally generated development fixture
 - Date: 2026-09-13
 - Consent/license: Generated locally with the installed Windows speech synthesizer; no participant or third-party recording
 - Modality: 3.449 second mono PCM WAV, 16-bit, 22.05 kHz
@@ -56,7 +53,7 @@ not representative speech and supplies no clinical or population evidence.
 
 ### heldout_repetition.wav
 
-- Author: Codex for AccessFlow development
+- Creation: Locally generated development fixture
 - Date: 2026-09-13
 - Consent/license: Generated locally with the installed Windows speech synthesizer; no participant or third-party recording
 - Modality: 4.724 second mono PCM WAV, 16-bit, 22.05 kHz
@@ -67,7 +64,7 @@ not representative speech and supplies no clinical or population evidence.
 
 ### heldout_pause.wav
 
-- Author: Codex for AccessFlow development
+- Creation: Locally generated development fixture
 - Date: 2026-09-13
 - Consent/license: Generated locally with the installed Windows speech synthesizer; no participant or third-party recording
 - Modality: 5.958 second mono PCM WAV, 16-bit, 22.05 kHz

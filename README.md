@@ -157,7 +157,7 @@ These check software behavior and do not establish a benchmark accuracy score. R
 voice sessions and manually observed microphone checks are documented separately.
 No official aggregate benchmark score is claimed here. Reproduction evidence and its
 qualifications are retained in [evaluation documentation](docs/FDB_REPRODUCTION.md) and
-[verification records](docs/reviews/).
+[verification evidence](docs/EVIDENCE.md).
 
 External actions are mock tools or the local navigation simulation. No real bookings,
 payments or vehicle controls are performed. Accessibility benefits are intended;
@@ -184,6 +184,4 @@ uv run --frozen --extra dev ruff check .
 | `docs/presentation/` | Presentation files |
 | `docs/AI_USE_LOG.md` | AI-assistance disclosure source record |
 
-[Recording plan](docs/DEMO_RECORDING_PLAN.md) ·
-[Submission checklist](docs/SUBMISSION_CHECKLIST_2026-09-30.md) ·
-[Development history](docs/history/README_DEVELOPMENT_LOG_2026-09-30.md)
+[Evaluation guide](docs/EVALUATION_QUICK_GUIDE.md) · [Verification evidence](docs/EVIDENCE.md)
