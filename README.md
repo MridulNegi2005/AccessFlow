@@ -1,565 +1,187 @@
 # AccessFlow
 
-A conversational agent prototype for unfinished speech, corrections and safe mock actions.
-Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates remain open.**
+**A voice agent that lets people finish, change their minds, and interrupt.**
 
-## Start here
+AccessFlow handles spoken requests as conversations: users can pause, correct a detail,
+or interrupt a reply while the agent maintains the current task and its confirmed actions.
+It combines a session controller with speech recognition, language-model planning,
+and asynchronous tools to keep outdated requests from becoming incorrect results.
 
-- Atishay and his AI: [ATISHAY_START_HERE.md](ATISHAY_START_HERE.md)
-- Current verified status: [docs/STATUS.md](docs/STATUS.md)
-- Evaluation explained: [docs/EVALUATION_QUICK_GUIDE.md](docs/EVALUATION_QUICK_GUIDE.md)
-- Current FDB-v3 setup and reproduction: [docs/FDB_REPRODUCTION.md](docs/FDB_REPRODUCTION.md)
-- Private GPU evaluation setup: [docs/KAGGLE_FDB.md](docs/KAGGLE_FDB.md)
-- Install/configure/evaluate entry point: `python scripts/bootstrap_fdb.py --help`;
-  requires a compatible prepared scorer or its tested hashed lock, released audio
-  and private configuration. Final combined/live reproduction remains unverified.
-- Saved-output judging has a separate hash-checked lock:
-  `requirements/fdb-score.lock`. It supports scoring retained results; full
-  audio inference still uses the GPU profile in `docs/KAGGLE_FDB.md`.
-- Historical queue package: [docs/SAMSUNG_PACKAGE.md](docs/SAMSUNG_PACKAGE.md)
-- Agreed plan: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
-- Interfaces and ownership: [docs/CONTRACT.md](docs/CONTRACT.md), [AGENTS.md](AGENTS.md)
-- Daily notes: [docs/handoffs/](docs/handoffs/)
+Built for **Samsung PRISM GenAI Hackathon — Theme 5: Interruptible Real-time Agents**.
 
-## Current progress
+[Demo video folder](https://drive.google.com/drive/folders/1s51DDXuR4_SMGKm-kzsKJsFzk4edWE_H?usp=drive_link)
+ · [Evaluation and reproduction](docs/FDB_REPRODUCTION.md)
+ · [Architecture and contracts](docs/CONTRACT.md)
 
-As of 30 September: Samsung's updated target is FDB-v3 over LiveKit. The voice
-worker, navigation extension, unique-result binding and optional locked runtime
-are integrated. The latest combined software passed 1,614 tests / 8 skipped,
-Ruff and seven browser checks. A fresh public clone installed all 85 locked
-worker packages and passed actual worker/registry, navigation and VAD imports
-offline. Runtime settings, actual planner access and Kaggle GPU warm-up now pass.
-An initial 100-recording batch failed; the corrected batch is running with actual
-audio reaching the agent. Official aggregate scoring remains unverified.
-Atishay now reports M1–M4 physical microphone passes; the pushed notes qualify
-them as human-observed, with browser connection/session-isolation corroboration
-and no retained per-command timing traces. His extension media still needs handover.
-The unchanged public scorer's separate OpenAI judge has no API credit; Samsung's
-guide does not explicitly require teams to buy credit. Its organizer rerun uses
-one pinned judge. Agent inference and local judging are separate configurations.
-Read [the current GPU runtime report](docs/reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md)
-and the current status/reproduction guide for exact evidence and limitations.
+## What it does
 
-The earlier checkpoints below are historical. Their test counts, backend limitations
-and local-model results describe their recorded state, not today's entire implementation.
+- **Voice conversations:** LiveKit carries microphone input and spoken replies; users can
+  interrupt without submitting each turn with a button.
+- **Corrections with context:** Revised requests update the relevant session details while
+  preserving information that still applies.
+- **Action safety:** Dependency tracking, cancellation, stale-result rejection and an
+  action ledger prevent obsolete or duplicate tool results from being treated as current.
+- **Clear stop behavior:** An explicit stop-speaking request differs from canceling an action.
+  An ambiguous stop request asks for clarification rather than guessing.
+- **Tools supplied by manifests:** The controller validates tool arguments and resolves
+  supplied capabilities rather than assuming a fixed set of tool names.
+- **Isolated sessions:** Each voice room starts with fresh conversational state.
 
-## Local setup
+AccessFlow uses pretrained models. Its contribution is conversation control, state and
+execution safety, tool integration, and the voice runtime; it does not train a foundation model.
 
-- Added `LocalPerception` for transcript pass-through and raw PCM WAV validation.
-- Preserved utterance IDs, revisions, source event IDs and speech timestamps.
-- Added an injected ASR seam for deterministic tests and a lazy Faster Whisper CPU INT8
-  path that requires an already-installed local model.
-- Kept blocking WAV and transcription work off the event loop with `asyncio.to_thread`.
-- Image input is explicitly refused until a real replaceable vision provider is supplied;
-  no canned caption is treated as perception.
+## Architecture
 
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest -q  -> 21 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                             -> All checks passed
+```mermaid
+flowchart LR
+    U[User speech] --> LK[LiveKit voice session]
+    LK --> STT[Speech recognition]
+    STT --> C[AccessFlow session controller]
+    C <--> P[Language-model planner]
+    C --> E[Tool executor and action ledger]
+    E --> T[Manifest-defined tools]
+    T --> E
+    E --> C
+    C --> S[Speech synthesis]
+    S --> LK
+    LK --> R[Spoken response]
 ```
 
-The tests prove contract and adapter behavior only. No live ASR, vision quality, hosted
-backend result or hardware latency is claimed yet. Next: turn timing policies, partial
-transcript cases, a replaceable vision adapter and the minimal fake-agent demo.
-
-
-### Checkpoint 1 - 13 September 2026: perception foundation
-
-Atishay's Workstream B has started on `atishay/perception`.
-
-- Added `LocalPerception` for transcript pass-through and raw PCM WAV validation.
-- Preserved utterance IDs, revisions, source event IDs and speech timestamps.
-- Added an injected ASR seam for deterministic tests and a lazy Faster Whisper CPU INT8
-  path that requires an already-installed local model.
-- Kept blocking WAV and transcription work off the event loop with `asyncio.to_thread`.
-- Image input is explicitly refused until a real replaceable vision provider is supplied;
-  no canned caption is treated as perception.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest -q  -> 21 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                             -> All checks passed
-```
-
-The tests prove contract and adapter behavior only. No live ASR, vision quality, hosted
-backend result or hardware latency is claimed yet. Next: turn timing policies, partial
-transcript cases, a replaceable vision adapter and the minimal fake-agent demo.
-
-## Checkpoint 2 - 13 September 2026: turn policy baseline
-
-Added the first synchronous `HeuristicTurnPolicy` under Atishay's owned workstream.
-
-- Final speech completes only when the observation is marked final; partial speech always continues.
-- Explicit markers such as "actually" and "I mean" become `possible_correction` decisions.
-- Repeated words remain ordinary speech unless a correction marker is present.
-- Short acknowledgments such as "mm-hmm" become `backchannel` decisions.
-- Older revisions cannot complete a turn when a newer observation is already present.
-- The policy is deterministic, synchronous and model-free, so it does not block the dispatcher.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest tests/perception -q  -> 13 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/turn_policy tests/perception
-                                                               -> All checks passed
-```
-
-The current contract has no timer or silence event, so this baseline does not claim acoustic
-pause detection. Next: a replaceable PNG vision adapter with frame identity and evidence
-metadata, followed by the minimal fake-agent demo.
-
-## Checkpoint 3 - 13 September 2026: replaceable vision seam
-
-Added the first image path to `LocalPerception` without changing the shared v0.1 contract.
-
-- Validates the PNG signature, IHDR chunk and non-zero dimensions before provider work.
-- Uses an injected vision provider so tests remain deterministic and future backends stay replaceable.
-- Emits `Observation(modality="image")` with `frame_id`, source event ID, revision 0 and frame timestamp.
-- Refuses missing providers and malformed images instead of generating a canned caption.
-- Keeps validation and provider execution off the event loop.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest tests/perception -q  -> 15 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                                               -> All checks passed
-```
-
-This proves the adapter seam and provenance behavior only. No live vision model quality or
-hardware latency is claimed. Next: add a minimal fake-agent demo that renders output events
-without duplicating authoritative engine state.
-
-## Checkpoint 4 - 13 September 2026: minimal fake-agent demo
-
-Added a small FastAPI WebSocket demo under `demo/` that uses the existing queue-based
-controller and renders serialized `OutputEvent` snapshots.
-
-- Text, WAV/mock-audio, microphone/mock-audio and PNG/mock-image controls are visible in the browser.
-- Browser messages are translated into typed v0.1 events before entering the controller.
-- The frontend renders returned state snapshots and does not maintain slots, planning or action state.
-- Every mock input and response is labeled `demo/mock`; this demo is not live ASR or vision evidence.
-- The WebSocket smoke test confirms a transcript produces both acknowledgment and final output events.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest tests/demo -q  -> 6 passed
-uv run --python 3.12 --extra dev ruff check demo tests/demo
-                                                       -> All checks passed
-```
-
-FastAPI's test client currently emits dependency deprecation warnings; they do not fail the
-suite. Next: add real WAV fixture provenance and timing/VAD integration while retaining the
-mock demo as an explicit development mode.
-## Checkpoint 5 - 13 September 2026: audio fixture provenance
-
-Added a deterministic synthetic WAV fixture at `tests/fixtures/audio/synthetic_tone.wav`.
-
-- The fixture is generated locally with Python's standard `wave`, `struct` and `math` libraries.
-- It is mono PCM, 16-bit, 16 kHz and 0.5 seconds long; it contains a 440 Hz tone, not speech.
-- Its provenance, intended development-only use and SHA-256 are recorded in `docs/feedback/PROVENANCE.md`.
-- A perception test validates the checked-in file through the same raw WAV route used by `LocalPerception`.
-- No participant voice, third-party recording or ASR quality claim is attached to this asset.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest tests/perception -q  -> 16 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                                               -> All checks passed
-```
-
-Next: connect a real local transcription backend to an explicitly installed model and add
-speech-activity timing behind a replaceable adapter, with backend and hardware measurements.
-## Checkpoint 6 - 13 September 2026: PCM and activity baseline
-
-Added an isolated PCM loader and fixed-window energy activity helper in
-`src/accessflow/perception/audio.py`.
-
-- Downmixes mono or stereo PCM WAV input and converts it to a requested sample rate.
-- Exposes frame start/end times and RMS levels for deterministic timing experiments.
-- Keeps this as an energy baseline, not a speech classifier or clinical VAD.
-- Covers the checked-in tone fixture, stereo resampling, silence/tone boundaries and invalid configuration.
-- Adds no dependency or shared-contract change; Checkpoint 8 later replaced the deprecated audioop path with standard-library primitives.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest tests/perception -q  -> 21 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                                               -> All checks passed
-```
-
-The CP6 baseline used audioop; Checkpoint 8 removed that deprecation from the PCM path. No live ASR, speech VAD, vision quality, hosted backend or hardware latency is claimed. Next: connect an explicitly installed local ASR model and measure backend timing on declared hardware.
-## Checkpoint 7 - 13 September 2026: local ASR seam
-
-Hardened the optional Faster Whisper path in `LocalPerception` without downloading models during a scenario.
-
-- Requires an existing local model directory before starting inference.
-- Adds a factory seam for deterministic tests and future backend substitution.
-- Requests `device="cpu"` and `compute_type="int8"`, then aggregates returned segment text.
-- Keeps the model import, load and transcription work off the event loop.
-- Labels the output `faster-whisper/cpu-int8`; the factory tests are not a live model benchmark.
-
-Evidence from this checkpoint:
-
-```text
-uv run --python 3.12 --extra dev pytest tests/perception -q  -> 23 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                                               -> All checks passed
-```
-
-At the time of this checkpoint no Faster Whisper weights had been evaluated; Checkpoint 9 records the first local measurement. Next: measure
-an explicitly installed model on declared hardware, then connect timing decisions to the
-available event contract without making every pause a completion.
-
-## Checkpoint 8 - 13 September 2026: dependency-free PCM backend
-
-Replaced the deprecated Python 3.12 audioop calls in the owned PCM path with small
-standard-library decoder, stereo downmixer, linear resampler and RMS helpers.
-
-- Supports 1-, 2-, 3- and 4-byte PCM sample widths.
-- Keeps the existing mono/stereo loading and target-rate behavior without adding a dependency
-  or changing the shared contract.
-- Adds focused coverage for all supported sample widths.
-- Keeps the activity output explicitly labeled as an energy baseline, not a speech classifier.
-
-Evidence from this checkpoint:
-
-~~~text
-uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q  -> 9 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                                                         -> All checks passed
-~~~
-
-This removes the current audioop deprecation warning from the PCM path. It does not establish
-production resampling quality or acoustic VAD quality. Next: measure an explicitly installed
-local ASR model on declared hardware.
-
-## Checkpoint 9 - 13 September 2026: local ASR timing measurement
-
-Ran the installed Faster Whisper base.en model through the local CPU INT8 path on the
-checked-in WAV fixture.
-
-- Hardware: Intel Core Ultra 5 125H, 16 GB installed RAM, Python 3.12.10.
-- Model/runtime: Systran/faster-whisper-base.en, snapshot 3d3d5dee26484f91867d81cb899cfcf72b96be6c, faster-whisper 1.2.1.
-- Audio duration: 0.500 s; model load: 0.464 s; inference: 0.677 s; backend realtime factor: 1.354. LocalPerception.observe elapsed 1.233 s, realtime factor 2.466.
-- The model returned an empty transcript and detected English, which is expected for the
-  synthetic 440 Hz tone. This is timing/backend evidence, not speech recognition quality.
-
-The full measurement record is in docs/feedback/ASR_MEASUREMENTS.md. The model remains in the
-ignored models directory and is not committed.
-
-## Checkpoint 10 - 13 September 2026: illustrative speech ASR run
-
-Added a locally synthesized, non-participant speech fixture and ran it through
-LocalPerception with the installed Faster Whisper base.en CPU INT8 backend.
-
-- Fixture: 5.304 s mono PCM, 16-bit, 22.05 kHz; generated with the installed Windows speech synthesizer.
-- SHA-256: B42354F90462A08AD23DF835256289116DEFDE4287AB2AC3D9D3CF2E87BCD5E6.
-- Transcript: “My screen keeps flickering after the update. Book Wednesday at 5.”
-- Adapter elapsed time: 5.874 s; realtime factor: 1.108.
-- This is one illustrative generated-voice case, not a held-out accuracy benchmark or a claim
-  about participant speech.
-
-The fixture and ASR details are recorded in docs/feedback/PROVENANCE.md and
-docs/feedback/ASR_MEASUREMENTS.md.
-
-## Checkpoint 11 - 13 September 2026: timing-only activity summary
-
-Added an offline timing summary over the energy frames without changing the shared v0.1
-contract or treating a pause as turn completion.
-
-- Reports contiguous active windows, active duration and leading/trailing silence.
-- Exposes pause_detected only as an acoustic timing signal; all-silence input is not a pause after speech.
-- Adds an additive contract proposal for carrying timing metadata into a future adapter.
-
-Evidence from this checkpoint:
-
-~~~text
-uv run --python 3.12 --extra dev pytest tests/perception/test_audio.py -q  -> 13 passed
-uv run --python 3.12 --extra dev ruff check src/accessflow/perception tests/perception
-                                                                         -> All checks passed
-~~~
-
-The current engine still consumes the v0.1 observation contract and has no timer event.
-This is an offline timing baseline, not acoustic VAD quality or a semantic completion claim.
-## Checkpoint 12 - 13 September 2026: optional WebRTC activity backend
-
-Added a lazy optional WebRTC VAD adapter over normalized 16-bit PCM frames, with injected
-detector tests and no shared contract change.
-
-- Accepts 8, 16, 32 or 48 kHz audio and 10, 20 or 30 ms frames.
-- Keeps acoustic activity separate from semantic turn completion and tool safety.
-- Compared the adapter with the energy baseline on both provenance-tracked fixtures.
-- On the tone, both methods marked 25/25 frames active, showing that activity detection alone
-  is not evidence of speech.
-- On generated speech, WebRTC marked 189/265 frames active in two broad windows and left
-  0.640 s trailing silence; the energy baseline marked 138/266 frames across fragmented windows.
-
-The comparison is an illustrative backend observation, not a VAD quality benchmark. Details are
-in docs/feedback/VAD_MEASUREMENTS.md. The local environment uses webrtcvad-wheels 2.0.14;
-the shared lockfile remains unchanged pending review.
-
-## Checkpoint 13 - 13 September 2026: pause-and-correction fixture
-
-Added a second generated speech fixture containing “Book Tuesday.”, a deliberate 1.5 second
-break, and “Actually, Wednesday at five.”
-
-- Fixture: 6.024 s mono PCM, 16-bit, 22.05 kHz; SHA-256
-  49B0B26FD1EBCAE0772B2559A4ABA3782444F59FAB7E7E7038122F06157C872B.
-- Faster Whisper returned “Book Tuesday. Actually, Wednesday at 5.” in 1.334 s
-  (realtime factor 0.221).
-- WebRTC VAD produced three windows around the spoken portions and 0.640 s trailing silence.
-- The timing and transcript are illustrative development evidence; this fixture is not held out.
-
-## Checkpoint 14 - 13 September 2026: browser media upload boundary
-
-Extended the minimal demo to upload selected WAV and PNG bytes through the WebSocket route.
-
-- The server decodes base64 payloads, enforces an 8 MiB limit and validates RIFF/WAV or PNG headers.
-- Uploaded files are materialized in a per-session temporary directory and removed with the session.
-- The existing typed AudioEvent and FrameEvent routes receive the materialized paths.
-- The browser microphone button remains explicitly mock; selected-file upload is real transport only.
-- The demo still uses demo/mock perception and makes no live ASR or vision claim.
-
-Evidence from this checkpoint:
-
-~~~text
-uv run --python 3.12 --extra dev pytest tests/demo -q  -> 9 passed
-uv run --python 3.12 --extra dev ruff check demo tests/demo
-                                                       -> All checks passed
-~~~
-
-## Checkpoint 15 - 13 September 2026: browser microphone capture
-
-Replaced the mock microphone button with browser capture that encodes mono PCM into a
-16-bit WAV and sends it through the existing validated session upload route.
-
-- Uses getUserMedia and a short-lived browser audio processor; the stream stops when the user uploads.
-- Encodes the captured samples as a RIFF/WAV payload before WebSocket transport.
-- Reuses the server-side 8 MiB limit, WAV validation and per-session temporary storage.
-- Keeps the downstream agent on demo/mock perception, so microphone transport is not live ASR evidence.
-- Adds static checks for the microphone controls, getUserMedia path and WAV encoder.
-
-Evidence from this checkpoint:
-
-~~~text
-uv run --python 3.12 --extra dev pytest tests/demo -q  -> 9 passed
-uv run --python 3.12 --extra dev ruff check demo tests/demo
-                                                       -> All checks passed
-~~~
-
-A real browser permission/device smoke run is still required before claiming microphone
-capture works on evaluator hardware.
-
-## Checkpoint 16 - 13 September 2026: endpoint candidate extraction
-
-Added internal and trailing pause candidates over activity windows.
-
-- Internal gaps and end-of-recording silence are returned separately with timestamps and durations.
-- Short gaps and all-silence input produce no endpoint candidate at the default threshold.
-- The helper remains timing-only; consumers must combine it with transcript revisions and turn policy.
-- On generated speech, WebRTC found an internal 0.780 s gap and a 0.640 s trailing gap.
-- On the pause-correction fixture, WebRTC found the designed 2.260 s internal gap and a 0.640 s trailing gap.
-
-This is endpointing evidence for development fixtures, not a semantic completion or held-out
-benchmark. The detailed measurements are in docs/feedback/VAD_MEASUREMENTS.md.
-
-Python 3.11 and `uv` are required:
+The controller owns authoritative session state. Perception, planning and tools execute
+asynchronously. Corrections invalidate dependent work; late responses must match the
+current dependencies before they can be accepted. A canceled operation is not automatically
+a rollback: committed effects and uncertain write outcomes must be handled explicitly.
+
+### Voice runtime
+
+| Component | Configured backend |
+|---|---|
+| Audio transport | LiveKit |
+| Speech recognition | Groq `whisper-large-v3` |
+| Planning | LiveKit Inference `openai/gpt-5.6-luna` |
+| Speech output | LiveKit Inference `deepgram/aura-2` |
+| Speech activity | Silero VAD |
+| State and tool orchestration | AccessFlow Python controller |
+
+The benchmark judge is a separate evaluation dependency, not the agent's planner.
+Provider settings and private API credentials are documented in the
+[voice adapter setup](src/accessflow/perception/fdb_v3/README.md).
+
+## Extension: destination changes by voice
+
+The extension applies the same controller and voice runtime to a simulated in-car trip.
+A user can change the destination, interrupt a reply, or clarify a stop request. Confirmed
+changes appear on a browser dashboard backed by the room's local state.
+
+The destination catalog contains **Central Station**, **City Hospital**, and
+**Airport Terminal 1**. Unknown places require clarification. A new room starts a new trip.
+This is a destination-state simulation: it does not control a vehicle, calculate routes,
+use GPS, or provide travel estimates. It uses a separate tool catalog from the benchmark.
+
+The implementation includes `demo/navigation.html`, its FastAPI display, and
+`accessflow.perception.navigation_agent`. A polished frontend is not required to run
+benchmark evaluation.
+
+## Install and run
+
+Use **Python 3.11**, Git, and `uv`. From a repository checkout:
 
 ```powershell
-uv sync --extra dev
-uv run pytest tests/test_contract.py
+git clone https://github.com/MridulNegi2005/AccessFlow.git
+cd AccessFlow
+uv sync --frozen --extra fdb
 ```
 
-This is the canonical repository root. Organizer PDFs and prior research live outside
-the repository in `../sources` and `../research`. Do not commit credentials, private
-recordings or organizer materials without checking redistribution permission.
+Configure the LiveKit project URL, API key and secret, plus the Groq key, in a private
+file outside Git. Never put provider secrets in the browser or the repository.
+The benchmark worker additionally requires the pinned FDB-v3 reference and released corpus;
+follow [FDB setup](docs/FDB_REPRODUCTION.md) before starting it:
 
-The internal protocol is v0.1, **not Samsung's unpublished wire schema**. Offline fakes
-prove contracts and orchestration only. No live ASR, vision quality, official-kit score,
-hardware latency or accessibility benefit is claimed by passing those tests.
+```powershell
+$env:FDB_V3_ROOT = 'C:\FDB-reference\v3'
+uv run --frozen --extra fdb python -m accessflow.perception.fdb_v3.agent check
+uv run --frozen --extra fdb python -m accessflow.perception.fdb_v3.agent dev
+```
 
-The shared GitHub remote is being set up at the user's request. Registration, final
-submission tag and submission are separate human steps. No API credentials are required
-for contract tests.
+For the separate navigation extension, stop the benchmark worker first because both use
+unnamed LiveKit dispatch. Start the extension and display in separate terminals:
 
-## Checkpoint 17 - 13 September 2026: feedback and recording safeguards
+```powershell
+# Terminal 1: voice worker
+$env:NAV_ENV_FILE = 'C:\private\accessflow.env'
+$env:NAV_STATE_DB = 'C:\private\navigation.sqlite3'
+uv run --frozen --extra fdb python -m accessflow.perception.navigation_agent dev
+```
 
-Added an ethical voluntary-feedback worksheet and a timed demo recording script.
+```powershell
+# Terminal 2: dashboard, using the same state database
+$env:NAV_STATE_DB = 'C:\private\navigation.sqlite3'
+uv run --frozen --extra fdb python -m uvicorn demo.navigation_app:app --host 127.0.0.1 --port 8011
+```
 
-- Feedback defaults to anonymized written notes.
-- Recording, upload or redistribution requires specific agreement before capture.
-- The worksheet records backend labels, prototype commit/configuration, retention and
-  deletion decisions, while excluding diagnosis, training and population claims.
-- The 4m40s recording script labels mock, local and future integration boundaries and
-  gives evidence-backed narration for corrections, stale results, image uncertainty,
-  reconciliation and current measurements.
+Connect a microphone client to a fresh room in the same LiveKit project, then open
+`http://127.0.0.1:8011/?room=YOUR_ROOM_NAME`. The dashboard displays state; it does not
+itself create the room or capture microphone audio. See the
+[extension instructions](src/accessflow/perception/fdb_v3/README.md#separate-in-car-destination-extension).
 
-Files:
+## Evaluation
 
-- docs/feedback/SESSION_TEMPLATE.md
-- docs/presentation/DEMO_RECORDING_SCRIPT.md
+The current submission interface is **Full-Duplex-Bench v3 over LiveKit**. The released set
+contains 100 human recordings across 79 scenarios, 12 speakers, 12 tools and four domains.
+The worker integrates the official mock tools without loading benchmark answers into
+its planner. The older asynchronous-queue harness remains a development interface.
 
-The session has not been run and no participant data has been collected. The recording
-has not been made; manual browser/device smoke and the Mridul engine integration remain.
+The reproduction entry point installs the agent and launches evaluation against a prepared
+scorer and released data:
 
-Local smoke evidence:
+```powershell
+python scripts/bootstrap_fdb.py --fdb-root C:\FDB-reference\v3 --scorer-python C:\FDB-scorer\Scripts\python.exe --reuse-scorer --env-file C:\private\accessflow.env --output artifacts\fdb-run --mode reproduce
+```
 
-~~~text
-GET http://127.0.0.1:8000/ -> 200
-served page contains getUserMedia, encodeWav and the demo/mock label
-uv run --python 3.12 --extra dev pytest -q -> 61 passed, 2 warnings
-~~~
+[Reproduction instructions](docs/FDB_REPRODUCTION.md) cover the pinned reference,
+corpus download, scorer dependencies, supported modes, retained evidence and saved-result
+judging. [GPU setup](docs/KAGGLE_FDB.md) documents the GPU evaluation environment.
+`doctor` checks prerequisites, `run` captures inference, `score` grades retained results,
+and `reproduce` combines inference and scoring.
 
-The browser-control surface was unavailable in this run, so microphone permission and
-physical-device capture remain unverified.
-## Checkpoint 18 - 13 September 2026: held-out generated speech and endpoint check
+Samsung's organizer rerun determines the official benchmark score. The unchanged public
+semantic/latency scorer uses a separately configured OpenAI judge; a different judge or
+exact-match diagnostic must not be described as the same score.
 
-Added three generated-voice cases after the earlier development fixtures and fixed timing
-threshold:
+## Verification and limitations
 
-- fluent request: “Please book a screen repair for Friday at ten.”
-- repetition and correction: “I want Tuesday, Tuesday, actually Wednesday at five.”
-- two-part request with a labeled 1.2 second inserted break.
+The latest full software verification recorded **1,614 passing tests and 8 skipped tests**.
+These check software behavior and do not establish a benchmark accuracy score. Recorded
+voice sessions and manually observed microphone checks are documented separately.
+No official aggregate benchmark score is claimed here. Reproduction evidence and its
+qualifications are retained in [evaluation documentation](docs/FDB_REPRODUCTION.md) and
+[verification records](docs/reviews/).
 
-Faster Whisper base.en CPU INT8 recognized all three cases through LocalPerception.observe.
-The model emitted numerals for “ten” and “five”; the repeated phrase and correction wording
-were retained.
+External actions are mock tools or the local navigation simulation. No real bookings,
+payments or vehicle controls are performed. Accessibility benefits are intended;
+clinical effectiveness has not been evaluated.
 
-WebRTC VAD at aggressiveness 2 and 20 ms found no internal candidate in the fluent or
-repetition case. In the pause case it found 1.880-3.860 seconds, overlapping the labeled
-2.549-3.749 second break. The candidate's interval-over-union was 0.606, with a -0.669
-second start error and +0.111 second end error. The early start is a known limitation of
-the fixed-window timing baseline.
+To run the software checks:
 
-Evidence and provenance:
+```powershell
+uv run --frozen --extra fdb --extra dev python -m pytest -q
+uv run --frozen --extra dev ruff check .
+```
 
-- docs/feedback/HELD_OUT_CASES.json
-- docs/feedback/HELD_OUT_RESULTS.json
-- docs/feedback/ASR_MEASUREMENTS.md
-- docs/feedback/VAD_MEASUREMENTS.md
-- docs/feedback/PROVENANCE.md
+## Project files
 
-These are generated development cases held out from the earlier local examples. They do
-not establish human speech accuracy, representative generalization, endpoint quality or
-clinical benefit. The fixture metadata check passed; full-suite verification follows.
-## Checkpoint 19 - 13 September 2026: opt-in local audio demo path
+| Path | Purpose |
+|---|---|
+| `src/accessflow/engine.py` | Session controller and execution orchestration |
+| `src/accessflow/adapters/` | Model, tool and runtime adapters |
+| `src/accessflow/perception/fdb_v3/` | LiveKit benchmark voice integration |
+| `src/accessflow/perception/navigation_agent.py` | Separate destination voice extension |
+| `demo/navigation.html` | Simulated trip dashboard |
+| `scripts/` | Setup, reproduction and evidence utilities |
+| `tests/` | Contracts, controller, perception, demo and packaging verification |
+| `docs/presentation/` | Presentation files |
+| `docs/AI_USE_LOG.md` | AI-assistance disclosure source record |
 
-The browser demo now supports an explicit local audio mode without changing its safe
-default:
-
-~~~powershell
-$env:ACCESSFLOW_DEMO_WHISPER_MODEL = 'E:\path\to\existing\faster-whisper-model'
-uv run --python 3.12 uvicorn demo.app:app
-~~~
-
-When configured, uploaded or microphone WAV input uses LocalPerception and the page shows
-“local/Faster Whisper CPU INT8 audio + demo/mock text/image”. Text and image inputs remain
-demo/mock. The model must already exist locally; the demo does not download weights.
-
-Integration smoke evidence with the cached base.en model:
-
-~~~text
-WebSocket status: local/Faster Whisper CPU INT8 audio + demo/mock text/image
-Audio acknowledgment: faster-whisper/cpu-int8
-Controller final: Mock agent received audio input: Please book a screen repair for Friday at 10. (informational)
-~~~
-
-The backend route and controller output are verified through TestClient. Browser permission,
-physical microphone capture, live vision and a non-mock reasoner remain unverified.
-## Checkpoint 20 - 13 September 2026: presentation content outline
-
-Added docs/presentation/SLIDE_OUTLINE.md, a template-neutral eight-slide content draft
-for the required final presentation.
-
-It includes the scenario, failure mode, architecture, correction and pause evidence,
-action-safety states, browser/backend boundaries, current measurements and remaining
-gates. It explicitly labels generated fixtures, mock reasoning and missing live evidence.
-The official organizer template is still required before final assembly.
-## Checkpoint 21 - 13 September 2026: session path isolation
-
-Hardened the browser upload boundary so a WebSocket payload cannot make the demo read an
-arbitrary client-supplied filesystem path.
-
-- Byte uploads are decoded, validated and written inside the session temporary directory.
-- When no bytes are supplied, the mock fallback path is also rooted in that session.
-- Unit coverage confirms a path such as C:\private\recording.wav is never used when a
-  session upload root exists.
-- The no-root helper behavior remains available for isolated typed-event tests.
-
-This is a demo boundary hardening change; it does not alter shared contracts or authorize
-real actions.
-## Checkpoint 22 - 13 September 2026: local model configuration guard
-
-The opt-in local audio mode now validates its model directory before starting the demo
-session.
-
-- A missing or invalid ACCESSFLOW_DEMO_WHISPER_MODEL value produces a labeled demo/config
-  error and closes the WebSocket with a policy error code.
-- A valid existing directory still enables local Faster Whisper audio.
-- The default unset configuration remains demo/mock.
-- This prevents the page from advertising a local backend that cannot run.
-
-The guard is covered by unit and WebSocket tests. No shared contract or dependency changed.
-## Checkpoint 23 - 13 September 2026: opt-in local Ollama vision path
-
-Added an optional local PNG provider using the Ollama generate API.
-
-~~~powershell
-$env:ACCESSFLOW_DEMO_OLLAMA_VISION_MODEL = 'gemma3:4b'
-$env:ACCESSFLOW_DEMO_OLLAMA_ENDPOINT = 'http://127.0.0.1:11434/api/generate'
-uv run --python 3.12 uvicorn demo.app:app
-~~~
-
-When configured, the demo routes PNG input through the existing LocalPerception validation
-and displays an ollama/gemma3:4b observation backend. The provider sends image bytes only
-to a loopback endpoint, never downloads a model, trims the response and surfaces service or
-shape errors. Text remains mock; audio stays independently configurable.
-
-The provider and demo delegate are covered with mocked responses. No ollama executable or
-loopback service was available on this machine, so model availability and live vision
-quality remain unverified.
-## Checkpoint 24 - 13 September 2026: WebSocket media protocol smoke
-
-Added end-to-end demo coverage for browser media messages after session materialization.
-
-- A base64 WAV upload is acknowledged as received, reaches the mock controller and produces
-  the expected informational final output.
-- A base64 PNG upload is acknowledged as received and preserved for the session; the current
-  v0.1 agent still needs a paired transcript before it emits a controller final output.
-- The transport status includes the media kind and source ID without changing perception
-  backend labels or shared contracts.
-
-Verification: pytest tests/demo -q -> 18 passed; pytest -q -> 77 passed; Ruff clean;
-git diff --check clean. FastAPI/Starlette dependency deprecation warnings remain informational.
-
-## Checkpoint 25 - 13 September 2026: functional Chrome browser smoke
-
-Ran the local demo through a temporary isolated Chrome session using the actual page controls.
-
-- Chrome connected to the WebSocket route and rendered the demo/mock backend label.
-- Text produced the visible mock acknowledgment and informational final output.
-- The checked-in WAV control produced a media-received audio status and mock final.
-- The PNG control produced a media-received frame status; a paired transcript then produced
-  its informational final.
-- The captured viewport had no horizontal overflow.
-- Uvicorn required local-only websockets 17.1 because the committed dependency set does not
-  currently include a WebSocket runtime. This is recorded as a proposal for the shared owner.
-- Physical microphone/device capture, pixel inspection and separate console capture remain
-  unverified.
-## Checkpoint 26 - 13 September 2026: synthetic microphone browser smoke
-
-Exercised the microphone controls in isolated Chrome with a synthetic audio device.
-
-- Start entered recording state; stop encoded the captured samples as WAV and uploaded them.
-- The session reported media_received=audio and emitted the expected mock final.
-- This run used no person or physical microphone. Physical device permission, pixel inspection
-  and separate console capture remain unverified.
+[Recording plan](docs/DEMO_RECORDING_PLAN.md) ·
+[Submission checklist](docs/SUBMISSION_CHECKLIST_2026-09-30.md) ·
+[Development history](docs/history/README_DEVELOPMENT_LOG_2026-09-30.md)
