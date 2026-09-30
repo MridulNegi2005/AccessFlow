@@ -1956,3 +1956,12 @@ No B edit, model training, live agent/ASR/judge call, score or mic claim.
 ## 2026-09-30 — Latest main reconciliation
 
 AI assistance merged Mridul's `d007d81` corpus-format/preflight update into `atishay/perception` and verified the combined tree. No Atishay runtime source or presentation file changed. The Python 3.11 suite passed 1,589 tests with 6 skipped and two existing dependency warnings; Ruff and merge diff checks passed. The official score remains unrun because judge/scorer prerequisites are incomplete. Physical mic access is still awaiting Atishay; no speech or microphone result is claimed.
+
+## 2026-09-30 — Reviewed final voice integration and teammate instructions
+
+AI assistance inspected the latest Atishay branch, preserved shared ownership,
+ran the exact combined software suite and browser checks, integrated the reviewed
+source, and drafted first-person remaining-work instructions. Human request:
+merge if verified, defer presentation, and provide teammate instructions.
+No source repair, model training, live provider request, score or physical
+microphone test occurred. Checks are in reviews/MERGE_VERIFICATION_2026-09-30.md.
