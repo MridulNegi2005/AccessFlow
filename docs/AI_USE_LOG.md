@@ -1753,3 +1753,7 @@ request, verified A ownership and B source identity, and reran the full suite:
 1,463 passed, 6 skipped, 2 existing warnings in 84.97 seconds. Ruff, seven
 browser checks and whitespace validation passed. No source fix was added during
 the merge, and no live provider/device/evaluator result is implied.
+
+## 2026-09-30 — Completion instructions
+
+Model-assisted drafting of Atishay first-person work instructions from verified audit and source configuration; user requested A code and slide work next. No source behavior changed in this prompt commit.
