@@ -16,7 +16,7 @@ import sys
 import time
 import zipfile
 
-AGENT_PIN = "53260dfe58210f4ef2059c2713355721a4072ed5"
+AGENT_PIN = "1030321a0dcbafcf97db5fbbad86423b57ba35b5"
 FDB_PIN = "3e799c45a045256f47d5f1c9cda90157e2d2ec9e"
 ARCHIVE_SHA = "37545bd896f81718136598cf5be25d42ea9aa22efcd91f58370938d05d7d672f"
 WORK = Path("/tmp/accessflow-fdb")
@@ -86,7 +86,7 @@ def prepare():
             log=EVIDENCE / "torch-install.log")
     command([uv, "pip", "install", "--python", scorer,
              "nemo_toolkit[asr]==2.4.0", "numpy==1.26.4", "huggingface-hub<1",
-             "transformers==4.51.3", "livekit==1.1.2", "openai==1.109.1",
+             "transformers==4.51.3", "livekit==1.1.2", "livekit-api==1.2.1", "openai==1.109.1",
              "python-dotenv==1.2.3", "pydub==0.25.1", "ffmpeg-python==0.2.0", "gdown==5.2.0"],
             log=EVIDENCE / "scorer-install.log")
     command([uv, "pip", "check", "--python", scorer], log=EVIDENCE / "scorer-dependency-check.log")
@@ -96,6 +96,8 @@ def prepare():
              "--extra", "fdb"], env=env, log=EVIDENCE / "agent-install.log")
     command([scorer, "-m", "pip", "freeze"], log=EVIDENCE / "scorer-freeze.txt")
     fdb = reference / "v3"
+    command([scorer, "-c", "import livekit_inference; print('Official transport imports passed')"],
+            cwd=fdb, log=EVIDENCE / "transport-import.log")
     # Actual unchanged official loader, GPU transfer and a synthetic silence smoke test.
     probe = """import json,time,torch,numpy as np
 from run_tool_benchmark import load_asr_model

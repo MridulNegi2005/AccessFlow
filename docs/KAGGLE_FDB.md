@@ -80,3 +80,10 @@ performance. OpenAI judge funding remains a separate issue.
 References: [Kaggle kernel configuration](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels_metadata.md),
 [Kaggle Secrets](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md),
 [FDB-v3](https://github.com/DanielLin94144/Full-Duplex-Bench/tree/main/v3).
+
+Version 4 finished with 100 failed client calls and zero completed recordings.
+The corrected profile includes the separate `livekit-api==1.2.1` distribution
+and imports the actual official client before model warm-up. Core pin `1030321`
+also retains swallowed client stderr with secret redaction and fails an
+all-failure batch. A green Kaggle job badge does not establish a working run.
+See `reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md` for reproduction and evidence.

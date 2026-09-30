@@ -1972,3 +1972,8 @@ AI assistance prepared separate GPU scorer/agent environments, a private noteboo
 Kaggle version 2 failed in actual preflight: resolving its venv Python symlink invoked the base interpreter without scorer dependencies. AI-assisted fix preserves the venv entry point in both owned scripts. Two real-symlink regressions skip on Windows; Linux retry is necessary evidence. No B edits.
 
 Actual single planner connection through LiveKit succeeded, 56 input/11 output tokens, 5.31s; no benchmark score implied. CLI upload detached private Kaggle Secrets in version 3; restored bindings and UI-launched version 4. No payment or B source edit.
+
+Version 4 produced 100 inference failures. AI assistance reproduced a missing
+livekit-api dependency using the unchanged real client, added an import preflight,
+error observation and all-failure gate in owned packaging. Full suite 1,601
+passed/8 skipped; no B source edit, payment, training, score or microphone claim.

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "date": "2026-09-30",
+  "kaggle_version": 4,
+  "kaggle_run_id": 354191444,
+  "manifest_sha256": "a3b3595dee7392b3f776319971c7b4789d5a75b298b23607f05e7f4026a9c26e",
+  "results": {
+    "expected": 100,
+    "missing": [],
+    "status_counts": {
+      "inference_failed": 100
+    }
+  },
+  "claim": "No successful inference or score; all 100 client calls failed. Worker registered but received no jobs.",
+  "reproduction": "Unmodified livekit_inference import fails with livekit 1.1.2 alone; passes after livekit-api 1.2.1 installation.",
+  "limitation": "This dependency reproduction does not prove no further live runtime defects exist.",
+  "agent_commit": "53260dfe58210f4ef2059c2713355721a4072ed5"
+}
