@@ -1942,6 +1942,7 @@ AI assistance updated only Atishay-owned FDB-v3 tool descriptions and tests afte
 Actual LiveKit recorded-audio checks used Groq whisper-large-v3 STT, LiveKit Inference openai/gpt-5.6-luna planning and Deepgram Aura-2 athena TTS. travel_01 made the expected flight search; ecommerce_19 searched the corrected tablet and added one product; the final ecommerce_18 run searched gaming mice, tracked PO999 and added its sole result. One earlier e18 run only made the independent reads; the final guidance change preceded its passing rerun. No 401/429 occurred. One SDK prewarm timeout warning did not prevent successful planner requests.
 
 No official score, physical microphone result or clean scoring-host verification is claimed. NeMo and the OpenAI judge key are unavailable; M1-M4 remain NOT RUN. Generated replies and traces stay outside Git. The previously verified navigation clip and screenshot deliverables are linked in the Atishay handoff. No provider secrets or bulk benchmark audio were committed.
+
 ## 2026-09-30 — Actual corpus verification
 
 Downloaded official released inputs into ignored storage and verified formats
@@ -1951,3 +1952,7 @@ it. Full A 1,544 pass/6 skip, focused packaging 56 pass, Ruff pass. Unmodified
 official reader and checksum-verified private FFmpeg converted all 100 originals
 with hashes unchanged. Scoring preflight explicitly fails for missing judge key.
 No B edit, model training, live agent/ASR/judge call, score or mic claim.
+
+## 2026-09-30 — Latest main reconciliation
+
+AI assistance merged Mridul's `d007d81` corpus-format/preflight update into `atishay/perception` and verified the combined tree. No Atishay runtime source or presentation file changed. The Python 3.11 suite passed 1,589 tests with 6 skipped and two existing dependency warnings; Ruff and merge diff checks passed. The official score remains unrun because judge/scorer prerequisites are incomplete. Physical mic access is still awaiting Atishay; no speech or microphone result is claimed.
