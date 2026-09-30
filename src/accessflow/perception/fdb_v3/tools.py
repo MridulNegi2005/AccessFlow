@@ -42,11 +42,11 @@ _TOOLS = (
      ("origin_address", "destination_address")),
     ("update_search_filter", "write", "Update an apartment search filter.",
      {"filter_name": "string", "value": None}, ("filter_name", "value")),
-    ("track_order", "read", "Look up the current state of an order. An order ID spelled with spoken separators is one identifier: remove spaces and hyphens between its letters and digits.",
+    ("track_order", "read", "Look up the current state of an order. When requested, perform this read even if the user also asked for an independent task. An order ID spelled with spoken separators is one identifier: remove spaces and hyphens between its letters and digits.",
      {"order_id": "string"}, ("order_id",)),
-    ("search_products", "read", "Find products by query and optional budget.",
+    ("search_products", "read", "Find products by query and optional budget; perform the search when requested, even if another independent task is also requested. Returns /products rows with /product_id, /name, and /price. For an explicit cart add, declare its write contract before this read. When choice is otherwise unspecified, product_id may come from exactly one valid returned row. If the user asked for the cheapest and exactly one valid row is returned, that sole row is the unambiguous cheapest candidate and may supply product_id. If several rows are returned, ranking is unsupported; ask the user to select.",
      {"query": "string", "max_price": "number"}, ("query",)),
-    ("add_to_cart", "write", "Add a product and quantity to the cart. A request to add one singular item without another quantity means quantity 1; preserve any explicit quantity or correction.",
+    ("add_to_cart", "write", "Add a product and quantity to the cart only after an explicit user request. For a searched product, use product_id only from the current accepted search result under its selection rules and a write contract declared before search. A request to add one singular item without another quantity means quantity 1; preserve any explicit quantity or correction.",
      {"product_id": "string", "quantity": "integer"}, ("product_id", "quantity")),
 )
 

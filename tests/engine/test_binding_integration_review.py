@@ -98,7 +98,7 @@ async def test_fresh_selection_correction_can_explicitly_reuse_accepted_read_end
         await end(iq, task)
 
 
-@pytest.mark.parametrize("fault", ["both_sources", "no_source", "empty_constraints"])
+@pytest.mark.parametrize("fault", ["both_sources", "no_source"])
 async def test_model_boundary_rejects_invalid_binding_semantics(fault):
     malformed = read_plan().model_dump()
     rule = malformed["write_contracts"][0]["delegated_arguments"]["item_id"]
@@ -106,8 +106,6 @@ async def test_model_boundary_rejects_invalid_binding_semantics(fault):
         rule["source_call_id"] = "unrelated"
     elif fault == "no_source":
         rule["source_call_index"] = None
-    else:
-        rule["match_slots"] = {}
 
     class Backend:
         async def generate(self, system, data, schema):

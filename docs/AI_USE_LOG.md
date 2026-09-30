@@ -1908,3 +1908,19 @@ passed. No video file was captured and M1–M4 remain NOT RUN.
 ## 2026-09-30 17:23 IST — Live dashboard clip and handoff
 
 AI assistance captured and checked a synchronized local dashboard/voice clip for a fresh simulated navigation room. The real LiveKit worker processed generated speech, committed Airport Terminal 1 / revision 1, and produced the recorded spoken confirmation; the 31.08-second 1280×720 H.264/AAC MP4 decoded fully. File and sanitized trace locations, pinned optional worker requirements, start/scoring commands, provider profile and remaining Mridul-owned binding/package work are recorded in `docs/handoffs/atishay.md`. Dashboard screenshots are available in the task's deliverable tabs. This is generated-audio evidence only; no physical microphone or official FDB score is claimed. Existing FDB case outcomes remain one expected single-tool call, one missing cart action and one no-tool three-step attempt. No secrets or raw benchmark recordings were added to Git.
+## 2026-09-30 — Unique-row binding
+
+AI-assisted generic contract/resolver/prompt change and regression design. Human request: complete A code plus presentation. Explicit empty constraints now require a single valid object; source/authorization/interruption guards retained. Full tests 1,488 pass/6 skip. No training, benchmark-answer-specific code, live inference or official evaluation.
+
+## 2026-09-30 — FDB package and Samsung draft
+
+AI assistance added root optional dependency lock, reproduction supervision, sixteen offline safety tests, candidate container recipe and current-target documentation. Inspected unchanged pinned FDB source and B repair commit; B implementation untouched. Draft presentation follows supplied Samsung template with editable tables/diagram and qualified evidence. Full A software 1,504 pass/6 skip; no model training or actual live inference/scorer/microphone result. Human review of team details, run evidence and final artifacts remains.
+
+## 2026-09-30 — Scorer request audit
+
+AI-assisted A packaging observes the pinned scorer's synchronous SDK requests
+without changing prompts, replies, score logic, models or agent inputs. Added
+24 offline regression cases, including actual-SDK mock transport; three separate
+unmodified upstream function probes reproduce swallowed failures with no network
+request. Full A software 1,528 pass/6 skip, focused packaging 40 pass, Ruff pass.
+No B source edit, model training, real judge/audio score or microphone claim.

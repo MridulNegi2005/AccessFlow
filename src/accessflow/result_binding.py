@@ -184,15 +184,14 @@ def resolve_selection(
     ``matches`` is a pointer relative to a row and its value is the expected
     JSON scalar.  Missing fields simply make that row fail its constraints;
     malformed pointers, an absent collection, no matching row, ambiguity, or
-    a null selected value raise :class:`BindingError`.
+    a null selected value raise :class:`BindingError`. An explicit empty match
+    map selects only a collection of exactly one bounded valid JSON object.
     """
 
     if not isinstance(result, dict):
         raise BindingError("result must be a JSON object")
     if not isinstance(matches, dict) or any(type(pointer) is not str for pointer in matches):
         raise BindingError("matches must map string JSON pointers to scalar values")
-    if not matches:
-        raise BindingError("at least one match constraint is required")
     if len(matches) > MAX_MATCHES:
         raise BindingError(f"matches exceeds the {MAX_MATCHES}-constraint limit")
     if any(not _is_json_scalar(expected) for expected in matches.values()):
@@ -211,6 +210,9 @@ def resolve_selection(
         raise BindingError("collection path must resolve to a list")
     if len(collection) > MAX_ROWS:
         raise BindingError(f"collection exceeds the {MAX_ROWS}-row limit")
+    if not matches and (len(collection) != 1 or type(collection[0]) is not dict
+                        or not _bounded_json_value(collection[0])):
+        raise BindingError("unconstrained selection requires exactly one valid object row")
 
     selected: Any = _MISSING
     matching_rows = 0

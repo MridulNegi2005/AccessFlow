@@ -267,15 +267,14 @@ class ResultBinding(Model):
     source_call_id: str | None = Field(default=None, min_length=1)
     collection_pointer: str = Field(max_length=512)
     value_pointer: str = Field(max_length=512)
-    # Candidate field JSON pointer -> user-controlled slot name.
-    match_slots: dict[str, str] = Field(min_length=1, max_length=16)
+    # Candidate field JSON pointer -> user-controlled slot name. An explicit
+    # empty map permits only a collection containing exactly one valid object.
+    match_slots: dict[str, str] = Field(max_length=16)
 
     @model_validator(mode="after")
     def one_source(self):
         if (self.source_call_index is None) == (self.source_call_id is None):
             raise ValueError("Exactly one read source is required")
-        if not self.match_slots or len(self.match_slots) > 16:
-            raise ValueError("Between one and sixteen match constraints are required")
         return self
 
 

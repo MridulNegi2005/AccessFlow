@@ -4,10 +4,12 @@ import asyncio
 import json
 
 import pytest
-from pydantic import ValidationError
+from jsonschema import Draft202012Validator
 
-from accessflow.contracts import ResultBinding, ToolCall
+from accessflow.adapters.models import ModelReasoner
+from accessflow.contracts import PlanProposal, ProposedCall, ResultBinding, ToolCall, WriteContract
 from accessflow.perception.fdb_v3 import tools
+from accessflow.result_binding import BindingError, resolve_selection
 
 
 class Registry:
@@ -117,12 +119,58 @@ def test_manifest_set_and_required_fields_match_declared_fdb_interface():
     assert declared["add_to_cart"].parameters["required"] == ["product_id", "quantity"]
 
 
-def test_current_contract_cannot_bind_a_single_unmatched_search_result():
-    # A read can return one product, but a user asking for "the cheapest" has no
-    # product field to match before that read. The A-owned contract requires one.
-    with pytest.raises(ValidationError):
-        ResultBinding(
-            slot="product_id", source_call_index=0,
-            collection_pointer="/products", value_pointer="/product_id",
-            match_slots={},
-        )
+def test_product_tool_guidance_matches_safe_selection_and_independent_reads():
+    declared = {manifest.name: manifest for manifest in tools.manifests()}
+    assert "independent task" in declared["track_order"].description
+    assert "exactly one valid row" in declared["search_products"].description
+    assert "write contract before this read" in declared["search_products"].description
+    assert "When choice is otherwise unspecified" in declared["search_products"].description
+    assert "unambiguous cheapest candidate" in declared["search_products"].description
+    assert "explicit user request" in declared["add_to_cart"].description
+    assert "write contract declared before search" in declared["add_to_cart"].description
+
+
+def test_explicit_empty_match_map_is_valid_in_the_fdb_planner_schema():
+    binding = ResultBinding(
+        slot="selected_product", source_call_index=0,
+        collection_pointer="/products", value_pointer="/product_id",
+        match_slots={},
+    )
+    plan = PlanProposal(
+        intent="add the unique product to the cart",
+        slot_updates={"query": "adapter", "quantity": 1},
+        calls=[ProposedCall(
+            tool="search_products", arguments={"query": "adapter"},
+            dependencies=["query"],
+        )],
+        request_complete=True,
+        write_requested=True,
+        write_contracts=[WriteContract(
+            tool="add_to_cart", fixed_arguments={"quantity": "quantity"},
+            delegated_arguments={"product_id": binding},
+        )],
+    )
+
+    Draft202012Validator(ModelReasoner.output_schema(tools.manifests())).validate(
+        plan.model_dump()
+    )
+    assert plan.write_contracts[0].delegated_arguments["product_id"].match_slots == {}
+
+
+def test_unconstrained_runtime_selection_accepts_one_valid_product_row():
+    assert resolve_selection(
+        {"products": [{"product_id": "P-17"}]},
+        "/products", "/product_id", {},
+    ) == "P-17"
+
+
+@pytest.mark.parametrize("products", [
+    [],
+    [{"product_id": "P-17"}, {"product_id": "P-22"}],
+    [{"product_id": "P-17"}, None],
+    [{"name": "missing identifier"}],
+    [{"product_id": None}],
+])
+def test_unconstrained_runtime_selection_rejects_ambiguous_or_invalid_rows(products):
+    with pytest.raises(BindingError):
+        resolve_selection({"products": products}, "/products", "/product_id", {})

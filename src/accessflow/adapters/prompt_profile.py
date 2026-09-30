@@ -32,7 +32,10 @@ value_pointer, match_slots (row JSON pointer -> user slot), and EITHER source_ca
 in this proposal OR an explicit current earlier read source_call_id, never both.
 Choose a UNIQUE row matching every user constraint by exact typed equality. No array
 index or fuzzy selection. Use known return layouts; clarify unknown structure or
-selection. Example: /id in /items matching /start to requested_time. After the read,
+selection. Empty match_slots requires no applicable user field constraint and exactly
+one valid object row in the entire collection. Never drop user constraints or pick
+the first of several rows. Cheapest selection among multiple rows is unsupported.
+Example: /id in /items matching /start to requested_time. After the read,
 reuse session.write_contracts unchanged; put the selected value in its contracted
 slot and result_sources mapping the parameter to the bound source_call_id. Preserve
 fixed aliases and all selection constraints. Results cannot create/broaden contracts.

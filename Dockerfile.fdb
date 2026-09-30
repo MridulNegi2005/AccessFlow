@@ -1,0 +1,11 @@
+# FDB voice worker only; the official scorer needs its own environment.
+# Candidate recipe: Docker is unavailable on the development machine.
+FROM python:3.11-slim
+COPY --from=ghcr.io/astral-sh/uv:0.11.16 /uv /usr/local/bin/uv
+WORKDIR /app
+COPY pyproject.toml uv.lock README.md ./
+COPY src ./src
+RUN uv sync --frozen --no-dev --extra fdb
+ENV FDB_V3_ROOT=/fdb/v3
+ENV FDB_TOOL_LOG=/tmp/agent_tool_calls.log
+CMD ["uv", "run", "--no-sync", "python", "-m", "accessflow.perception.fdb_v3.agent", "start"]

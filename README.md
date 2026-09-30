@@ -7,21 +7,20 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 
 - Atishay and his AI: [ATISHAY_START_HERE.md](ATISHAY_START_HERE.md)
 - Current verified status: [docs/STATUS.md](docs/STATUS.md)
-- Samsung package and official checks: [docs/SAMSUNG_PACKAGE.md](docs/SAMSUNG_PACKAGE.md)
+- Current FDB-v3 setup and reproduction: [docs/FDB_REPRODUCTION.md](docs/FDB_REPRODUCTION.md)
+- Historical queue package: [docs/SAMSUNG_PACKAGE.md](docs/SAMSUNG_PACKAGE.md)
 - Agreed plan: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 - Interfaces and ownership: [docs/CONTRACT.md](docs/CONTRACT.md), [AGENTS.md](AGENTS.md)
 - Daily notes: [docs/handoffs/](docs/handoffs/)
 
 ## Current progress
 
-As of24 September: the Samsung queue adapter supports actual MP3 turn assembly,
-local CPU transcription and explicit real-perception setup. The new packaged
-ASR/vision/Qwen warm-up passed in47.9s;the Docker recipe remains unexecuted. An isolated native audio
-package verified89 hashes/37 pins and ran a public audio scenario. Full software suite:
-1344 passed,2 skipped,1 expected failure. Actual audio tasks still missed completion;
-local vision took23.688s and missed the official tail. **Code readiness remains open.**
-See [current status](docs/STATUS.md), [audio/runtime evidence](docs/SAMSUNG_AUDIO_ADMISSION_2026-09-24.md)
-and [ownership/coordination](docs/MEDIA_COMPLETION_COORDINATION_2026-09-24.md).
+As of 30 September: Samsung's updated target is FDB-v3 over LiveKit. The shared
+unique-result binding and optional locked runtime are implemented. A software
+suite: 1,504 passed / 6 skipped. Official aggregate scoring and live microphone
+acceptance remain open. Atishay's newest voice/navigation code is under separate
+integration review. Read the current status and reproduction guide for exact
+ownership, prerequisite and evidence limitations.
 
 The earlier checkpoints below are historical. Their test counts, backend limitations
 and local-model results describe their recorded state, not today's entire implementation.

@@ -57,7 +57,11 @@ A rule names its destination slot, source_call_index in this proposal's calls (o
 explicit earlier current read source_call_id, never both), collection_pointer, value_pointer,
 and match_slots mapping row field JSON pointers to user slots. Select only a UNIQUE row
 matching every constraint by exact typed equality; array-index paths and fuzzy matching
-are unsupported. Use supplied descriptions to choose paths; if structure or selection is
+are unsupported. An explicit empty match_slots is allowed only when no user field
+constraint applies and the returned collection contains exactly one valid object row.
+Never omit a stated constraint or choose the first of multiple rows. Selecting cheapest
+among multiple rows is unsupported and needs clarification. Use supplied descriptions
+to choose paths; if structure or selection is
 unknown, clarify rather than inventing authority. Preserve every user selection constraint.
 For example a returned identifier can select /id in /items matching /start to requested_time.
 After the read, use session.write_contracts, set the selected value in slot_updates, and

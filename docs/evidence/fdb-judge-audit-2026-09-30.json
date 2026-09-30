@@ -1,0 +1,73 @@
+{
+  "mode": "offline actual-SDK mock transport; zero network/provider requests",
+  "fdb_commit": "3e799c45a045256f47d5f1c9cda90157e2d2ec9e",
+  "cases": [
+    {
+      "script": "evaluate_tool_calls.py",
+      "upstream_behavior": "upstream accepted exact-match fallback after mocked 401",
+      "audit": {
+        "version": 1,
+        "script": "evaluate_tool_calls.py",
+        "observed_requests": 1,
+        "failed_requests": 1,
+        "status": "unverified_failures",
+        "openai_sdk": "2.54.0",
+        "requests": [
+          {
+            "request": 1,
+            "model": "gpt-4o",
+            "status": "request_error",
+            "error_type": "AuthenticationError",
+            "duration_s": 0.047
+          }
+        ],
+        "scope": "SDK request/reply structure only; not proof of judge accuracy or all report coverage"
+      }
+    },
+    {
+      "script": "evaluate_pass_rate.py",
+      "upstream_behavior": "upstream accepted exact-match fallback after mocked 401",
+      "audit": {
+        "version": 1,
+        "script": "evaluate_pass_rate.py",
+        "observed_requests": 1,
+        "failed_requests": 1,
+        "status": "unverified_failures",
+        "openai_sdk": "2.54.0",
+        "requests": [
+          {
+            "request": 1,
+            "model": "gpt-4o",
+            "status": "request_error",
+            "error_type": "AuthenticationError",
+            "duration_s": 0.0
+          }
+        ],
+        "scope": "SDK request/reply structure only; not proof of judge accuracy or all report coverage"
+      }
+    },
+    {
+      "script": "analyze_tool_latency.py",
+      "upstream_behavior": "upstream retained a report but no judged task-completion latency",
+      "audit": {
+        "version": 1,
+        "script": "analyze_tool_latency.py",
+        "observed_requests": 1,
+        "failed_requests": 1,
+        "status": "unverified_failures",
+        "openai_sdk": "2.54.0",
+        "requests": [
+          {
+            "request": 1,
+            "model": "gpt-4o",
+            "status": "request_error",
+            "error_type": "AuthenticationError",
+            "duration_s": 0.0
+          }
+        ],
+        "scope": "SDK request/reply structure only; not proof of judge accuracy or all report coverage"
+      }
+    }
+  ],
+  "scope": "Scoring failure detection, not an agent/benchmark score"
+}

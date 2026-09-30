@@ -100,8 +100,7 @@ def _nested_list(depth):
 
 
 def test_requires_a_bounded_number_of_constraints():
-    with pytest.raises(BindingError):
-        resolve_selection({"rows": [{"id": "a"}]}, "/rows", "/id", {})
+    assert resolve_selection({"rows": [{"id": "a"}]}, "/rows", "/id", {}) == "a"
     with pytest.raises(BindingError):
         resolve_selection(
             {"rows": [{"id": "a"}]},
@@ -109,6 +108,15 @@ def test_requires_a_bounded_number_of_constraints():
             "/id",
             {f"/constraint{index}": "x" for index in range(17)},
         )
+
+
+@pytest.mark.parametrize("rows", [[], [{"id": "a"}, {"id": "b"}],
+                                  [{"id": "a"}, None], ["a"], [None],
+                                  [{"id": "a", "invalid": float("nan")}],
+                                  [{"id": None}], [{"other": "missing"}]])
+def test_unconstrained_binding_rejects_ambiguous_or_malformed_entire_collection(rows):
+    with pytest.raises(BindingError):
+        resolve_selection({"rows": rows}, "/rows", "/id", {})
 
 
 def test_json_equal_rejects_depth_node_and_cycle_overruns():
