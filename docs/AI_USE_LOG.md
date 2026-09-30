@@ -1,5 +1,18 @@
 # AI-use development log
 
+## 2026-09-30 — Latest-push review and official-source reconciliation
+
+- Prompt purpose: audit newly pushed B changes, Groq usage and submission needs.
+- Model-assisted code inspection, full offline regression and two additional
+  deterministic probes; no product code generated or changed. Human decides
+  whether/when to merge, implement fixes and release.
+- Results: 1,482 pass / 6 skip, Ruff and seven Node checks pass; reproduced voice
+  control completion and navigation cancellation defects outside existing tests.
+- Independently read updated organizer guide, current submission form and relevant
+  emails. Saved two review/checklist Markdown artifacts; no email bodies/recipient
+  lists/credentials were copied into repository records.
+- No live model request, official score, microphone result or submission claimed.
+
 ## 2026-09-25 — Browser request/response correlation recovery
 
 - A deterministic regression reproduced two owned demo issues: a valid
