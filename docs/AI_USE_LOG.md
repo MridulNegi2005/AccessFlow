@@ -87,6 +87,18 @@
   microphone capture, or final submission occurred.
 - No A-owned implementation or root package dependency was changed. The
   updated competition target and LiveKit account remain open inputs.
+## 2026-09-30 — Latest-push review and official-source reconciliation
+
+- Prompt purpose: audit newly pushed B changes, Groq usage and submission needs.
+- Model-assisted code inspection, full offline regression and two additional
+  deterministic probes; no product code generated or changed. Human decides
+  whether/when to merge, implement fixes and release.
+- Results: 1,482 pass / 6 skip, Ruff and seven Node checks pass; reproduced voice
+  control completion and navigation cancellation defects outside existing tests.
+- Independently read updated organizer guide, current submission form and relevant
+  emails. Saved two review/checklist Markdown artifacts; no email bodies/recipient
+  lists/credentials were copied into repository records.
+- No live model request, official score, microphone result or submission claimed.
 
 ## 2026-09-25 — Browser request/response correlation recovery
 
@@ -1796,6 +1808,14 @@ browser checks. The merge review names each retained path and limitation.
 No teammate source was edited to hide a failure; no official media acceptance,
 release tag or submission is claimed.
 
+## 2026-09-30 - Review of September 27 B snapshot
+
+AI assistance compared branch af2b89f against main, inspected changed source,
+tests and result records, and reran the full Python suite, Ruff and all seven
+browser checks. Results: 1,463 passed, 6 skipped, 2 dependency warnings; Ruff
+and browser checks passed. No model calls or source changes were made. User
+chose this dated review while newer work may be unpushed. No newer quota or
+live microphone result is inferred from the older records.
 ## 2026-09-27 - Atishay D4 demo and cloud-preview integration
 
 AI assistance fast-forwarded Atishay's branch to the ownership-safe merged
@@ -1844,3 +1864,14 @@ Follow-up evidence: the installed Groq STT plugin decoded a recorded project
 WAV and a custom direct mock write called `add_to_cart` once. Compact-v2
 planning failed schema validation twice; the adapter retains the full prompt
 and its bridge now waits through bounded controller recovery.
+## 2026-09-30 - Reviewed B merge and combined verification
+
+AI assistance merged reviewed Atishay commit af2b89f into main after the user's
+request, verified A ownership and B source identity, and reran the full suite:
+1,463 passed, 6 skipped, 2 existing warnings in 84.97 seconds. Ruff, seven
+browser checks and whitespace validation passed. No source fix was added during
+the merge, and no live provider/device/evaluator result is implied.
+
+## 2026-09-30 — Completion instructions
+
+Model-assisted drafting of Atishay first-person work instructions from verified audit and source configuration; user requested A code and slide work next. No source behavior changed in this prompt commit.
