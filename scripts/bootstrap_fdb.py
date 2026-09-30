@@ -23,7 +23,8 @@ def bootstrap(args) -> None:
     if uv is None:
         raise ValueError("Install uv before invoking the bootstrap")
     fdb, output = args.fdb_root.resolve(), args.output.resolve()
-    scorer, private = args.scorer_python.resolve(), args.env_file.resolve()
+    scorer = args.scorer_python.expanduser().absolute()
+    private = args.env_file.resolve()
     environment = args.agent_env.resolve()
     agent_python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     if environment == ROOT or not environment.is_relative_to(ROOT):

@@ -37,7 +37,7 @@ an independent OpenAI `gpt-4o` judge.
 
 ## Reproducibility and scope
 
-- Agent source: `91e3b8d76083135cdef38550c0360b7765c80c5f`.
+- Agent source: `53260dfe58210f4ef2059c2713355721a4072ed5` (Linux venv fix).
 - Official FDB source: `3e799c45a045256f47d5f1c9cda90157e2d2ec9e`.
 - Runner: `scripts/kaggle_fdb.py`; notebook embeds the same runner.
 - GPU candidate: Python 3.10, Torch/Torchaudio 2.6.0 CUDA 12.4, NeMo 2.4.0;
