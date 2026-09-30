@@ -189,6 +189,23 @@ def sanitized_config(env: dict[str, str]) -> dict:
     return {name: env.get(name, default) for name, default in CONFIG.items()}
 
 
+def configured_environment(fdb: Path, private: Path | None = None) -> dict[str, str]:
+    from dotenv import dotenv_values
+    env = dict(os.environ)
+    if private is not None and not private.is_file():
+        raise ValueError("Explicit private configuration file is missing")
+    for path in ([private] if private else []) + [fdb / ".env.local"]:
+        for key, value in dotenv_values(path, interpolate=False).items():
+            if value is not None:
+                env.setdefault(key, value)
+    for key, value in CONFIG.items():
+        env.setdefault(key, value)
+    env["FDB_V3_ROOT"] = str(fdb.resolve())
+    env["FDB_TOOL_LOG"] = str(Path(fdb.resolve().anchor) / "tmp/agent_tool_calls.log")
+    env["PYTHONUTF8"] = "1"
+    return env
+
+
 def stop_worker(worker: subprocess.Popen, timeout: float = 10) -> None:
     """Stop only the process started by this invocation."""
     if worker.poll() is None:
@@ -332,6 +349,7 @@ def main(argv=None) -> int:
     parser.add_argument("--fdb-root", type=Path, required=True, help="Pinned official clone's v3 directory")
     parser.add_argument("--scorer-python", required=True, help="Separate scorer environment Python")
     parser.add_argument("--output", type=Path, required=True, help="New private evidence directory")
+    parser.add_argument("--env-file", type=Path, help="Optional private config; process environment has precedence")
     parser.add_argument("--mode", choices=("doctor", "run", "score", "reproduce"), default="doctor")
     parser.add_argument("--exact-match", action="store_true", help="Label tool scoring diagnostic, not semantic judge scoring")
     parser.add_argument("--overwrite-results", action="store_true", help="Explicitly let upstream replace existing result files")
@@ -340,18 +358,8 @@ def main(argv=None) -> int:
     args.scorer_python = str(Path(args.scorer_python).resolve())
     if not 1 <= args.registration_timeout <= 600:
         parser.error("Registration timeout must be between 1 and 600 seconds")
-    env = dict(os.environ)
     try:
-        from dotenv import dotenv_values
-        for key, value in dotenv_values(args.fdb_root / ".env.local").items():
-            if value is not None:
-                env.setdefault(key, value)
-        for key, value in CONFIG.items():
-            env.setdefault(key, value)
-        env["FDB_V3_ROOT"] = str(args.fdb_root.resolve())
-        # Scorer always reads this rooted path, not the worker's custom override.
-        env["FDB_TOOL_LOG"] = str(Path(args.fdb_root.resolve().anchor) / "tmp/agent_tool_calls.log")
-        env["PYTHONUTF8"] = "1"
+        env = configured_environment(args.fdb_root, args.env_file)
         result = run_pipeline(args, env)
     except (ValueError, RuntimeError, TimeoutError, subprocess.SubprocessError, OSError, ImportError) as error:
         print(str(error) if isinstance(error, (ValueError, RuntimeError, TimeoutError)) else
