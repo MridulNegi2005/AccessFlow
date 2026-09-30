@@ -817,7 +817,7 @@ arrives and reaches the reasoner first; after frame 1 is released, its stale res
 never appears in a frame-bearing reasoner view.
 
 **Status:** Focused regression passed. Expected suite counts after this change are 94 passed, 3 strict
-xfailed; demo suite 35 passed, 3 strict xfailed; perception suite 43 passed.
+xfailed; demo suite 36 passed, 3 strict xfailed; perception suite 43 passed.
 
 **Notes:** This covers stale-result handling with a perception seam and makes no live vision quality
 claim. No engine, contract, lockfile or dependency manifest changes were made.
@@ -1157,7 +1157,7 @@ queue at 16. No engine, contracts, adapters, lockfile or model/network behavior 
 terminate the recoverable input path; added structured error recovery and a same-session regression.
 A separate delegated perception review found unknown critical PNG chunks were accepted before vision
 inference; added parser rejection and a provider-not-called regression. Focused checks passed, with
-full-suite verification recorded at 635 passed and one retained expected conflict example. No engine,
+full-suite verification recorded at 636 passed and one retained expected conflict example. No engine,
 contracts, adapters, lockfile or model/network behavior changed.
 
 2026-09-16 AI-assisted implementation: Added failure-safe cleanup for browser media materialization after
@@ -1875,3 +1875,7 @@ the merge, and no live provider/device/evaluator result is implied.
 ## 2026-09-30 — Completion instructions
 
 Model-assisted drafting of Atishay first-person work instructions from verified audit and source configuration; user requested A code and slide work next. No source behavior changed in this prompt commit.
+
+## 2026-09-30 15:35 IST — B1/B2 hardening
+
+AI assistance repaired the B-owned RoomBridge completion path and navigation persistence lifecycle, then added deterministic regressions for correlated terminal acknowledgments, stale events, timeout/blank input, cancellation races, idempotency, commit uncertainty, revision ordering, shutdown and room isolation. Validation: 36 focused tests passed before the final acknowledgment predicate tightening; the final bridge/navigation rerun passed 29, and the full Python suite passed 1,501 with 6 skipped and 2 existing warnings; Ruff and `git diff --check` passed. The full-suite rerun used a clean child-process environment after inherited user model/backend selectors caused two unrelated initial failures. The LiveKit package and Groq credential were unavailable to this checkout, so no provider request, recorded-audio run, physical microphone check, or official FDB score was made. No secret values or participant recordings were read into the report.

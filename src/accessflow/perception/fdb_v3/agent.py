@@ -132,7 +132,9 @@ class AccessFlowVoiceAgent(LiveKitAgent):
                          if message.role == "user"), "")
         existing_operations = self.executor.operation_ids()
         reply = await self.bridge.complete_turn(text)
-        await self.executor.drain()
+        unresolved = await self.executor.drain()
+        if unresolved:
+            _LOG.warning("Executor operations remain unresolved after turn: %s", unresolved)
         confirmed = self.executor.confirmed_results(excluding=existing_operations)
         if self.bridge.last_reply_kind == "final" and (len(confirmed) > 1 or any(
                 tool in {"set_navigation_destination", "get_navigation_state"}

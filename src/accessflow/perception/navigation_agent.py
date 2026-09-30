@@ -56,6 +56,9 @@ async def entrypoint(ctx: agents.JobContext) -> None:
     async def close_room() -> None:
         try:
             await bridge.close()
+            unresolved = await executor.drain(timeout=5.0)
+            if unresolved:
+                _LOG.error("Navigation writes unresolved at room close: %s", unresolved)
             _LOG.info("Navigation planner request outcomes: %s", backend.evidence()["requests"])
             _LOG.info("Navigation demo final state: destination=%s revision=%s",
                       executor.destination, executor.revision)

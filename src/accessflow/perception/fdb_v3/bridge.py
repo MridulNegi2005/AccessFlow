@@ -16,6 +16,10 @@ from .tools import manifests
 
 def spoken_reply(output) -> str:
     """Render a controller terminal event for speech without inventing results."""
+    # Output-only stop must be silent: the user asked us to stop speaking, so we
+    # must not emit any spoken response.
+    if output.kind == "acknowledge" and output.payload.get("output_only"):
+        return ""
     if text := output.payload.get("text"):
         return str(text)
     if result := output.payload.get("result"):
@@ -134,7 +138,10 @@ class RoomBridge:
         if self._runner is None:
             raise RuntimeError("Room not started")
         if not text.strip():
-            self._utterance_id = None
+            # A transport pending event was already admitted by begin_speech().
+            # Close that speech source through the controller contract instead
+            # of leaving the turn permanently in a pending state.
+            await self.fail_speech()
             return ""
         utterance_id = self._utterance_id or str(uuid4())
         revision = 1 if self._utterance_id else 0
@@ -147,7 +154,20 @@ class RoomBridge:
             utterance_id=utterance_id, revision=revision, text=text, final=True))
         self._reply_cause = event.event_id
         await self.inputs.put(event)
-        return await asyncio.wait_for(asyncio.shield(self._reply), timeout=timeout)
+        reply = self._reply
+        try:
+            return await asyncio.wait_for(asyncio.shield(reply), timeout=timeout)
+        except TimeoutError:
+            # A timeout ends this adapter wait, not any effect that may already
+            # have committed. Interrupt the unfinished speech request so the
+            # controller drops stale plans and applies its normal write guards.
+            if self._reply is reply and not reply.done():
+                reply.cancel()
+                await self.inputs.put(InterruptEvent(
+                    session_id=self.session_id,
+                    payload=Interrupt(scope="speech", utterance_id=utterance_id),
+                ))
+            raise
 
     async def fail_speech(self) -> None:
         if self._utterance_id is None:
@@ -186,6 +206,25 @@ class RoomBridge:
             terminal_error = output.kind == "error" and output.payload.get("code") in {
                 "backend_failure", "no_progress_exhausted", "write_outcome_unknown",
             }
-            if output.kind in {"final", "clarify"} or terminal_error:
+            # Control-terminal acknowledge events must also resolve the pending
+            # reply.  The controller emits acknowledge (not final) for a
+            # successful output-only stop and for explicit task cancellation.
+            # - output_only=True  → output stop accepted; resolve silently ("")
+            # - stop_output=True with text → task cancellation acknowledged
+            # Nonterminal acknowledgments do not meet these terminal predicates;
+            # the event-cause guard also rejects acknowledgments from other inputs.
+            terminal_acknowledge = (
+                output.kind == "acknowledge"
+                and (
+                    # output-only stop: stops output silently with no further event
+                    output.payload.get("output_only") is True
+                    # task cancel ack: "Stopped." text signals the task stop completed.
+                    # Vague-stop also emits acknowledge with stop_output=True but WITHOUT
+                    # text; it is followed by a clarify (not terminal yet).
+                    or (output.payload.get("stop_output") is True
+                        and output.payload.get("text") == "Stopped.")
+                )
+            )
+            if output.kind in {"final", "clarify"} or terminal_error or terminal_acknowledge:
                 self.last_reply_kind = output.kind
                 future.set_result(spoken_reply(output))
