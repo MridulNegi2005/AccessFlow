@@ -1,3 +1,22 @@
+## Latest combined integration — 30 September 2026
+
+Main now includes the reviewed Atishay ee5c70c snapshot and all Mridul changes
+through d007d81. Independent exact-source verification: 1,589 passed, 6 skipped,
+two existing warnings (103.73s), Ruff, seven Node checks, demo syntax and diff
+checks passed. Worker imports/actual pinned registry passed offline with
+placeholder credentials only. Protected Mridul implementation/config/tests are
+unchanged by the teammate integration. No merge-blocking regression found.
+
+Latest Atishay notes report successful recorded one/two/three-tool paths and a
+navigation clip. Raw evidence remains on his machine and was not independently
+replayed here. Physical mic M1–M4, full 100-recording official judged scoring and
+clean scoring-host reproduction remain separate gates. His mic browser was
+still Connecting. NeMo/judge readiness requires both owners. Earlier unmerged
+and stale-assertion notes below are historical, not current blockers.
+
+Read reviews/MERGE_VERIFICATION_2026-09-30.md and
+handoffs/ATISHAY_FINAL_VOICE_HANDOFF_2026-09-30.md. Presentation deferred by user.
+
 # FDB-v3 reproduction — 30 September 2026
 
 ## Latest actual-corpus checkpoint
