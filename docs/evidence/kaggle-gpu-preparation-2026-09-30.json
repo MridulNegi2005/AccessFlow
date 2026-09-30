@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "initial_preparation_run": 354181534,
+  "probe_source": "Kaggle API latest output downloaded after version 2 failed",
+  "subsequent_run": "version 2",
+  "source_commit": "91e3b8d76083135cdef38550c0360b7765c80c5f",
+  "official_reference": "3e799c45a045256f47d5f1c9cda90157e2d2ec9e",
+  "probe": {
+    "status": "gpu_model_and_silence_probe_passed",
+    "gpu": "Tesla T4",
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "seconds": 60.48370155800001
+  },
+  "scope": "Real official GPU model loader and synthetic silence only; no agent task or judge score",
+  "subsequent_pipeline_failure": "Scorer venv executable symlink resolved to base Python; preflight failed before worker",
+  "evidence_sha256": {
+    "nemo-gpu-health.log": "db694e70899e0860339ad82765ecee8e0f0fbfcd9e6d879852f19600addaaef0",
+    "scorer-freeze.txt": "5faf5e5b65f9de84217c154f1560b8929bf4d89866ec84eb5d84c91f57327bb4",
+    "scorer-dependency-check.log": "7430a81e1f260680220dd05fb4d7baa60a107bc3a6481088ee4484501468eef0"
+  },
+  "local_registration": "Actual LiveKit worker registered; no speech/planner/TTS/judge request",
+  "official_judge": "API account balance zero; no payment performed"
+}

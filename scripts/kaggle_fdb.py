@@ -16,7 +16,7 @@ import sys
 import time
 import zipfile
 
-AGENT_PIN = "91e3b8d76083135cdef38550c0360b7765c80c5f"
+AGENT_PIN = "53260dfe58210f4ef2059c2713355721a4072ed5"
 FDB_PIN = "3e799c45a045256f47d5f1c9cda90157e2d2ec9e"
 ARCHIVE_SHA = "37545bd896f81718136598cf5be25d42ea9aa22efcd91f58370938d05d7d672f"
 WORK = Path("/tmp/accessflow-fdb")
@@ -29,9 +29,11 @@ def command(args, *, cwd=None, env=None, log=None):
     if log is None:
         subprocess.run([str(x) for x in args], check=True, cwd=cwd, env=env)
     else:
+        print(json.dumps({"stage": log.name, "status": "running"}), flush=True)
         with log.open("w", encoding="utf-8") as stream:
             subprocess.run([str(x) for x in args], check=True, cwd=cwd, env=env,
                            stdout=stream, stderr=subprocess.STDOUT)
+        print(json.dumps({"stage": log.name, "status": "finished"}), flush=True)
 
 
 def extract_corpus(archive: Path, destination: Path):
