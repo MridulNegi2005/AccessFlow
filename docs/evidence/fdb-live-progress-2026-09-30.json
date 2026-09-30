@@ -1,0 +1,24 @@
+{
+  "observed_at_utc": "2026-09-30T18:07:47Z",
+  "source": "LiveKit Sessions visible dashboard and paginated room table",
+  "kaggle_version": 5,
+  "kaggle_run_id": 354197763,
+  "agent_commit": "1030321a0dcbafcf97db5fbbad86423b57ba35b5",
+  "benchmark_recordings": 100,
+  "livekit_total_rooms": 83,
+  "livekit_unique_participants": 166,
+  "visible_active_rooms": 2,
+  "latest_room_start_utc": "2026-09-30T18:06:36.05Z",
+  "earlier_paginated_snapshot": {
+    "observed_at_utc": "2026-09-30T17:56:00Z",
+    "rooms": 72,
+    "closed": 70,
+    "active": 2,
+    "all_names_had_eval_prefix": true,
+    "earliest_start_utc": "2026-09-30T16:46:32.99Z"
+  },
+  "scope": "Current-run live session activity; no exact saved-result or transcription count available from this dashboard",
+  "completed_task_count": null,
+  "saved_result_count": null,
+  "judge_score": null
+}
