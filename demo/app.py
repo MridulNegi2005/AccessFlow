@@ -693,6 +693,31 @@ async def _receive_browser_message(websocket: WebSocket) -> dict[str, Any]:
     return parsed
 
 
+def _configured_setup_error_message(error: Exception, *, mode: str) -> str:
+    if isinstance(error, ValueError) and mode == "mock":
+        return str(error)
+    response = getattr(error, "response", None)
+    status_code = getattr(response, "status_code", None)
+    if status_code == 429 or str(error) in {
+        "Groq audio HTTP 429",
+        "Groq image HTTP 429",
+    }:
+        return "Configured model provider was rate limited during setup (HTTP 429). Retry later."
+    return "Configured agent setup failed. Check local model, provider and service settings."
+
+
+def _configure_groq_reasoner_key() -> None:
+    """Map the portal key name for the direct browser demo's Groq reasoner."""
+    if os.getenv("ACCESSFLOW_SAMSUNG_BACKEND") != "groq":
+        return
+    portal_key = os.getenv("SECRET_GROQ_API_KEY")
+    reasoner_key = os.getenv("ACCESSFLOW_GROQ_API_KEY")
+    if portal_key and reasoner_key and portal_key != reasoner_key:
+        raise ValueError("Groq portal and local key settings conflict")
+    if portal_key and not reasoner_key:
+        os.environ["ACCESSFLOW_GROQ_API_KEY"] = portal_key
+
+
 @app.websocket("/ws")
 async def websocket(websocket: WebSocket) -> None:
     await websocket.accept()
@@ -720,6 +745,7 @@ async def websocket(websocket: WebSocket) -> None:
     try:
         mode = _demo_agent_mode()
         if mode == "configured":
+            _configure_groq_reasoner_key()
             agent = await build_configured_agent(
                 root=Path(os.environ.get("ACCESSFLOW_DEMO_ASSETS_ROOT", ROOT.parent)),
                 authorization=MockOnlyAuthorization(),
@@ -744,10 +770,7 @@ async def websocket(websocket: WebSocket) -> None:
             reasoner_label = getattr(reasoner, "backend_name", "demo/unknown-reasoner")
             manifests = []
     except Exception as error:
-        message = (
-            str(error) if isinstance(error, ValueError) and mode == "mock"
-            else "Configured agent setup failed. Check local model, provider and service settings."
-        )
+        message = _configured_setup_error_message(error, mode=mode)
         await outgoing.put(
             {"kind": "demo_error", "payload": {"backend": "demo/config", "message": message}}
         )
@@ -765,7 +788,8 @@ async def websocket(websocket: WebSocket) -> None:
                 "agent_mode": mode,
                 "tool_environment": "mock",
                 "live_preview_available": (
-                    mode == "configured" and agent.perception_configuration.mode == "process"
+                    mode == "configured"
+                    and agent.perception_configuration.mode in {"process", "cloud"}
                 ),
                 "perception_backend": perception_label,
                 "reasoner_backend": reasoner_label,
@@ -802,7 +826,10 @@ async def websocket(websocket: WebSocket) -> None:
         )
         preview_tasks: dict[str, asyncio.Task[None]] = {}
         preview_revisions: dict[str, int] = {}
-        preview_available = mode == "configured" and agent.perception_configuration.mode == "process"
+        preview_available = (
+            mode == "configured"
+            and agent.perception_configuration.mode in {"process", "cloud"}
+        )
 
         async def process_preview(event: AudioEvent) -> None:
             source_id = event.payload.utterance_id
@@ -824,12 +851,20 @@ async def websocket(websocket: WebSocket) -> None:
                 })
             except asyncio.CancelledError:
                 raise
-            except Exception:
+            except Exception as error:
                 if preview_revisions.get(source_id) == revision:
+                    rate_limited = "HTTP 429" in str(error)
+                    message = (
+                        "The configured speech provider rate-limited this preview (HTTP 429). "
+                        "Keep speaking or try again."
+                        if rate_limited
+                        else "The configured speech transcription failed for this preview. "
+                        "Keep speaking or try again."
+                    )
                     enqueue_output({
                         "kind": "demo_preview", "session_id": session_id,
                         "source_id": source_id, "revision": revision,
-                        "error": "A speech preview could not be decoded; keep speaking or try again.",
+                        "error": message,
                     })
             finally:
                 if preview_tasks.get(source_id) is asyncio.current_task():
@@ -863,7 +898,7 @@ async def websocket(websocket: WebSocket) -> None:
                             "kind": "demo_error",
                             "payload": {
                                 "backend": "demo/input",
-                                "message": "Live speech preview needs configured process ASR.",
+                                "message": "Live speech preview needs configured process or cloud ASR.",
                             },
                         })
                         continue

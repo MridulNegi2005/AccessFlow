@@ -1716,3 +1716,27 @@ browser checks. Results: 1,463 passed, 6 skipped, 2 dependency warnings; Ruff
 and browser checks passed. No model calls or source changes were made. User
 chose this dated review while newer work may be unpushed. No newer quota or
 live microphone result is inferred from the older records.
+## 2026-09-27 - Atishay D4 demo and cloud-preview integration
+
+AI assistance fast-forwarded Atishay's branch to the ownership-safe merged
+base, reproduced the five B-owned demo failures, and updated only B-owned demo
+and demo-test files. The browser now displays controller-issued image ordinals
+and binds image failures to their own source; configured cloud WAV previews are
+enabled and HTTP 429 is reported as rate limiting. Software checks passed:
+149 demo tests, 424 perception/demo tests, 1,459 full-suite tests, Ruff and
+seven Node browser checks. All five declared Gate 2 asset hashes match.
+
+No real Groq request or physical-microphone capture was made because the
+credential/model configuration and human speech input were unavailable. The
+official kit path was absent; packaging/evaluator files were not edited. Gate 2
+remains 0/12 and Gate 3 remains 0/4, as recorded in the 27 September acceptance
+audit. No setup call, fake adapter, or generated label is counted as a completed
+scenario.
+
+## 2026-09-30 - Reviewed B merge and combined verification
+
+AI assistance merged reviewed Atishay commit af2b89f into main after the user's
+request, verified A ownership and B source identity, and reran the full suite:
+1,463 passed, 6 skipped, 2 existing warnings in 84.97 seconds. Ruff, seven
+browser checks and whitespace validation passed. No source fix was added during
+the merge, and no live provider/device/evaluator result is implied.

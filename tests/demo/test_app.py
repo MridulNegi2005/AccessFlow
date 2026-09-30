@@ -1177,7 +1177,10 @@ def test_websocket_configured_mode_uses_factory_agent_and_declared_mock_tools(mo
     assert observed["agent"].perception.inner.closed
 
 
-def test_audio_preview_decodes_before_final_without_reaching_controller(monkeypatch):
+@pytest.mark.parametrize("perception_mode", ["process", "cloud"])
+def test_audio_preview_decodes_before_final_without_reaching_controller(
+    monkeypatch, perception_mode
+):
     fixture = Path(__file__).parents[1] / "fixtures/audio/synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
     observed = {"plans": 0}
@@ -1195,7 +1198,10 @@ def test_audio_preview_decodes_before_final_without_reaching_controller(monkeypa
             HeuristicTurnPolicy(), Reasoner(),
             kwargs["executor"], kwargs["authorization"],
         )
-        agent.perception_configuration = SimpleNamespace(mode="process", vision_provider="none")
+        agent.perception_configuration = SimpleNamespace(
+            mode=perception_mode,
+            vision_provider="groq" if perception_mode == "cloud" else "none",
+        )
         agent.perception_warmup_backends = {}
         return agent
 
@@ -1237,6 +1243,54 @@ def test_audio_preview_decodes_before_final_without_reaching_controller(monkeypa
     assert receipt["accepted_event_id"] == final_observation["payload"]["event_id"]
     assert final["payload"]["caused_by_event_id"] == receipt["accepted_event_id"]
     assert observed["plans"] == 1
+
+
+def test_cloud_audio_preview_reports_provider_rate_limit_honestly(monkeypatch):
+    fixture = Path(__file__).parents[1] / "fixtures/audio/synthetic_tone.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+
+    class RateLimitedAudio:
+        async def observe(self, _event):
+            if False:
+                yield None
+            raise RuntimeError("Groq audio HTTP 429")
+
+    class Reasoner:
+        backend = SimpleNamespace(name="test/groq-qwen-reasoner")
+
+        async def plan(self, _view, _manifests):
+            raise AssertionError("a provisional cloud preview must not reach the reasoner")
+
+    async def factory(**kwargs):
+        agent = Agent(
+            DemoPerception(audio_backend=RateLimitedAudio()),
+            HeuristicTurnPolicy(), Reasoner(),
+            kwargs["executor"], kwargs["authorization"],
+        )
+        agent.perception_configuration = SimpleNamespace(mode="cloud", vision_provider="groq")
+        agent.perception_warmup_backends = {}
+        return agent
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json({
+                "kind": "audio_preview",
+                "payload": {
+                    "utterance_id": "rate-limited-turn",
+                    "revision": 1,
+                    "data_base64": encoded,
+                },
+            })
+            preview = socket.receive_json()
+
+    assert status["payload"]["live_preview_available"] is True
+    assert preview["kind"] == "demo_preview"
+    assert "HTTP 429" in preview["error"]
+    assert "rate-limited" in preview["error"]
+    assert "decoded" not in preview["error"]
 
 
 @pytest.mark.asyncio
@@ -1338,6 +1392,82 @@ def test_websocket_configured_setup_failure_has_no_fake_fallback(monkeypatch):
             "message": "Configured agent setup failed. Check local model, provider and service settings.",
         },
     }
+
+
+@pytest.mark.parametrize("source", ["media_adapter", "http_response"])
+def test_websocket_configured_setup_rate_limit_is_reported_safely(monkeypatch, source):
+    async def rate_limited_factory(**_kwargs):
+        if source == "media_adapter":
+            raise RuntimeError("Groq audio HTTP 429")
+        error = RuntimeError("private provider response must not reach the browser")
+        error.response = SimpleNamespace(status_code=429)
+        raise error
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setattr(demo_app, "build_configured_agent", rate_limited_factory)
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert failure == {
+        "kind": "demo_error",
+        "payload": {
+            "backend": "demo/config",
+            "message": "Configured model provider was rate limited during setup (HTTP 429). Retry later.",
+        },
+    }
+
+
+def test_websocket_configured_demo_maps_portal_key_for_groq_reasoner(monkeypatch):
+    observed = {}
+
+    async def inspect_factory(**_kwargs):
+        observed["reasoner_key"] = os.getenv("ACCESSFLOW_GROQ_API_KEY")
+        raise RuntimeError("stop after checking the local key mapping")
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setenv("ACCESSFLOW_SAMSUNG_BACKEND", "groq")
+    monkeypatch.setenv("SECRET_GROQ_API_KEY", "test-only-sentinel")
+    monkeypatch.delenv("ACCESSFLOW_GROQ_API_KEY", raising=False)
+    monkeypatch.setattr(demo_app, "build_configured_agent", inspect_factory)
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert observed == {"reasoner_key": "test-only-sentinel"}
+    assert failure["kind"] == "demo_error"
+    assert "test-only-sentinel" not in failure["payload"]["message"]
+    assert failure["payload"]["message"] == (
+        "Configured agent setup failed. Check local model, provider and service settings."
+    )
+
+
+def test_websocket_configured_demo_rejects_conflicting_groq_keys_safely(monkeypatch):
+    factory_called = False
+
+    async def factory(**_kwargs):
+        nonlocal factory_called
+        factory_called = True
+        raise RuntimeError("configured factory should not run on a key conflict")
+
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "configured")
+    monkeypatch.setenv("ACCESSFLOW_SAMSUNG_BACKEND", "groq")
+    monkeypatch.setenv("SECRET_GROQ_API_KEY", "portal-test-sentinel")
+    monkeypatch.setenv("ACCESSFLOW_GROQ_API_KEY", "local-test-sentinel")
+    monkeypatch.setattr(demo_app, "build_configured_agent", factory)
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            failure = socket.receive_json()
+
+    assert not factory_called
+    assert failure["kind"] == "demo_error"
+    assert "portal-test-sentinel" not in failure["payload"]["message"]
+    assert "local-test-sentinel" not in failure["payload"]["message"]
+    assert failure["payload"]["message"] == (
+        "Configured agent setup failed. Check local model, provider and service settings."
+    )
 
 
 def test_websocket_configured_factory_requires_explicit_backend(monkeypatch):
@@ -2012,8 +2142,9 @@ def test_websocket_combined_media_context_is_visible():
     assert audio_status["payload"] == {"media_received": "audio", "source_id": "ws-audio"}
     assert frame_status["payload"] == {"media_received": "frame", "source_id": "ws-frame"}
     assert "Mock agent received audio input" in audio_final["payload"]["text"]
-    assert "multimodal context: audio:" in frame_final["payload"]["text"]
-    assert "multimodal context: audio:" in text_final["payload"]["text"]
+    assert "Mock agent received audio input" in frame_final["payload"]["text"]
+    assert "image:" in frame_final["payload"]["text"]
+    assert "audio:" in text_final["payload"]["text"]
     assert "image:" in text_final["payload"]["text"]
 
 
@@ -3496,10 +3627,14 @@ def test_websocket_stale_vision_failure_does_not_break_recovered_multimodal_sess
 
     class ObservingReasoner(demo_app.DemoReasoner):
         image_seen = threading.Event()
+        image_history = None
 
         async def plan(self, view, manifests):
             if any(item.modality == "image" for item in view.observations):
                 ObservingReasoner.image_seen.set()
+            ObservingReasoner.image_history = [
+                (item.ordinal, item.frame_id, item.status) for item in view.image_history
+            ]
             return await super().plan(view, manifests)
 
     vision = RecoveringVision()
@@ -3574,7 +3709,14 @@ def test_websocket_stale_vision_failure_does_not_break_recovered_multimodal_sess
     assert first_status["payload"] == {"media_received": "frame", "source_id": "stale-frame"}
     assert second_status["payload"] == {"media_received": "frame", "source_id": "current-frame"}
     assert audio_status["payload"] == {"media_received": "audio", "source_id": "recovered-audio"}
-    assert not any(item.get("kind") == "error" for item in all_messages)
+    errors = [item for item in all_messages if item.get("kind") == "error"]
+    assert len(errors) == 1
+    assert errors[0]["payload"]["code"] == "image_perception_failed"
+    assert errors[0]["payload"]["frame_id"] == "stale-frame"
+    assert ObservingReasoner.image_history == [
+        (1, "stale-frame", "failed"),
+        (2, "current-frame", "observed"),
+    ]
     final = next(item for item in outputs if item["kind"] == "final")
     assert "Please inspect the attached screen" in final["payload"]["text"]
     assert "screen shows the approval prompt" in final["payload"]["text"]
@@ -3826,7 +3968,7 @@ async def test_configured_vision_failure_emits_backend_error_without_final(tmp_p
 
 
 
-def test_websocket_new_frame_replaces_previous_frame():
+def test_websocket_new_frame_retains_previous_image():
     png = _png_bytes(width=2, height=3)
     encoded_image = base64.b64encode(png).decode("ascii")
 
@@ -3856,7 +3998,7 @@ def test_websocket_new_frame_replaces_previous_frame():
     assert status["payload"]["perception_backend"] == "demo/mock"
     assert first_status["payload"] == {"media_received": "frame", "source_id": "ws-frame-1"}
     assert second_status["payload"] == {"media_received": "frame", "source_id": "ws-frame-2"}
-    assert final["payload"]["text"].count("image:") == 1
+    assert final["payload"]["text"].count("image:") == 2
 
 
 
@@ -4614,10 +4756,6 @@ async def test_partial_speech_and_final_image_never_authorize_a_write(tmp_path: 
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason="The current controller does not represent conflicting frame evidence before a write.",
-)
 async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path):
     first_png = _png_bytes(width=2, height=3)
     second_png = _png_bytes(width=3, height=2)
@@ -4738,7 +4876,7 @@ async def test_conflicting_frames_require_resolution_before_write(tmp_path: Path
 
 
 @pytest.mark.asyncio
-async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: Path):
+async def test_new_frame_retains_previous_frame_in_reasoner_context(tmp_path: Path):
     class FrameReasoner:
         def __init__(self):
             self.views = []
@@ -4784,8 +4922,15 @@ async def test_new_frame_replaces_previous_frame_in_reasoner_context(tmp_path: P
         await incoming.put(frame_two)
         await asyncio.wait_for(reasoner.frame_two_seen.wait(), timeout=1)
         latest_view = reasoner.views[-1]
+        assert [
+            (item.ordinal, item.frame_id, item.status)
+            for item in latest_view.image_history
+        ] == [
+            (1, "frame-1", "observed"),
+            (2, "frame-2", "observed"),
+        ]
         assert [item.source_id for item in latest_view.observations if item.modality == "image"] == [
-            "frame-2"
+            "frame-1", "frame-2"
         ]
     finally:
         if agent.running:
