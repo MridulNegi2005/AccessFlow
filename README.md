@@ -10,6 +10,8 @@ and asynchronous tools to keep outdated requests from becoming incorrect results
 Built for **Samsung PRISM GenAI Hackathon — Theme 5: Interruptible Real-time Agents**.
 
 [Demo video folder](https://drive.google.com/drive/folders/1s51DDXuR4_SMGKm-kzsKJsFzk4edWE_H?usp=drive_link)
+ · [Final presentation](docs/presentation/AccessFlow_Samsung_Final_2026-09-30.pptx)
+ · [AI disclosure](docs/submission/AccessFlow_AI_Disclosure.docx)
  · [Evaluation and reproduction](docs/FDB_REPRODUCTION.md)
  · [Architecture and contracts](docs/CONTRACT.md)
 
