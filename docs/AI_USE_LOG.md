@@ -1977,3 +1977,10 @@ Version 4 produced 100 inference failures. AI assistance reproduced a missing
 livekit-api dependency using the unchanged real client, added an import preflight,
 error observation and all-failure gate in owned packaging. Full suite 1,601
 passed/8 skipped; no B source edit, payment, training, score or microphone claim.
+
+AI assistance added a hash-checked private evidence restore command so saved
+Kaggle outputs can be scored later without repeating inference. Thirteen tests
+cover all 100 fixture files, altered inputs/sources/outputs, path escape,
+overwrites, coverage, mixed failures and LF/CRLF portability. The actual failed
+version 4 was refused with no output writes. Full suite 1,614 passed/8 skipped;
+GPU version 5 remains active. No B source edit or judge request.

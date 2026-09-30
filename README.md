@@ -21,7 +21,7 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 
 As of 30 September: Samsung's updated target is FDB-v3 over LiveKit. The voice
 worker, navigation extension, unique-result binding and optional locked runtime
-are integrated. The latest combined software passed 1,601 tests / 8 skipped,
+are integrated. The latest combined software passed 1,614 tests / 8 skipped,
 Ruff and seven browser checks. A fresh public clone installed all 85 locked
 worker packages and passed actual worker/registry, navigation and VAD imports
 offline. Runtime settings, actual planner access and Kaggle GPU warm-up now pass.

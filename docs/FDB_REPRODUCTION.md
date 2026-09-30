@@ -227,6 +227,40 @@ scoring. No parameter pretends to replace actual audio with transcripts.
 
 ## Evidence and failure reporting
 
+### Score a retained Kaggle run without repeating audio inference
+
+Download the completed private job's evidence. Preserve its original
+`official-run-.../manifest.json` alongside all generated outputs. Prepare the
+same pinned official v3 checkout and checksum-verified released corpus locally.
+Then restore its outputs (replace the example paths with the downloaded run):
+
+```powershell
+uv run --frozen --extra fdb python -m scripts.restore_fdb_evidence --evidence artifacts/kaggle-run/accessflow-fdb/evidence/official-run-... --fdb-root artifacts/fdb-reference/v3
+```
+
+The command checks the reference pin/clean v3 source, all 100 original input
+hashes, every copied output hash and complete result/status coverage before
+writing. It refuses different existing outputs; use a fresh released-data
+checkout rather than deleting evidence. Identical outputs are safely reusable.
+Reference text may have Git's LF/CRLF checkout difference; input and output
+bytes must match exactly. No expected-answer metadata or arbitrary manifest
+paths are copied. Mixed failed recordings remain in the 100-recording denominator;
+an all-failure run cannot be restored as a working recorded run.
+
+With a funded private judge configuration and a separate scorer interpreter:
+
+```powershell
+uv run --frozen --extra fdb python -m scripts.reproduce_fdb --fdb-root artifacts/fdb-reference/v3 --scorer-python C:/FDB-scorer/Scripts/python.exe --env-file .env.fdb.private --output artifacts/fdb-score-retained --mode score
+```
+
+Scoring saved JSON does not require GPU/NeMo, LiveKit, Groq or a live agent. The
+separate scorer needs the official scoring scripts' OpenAI and python-dotenv
+dependencies. Keep the original inference manifest with the new score manifest:
+the score-only supervisor's checkout commit is not evidence that the current
+agent generated those older outputs. Restoration verifies consistency and
+provenance hashes, not task correctness or authenticity of an untrusted manifest.
+The complete run and judge request checks still determine the score status.
+
 Every started invocation writes `manifest.json`, including failures or Ctrl+C.
 It records UTC timestamps, code/pin, dirty-tree state, model/config selections,
 source/input hashes, command arguments, actual statuses and the declared

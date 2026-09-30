@@ -87,3 +87,10 @@ and imports the actual official client before model warm-up. Core pin `1030321`
 also retains swallowed client stderr with secret redaction and fails an
 all-failure batch. A green Kaggle job badge does not establish a working run.
 See `reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md` for reproduction and evidence.
+
+After downloading a completed private run, use
+`python -m scripts.restore_fdb_evidence --evidence <official-run-directory> --fdb-root <fresh-v3-directory>`
+to validate and restore generated outputs. Then run the supervisor in `score`
+mode with funded judge credentials. This avoids repeating real-time inference.
+The full commands and original-inference provenance requirements are in
+`FDB_REPRODUCTION.md`. Current failed version 4 is correctly refused.

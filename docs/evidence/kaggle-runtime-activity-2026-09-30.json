@@ -1,0 +1,28 @@
+{
+  "status": "runtime_activity_observed_results_pending",
+  "observed_at_utc": "2026-09-30T17:02:40Z",
+  "kaggle_version": 5,
+  "agent_commit": "1030321a0dcbafcf97db5fbbad86423b57ba35b5",
+  "source": "Read-only LiveKit project usage and quota dashboard during the private Kaggle run",
+  "room_sessions_observed": 13,
+  "webrtc_participant_minutes_observed": 27,
+  "inference_peak_usage_past_7_days": {
+    "openai/gpt-5.6-luna": {
+      "requests_per_minute": 10,
+      "request_limit_per_minute": 100,
+      "tokens_per_minute": 15010,
+      "token_limit_per_minute": 600000
+    },
+    "deepgram/aura-2": {
+      "concurrent_connections": 2,
+      "concurrent_connection_limit": 5
+    }
+  },
+  "scope": "Real media and declared inference services are being used. Observed peaks are below displayed limits.",
+  "limitations": [
+    "Room counts and provider usage are not successful-task counts.",
+    "No final output, completion rate, semantic score or latency metric verified yet.",
+    "Past peak usage does not guarantee future quota availability.",
+    "The separate OpenAI gpt-4o judge account remains unfunded."
+  ]
+}
