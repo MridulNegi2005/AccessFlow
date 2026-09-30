@@ -1965,3 +1965,6 @@ source, and drafted first-person remaining-work instructions. Human request:
 merge if verified, defer presentation, and provide teammate instructions.
 No source repair, model training, live provider request, score or physical
 microphone test occurred. Checks are in reviews/MERGE_VERIFICATION_2026-09-30.md.
+
+## 2026-09-30 — Kaggle scorer and authorized runtime setup
+AI assistance prepared separate GPU scorer/agent environments, a private notebook, seven extraction/packaging guards and reproduced actual GPU model warm-up/silence ASR. Human authorized Kaggle access and account/key setup. Credentials saved privately, never committed. Version 2 unscored real-audio job started; judge account credit zero. No payment, B source change, training, score or microphone claim.
