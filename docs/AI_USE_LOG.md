@@ -1924,3 +1924,13 @@ without changing prompts, replies, score logic, models or agent inputs. Added
 unmodified upstream function probes reproduce swallowed failures with no network
 request. Full A software 1,528 pass/6 skip, focused packaging 40 pass, Ruff pass.
 No B source edit, model training, real judge/audio score or microphone claim.
+
+## 2026-09-30 — Fresh agent setup and corrected deck
+
+AI-assisted A bootstrap adds frozen installation, explicit private configuration,
+optional hashed scorer setup and failure boundaries. Eleven additional offline
+tests added; current A full suite 1,539 pass/6 skip, focused packaging 51 pass.
+Actual new environment installation/imports verified; doctor honestly failed
+before inference because the B worker is unmerged. Revised Samsung v3 draft
+corrects evidence notes and renders all eight slides. No B implementation,
+live model/score, microphone, training, release or submission was performed.

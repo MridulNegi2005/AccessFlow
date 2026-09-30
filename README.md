@@ -8,6 +8,9 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 - Atishay and his AI: [ATISHAY_START_HERE.md](ATISHAY_START_HERE.md)
 - Current verified status: [docs/STATUS.md](docs/STATUS.md)
 - Current FDB-v3 setup and reproduction: [docs/FDB_REPRODUCTION.md](docs/FDB_REPRODUCTION.md)
+- Install/configure/evaluate entry point: `python scripts/bootstrap_fdb.py --help`;
+  requires a compatible prepared scorer or its tested hashed lock, released audio
+  and private configuration. Final combined/live reproduction remains unverified.
 - Historical queue package: [docs/SAMSUNG_PACKAGE.md](docs/SAMSUNG_PACKAGE.md)
 - Agreed plan: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 - Interfaces and ownership: [docs/CONTRACT.md](docs/CONTRACT.md), [AGENTS.md](AGENTS.md)

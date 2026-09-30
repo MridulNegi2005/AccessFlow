@@ -86,6 +86,12 @@ its project. Groq's documented input-token-per-minute limit can affect planning.
 independently of the agent's planner. An exact-match tool diagnostic is labeled
 as such; the pinned latency analyzer still requires this key.
 
+Alternatively supply `--env-file C:\private\accessflow-fdb.env` to the supervisor
+or bootstrap. The file is read, never copied or printed. Precedence is process
+environment, explicit file, clone `.env.local`, then declared defaults. Values
+are read literally, without `${...}` interpolation. The supervisor controls the
+reference/telemetry paths even if a settings file tries to override them.
+
 ## Prepare the scorer separately on the same host
 
 Use the Python 3.10 environment described in the pinned official README. It
@@ -99,6 +105,38 @@ The upstream scorer does not supply an exact dependency lock. Save its resolved
 remaining reproducibility limitation, not a claimed tested clean scorer setup.
 Its Parakeet ASR model downloads/loads during inference. Verify the model and
 hardware before reserving time for a 100-recording run.
+
+## One install/configure/evaluate command
+
+On the prepared scoring host, provide Python, `uv`, ffmpeg, the unchanged pinned
+reference, released data and private configuration. The agent environment is
+installed from `uv.lock`; it remains separate from the compatible scorer.
+With a **host-tested hashed scorer requirements lock**, run:
+
+```powershell
+python scripts/bootstrap_fdb.py --fdb-root C:\FDB-reference\v3 --scorer-python C:\FDB-scorer\Scripts\python.exe --scorer-lock C:\FDB-scorer\requirements.lock --env-file C:\private\accessflow-fdb.env --output artifacts/fdb-final-run --mode reproduce
+```
+
+This installs the frozen agent, installs scorer dependencies with hash checking,
+loads private settings and runs supervised inference plus the official scoring.
+No worker or credential file is supplied by fake-mode fixtures. On Linux replace
+the paths and use the scorer environment's `bin/python`. The default agent
+environment is the ignored `.venv-fdb/`; `--agent-env` may select a dedicated
+subdirectory of the repository. Inputs, keys, scorer and evidence must stay
+outside it. Existing evidence and non-environment directories are protected.
+
+If the scorer is already prepared, replace `--scorer-lock ...` with the explicit
+`--reuse-scorer`. This mode does **not** install or validate a frozen scorer
+installation. A validated scorer lock/host is still a final reproducibility gate;
+one has not been invented from the unpinned upstream README. Change `--mode` to
+`doctor` for preflight without any evaluation/API call.
+
+Actual fresh-agent check on this machine: 85 frozen packages installed into a
+previously absent environment; core import and Silero VAD load passed. The doctor
+then failed for the absent unmerged B worker. It used the existing development
+interpreter only as a placeholder scorer and did not prove Python 3.10/NeMo
+compatibility. `docs/evidence/fdb-clean-install-2026-09-30.json` records the lock,
+resolved packages and failed preflight. This is not full clean-host evaluation.
 
 Worker and scorer must run on the same host and share `/tmp/agent_tool_calls.log`.
 On Windows the supervisor sets `FDB_TOOL_LOG` to the `tmp` folder on the official
