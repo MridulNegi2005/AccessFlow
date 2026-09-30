@@ -1,0 +1,4 @@
+# Scoring already-recorded FDB-v3 results only; no ASR, GPU or live worker.
+# Use the same judge SDK pin as the Kaggle scorer profile.
+openai==1.109.1
+python-dotenv==1.2.3

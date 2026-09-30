@@ -247,10 +247,24 @@ bytes must match exactly. No expected-answer metadata or arbitrary manifest
 paths are copied. Mixed failed recordings remain in the 100-recording denominator;
 an all-failure run cannot be restored as a working recorded run.
 
-With a funded private judge configuration and a separate scorer interpreter:
+For saved-output scoring on Python 3.11, create a separate lightweight scorer:
 
 ```powershell
-uv run --frozen --extra fdb python -m scripts.reproduce_fdb --fdb-root artifacts/fdb-reference/v3 --scorer-python C:/FDB-scorer/Scripts/python.exe --env-file .env.fdb.private --output artifacts/fdb-score-retained --mode score
+uv venv --python 3.11 artifacts/fdb-score-env
+uv pip install --python artifacts/fdb-score-env/Scripts/python.exe --require-hashes --requirements requirements/fdb-score.lock
+```
+
+This installs only the judge SDK/dependencies. The universal lock was installed
+and checked on Windows/Python 3.11.15 (18 packages). All three actual official
+scoring CLIs load, and preflight validates the 100 original recordings. This is
+installation/import evidence, not a completed judge run or a tested Linux lock.
+On Linux the interpreter is `artifacts/fdb-score-env/bin/python`. Do not use
+this score-only lock for inference: it omits NeMo, CUDA, media and agent packages.
+
+With a funded private judge configuration, score the restored outputs:
+
+```powershell
+uv run --frozen --extra fdb python -m scripts.reproduce_fdb --fdb-root artifacts/fdb-reference/v3 --scorer-python artifacts/fdb-score-env/Scripts/python.exe --env-file .env.fdb.private --output artifacts/fdb-score-retained --mode score
 ```
 
 Scoring saved JSON does not require GPU/NeMo, LiveKit, Groq or a live agent. The
@@ -260,6 +274,7 @@ the score-only supervisor's checkout commit is not evidence that the current
 agent generated those older outputs. Restoration verifies consistency and
 provenance hashes, not task correctness or authenticity of an untrusted manifest.
 The complete run and judge request checks still determine the score status.
+Installation evidence: `evidence/fdb-score-environment-2026-09-30.json`.
 
 Every started invocation writes `manifest.json`, including failures or Ctrl+C.
 It records UTC timestamps, code/pin, dirty-tree state, model/config selections,

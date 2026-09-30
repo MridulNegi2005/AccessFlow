@@ -1984,3 +1984,9 @@ cover all 100 fixture files, altered inputs/sources/outputs, path escape,
 overwrites, coverage, mixed failures and LF/CRLF portability. The actual failed
 version 4 was refused with no output writes. Full suite 1,614 passed/8 skipped;
 GPU version 5 remains active. No B source edit or judge request.
+
+AI assistance compiled a hash-checked universal score-only dependency lock and
+installed its 18 packages in a separate fresh Windows/Python 3.11 environment.
+Actual official scoring CLI imports, dependency check and 100-input preflight
+pass without GPU/NeMo. OpenAI billing still shows zero credit. This is setup
+evidence only: no judge request, score, B source edit, payment or training.

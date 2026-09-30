@@ -12,6 +12,9 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 - Install/configure/evaluate entry point: `python scripts/bootstrap_fdb.py --help`;
   requires a compatible prepared scorer or its tested hashed lock, released audio
   and private configuration. Final combined/live reproduction remains unverified.
+- Saved-output judging has a separate hash-checked lock:
+  `requirements/fdb-score.lock`. It supports scoring retained results; full
+  audio inference still uses the GPU profile in `docs/KAGGLE_FDB.md`.
 - Historical queue package: [docs/SAMSUNG_PACKAGE.md](docs/SAMSUNG_PACKAGE.md)
 - Agreed plan: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 - Interfaces and ownership: [docs/CONTRACT.md](docs/CONTRACT.md), [AGENTS.md](AGENTS.md)
