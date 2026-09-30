@@ -1761,3 +1761,7 @@ Model-assisted drafting of Atishay first-person work instructions from verified 
 ## 2026-09-30 — Unique-row binding
 
 AI-assisted generic contract/resolver/prompt change and regression design. Human request: complete A code plus presentation. Explicit empty constraints now require a single valid object; source/authorization/interruption guards retained. Full tests 1,488 pass/6 skip. No training, benchmark-answer-specific code, live inference or official evaluation.
+
+## 2026-09-30 — FDB package and Samsung draft
+
+AI assistance added root optional dependency lock, reproduction supervision, sixteen offline safety tests, candidate container recipe and current-target documentation. Inspected unchanged pinned FDB source and B repair commit; B implementation untouched. Draft presentation follows supplied Samsung template with editable tables/diagram and qualified evidence. Full A software 1,504 pass/6 skip; no model training or actual live inference/scorer/microphone result. Human review of team details, run evidence and final artifacts remains.

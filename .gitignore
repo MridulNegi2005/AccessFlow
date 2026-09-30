@@ -4,7 +4,9 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 .env
-!\.env.example
+.env.*
+!.env.example
+!.env.fdb.example
 artifacts/*
 !artifacts/.gitkeep
 models/

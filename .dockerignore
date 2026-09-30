@@ -1,6 +1,7 @@
 .git
 .venv
 .env
+.env.*
 artifacts
 models
 __pycache__
