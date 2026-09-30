@@ -18,12 +18,14 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 
 ## Current progress
 
-As of 30 September: Samsung's updated target is FDB-v3 over LiveKit. The shared
-unique-result binding and optional locked runtime are implemented. A software
-suite: 1,504 passed / 6 skipped. Official aggregate scoring and live microphone
-acceptance remain open. Atishay's newest voice/navigation code is under separate
-integration review. Read the current status and reproduction guide for exact
-ownership, prerequisite and evidence limitations.
+As of 30 September: Samsung's updated target is FDB-v3 over LiveKit. The voice
+worker, navigation extension, unique-result binding and optional locked runtime
+are integrated. The exact combined software passed 1,589 tests / 6 skipped,
+Ruff and seven browser checks. A fresh public clone installed all 85 locked
+worker packages and passed actual worker/registry, navigation and VAD imports
+offline. Official aggregate scoring and physical microphone acceptance remain
+unverified. Read [the post-merge runtime check](docs/reviews/POSTMERGE_RUNTIME_CHECK_2026-09-30.md)
+and the current status/reproduction guide for exact evidence and limitations.
 
 The earlier checkpoints below are historical. Their test counts, backend limitations
 and local-model results describe their recorded state, not today's entire implementation.
