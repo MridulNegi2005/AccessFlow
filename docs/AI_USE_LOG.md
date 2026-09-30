@@ -1707,3 +1707,12 @@ The integrated tree was checked with 1,451 passing Python tests, 6 skips,
 browser checks. The merge review names each retained path and limitation.
 No teammate source was edited to hide a failure; no official media acceptance,
 release tag or submission is claimed.
+
+## 2026-09-30 - Review of September 27 B snapshot
+
+AI assistance compared branch af2b89f against main, inspected changed source,
+tests and result records, and reran the full Python suite, Ruff and all seven
+browser checks. Results: 1,463 passed, 6 skipped, 2 dependency warnings; Ruff
+and browser checks passed. No model calls or source changes were made. User
+chose this dated review while newer work may be unpushed. No newer quota or
+live microphone result is inferred from the older records.
