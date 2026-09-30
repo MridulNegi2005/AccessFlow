@@ -31,6 +31,31 @@ def test_released_recording_layout_and_denominator_are_validated(tmp_path):
         fdb.recordings(tmp_path, expected=1)
 
 
+@pytest.mark.parametrize("rate,width,channels", [(16000, 2, 1), (48000, 4, 1), (48000, 4, 2), (22050, 3, 2)])
+def test_original_pcm_formats_pass_without_resampling_or_modifying_files(tmp_path, rate, width, channels):
+    audio = audio_tree(tmp_path)
+    with wave.open(str(audio), "wb") as stream:
+        stream.setparams((channels, width, rate, 0, "NONE", "not compressed"))
+        stream.writeframes(b"\x00" * width * channels * 10)
+    before = audio.read_bytes()
+    assert fdb.recordings(tmp_path, expected=1) == [audio]
+    assert fdb.recording_format(audio) == {"sample_rate_hz": rate, "channels": channels,
+                                           "sample_width_bytes": width, "frames": 10}
+    assert audio.read_bytes() == before
+
+
+def test_empty_and_truncated_pcm_are_still_rejected(tmp_path):
+    audio = audio_tree(tmp_path)
+    with wave.open(str(audio), "wb") as stream:
+        stream.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
+    with pytest.raises(ValueError, match="nonempty"):
+        fdb.recordings(tmp_path, expected=1)
+    audio = audio.parent / "input.wav"
+    audio.write_bytes(b"not a WAV")
+    with pytest.raises(ValueError, match="header"):
+        fdb.recordings(tmp_path, expected=1)
+
+
 def test_benchmark_cli_uses_pinned_scripts_real_audio_and_semantic_judge(tmp_path):
     plan = fdb.commands(tmp_path / "v3", "scorer python", tmp_path / "private run")
     assert "--root_dir" in plan[0]
@@ -206,8 +231,7 @@ def test_scoring_only_needs_no_voice_worker_credentials_or_nemo(tmp_path, monkey
     scorer.touch()
     for name in fdb.REQUIRED:
         (tmp_path / name).write_text("reference-source")
-    audio = tmp_path / "example.wav"
-    audio.write_bytes(b"recording")
+    audio = audio_tree(tmp_path)
     monkeypatch.setattr(fdb, "git_output", lambda path, *args: fdb.PIN if args[0] == "rev-parse" else "")
     monkeypatch.setattr(fdb, "recordings", lambda *args: [audio])
     monkeypatch.setattr(fdb.shutil, "which", lambda *args: None)

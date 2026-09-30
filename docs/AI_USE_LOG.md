@@ -1942,3 +1942,12 @@ AI assistance updated only Atishay-owned FDB-v3 tool descriptions and tests afte
 Actual LiveKit recorded-audio checks used Groq whisper-large-v3 STT, LiveKit Inference openai/gpt-5.6-luna planning and Deepgram Aura-2 athena TTS. travel_01 made the expected flight search; ecommerce_19 searched the corrected tablet and added one product; the final ecommerce_18 run searched gaming mice, tracked PO999 and added its sole result. One earlier e18 run only made the independent reads; the final guidance change preceded its passing rerun. No 401/429 occurred. One SDK prewarm timeout warning did not prevent successful planner requests.
 
 No official score, physical microphone result or clean scoring-host verification is claimed. NeMo and the OpenAI judge key are unavailable; M1-M4 remain NOT RUN. Generated replies and traces stay outside Git. The previously verified navigation clip and screenshot deliverables are linked in the Atishay handoff. No provider secrets or bulk benchmark audio were committed.
+## 2026-09-30 — Actual corpus verification
+
+Downloaded official released inputs into ignored storage and verified formats
+without parsing expected-answer metadata. Actual data exposed an A preflight
+format assumption; AI-assisted generic PCM validation and five regressions fix
+it. Full A 1,544 pass/6 skip, focused packaging 56 pass, Ruff pass. Unmodified
+official reader and checksum-verified private FFmpeg converted all 100 originals
+with hashes unchanged. Scoring preflight explicitly fails for missing judge key.
+No B edit, model training, live agent/ASR/judge call, score or mic claim.

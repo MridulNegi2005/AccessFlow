@@ -1,5 +1,15 @@
 # FDB-v3 reproduction — 30 September 2026
 
+## Latest actual-corpus checkpoint
+
+The released data is now present privately in the local pinned clone. All 100
+originals pass hashes/headers and actual normalization by the official reader;
+seven are 16 kHz, so the former 48 kHz-only preflight was corrected. Original
+formats are recorded; inputs are not rewritten. Current A: 1,544 pass/6 skip,
+56 focused checks and Ruff pass. See reviews/RELEASED_CORPUS_CHECK_2026-09-30.md.
+Earlier missing-data checks below are historical. Scoring now fails for the
+missing OpenAI judge key; B worker/integrated live/scorer evidence remains open.
+
 This is the current Theme 5 target. The older queue kit and `SAMSUNG_PACKAGE.md`
 are historical development paths, not the final FDB evaluation interface.
 
@@ -65,9 +75,12 @@ Sparse checkout avoids irrelevant older-version `node_modules` paths that exceed
 Windows filename limits. Do not modify the official scripts or benchmark labels.
 Use the [data link in the pinned official README](https://github.com/DanielLin94144/Full-Duplex-Bench/blob/3e799c45a045256f47d5f1c9cda90157e2d2ec9e/v3/README.md).
 Download the released ZIP, extract `fdb_v3_data_released` under `C:\FDB-reference\v3`.
-The supervisor requires 100 nonempty 48 kHz PCM `input.wav` files, each in the
+The supervisor requires 100 nonempty valid PCM `input.wav` files, each in the
 released `{example_id}_{24-hex-speaker-id}` directory with its metadata file.
 It checks and hashes recordings, but never supplies expected answers to the agent.
+It preserves original sample rates/widths/channels; the official reader uses
+ffmpeg to normalize publishing audio. The actual archive has 93 inputs at 48 kHz
+and seven at 16 kHz despite the README's general 48 kHz description.
 
 ## Configure privately
 
@@ -143,6 +156,12 @@ On Windows the supervisor sets `FDB_TOOL_LOG` to the `tmp` folder on the officia
 clone's drive, matching the runner's current drive. Do not move only the scorer
 to another machine and lose the worker's telemetry. Stop other unnamed LiveKit
 workers, including the navigation worker, to prevent wrong-worker dispatch.
+
+The private local FFmpeg probe used `artifacts/tools/ffmpeg/bin/ffmpeg.exe`,
+checksum-verified from the linked builder. To use it in a local scoring terminal,
+prepend that folder to **that terminal's** PATH; do not change system/user PATH.
+The submission host needs its own supported ffmpeg installation. This local
+binary is ignored and is not part of the distributable application.
 
 ## One-command reproduction after prerequisites
 
