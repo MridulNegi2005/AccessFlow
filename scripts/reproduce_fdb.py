@@ -369,7 +369,9 @@ def main(argv=None) -> int:
     parser.add_argument("--overwrite-results", action="store_true", help="Explicitly let upstream replace existing result files")
     parser.add_argument("--registration-timeout", type=float, default=90)
     args = parser.parse_args(argv)
-    args.scorer_python = str(Path(args.scorer_python).resolve())
+    # Linux venv executables are symlinks. Resolving one invokes the base Python
+    # and loses the scorer's installed packages; preserve its venv entry point.
+    args.scorer_python = str(Path(args.scorer_python).expanduser().absolute())
     if not 1 <= args.registration_timeout <= 600:
         parser.error("Registration timeout must be between 1 and 600 seconds")
     try:

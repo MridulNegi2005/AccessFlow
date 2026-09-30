@@ -10,6 +10,25 @@ import pytest
 from scripts import reproduce_fdb as fdb
 
 
+def test_cli_preserves_scorer_virtual_environment_entrypoint(tmp_path, monkeypatch):
+    scorer = tmp_path / "scorer-venv" / "bin" / "python"
+    base = tmp_path / "base-python"
+    base.touch()
+    scorer.parent.mkdir(parents=True)
+    try:
+        scorer.symlink_to(base)
+    except OSError:
+        pytest.skip("Host cannot create executable symlinks")
+    captured = []
+    monkeypatch.setattr(fdb, "configured_environment", lambda *args: {})
+    monkeypatch.setattr(fdb, "run_pipeline", lambda args, env:
+                        captured.append(args.scorer_python) or {"status": "test"})
+    assert fdb.main(["--fdb-root", str(tmp_path), "--scorer-python", str(scorer),
+                     "--output", str(tmp_path / "evidence")]) == 0
+    assert captured == [str(scorer.absolute())]
+    assert captured[0] != str(base)
+
+
 def audio_tree(tmp_path):
     folder = tmp_path / ("generic_case_" + "a" * 24)
     folder.mkdir()

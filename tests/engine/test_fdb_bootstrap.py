@@ -10,6 +10,23 @@ from scripts import bootstrap_fdb as setup
 from scripts import reproduce_fdb as supervisor
 
 
+def test_bootstrap_keeps_venv_executable_symlink(tmp_path, monkeypatch):
+    args = arguments(tmp_path, monkeypatch)
+    base = tmp_path / "base-python"
+    base.touch()
+    entrypoint = tmp_path / "scorer-venv/bin/python"
+    entrypoint.parent.mkdir(parents=True)
+    try:
+        entrypoint.symlink_to(base)
+    except OSError:
+        pytest.skip("Host cannot create executable symlinks")
+    args.scorer_python = entrypoint
+    calls = []
+    monkeypatch.setattr(setup.subprocess, "run", lambda command, **kw: calls.append(command))
+    setup.bootstrap(args)
+    assert calls[-1][calls[-1].index("--scorer-python") + 1] == str(entrypoint.absolute())
+
+
 def arguments(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     root.mkdir()
