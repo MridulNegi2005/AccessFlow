@@ -1966,9 +1966,15 @@ merge if verified, defer presentation, and provide teammate instructions.
 No source repair, model training, live provider request, score or physical
 microphone test occurred. Checks are in reviews/MERGE_VERIFICATION_2026-09-30.md.
 
+## 2026-09-30 — Atishay final verification
+
+AI assistance fetched origin and confirmed Atishay's branch already contained latest main, ran the focused regressions, one full-suite attempt, Ruff and diff checks, and appended evidence-qualified handoff updates. Focused: 43 passed, two existing warnings. Full suite: 1,587 passed, 6 skipped, 2 environment-sensitive failures; a selector-cleaned rerun was started and then stopped at the user's request, with no result. No duplicate test run was made. Confirmed the pinned public FDB-v3 checkout contains all three official evaluator scripts and 100 WAVs; no 100-case result JSONs exist. Atishay reported M1–M4 successful, but no independent trace or device evidence was available, so the record labels these user-reported. No secrets, benchmark files, scorer sources, Mridul implementation or presentation files were changed.
 ## 2026-09-30 — Kaggle scorer and authorized runtime setup
 AI assistance prepared separate GPU scorer/agent environments, a private notebook, seven extraction/packaging guards and reproduced actual GPU model warm-up/silence ASR. Human authorized Kaggle access and account/key setup. Credentials saved privately, never committed. Version 2 unscored real-audio job started; judge account credit zero. No payment, B source change, training, score or microphone claim.
 
+## 2026-09-30 21:25 IST — Atishay physical mic evidence
+
+AI assistance checked the live local mic-page connection log and two dashboard room states after Atishay reported M1–M4 PASS, then appended clearly qualified evidence. It fetched and cleanly merged the new Mridul main without editing his implementation, scorer, notebook, release files or deck. It did not record or transmit participant speech, rerun software tests, run an evaluator, claim an official score, tag a release, or submit a form. The user's verbal PASS judgments and the browser/dashboard observations are distinguished in the handoff.
 Kaggle version 2 failed in actual preflight: resolving its venv Python symlink invoked the base interpreter without scorer dependencies. AI-assisted fix preserves the venv entry point in both owned scripts. Two real-symlink regressions skip on Windows; Linux retry is necessary evidence. No B edits.
 
 Actual single planner connection through LiveKit succeeded, 56 input/11 output tokens, 5.31s; no benchmark score implied. CLI upload detached private Kaggle Secrets in version 3; restored bindings and UI-launched version 4. No payment or B source edit.
