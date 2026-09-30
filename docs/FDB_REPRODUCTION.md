@@ -1,4 +1,16 @@
-## Latest combined integration — 30 September 2026
+## Current runtime checkpoint — 30 September 2026
+
+Both owners' reviewed code is merged; current local suite is 1,601 passed,
+8 skipped. Private runtime credentials and actual planner access are verified.
+The corrected Kaggle scorer passes official client import and GPU ASR warm-up;
+real evaluation audio reaches agent rooms. Full output is still pending.
+Version 4 failed all 100 clients before the missing livekit-api fix, so no score
+or end-to-end pass is claimed. OpenAI judge funding and physical microphone
+acceptance remain open. Use [Kaggle setup](KAGGLE_FDB.md) and
+[current runtime evidence](reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md).
+All earlier missing-worker/key/dependency statements below are dated history.
+
+## Historical combined integration — 30 September 2026
 
 Main now includes the reviewed Atishay ee5c70c snapshot and all Mridul changes
 through d007d81. Independent exact-source verification: 1,589 passed, 6 skipped,
@@ -70,8 +82,8 @@ installed SDK; this is not a full worker warm-up or microphone/performance test.
 
 ## Install the agent
 
-Use Python 3.11, Git and `uv`. First integrate the reviewed owner changes and
-resolve the obsolete B assertion. From a clean repository checkout:
+Use Python 3.11, Git and `uv`. Both owner changes and the obsolete B assertion
+fix are already integrated. From a clean repository checkout:
 
 ```powershell
 uv sync --frozen --extra fdb

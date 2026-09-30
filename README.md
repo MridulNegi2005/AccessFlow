@@ -8,6 +8,7 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 - Atishay and his AI: [ATISHAY_START_HERE.md](ATISHAY_START_HERE.md)
 - Current verified status: [docs/STATUS.md](docs/STATUS.md)
 - Current FDB-v3 setup and reproduction: [docs/FDB_REPRODUCTION.md](docs/FDB_REPRODUCTION.md)
+- Private GPU evaluation setup: [docs/KAGGLE_FDB.md](docs/KAGGLE_FDB.md)
 - Install/configure/evaluate entry point: `python scripts/bootstrap_fdb.py --help`;
   requires a compatible prepared scorer or its tested hashed lock, released audio
   and private configuration. Final combined/live reproduction remains unverified.
@@ -20,11 +21,14 @@ Samsung PRISM Theme 5; Mridul + Atishay. **Development build; submission gates r
 
 As of 30 September: Samsung's updated target is FDB-v3 over LiveKit. The voice
 worker, navigation extension, unique-result binding and optional locked runtime
-are integrated. The exact combined software passed 1,589 tests / 6 skipped,
+are integrated. The latest combined software passed 1,601 tests / 8 skipped,
 Ruff and seven browser checks. A fresh public clone installed all 85 locked
 worker packages and passed actual worker/registry, navigation and VAD imports
-offline. Official aggregate scoring and physical microphone acceptance remain
-unverified. Read [the post-merge runtime check](docs/reviews/POSTMERGE_RUNTIME_CHECK_2026-09-30.md)
+offline. Runtime settings, actual planner access and Kaggle GPU warm-up now pass.
+An initial 100-recording batch failed; the corrected batch is running with actual
+audio reaching the agent. Official aggregate scoring and physical microphone
+acceptance remain unverified. The separate OpenAI judge has no API credit.
+Read [the current GPU runtime report](docs/reviews/KAGGLE_RUNTIME_SETUP_2026-09-30.md)
 and the current status/reproduction guide for exact evidence and limitations.
 
 The earlier checkpoints below are historical. Their test counts, backend limitations
