@@ -1757,3 +1757,7 @@ the merge, and no live provider/device/evaluator result is implied.
 ## 2026-09-30 — Completion instructions
 
 Model-assisted drafting of Atishay first-person work instructions from verified audit and source configuration; user requested A code and slide work next. No source behavior changed in this prompt commit.
+
+## 2026-09-30 — Unique-row binding
+
+AI-assisted generic contract/resolver/prompt change and regression design. Human request: complete A code plus presentation. Explicit empty constraints now require a single valid object; source/authorization/interruption guards retained. Full tests 1,488 pass/6 skip. No training, benchmark-answer-specific code, live inference or official evaluation.
