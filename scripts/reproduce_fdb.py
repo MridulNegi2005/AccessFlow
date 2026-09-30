@@ -39,6 +39,21 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def recording_format(audio: Path) -> dict:
+    """Keep original PCM formats; the official reader normalizes with ffmpeg."""
+    try:
+        with wave.open(str(audio), "rb") as wav:
+            row = {"sample_rate_hz": wav.getframerate(), "channels": wav.getnchannels(),
+                   "sample_width_bytes": wav.getsampwidth(), "frames": wav.getnframes()}
+            if row["frames"] <= 0 or row["sample_rate_hz"] <= 0 or wav.getcomptype() != "NONE":
+                raise ValueError("Expected a nonempty valid PCM WAV recording")
+            if len(wav.readframes(1)) != row["channels"] * row["sample_width_bytes"]:
+                raise ValueError("WAV recording has no complete PCM frame")
+            return row
+    except (wave.Error, EOFError) as error:
+        raise ValueError("Invalid or unsupported released WAV header") from error
+
+
 def recordings(data: Path, expected: int = 100) -> list[Path]:
     """Match the released runner's flat layout without consuming answer labels."""
     if not data.is_dir():
@@ -51,9 +66,7 @@ def recordings(data: Path, expected: int = 100) -> list[Path]:
         for asset in (audio, metadata):
             if not asset.is_file() or asset.is_symlink() or not asset.resolve().is_relative_to(data.resolve()):
                 raise ValueError("Released input is missing or escapes its data directory")
-        with wave.open(str(audio), "rb") as wav:
-            if wav.getnframes() == 0 or wav.getframerate() != 48000 or wav.getcomptype() != "NONE":
-                raise ValueError("Expected nonempty 48 kHz PCM released WAV recordings")
+        recording_format(audio)
         result.append(audio)
     if len(result) != expected:
         raise ValueError(f"Expected {expected} released recordings, found {len(result)}")
@@ -267,7 +280,8 @@ def preflight(fdb: Path, scorer: str, env: dict[str, str], *, need_runtime: bool
                            check=True, cwd=ROOT, env=env)
     return {"fdb_commit": PIN, "input_count": len(inputs), "source_sha256": {
         name: digest(fdb / name) for name in REQUIRED}, "config": sanitized_config(env),
-        "inputs": [{"folder": audio.parent.name, "sha256": digest(audio)} for audio in inputs]}
+        "inputs": [{"folder": audio.parent.name, "sha256": digest(audio),
+                    "format": recording_format(audio)} for audio in inputs]}
 
 
 def run_pipeline(args, env: dict[str, str]) -> dict:

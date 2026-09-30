@@ -1784,3 +1784,13 @@ Actual new environment installation/imports verified; doctor honestly failed
 before inference because the B worker is unmerged. Revised Samsung v3 draft
 corrects evidence notes and renders all eight slides. No B implementation,
 live model/score, microphone, training, release or submission was performed.
+
+## 2026-09-30 — Actual corpus verification
+
+Downloaded official released inputs into ignored storage and verified formats
+without parsing expected-answer metadata. Actual data exposed an A preflight
+format assumption; AI-assisted generic PCM validation and five regressions fix
+it. Full A 1,544 pass/6 skip, focused packaging 56 pass, Ruff pass. Unmodified
+official reader and checksum-verified private FFmpeg converted all 100 originals
+with hashes unchanged. Scoring preflight explicitly fails for missing judge key.
+No B edit, model training, live agent/ASR/judge call, score or mic claim.

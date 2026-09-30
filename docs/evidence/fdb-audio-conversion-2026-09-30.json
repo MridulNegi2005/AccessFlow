@@ -1,0 +1,710 @@
+{
+  "scope": "Actual official input normalization only; no speech recognition, model, agent, LiveKit room, judge, microphone or score",
+  "ffmpeg_source": "https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip",
+  "builder_checksum_verified": "60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba",
+  "ffmpeg_version": "ffmpeg version 9.0.2-essentials_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+  "binary_scope": "Private ignored local tool; process PATH only, no system/user PATH change or published binary",
+  "converted_recordings": 100,
+  "rows": [
+    {
+      "folder": "ecommerce_01_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_01_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_02_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_04_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_05_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_06_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_07_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_08_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_08_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_09_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_10_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_11_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_12_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_13_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_13_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_14_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_14_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_15_56780a5a89319e0011644cb4",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_15_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_16_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_17_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_18_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_19_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_20_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_21_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_21_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_23_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_25_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "ecommerce_25_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_01_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_01_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_02_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_03_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_03_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_04_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_06_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_07_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_07_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_08_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_08_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_10_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_11_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_12_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_12_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_14_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_15_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_16_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_17_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_18_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_19_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_20_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_21_5e3c1fbece3a7b000a6fd95a",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_22_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "finance_23_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_01_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_02_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_03_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_04_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_05_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_05_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_06_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_08_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_09_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_10_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_11_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_13_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_14_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_14_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_15_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_15_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_17_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_17_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_18_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_19_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_20_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_21_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_22_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_24_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_24_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "housing_25_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_01_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_02_5e3c1fbece3a7b000a6fd95a",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_03_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_03_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_05_6998abd731d2ec50d067d5bd",
+      "source_rate_hz": 16000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_07_5ff07b5ee7a1d23e719e421e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_07_61517db6a7589569521b2356",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_08_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_10_5f4a4da1575d605c43bef871",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_11_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_14_66c4f3cb14cbfc4db836bd4e",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_16_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_18_66f59c766e7e22e1f90d08f6",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_19_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_20_62a885d5b6af18b3d4579e1b",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_21_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_21_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_23_65e8cf8f4c7424fa062e54a3",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_23_69a9cf80f4d7668d5c815038",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    },
+    {
+      "folder": "travel_24_695bd157114f0d2317f88617",
+      "source_rate_hz": 48000,
+      "published_rate_hz": 48000,
+      "published_channels": 1,
+      "source_unchanged": true
+    }
+  ]
+}

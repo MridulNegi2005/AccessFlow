@@ -1,0 +1,14 @@
+{
+  "started_at": "2026-09-30T12:34:26.763323+00:00",
+  "status": "failed",
+  "mode": "score",
+  "scoring": "official scripts with semantic judge",
+  "judge_verification": {
+    "status": "not_run"
+  },
+  "agent_commit": "dd8bc816216f542112dbe269d1599334165b4303",
+  "agent_tree_dirty": true,
+  "seed_policy": "Official scripts expose no seed option; configuration and input hashes retained",
+  "failure": "Missing private settings: OPENAI_API_KEY",
+  "ended_at": "2026-09-30T12:34:27.175719+00:00"
+}
