@@ -752,11 +752,17 @@ async def websocket(websocket: WebSocket) -> None:
                 executor=FakeTools(),
             )
             perception = agent.perception
+            preview_backend = perception
+            live_preview_available = agent.perception_configuration.mode in {
+                "process", "cloud"
+            }
             perception_label = _configured_perception_label(agent)
             reasoner_label = agent.reasoner.backend.name
             manifests = _mock_external_tools()
         else:
             perception = DemoPerception.from_environment()
+            preview_backend = getattr(perception, "_audio_backend", None)
+            live_preview_available = preview_backend is not None
             reasoner_factory = getattr(DemoReasoner, "from_environment", None)
             reasoner = reasoner_factory() if callable(reasoner_factory) else DemoReasoner()
             agent = Agent(
@@ -787,10 +793,7 @@ async def websocket(websocket: WebSocket) -> None:
             "payload": {
                 "agent_mode": mode,
                 "tool_environment": "mock",
-                "live_preview_available": (
-                    mode == "configured"
-                    and agent.perception_configuration.mode in {"process", "cloud"}
-                ),
+                "live_preview_available": live_preview_available,
                 "perception_backend": perception_label,
                 "reasoner_backend": reasoner_label,
             },
@@ -826,17 +829,14 @@ async def websocket(websocket: WebSocket) -> None:
         )
         preview_tasks: dict[str, asyncio.Task[None]] = {}
         preview_revisions: dict[str, int] = {}
-        preview_available = (
-            mode == "configured"
-            and agent.perception_configuration.mode in {"process", "cloud"}
-        )
+        preview_available = live_preview_available
 
         async def process_preview(event: AudioEvent) -> None:
             source_id = event.payload.utterance_id
             revision = event.payload.revision
             try:
                 observations = [
-                    item async for item in perception.inner.observe(event)
+                    item async for item in preview_backend.observe(event)
                     if item.event_id == event.event_id and item.source_id == source_id
                     and item.revision == revision and item.modality == "audio" and item.final
                 ]
@@ -858,8 +858,13 @@ async def websocket(websocket: WebSocket) -> None:
                         "The configured speech provider rate-limited this preview (HTTP 429). "
                         "Keep speaking or try again."
                         if rate_limited
-                        else "The configured speech transcription failed for this preview. "
-                        "Keep speaking or try again."
+                        else (
+                            "Local speech transcription failed for this preview. "
+                            "Keep speaking or try again."
+                            if mode == "mock"
+                            else "The configured speech transcription failed for this preview. "
+                            "Keep speaking or try again."
+                        )
                     )
                     enqueue_output({
                         "kind": "demo_preview", "session_id": session_id,

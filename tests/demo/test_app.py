@@ -1245,6 +1245,41 @@ def test_audio_preview_decodes_before_final_without_reaching_controller(
     assert observed["plans"] == 1
 
 
+def test_mock_reasoner_can_use_local_asr_for_live_voice_preview(monkeypatch):
+    fixture = Path(__file__).parents[1] / "fixtures/audio/synthetic_tone.wav"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    perception = demo_app.DemoPerception(
+        audio_backend=demo_app.LocalPerception(
+            transcriber=lambda _path: "Recognized local speech"
+        )
+    )
+    monkeypatch.setenv("ACCESSFLOW_DEMO_AGENT_MODE", "mock")
+    monkeypatch.setattr(
+        demo_app.DemoPerception,
+        "from_environment",
+        classmethod(lambda _cls: perception),
+    )
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            status = socket.receive_json()
+            socket.send_json({
+                "kind": "audio_preview",
+                "payload": {
+                    "utterance_id": "local-mic-turn",
+                    "revision": 1,
+                    "data_base64": encoded,
+                },
+            })
+            preview = socket.receive_json()
+
+    assert status["payload"]["agent_mode"] == "mock"
+    assert status["payload"]["live_preview_available"] is True
+    assert status["payload"]["reasoner_backend"] == "demo/mock-reasoner"
+    assert preview["kind"] == "demo_preview"
+    assert preview["text"] == "Recognized local speech"
+
+
 def test_cloud_audio_preview_reports_provider_rate_limit_honestly(monkeypatch):
     fixture = Path(__file__).parents[1] / "fixtures/audio/synthetic_tone.wav"
     encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
@@ -4000,6 +4035,51 @@ def test_websocket_new_frame_retains_previous_image():
     assert second_status["payload"] == {"media_received": "frame", "source_id": "ws-frame-2"}
     assert final["payload"]["text"].count("image:") == 2
 
+
+
+def test_websocket_three_images_keep_admission_order_with_out_of_order_capture_times():
+    fixture = Path(__file__).parents[1] / "fixtures/images/device_panel.png"
+    encoded = base64.b64encode(fixture.read_bytes()).decode("ascii")
+    events = []
+
+    with TestClient(demo_app.app) as client:
+        with client.websocket_connect("/ws") as socket:
+            socket.receive_json()  # connection status
+            for ordinal, timestamp in enumerate((10.0, 10.0, 1.0), start=1):
+                source_id = f"ordered-frame-{ordinal}"
+                socket.send_json({
+                    "kind": "frame", "timestamp": timestamp,
+                    "payload": {"data_base64": encoded, "frame_id": source_id},
+                })
+                while True:
+                    event = socket.receive_json()
+                    events.append(event)
+                    if (event["kind"] == "demo_status"
+                            and event["payload"].get("media_received") == "frame"
+                            and event["payload"].get("source_id") == source_id):
+                        break
+
+            socket.send_json({
+                "kind": "transcript", "payload": {
+                    "text": "Three-image question", "utterance_id": "ordered-image-request",
+                },
+            })
+            while True:
+                event = socket.receive_json()
+                events.append(event)
+                if (event["kind"] == "final"
+                        and "Three-image question" in event["payload"].get("text", "")):
+                    final = event
+                    break
+
+    receipts = [
+        event["payload"]["image_received"] for event in events
+        if event["kind"] == "acknowledge" and event["payload"].get("image_received")
+    ]
+    assert [(receipt["ordinal"], receipt["frame_id"]) for receipt in receipts] == [
+        (1, "ordered-frame-1"), (2, "ordered-frame-2"), (3, "ordered-frame-3"),
+    ]
+    assert final["payload"]["text"].count("image:") == 3
 
 
 def test_websocket_multimodal_revision_keeps_latest_text_and_frame():

@@ -1,5 +1,93 @@
 # AI-use development log
 
+## 2026-09-30 — Navigation extension
+
+- Used model-assisted coding for a separate LiveKit navigation worker and
+  deterministic local destination state, then checked it with focused tests
+  and recorded audio. The full Python 3.11 suite passed (1,480 passed,
+  6 skipped), as did Ruff. One ambiguous ASR result asked for clarification; one
+  airport request changed the simulated route once and spoke the result.
+  A local Faster Whisper pass independently transcribed the captured reply.
+- Added a local SQLite-backed display so a separate browser view shows the
+  destination change. A fresh recorded voice request updated the dashboard;
+  its API and browser showed Airport Terminal 1 at revision 1. The database
+  and recordings are outside the repository. Final full Python 3.11 regression
+  passed (1,482 passed, 6 skipped), as did Ruff and JavaScript syntax checks.
+- No real car, map route, benchmark answer, official score, video, or physical
+  microphone outcome is claimed. Recordings and provider settings stayed out
+  of the repository.
+
+## 2026-09-30 — Official scorer setup check
+
+- Inspected the official FDB-v3 runner's local telemetry path and dependency
+  requirements. Corrected the owned adapter setup notes to recommend separate
+  worker and scorer environments on one machine. Confirmed the Agents version
+  ranges overlap, 100 released WAVs are present, and
+  private configuration presence without reading secret values into the log.
+- No local GPU, full official score, benchmark answer, or microphone test was
+  claimed. No shared-owner code or root dependency changed.
+
+## 2026-09-30 — FDB-v3 voice repair and recorded three-tool check
+
+- Used AJ's local LiveKit project for bounded model comparisons. A lower cost
+  LiveKit planner completed direct two- and three-tool requests; the adapter
+  now selects it by default. The previous Groq Qwen route remains optional.
+- Found and fixed parallel JSONL corruption, an incomplete spoken summary,
+  and a finance-recording transcription failure. The final released
+  `finance_18` audio run logged the three expected mock calls and produced
+  audible speech; a separate transcription heard all three confirmed results.
+  The old malformed local telemetry file was archived outside the repository.
+- Eleven focused tests, the full Python 3.11 suite (1,476 passed, 6 skipped),
+  and Ruff pass. No benchmark answers, secret values, organizer media,
+  A-owned source, official score, or physical microphone capture were added.
+- Combined two released recordings outside the repo to test same-room speech
+  interruption. One run replaced in-progress planning, and one interrupted
+  active flight speech; the later cart action happened once in both. These
+  custom checks do not substitute for official scoring or device testing.
+
+## 2026-09-29 — Audible LiveKit inference and planner probes
+
+- Tested released voice requests through LiveKit with the current private
+  project settings. `travel_01` produced audible speech and an independently
+  transcribed flight answer; `ecommerce_11` corrected a cart quantity; one
+  `travel_11` run completed its search-and-book mock chain.
+- Compared Groq GPT-OSS and Qwen planner profiles using sanitized request
+  evidence. Qwen compact-v2 completed two direct tool-chain probes. Another
+  two-step run and a three-tool case hit the account's 7,000 ITPM quota.
+  Probed LiveKit text inference with GPT-4.1 mini and GPT-5.4 mini; neither
+  produced an accepted hard-case plan. No model output was treated as a score.
+- Changed the owned voice adapter to LiveKit Inference speech by default;
+  retained Groq speech as optional. Added an owned reproducer and a proposal
+  for the A-side unique-row result-binding limitation. No A-owned source,
+  benchmark answer, secret, full benchmark result, or physical microphone
+  recording was added to the repository.
+
+## 2026-09-29 — LiveKit project and released-audio probe
+
+- Put AJ-supplied LiveKit settings in the official clone's ignored local file;
+  did not add credentials or benchmark media to the AccessFlow repository.
+- Ran the adapter configuration check, registered a LiveKit worker, and sent
+  one released FDB-v3 recording through the official headless client. The
+  worker transcribed it and issued one room-scoped mock tool call. The reply
+  recording was silent because Groq TTS required model terms acceptance.
+- Stopped the worker. No official score, 100-recording batch, physical
+  microphone recording, or submission occurred.
+
+## 2026-09-29 — Updated benchmark guide and configured Groq probes
+
+- Read the supplied duplicate PDFs, updated DOCX, and AJ's benchmark/scoring
+  screenshots as reference material. Compared them with the official FDB-v3
+  repository and current AccessFlow checkout; documented the mismatch in
+  `docs/feedback/FDB_V3_READINESS_2026-09-29.md`.
+- Used AJ's explicitly authorized Groq key in child processes only; neither
+  value nor provider error body was logged. Five development scenario attempts
+  produced two correct finals and three non-completions. The image backend
+  observed `ERR-42`; sanitized reasoning evidence confirmed one HTTP 429 ITPM
+  rate limit. No xAI request, LiveKit room, full FDB evaluation, physical
+  microphone capture, or final submission occurred.
+- No A-owned implementation or root package dependency was changed. The
+  updated competition target and LiveKit account remain open inputs.
+
 ## 2026-09-25 — Browser request/response correlation recovery
 
 - A deterministic regression reproduced two owned demo issues: a valid
@@ -1724,3 +1812,35 @@ official kit path was absent; packaging/evaluator files were not edited. Gate 2
 remains 0/12 and Gate 3 remains 0/4, as recorded in the 27 September acceptance
 audit. No setup call, fake adapter, or generated label is counted as a completed
 scenario.
+
+## 2026-09-29 - Pre-microphone project check
+
+AI assistance diagnosed six full-suite failures caused by assuming every demo
+perception implementation has an optional private audio backend, then made a
+one-line B-owned compatibility fix and added a three-image demo protocol
+regression for controller-issued ordinals. Python 3.11.15 full suite passed 1,465
+tests with 6 skips; Ruff, seven Node checks, four installed-ASR checks and the
+four local development scenarios passed. Browser text, local-ASR WAV and
+mock-image PNG paths passed; a real local-ASR preview returned a transcript.
+No physical microphone or real Groq Gate 2 attempts were run. The supplied
+student kit lacks seven required evaluator files, so no official package or
+score is claimed. Existing uncommitted work and untracked kit data were
+preserved; no commit, push, release or submission occurred.
+
+## 2026-09-29 - FDB-v3 LiveKit integration and setup
+
+AI assistance implemented the optional B-owned LiveKit bridge, official
+mock-tool adapter, telemetry, TTS length guard and setup guide; added
+focused tests. It obtained the public benchmark code/data outside the repo,
+verified 100 WAVs and runner discovery, and ran the Python 3.11.15 suite
+(1,472 passed/6 skipped), Ruff, LiveKit text mode and one custom real Groq
+mock-tool probe. The account-listed `openai/gpt-oss-120b` replaced a retired
+404 default for this adapter. A direct TTS check returned Groq
+`model_terms_required`; no LiveKit room, official score or microphone test
+occurred. No A-owned source, root lockfile, secrets or participant-kit data
+were changed. No commit, push or submission.
+
+Follow-up evidence: the installed Groq STT plugin decoded a recorded project
+WAV and a custom direct mock write called `add_to_cart` once. Compact-v2
+planning failed schema validation twice; the adapter retains the full prompt
+and its bridge now waits through bounded controller recovery.

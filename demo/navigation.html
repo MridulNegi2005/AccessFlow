@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AccessFlow · In-car destination</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #09131b; color: #eef7fa; }
+    main { max-width: 1100px; margin: auto; padding: clamp(24px, 5vw, 64px); }
+    .eyebrow { color: #62d8c7; font-size: .8rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 12px 0 10px; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.04em; }
+    .sub { max-width: 60ch; color: #a9bbc5; line-height: 1.6; }
+    .panel { margin-top: 44px; padding: clamp(28px, 5vw, 60px); background: linear-gradient(135deg, #152c38, #10202b 70%); border: 1px solid #35505a; border-radius: 28px; box-shadow: 0 24px 70px #0005; }
+    .label { color: #91b0bb; font-size: .82rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .destination { margin: 16px 0 34px; min-height: 1.25em; font-size: clamp(2.5rem, 8vw, 6.5rem); font-weight: 750; letter-spacing: -.06em; line-height: 1.05; }
+    .line { height: 4px; background: #345361; border-radius: 8px; overflow: hidden; }
+    .line::before { content: ""; display: block; width: 38%; height: 100%; background: #62d8c7; }
+    .details { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 24px; color: #b6cbd3; }
+    .details strong { color: #eef7fa; }
+    form { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-top: 34px; }
+    label { display: grid; gap: 9px; color: #b6cbd3; font-size: .9rem; }
+    input { width: min(440px, 80vw); padding: 14px 16px; border: 1px solid #52717d; border-radius: 12px; background: #0c1c25; color: #fff; font: inherit; }
+    button { padding: 14px 19px; border: 0; border-radius: 12px; background: #62d8c7; color: #05211f; font: inherit; font-weight: 750; cursor: pointer; }
+    .note { margin-top: 24px; color: #839faa; font-size: .85rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">AccessFlow / voice extension</div>
+    <h1>Destination, changed by voice.</h1>
+    <p class="sub">The LiveKit agent listens for a destination change and updates this local trip display after the action is confirmed.</p>
+    <section class="panel" aria-live="polite">
+      <div class="label">Current destination</div>
+      <div class="destination" id="destination">Waiting for a room</div>
+      <div class="line" aria-hidden="true"></div>
+      <div class="details"><span>Status: <strong id="status">Not connected</strong></span><span>Changes: <strong id="revision">0</strong></span></div>
+    </section>
+    <form id="room-form">
+      <label>LiveKit room name <input id="room" autocomplete="off" required maxlength="128" placeholder="e.g. nav-demo"></label>
+      <button type="submit">Show trip</button>
+    </form>
+    <p class="note">Local simulation only. This display does not control a vehicle, calculate a route, or show live GPS.</p>
+  </main>
+  <script>
+    const roomInput = document.getElementById('room');
+    const destination = document.getElementById('destination');
+    const status = document.getElementById('status');
+    const revision = document.getElementById('revision');
+    roomInput.value = new URLSearchParams(location.search).get('room') || '';
+    async function refresh() {
+      const room = roomInput.value.trim();
+      if (!room) return;
+      try {
+        const response = await fetch(`/api/navigation/${encodeURIComponent(room)}`, {cache: 'no-store'});
+        if (!response.ok) throw new Error('Room not active');
+        const state = await response.json();
+        destination.textContent = state.destination;
+        revision.textContent = String(state.revision);
+        status.textContent = state.revision ? 'Destination updated' : 'Ready for voice request';
+      } catch {
+        destination.textContent = 'Waiting for trip';
+        revision.textContent = '0';
+        status.textContent = 'Room not active';
+      }
+    }
+    document.getElementById('room-form').addEventListener('submit', event => {
+      event.preventDefault();
+      const room = roomInput.value.trim();
+      if (!room) return;
+      history.replaceState(null, '', `?room=${encodeURIComponent(room)}`);
+      refresh();
+    });
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>

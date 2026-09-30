@@ -1793,6 +1793,10 @@
             setVoiceCaption("Live voice unavailable", "Configure process or cloud ASR, or upload WAV");
             document.querySelector("#voice-help").textContent =
               "Hands-free voice needs configured process or cloud ASR. Upload WAV or type meanwhile.";
+          } else {
+            setVoiceCaption("Live mic ready", "Your mic stays off until you start.");
+            document.querySelector("#voice-help").textContent =
+              "Speak naturally. Pause to finish a turn, or end the session to stop listening.";
           }
           const reasoner = payload.reasoner_backend;
           responseBackend = reasoner
@@ -1807,11 +1811,16 @@
         }
         if (event.kind === "demo_preview") {
           if (activeSessionId && event.session_id !== activeSessionId) return;
-          if (liveVoice?.previewResult(event.source_id, event.revision, event.text, event.error) &&
-              typeof event.text === "string") {
+          if (!liveVoice?.previewResult(event.source_id, event.revision, event.text, event.error))
+            return;
+          if (typeof event.text === "string" && event.text.trim()) {
             document.querySelector("#caption-label").textContent =
               "Provisional transcript · no action yet";
             document.querySelector("#request-summary").textContent = event.text;
+            document.querySelector("#voice-help").textContent =
+              "Pause when you finish speaking to complete the turn automatically.";
+          } else if (typeof event.error === "string" && event.error.trim()) {
+            document.querySelector("#voice-help").textContent = event.error;
           }
           return;
         }
@@ -1852,6 +1861,8 @@
             document.querySelector("#request-summary").textContent = isMockAudio
               ? "Voice input received · demo/mock mode does not transcribe audio."
               : payload.text || "Voice request received.";
+            if (payload.final === true && !isMockAudio)
+              document.querySelector("#caption-label").textContent = "Final transcript";
           }
           if (payload.final === true && typeof payload.event_id === "string") {
             if (rememberRequestEvent(payload.source_id, payload.event_id, payload.revision ?? 0)) {
