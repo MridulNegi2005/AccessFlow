@@ -1934,3 +1934,11 @@ Actual new environment installation/imports verified; doctor honestly failed
 before inference because the B worker is unmerged. Revised Samsung v3 draft
 corrects evidence notes and renders all eight slides. No B implementation,
 live model/score, microphone, training, release or submission was performed.
+
+## 2026-09-30 — Atishay post-merge voice verification
+
+AI assistance updated only Atishay-owned FDB-v3 tool descriptions and tests after merging origin/main through dd8bc81. The guidance documents independent reads, a predeclared write contract, one-row identifier binding and the limit on ranking multiple results. Full frozen Python 3.11 FDB/dev suite: 1,584 passed, 6 skipped, 2 existing deprecation warnings; focused checks: 67 passed; whole-repository Ruff passed.
+
+Actual LiveKit recorded-audio checks used Groq whisper-large-v3 STT, LiveKit Inference openai/gpt-5.6-luna planning and Deepgram Aura-2 athena TTS. travel_01 made the expected flight search; ecommerce_19 searched the corrected tablet and added one product; the final ecommerce_18 run searched gaming mice, tracked PO999 and added its sole result. One earlier e18 run only made the independent reads; the final guidance change preceded its passing rerun. No 401/429 occurred. One SDK prewarm timeout warning did not prevent successful planner requests.
+
+No official score, physical microphone result or clean scoring-host verification is claimed. NeMo and the OpenAI judge key are unavailable; M1-M4 remain NOT RUN. Generated replies and traces stay outside Git. The previously verified navigation clip and screenshot deliverables are linked in the Atishay handoff. No provider secrets or bulk benchmark audio were committed.
