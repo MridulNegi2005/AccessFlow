@@ -78,6 +78,47 @@ def commands(fdb: Path, scorer: str, evidence: Path, *, semantic: bool = True) -
     ]
 
 
+def audited_commands(plan: list[list[str]], evidence: Path, *, semantic: bool = True) -> list[list[str]]:
+    """Observe scoring only; the runner and official arguments remain unchanged."""
+    result = [plan[0]]
+    for index, command in enumerate(plan[1:], start=1):
+        if semantic or index == 3:  # Upstream latency always uses its LLM judge.
+            script = Path(command[1])
+            result.append([command[0], str(ROOT / "scripts/fdb_judge_audit.py"),
+                           "--script", str(script), "--output",
+                           str(evidence / f"{script.stem}_judge_audit.json"), "--", *command[2:]])
+        else:
+            result.append(command)
+    return result
+
+
+def judge_evidence(evidence: Path, *, semantic: bool = True) -> dict:
+    names = ["analyze_tool_latency"]
+    if semantic:
+        names = ["evaluate_tool_calls", "evaluate_pass_rate", *names]
+    reports = []
+    for name in names:
+        path = evidence / f"{name}_judge_audit.json"
+        row = json.loads(path.read_text(encoding="utf-8"))
+        requests = row.get("requests")
+        if row.get("version") != 1 or not isinstance(requests, list):
+            raise ValueError("Missing/malformed judge request evidence")
+        valid = {"valid_response", "invalid_response", "request_error"}
+        if any(not isinstance(item, dict) or item.get("status") not in valid for item in requests):
+            raise ValueError("Malformed judge request statuses")
+        failed = sum(item["status"] != "valid_response" or item.get("model") != "gpt-4o" for item in requests)
+        if (type(row.get("observed_requests")) is not int or row["observed_requests"] != len(requests)
+                or type(row.get("failed_requests")) is not int or row["failed_requests"] != failed):
+            raise ValueError("Inconsistent judge request counts")
+        reports.append({"path": path.name, "sha256": digest(path), "requests": len(requests), "failed": failed})
+    failures = sum(row["failed"] for row in reports)
+    observed = sum(row["requests"] > 0 for row in reports)
+    status = ("unverified_failures" if failures else "observed_valid_requests" if observed == len(reports)
+              else "partially_observed" if observed else "no_requests_observed")
+    return {"status": status, "audits": reports,
+            "scope": "Request success and reply structure only; not judge correctness or full report coverage"}
+
+
 def verify_results(inputs: list[Path]) -> dict:
     """The upstream batch can exit zero while individual examples fail."""
     states: dict[str, int] = {}
@@ -219,7 +260,7 @@ def run_pipeline(args, env: dict[str, str]) -> dict:
     evidence.mkdir(parents=True)
     manifest = {"started_at": datetime.now(timezone.utc).isoformat(), "status": "started",
                 "mode": args.mode, "scoring": "exact-match diagnostic" if args.exact_match else "official scripts with semantic judge",
-                "judge_verification": "Upstream may silently fall back to exact matching; judge execution is not independently verified by this supervisor",
+                "judge_verification": {"status": "not_run"},
                 "agent_commit": git_output(ROOT, "rev-parse", "HEAD"),
                 "agent_tree_dirty": bool(git_output(ROOT, "status", "--porcelain")),
                 "seed_policy": "Official scripts expose no seed option; configuration and input hashes retained"}
@@ -228,7 +269,8 @@ def run_pipeline(args, env: dict[str, str]) -> dict:
         manifest.update(preflight(fdb, args.scorer_python, env,
                                   need_inference=args.mode != "score", need_judge=args.mode != "run"))
         inputs = recordings(fdb / "fdb_v3_data_released")
-        plan = commands(fdb, args.scorer_python, evidence, semantic=not args.exact_match)
+        plan = audited_commands(commands(fdb, args.scorer_python, evidence, semantic=not args.exact_match),
+                                evidence, semantic=not args.exact_match)
         manifest["commands"] = plan
         if args.mode == "doctor":
             manifest["status"] = "preflight_passed_not_evaluated"
@@ -257,7 +299,12 @@ def run_pipeline(args, env: dict[str, str]) -> dict:
                 subprocess.run(command, check=True, cwd=fdb, env=env)
             verify_reports(evidence, len(inputs))
             manifest["retained_outputs"] = preserve_outputs(inputs, evidence, telemetry)
-            manifest["status"] = "scored_with_recorded_outcomes"
+            manifest["judge_verification"] = judge_evidence(evidence, semantic=not args.exact_match)
+            verification = manifest["judge_verification"]["status"]
+            if verification == "unverified_failures":
+                raise ValueError("Judge requests failed or returned invalid JSON/schema; upstream fallback scores are not verified")
+            manifest["status"] = ("scored_with_recorded_outcomes" if verification == "observed_valid_requests"
+                                  else "scored_with_incomplete_judge_observation")
         else:
             manifest["status"] = "inference_recorded_not_scored"
         # Capture exact resolved installations, not secrets or input answers.

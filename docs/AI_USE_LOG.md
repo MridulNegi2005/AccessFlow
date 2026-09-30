@@ -1765,3 +1765,12 @@ AI-assisted generic contract/resolver/prompt change and regression design. Human
 ## 2026-09-30 — FDB package and Samsung draft
 
 AI assistance added root optional dependency lock, reproduction supervision, sixteen offline safety tests, candidate container recipe and current-target documentation. Inspected unchanged pinned FDB source and B repair commit; B implementation untouched. Draft presentation follows supplied Samsung template with editable tables/diagram and qualified evidence. Full A software 1,504 pass/6 skip; no model training or actual live inference/scorer/microphone result. Human review of team details, run evidence and final artifacts remains.
+
+## 2026-09-30 — Scorer request audit
+
+AI-assisted A packaging observes the pinned scorer's synchronous SDK requests
+without changing prompts, replies, score logic, models or agent inputs. Added
+24 offline regression cases, including actual-SDK mock transport; three separate
+unmodified upstream function probes reproduce swallowed failures with no network
+request. Full A software 1,528 pass/6 skip, focused packaging 40 pass, Ruff pass.
+No B source edit, model training, real judge/audio score or microphone claim.

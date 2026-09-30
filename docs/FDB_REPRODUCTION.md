@@ -32,6 +32,13 @@ NeMo are also absent here. No required keys are present in the tested process.
 No full score or physical microphone result is claimed. Atishay's runtime and
 recordings on his own machine are not automatically available here.
 
+A later presence-only check found a Groq key in the ignored repository `.env`;
+it found no LiveKit or OpenAI judge settings there. No key value was printed.
+The supervisor deliberately loads the official clone's `.env.local`, not the
+repository `.env`. A local Groq key alone cannot run the official voice/scoring
+pipeline. Standalone CPU Silero VAD loading took 0.187 seconds with the actual
+installed SDK; this is not a full worker warm-up or microphone/performance test.
+
 ## Install the agent
 
 Use Python 3.11, Git and `uv`. First integrate the reviewed owner changes and
@@ -144,6 +151,30 @@ reports and package freezes remain alongside the manifest. A nonzero error or
 missing/malformed result cannot become an unexplained green aggregate even if
 the upstream batch process exits zero. A scored run can still have poor task
 accuracy; its status does not mean all scenarios passed.
+
+The pinned evaluators can catch judge errors and silently fall back to exact
+argument matching. The supervisor now runs the three scoring scripts through
+`scripts/fdb_judge_audit.py`, using the supplied **scorer** Python. It observes
+their synchronous OpenAI SDK requests without changing prompts, arguments,
+responses, models or score logic. Official tracked sources stay unchanged.
+Inference is not wrapped, and the observer never runs inside the voice agent.
+
+Each scorer produces a `*_judge_audit.json` beside its original report. Audits
+contain request counts, model selection, timing, SDK version, token counts when
+present, reply-structure status and exception type. They exclude prompts,
+expected answers, response text, exception messages and credentials.
+Request failure or malformed reply marks the supervisor failed, retaining the
+upstream reports for diagnosis. Even a successful upstream exit cannot hide it.
+An evaluator with no requests is explicitly unobserved; the aggregate is labeled
+`scored_with_incomplete_judge_observation`, not verified semantic scoring.
+`--exact-match` wraps only the latency judge and remains a tool diagnostic.
+
+This observation verifies transport/reply structure, **not** judge accuracy or
+complete scenario coverage. The official denominator is checked separately.
+Three offline probes against the unchanged pinned evaluators reproduced their
+fallback/missing-latency behavior after mocked authentication errors, and the
+observer detected all three. See `docs/evidence/fdb-judge-audit-2026-09-30.json`.
+Those probes made zero network calls and are not an official benchmark score.
 
 Review raw logs/results for secrets, participant data and redistribution rights
 before publishing. Keep bulk audio/private configuration out of Git. Publish

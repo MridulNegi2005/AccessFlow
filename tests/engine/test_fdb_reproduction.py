@@ -52,6 +52,83 @@ def test_config_does_not_serialize_secrets_or_arbitrary_environment():
     assert "secret" not in json.dumps(config)
 
 
+def test_auditor_wraps_only_scoring_and_preserves_official_cli_arguments(tmp_path):
+    original = fdb.commands(tmp_path, "scorer-python", tmp_path)
+    audited = fdb.audited_commands(original, tmp_path)
+    assert audited[0] == original[0]
+    for raw, wrapped in zip(original[1:], audited[1:], strict=True):
+        assert wrapped[0] == raw[0]
+        assert wrapped[1].endswith("fdb_judge_audit.py")
+        assert wrapped[wrapped.index("--script") + 1] == raw[1]
+        assert wrapped[wrapped.index("--") + 1:] == raw[2:]
+    diagnostic = fdb.audited_commands(original, tmp_path, semantic=False)
+    assert diagnostic[1:3] == original[1:3]
+    assert diagnostic[3][1].endswith("fdb_judge_audit.py")
+
+
+def write_audits(tmp_path, statuses):
+    for name, states in zip(("evaluate_tool_calls", "evaluate_pass_rate", "analyze_tool_latency"), statuses, strict=True):
+        rows = [{"model": "gpt-4o", "status": state} for state in states]
+        (tmp_path / f"{name}_judge_audit.json").write_text(json.dumps({"version": 1,
+            "observed_requests": len(rows), "failed_requests": sum(state != "valid_response" for state in states),
+            "requests": rows}))
+
+
+@pytest.mark.parametrize("failure", ["request_error", "invalid_response"])
+def test_swallowed_judge_failure_is_not_verified_even_with_three_complete_reports(tmp_path, failure):
+    write_audits(tmp_path, [["valid_response"], [failure], ["valid_response"]])
+    assert fdb.judge_evidence(tmp_path)["status"] == "unverified_failures"
+
+
+def test_zero_and_partial_judge_observation_are_reported_honestly(tmp_path):
+    write_audits(tmp_path, [[], [], []])
+    assert fdb.judge_evidence(tmp_path)["status"] == "no_requests_observed"
+    write_audits(tmp_path, [["valid_response"], [], ["valid_response"]])
+    assert fdb.judge_evidence(tmp_path)["status"] == "partially_observed"
+    write_audits(tmp_path, [["valid_response"], ["valid_response"], ["valid_response"]])
+    assert fdb.judge_evidence(tmp_path)["status"] == "observed_valid_requests"
+
+
+def test_forged_judge_counts_cannot_hide_request_failures(tmp_path):
+    write_audits(tmp_path, [["request_error"], [], []])
+    path = tmp_path / "evaluate_tool_calls_judge_audit.json"
+    row = json.loads(path.read_text())
+    row["failed_requests"] = 0
+    path.write_text(json.dumps(row))
+    with pytest.raises(ValueError, match="Inconsistent"):
+        fdb.judge_evidence(tmp_path)
+
+
+@pytest.mark.parametrize("state", ["valid_response", "request_error", None])
+def test_pipeline_cannot_be_green_after_scorers_silently_swallow_judge_errors(tmp_path, monkeypatch, state):
+    audio = audio_tree(tmp_path)
+    (audio.parent / "result_accessflow.json").write_text('{"status":"completed"}')
+    args = SimpleNamespace(fdb_root=tmp_path, scorer_python="scorer", output=tmp_path / "run",
+                           mode="score", exact_match=False)
+    monkeypatch.setattr(fdb, "git_output", lambda *args: "a-commit")
+    monkeypatch.setattr(fdb, "preflight", lambda *args, **kwargs: {"input_count": 1})
+    monkeypatch.setattr(fdb, "recordings", lambda *args: [audio])
+
+    def upstream_success(command, **kwargs):
+        for name in ("tool_accuracy.json", "strict_pass_rate.json"):
+            (args.output / name).write_text('{"total_scenarios":1}')
+        (args.output / "latency.json").write_text('{}')
+        write_audits(args.output, [[state] if state else []] * 3)
+        return SimpleNamespace(returncode=0, stdout="synthetic package freeze")
+
+    monkeypatch.setattr(fdb.subprocess, "run", upstream_success)
+    if state == "request_error":
+        with pytest.raises(ValueError, match="fallback scores"):
+            fdb.run_pipeline(args, {})
+        manifest = json.loads((args.output / "manifest.json").read_text())
+        assert manifest["status"] == "failed"
+        assert manifest["judge_verification"]["status"] == "unverified_failures"
+    else:
+        manifest = fdb.run_pipeline(args, {})
+        expected = "scored_with_recorded_outcomes" if state else "scored_with_incomplete_judge_observation"
+        assert manifest["status"] == expected
+
+
 def test_retained_evidence_excludes_expected_answers_and_unrelated_rooms(tmp_path):
     audio = audio_tree(tmp_path)
     (audio.parent / "result_accessflow.json").write_text('{"room_name":"current","status":"completed"}')
