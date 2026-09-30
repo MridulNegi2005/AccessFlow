@@ -1,0 +1,17 @@
+{
+  "status": "success",
+  "evidence": {
+    "backend": "livekit",
+    "model": "openai/gpt-5.6-luna",
+    "response_format": "json_object",
+    "requests": [
+      {
+        "outcome": "success",
+        "seconds": 5.31,
+        "prompt_tokens": 56,
+        "completion_tokens": 11
+      }
+    ]
+  },
+  "scope": "Single real planner connection check, not a benchmark score"
+}

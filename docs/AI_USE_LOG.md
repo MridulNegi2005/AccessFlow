@@ -1970,3 +1970,5 @@ microphone test occurred. Checks are in reviews/MERGE_VERIFICATION_2026-09-30.md
 AI assistance prepared separate GPU scorer/agent environments, a private notebook, seven extraction/packaging guards and reproduced actual GPU model warm-up/silence ASR. Human authorized Kaggle access and account/key setup. Credentials saved privately, never committed. Version 2 unscored real-audio job started; judge account credit zero. No payment, B source change, training, score or microphone claim.
 
 Kaggle version 2 failed in actual preflight: resolving its venv Python symlink invoked the base interpreter without scorer dependencies. AI-assisted fix preserves the venv entry point in both owned scripts. Two real-symlink regressions skip on Windows; Linux retry is necessary evidence. No B edits.
+
+Actual single planner connection through LiveKit succeeded, 56 input/11 output tokens, 5.31s; no benchmark score implied. CLI upload detached private Kaggle Secrets in version 3; restored bindings and UI-launched version 4. No payment or B source edit.

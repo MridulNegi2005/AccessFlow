@@ -66,6 +66,17 @@ authentication, not spoken inference. OpenAI billing shows $0.00 API credit;
 no payment, upgrade or credited judge run occurred. Credentials stay in ignored
 `.env.fdb.private` and private Kaggle Secrets; never include them in Git.
 
+Version updates through the CLI did not retain notebook secret attachments in
+this session. After any update, open Add-ons → Secrets and verify all five
+checkboxes are attached to that version; save/run through the UI. Version 3
+stopped before agent launch because no secrets were attached. Version 4 was
+requested through the UI with all five checkboxes visibly selected.
+
+A separate actual single planner request through the saved LiveKit settings
+succeeded: `openai/gpt-5.6-luna`, 5.31 seconds, 56 prompt tokens, 11 completion
+tokens, valid JSON. This verifies inference access, not speech or benchmark
+performance. OpenAI judge funding remains a separate issue.
+
 References: [Kaggle kernel configuration](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels_metadata.md),
 [Kaggle Secrets](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels.md),
 [FDB-v3](https://github.com/DanielLin94144/Full-Duplex-Bench/tree/main/v3).
