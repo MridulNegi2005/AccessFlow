@@ -190,6 +190,7 @@ async def entrypoint(ctx: agents.JobContext) -> None:
         llm=scheduling_llm,
         tts=speech,
         turn_handling={"turn_detection": "vad", "preemptive_generation": {"enabled": False}},
+        aec_warmup_duration=0.5,
     )
 
     @session.on("user_state_changed")

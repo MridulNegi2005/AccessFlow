@@ -74,6 +74,7 @@ async def entrypoint(ctx: agents.JobContext) -> None:
         llm=backend.client,
         tts=_tts_engine(key),
         turn_handling={"turn_detection": "vad", "preemptive_generation": {"enabled": False}},
+        aec_warmup_duration=0.5,
     )
 
     @session.on("user_state_changed")

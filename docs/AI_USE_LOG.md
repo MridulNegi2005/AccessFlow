@@ -1879,3 +1879,32 @@ Model-assisted drafting of Atishay first-person work instructions from verified 
 ## 2026-09-30 15:35 IST — B1/B2 hardening
 
 AI assistance repaired the B-owned RoomBridge completion path and navigation persistence lifecycle, then added deterministic regressions for correlated terminal acknowledgments, stale events, timeout/blank input, cancellation races, idempotency, commit uncertainty, revision ordering, shutdown and room isolation. Validation: 36 focused tests passed before the final acknowledgment predicate tightening; the final bridge/navigation rerun passed 29, and the full Python suite passed 1,501 with 6 skipped and 2 existing warnings; Ruff and `git diff --check` passed. The full-suite rerun used a clean child-process environment after inherited user model/backend selectors caused two unrelated initial failures. The LiveKit package and Groq credential were unavailable to this checkout, so no provider request, recorded-audio run, physical microphone check, or official FDB score was made. No secret values or participant recordings were read into the report.
+
+## 2026-09-30 17:02 IST — Live voice follow-up
+
+AI assistance installed the pinned optional LiveKit/Groq/Silero dependencies in
+an isolated Python 3.11.15 environment and installed FFmpeg 9.0.2 for the
+current Windows user. It reduced the LiveKit AEC warmup to 0.5 seconds in the
+two Atishay-owned voice entrypoints after recorded playback showed the pinned
+SDK default suppressed early barge-in. The documented tradeoff is a higher
+chance that acoustic echo triggers interruption.
+
+It verified a spoken navigation correction, vague-stop clarification plus
+output-only answer, and one scripted barge-in through the actual LiveKit worker
+and local dashboard. The destination and revision remained in agreement on the
+confirmed action; generated WAV output and dashboard screenshots are identified
+in the navigation feedback record. These used generated speech, not a person
+or a physical microphone. Three released FDB-v3 cases were attempted: the
+one-tool flight case passed its call, the two-tool ecommerce case missed its
+cart write, and the three-tool ecommerce case made no calls. No official score
+was produced; NeMo and an OpenAI judge key are missing. No provider secrets,
+raw benchmark recordings or raw tool arguments were added to the repository.
+
+The focused regressions passed 36 tests; the final full suite passed 1,501,
+with 6 skipped and 2 existing warnings, after removing inherited model and
+Samsung selectors only from the test process. Ruff and `git diff --check`
+passed. No video file was captured and M1–M4 remain NOT RUN.
+
+## 2026-09-30 17:23 IST — Live dashboard clip and handoff
+
+AI assistance captured and checked a synchronized local dashboard/voice clip for a fresh simulated navigation room. The real LiveKit worker processed generated speech, committed Airport Terminal 1 / revision 1, and produced the recorded spoken confirmation; the 31.08-second 1280×720 H.264/AAC MP4 decoded fully. File and sanitized trace locations, pinned optional worker requirements, start/scoring commands, provider profile and remaining Mridul-owned binding/package work are recorded in `docs/handoffs/atishay.md`. Dashboard screenshots are available in the task's deliverable tabs. This is generated-audio evidence only; no physical microphone or official FDB score is claimed. Existing FDB case outcomes remain one expected single-tool call, one missing cart action and one no-tool three-step attempt. No secrets or raw benchmark recordings were added to Git.
